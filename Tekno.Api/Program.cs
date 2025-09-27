@@ -43,10 +43,37 @@ namespace Tekno.Api
             //configure db context
             builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+            //configure logging
+            builder.Logging.ClearProviders();
+            builder.Logging.AddConsole();
+            builder.Logging.AddDebug();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
+
+            // Apply pending migrations at startup
+            using (var scope = app.Services.CreateScope())
+            {
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                var retries = 10;
+                for (var i = 0; i < retries; i++)
+                {
+                    try
+                    {
+                        db.Database.Migrate();
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Migration attempt {Attempt} failed, retrying...", i + 1);
+                        Thread.Sleep(2000);
+                    }
+                }
+            }
+
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();

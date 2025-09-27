@@ -1,0 +1,23 @@
+﻿# ===== Stage 1: Build =====
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy sln + csproj và restore
+COPY *.sln ./
+COPY Tekno.Api/*.csproj Tekno.Api/
+RUN dotnet restore
+
+# Copy toàn bộ source và build
+COPY . .
+WORKDIR /src/Tekno.Api
+RUN dotnet publish -c Release -o /app/publish
+
+# ===== Stage 2: Runtime =====
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "Tekno.Api.dll"]
