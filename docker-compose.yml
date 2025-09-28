@@ -1,0 +1,31 @@
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Tekno.Api/Dockerfile
+    ports:
+      - "5000:8080"  # Host 5000 -> container 8080
+    depends_on:
+      - db
+    environment:
+      # Connection string cho container
+      - ConnectionStrings__DefaultConnection=Host=db;Database=tekno;Username=postgres;Password=postgres
+      - DOTNET_ENVIRONMENT=Development
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    container_name: tekno-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tekno
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  db_data:
