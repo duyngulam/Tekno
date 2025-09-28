@@ -14,7 +14,7 @@
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "swagger",
-      "applicationUrl": "http://localhost:5017",
+      "applicationUrl": "http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -36,15 +36,6 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
-    },
-    "Docker-Custom": {
-      "commandName": "Executable",
-      "executablePath": "docker",
-      "commandLineArgs": "compose up --build",
-      "workingDirectory": "..\\..\\",
-      "launchBrowser": true,
-      "launchUrl": "http://localhost:5000/swagger"
     }
-
   }
 }
