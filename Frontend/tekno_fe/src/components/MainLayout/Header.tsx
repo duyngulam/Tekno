@@ -2,15 +2,18 @@
 import Link from "next/link";
 import logo from "../../../src/asset/MainLogo.png";
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
 import {
   MagnifyingGlassIcon,
   ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
+import Login from "../auth/Login";
+import AuthModal from "../auth/AuthModal";
 
 const Header = () => {
   const pathname = usePathname();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   const navItems = [
     { href: "/", label: "Home" },
@@ -60,10 +63,13 @@ const Header = () => {
         <button
           className="bg-primary text-white py-2 px-4 rounded-md
           hover:bg-primary/60 active:bg-primary"
+          onClick={() => setIsLoginOpen(true)}
         >
           Login / Sign Up
         </button>
       </div>
+      {/* AuthModal renders outside the flex row, so it overlays the page */}
+      <AuthModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </div>
   );
 };

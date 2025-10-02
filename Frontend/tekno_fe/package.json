@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "clsx": "^2.1.1",
     "next": "15.5.4",
     "postcss": "^8.5.6",
     "react": "19.1.0",
@@ -22,6 +23,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "daisyui": "^5.1.25",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "typescript": "^5"
