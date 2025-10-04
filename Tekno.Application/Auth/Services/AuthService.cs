@@ -25,13 +25,13 @@ namespace Tekno.Application.Auth.Services
         }
 
         // Login
-        public async Task<AuthResponse?> LoginAsync(string username, string password)
+        public async Task<AuthResponse?> LoginAsync(string email, string password)
         {
-            var user = await _userRepo.GetByUsernameAsync(username);
+            var user = await _userRepo.GetByEmailAsync(email);
 
             if (user == null || !_passwordHasher.Verify(password, user.PasswordHash))
             {
-                _logger.LogWarning("Login failed for {Username}", username);
+                _logger.LogWarning("Login failed for {email}", email);
                 return null;
             }
 
@@ -40,7 +40,6 @@ namespace Tekno.Application.Auth.Services
             return new AuthResponse
             {
                 Id = user.Id,
-                Username = user.Username,
                 Email = user.Email,
                 Role = user.Role.Name,
                 Token = token,
@@ -51,10 +50,10 @@ namespace Tekno.Application.Auth.Services
         // Register
         public async Task<AuthResponse?> RegisterAsync(RegisterRequest request)
         {
-            var existingUser = await _userRepo.GetByUsernameAsync(request.Username);
+            var existingUser = await _userRepo.GetByEmailAsync(request.Username);
             if (existingUser != null)
             {
-                _logger.LogWarning("Register failed: Username {Username} already exists", request.Username);
+                _logger.LogWarning("Register failed: Username {email} already exists", request.Email);
                 return null;
             }
 
@@ -63,7 +62,7 @@ namespace Tekno.Application.Auth.Services
             var role = await _userRepo.GetRoleByNameAsync(request.Role)
                        ?? throw new Exception("Role not found");
 
-            var newUser = new User(request.Username, request.Email, hashedPassword, role.Id);
+            var newUser = new User(request.Username,request.Email, hashedPassword, role.Id);
 
             await _userRepo.AddAsync(newUser);
 
@@ -74,7 +73,7 @@ namespace Tekno.Application.Auth.Services
             return new AuthResponse
             {
                 Id = newUser.Id,
-                Username = newUser.Username,
+                
                 Email = newUser.Email,
                 Role = newUser.Role.Name,
                 Token = token,

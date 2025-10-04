@@ -20,17 +20,17 @@ namespace Tekno.Api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            _logger.LogInformation("Login attempt for user {Username}", request.Username);
+            _logger.LogInformation("Login attempt for user {Email}", request.Email);
 
-            var userDto = await _authService.LoginAsync(request.Username, request.Password);
+            var userDto = await _authService.LoginAsync(request.Email, request.Password);
 
             if (userDto == null)
             {
-                _logger.LogWarning("Failed login attempt for user {Username}", request.Username);
-                return Unauthorized(new { message = "Invalid username or password" });
+                _logger.LogWarning("Failed login attempt for user {Email}", request.Email);
+                return Unauthorized(new { message = "Invalid Email or password" });
             }
 
-            _logger.LogInformation("User {Username} logged in successfully", request.Username);
+            _logger.LogInformation("User {Username} logged in successfully", request.Email);
             return Ok(userDto);
         }
         //---------------Register----------------

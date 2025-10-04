@@ -13,10 +13,10 @@ namespace Tekno.Infrastructure.Persistence
             _context = context;
         }
 
-        public async Task<User?> GetByUsernameAsync(string username)
+        public async Task<User?> GetByEmailAsync(string email)
         {
             return await _context.Users.Include(u => u.Role)
-                                       .FirstOrDefaultAsync(u => u.Username == username);
+                                       .FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task<Role?> GetRoleByNameAsync(string roleName)
