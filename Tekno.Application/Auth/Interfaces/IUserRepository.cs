@@ -10,6 +10,7 @@ namespace Tekno.Application.Auth.Interfaces
     public interface IUserRepository
     {
         Task<User?> GetByUsernameAsync(string username);
+        Task<Role?> GetRoleByNameAsync(string roleName);
         Task AddAsync(User user);
         Task<bool> ExistsAsync(string username);
     }

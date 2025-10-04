@@ -1,57 +1,99 @@
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using Tekno.Application.Auth.Interfaces;
 using Tekno.Application.Auth.Services;
 using Tekno.Application.Common.Interfaces;
 using Tekno.Infrastructure.Auth;
 using Tekno.Infrastructure.Logging;
 using Tekno.Infrastructure.Persistence;
-namespace Tekno.Api
 
+namespace Tekno.Api
 {
     public class Program
     {
         public static void Main(string[] args)
         {
-            //var hash = BCrypt.Net.BCrypt.HashPassword("admin123");
-            //var hash2 = BCrypt.Net.BCrypt.HashPassword("customer123");
-            //using var loggerFactory = LoggerFactory.Create(builder =>
-            //{
-            //    builder.AddConsole();
-            //});
-
-            //ILogger logger = loggerFactory.CreateLogger<Program>();
-
-            //logger.LogInformation("Generated hash: {Hash}", hash);      
-            //logger.LogInformation("Generated hash: {Hash2}", hash2);
-
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            // =======================================================
+            // 1. CONFIGURATION
+            // =======================================================
+            var configuration = builder.Configuration;
+            var jwtSettings = configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"] ?? throw new Exception("JWT Secret missing");
 
+            // =======================================================
+            // 2. REGISTER FRAMEWORK SERVICES
+            // =======================================================
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend",
+                    policy =>
+                    {
+                        policy.WithOrigins("http://localhost:3000") // FE domain
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowCredentials(); // nếu dùng cookie-based token
+                    });
+            });
 
-            // Register Auth module dependencies
-            builder.Services.AddScoped<AuthService>(); // Auth business logic
+            // =======================================================
+            // 3. AUTHENTICATION & AUTHORIZATION
+            // =======================================================
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false; // Dev có thể tắt HTTPS
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = false, // Nếu có domain thật -> bật true
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+                    ClockSkew = TimeSpan.Zero // Tránh token hết hạn lệch giờ
+                };
+            });
+
+            builder.Services.AddAuthorization();
+
+            // =======================================================
+            // 4. APPLICATION & INFRASTRUCTURE DEPENDENCIES
+            // =======================================================
+            builder.Services.AddScoped<AuthService>(); // Business logic Auth
             builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
+            builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 
-
-            //configure db context
+            // =======================================================
+            // 5. DATABASE
+            // =======================================================
             builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-            //configure logging
+                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+            // =======================================================
+            // 6. LOGGING
+            // =======================================================
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
             builder.Logging.AddDebug();
+
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-
-            // Apply pending migrations at startup
+            // =======================================================
+            // 7. APPLY MIGRATIONS ON STARTUP
+            // =======================================================
             using (var scope = app.Services.CreateScope())
             {
                 var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
@@ -73,20 +115,25 @@ namespace Tekno.Api
                 }
             }
 
-
+            // =======================================================
+            // 8. MIDDLEWARE PIPELINE
+            // =======================================================
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
-
 
             app.MapControllers();
 
+            // =======================================================
+            // 9. RUN APP
+            // =======================================================
             app.Run();
         }
     }
