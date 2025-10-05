@@ -8,7 +8,7 @@ import {
   ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
-import Login from "../auth/Login";
+import Login from "../auth/LoginForm";
 import AuthModal from "../auth/AuthModal";
 
 const Header = () => {

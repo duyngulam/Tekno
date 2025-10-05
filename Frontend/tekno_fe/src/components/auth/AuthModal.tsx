@@ -2,8 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Input from "@/components/auth/Input";
-import Login from "./Login";
-import SignUp from "./SignUp";
+import LoginForm from "./LoginForm";
+import SignUpForm from "./SignUpForm";
 
 type ModalProps = {
   isOpen: boolean;
@@ -55,8 +55,8 @@ export default function AuthModal({ isOpen, onClose }: ModalProps) {
             Create Account
           </button>
         </div>
-        {activeTab === "login" && <Login />}
-        {activeTab === "register" && <SignUp />}
+        {activeTab === "login" && <LoginForm onClose={onClose} />}
+        {activeTab === "register" && <SignUpForm setActiveTab={setActiveTab} />}
         {/* <Login /> */}
       </div>
 
