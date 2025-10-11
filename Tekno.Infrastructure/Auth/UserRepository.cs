@@ -29,9 +29,9 @@ namespace Tekno.Infrastructure.Persistence
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
         }
-        public async Task<bool> ExistsAsync(string username)
+        public async Task<bool> ExistsAsync(string email)
         {
-            return await _context.Users.AnyAsync(u => u.Username == username);
+            return await _context.Users.AnyAsync(u => u.Email == email);
         }
     }
 }

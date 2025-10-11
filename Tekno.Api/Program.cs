@@ -123,7 +123,7 @@ namespace Tekno.Api
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            
+            app.UseCors("AllowFrontend");
             app.UseHttpsRedirection();
 
             app.UseAuthentication();

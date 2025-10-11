@@ -8,7 +8,7 @@ namespace Tekno.Infrastructure.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<Role> builder)
         {
-            builder.ToTable("Roles");
+            builder.ToTable("Role");
 
             builder.HasKey(r => r.Id);
 

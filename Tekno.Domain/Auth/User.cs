@@ -8,7 +8,6 @@ namespace Tekno.Domain.Auth
     public class User
     {
         public int Id { get; private set; }
-        public string Username { get; private set; }
         public string Email { get; private set; }
         public string PasswordHash { get; private set; }
         public int RoleId { get; private set; }
@@ -17,9 +16,8 @@ namespace Tekno.Domain.Auth
 
         private User() { } // EF Core
 
-        public User(string username, string email, string passwordHash, int roleId = 2)
+        public User(string email, string passwordHash, int roleId = 2)
         {
-            Username = username;
             Email = email;
             PasswordHash = passwordHash;
             RoleId = roleId; // default to Customer
