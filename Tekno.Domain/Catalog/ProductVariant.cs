@@ -15,6 +15,7 @@ namespace Tekno.Domain.Catalog
         public int Stock { get; private set; }
         public string Status { get; private set; } = "available";
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+        public string? VariantSpecsJson { get; set; } = null;// specs riêng (ghi đè nếu cần)
 
         public Product Product { get; private set; } = null!;
         public ICollection<ProductVariantAttribute> VariantAttributes { get; private set; } = new List<ProductVariantAttribute>();

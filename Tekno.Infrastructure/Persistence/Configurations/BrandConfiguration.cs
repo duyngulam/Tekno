@@ -32,79 +32,79 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 .WithOne(p => p.Brand)
                 .HasForeignKey(p => p.BrandId);
             builder.HasData(
-    new
-    {
-        Id = 1,
-        Name = "Apple",
-        Slug = "apple",
-        Country = "USA",
-        LogoUrl = "https://worldvectorlogo.com/logo/apple-13",
-        CreatedAt = DateTime.UtcNow
-    },
-    new
-    {
-        Id = 2,
-        Name = "Samsung",
-        Slug = "samsung",
-        Country = "Korea",
-        LogoUrl = "https://worldvectorlogo.com/logo/samsung-8",
-        CreatedAt = DateTime.UtcNow
-    },
-    new
-    {
-        Id = 3,
-        Name = "Dell",
-        Slug = "dell",
-        Country = "USA",
-        LogoUrl = "https://worldvectorlogo.com/logo/dell-2",
-        CreatedAt = DateTime.UtcNow
-    },
-    new
-    {
-        Id = 4,
-        Name = "Asus",
-        Slug = "asus",
-        Country = "Taiwan",
-        LogoUrl = "https://worldvectorlogo.com/logo/asus-4",
-        CreatedAt = DateTime.UtcNow
-    },
-    new
-    {
-        Id = 5,
-        Name = "Xiaomi",
-        Slug = "xiaomi",
-        Country = "China",
-        LogoUrl = "https://worldvectorlogo.com/logo/xiaomi-5",
-        CreatedAt = DateTime.UtcNow
-    },
-    new
-    {
-        Id = 6,
-        Name = "Lenovo",
-        Slug = "lenovo",
-        Country = "China",
-        LogoUrl = "https://worldvectorlogo.com/logo/lenovo-2",
-        CreatedAt = DateTime.UtcNow
-    },
-    new
-    {
-        Id = 7,
-        Name = "MSI",
-        Slug = "msi",
-        Country = "Taiwan",
-        LogoUrl = "https://worldvectorlogo.com/logo/msi-5",
-        CreatedAt = DateTime.UtcNow
-    },
-    new
-    {
-        Id = 8,
-        Name = "HP",
-        Slug = "hp",
-        Country = "USA",
-        LogoUrl = "https://worldvectorlogo.com/logo/HP-5",
-        CreatedAt = DateTime.UtcNow
-    }
-);
+                new
+                {
+                    Id = 1,
+                    Name = "Apple",
+                    Slug = "apple",
+                    Country = "USA",
+                    LogoUrl = "https://worldvectorlogo.com/logo/apple-13",
+                    CreatedAt = DateTime.UtcNow
+                },
+                new
+                {
+                    Id = 2,
+                    Name = "Samsung",
+                    Slug = "samsung",
+                    Country = "Korea",
+                    LogoUrl = "https://worldvectorlogo.com/logo/samsung-8",
+                    CreatedAt = DateTime.UtcNow
+                },
+                new
+                {
+                    Id = 3,
+                    Name = "Dell",
+                    Slug = "dell",
+                    Country = "USA",
+                    LogoUrl = "https://worldvectorlogo.com/logo/dell-2",
+                    CreatedAt = DateTime.UtcNow
+                },
+                new
+                {
+                    Id = 4,
+                    Name = "Asus",
+                    Slug = "asus",
+                    Country = "Taiwan",
+                    LogoUrl = "https://worldvectorlogo.com/logo/asus-4",
+                    CreatedAt = DateTime.UtcNow
+                },
+                new
+                {
+                    Id = 5,
+                    Name = "Xiaomi",
+                    Slug = "xiaomi",
+                    Country = "China",
+                    LogoUrl = "https://worldvectorlogo.com/logo/xiaomi-5",
+                    CreatedAt = DateTime.UtcNow
+                },
+                new
+                {
+                    Id = 6,
+                    Name = "Lenovo",
+                    Slug = "lenovo",
+                    Country = "China",
+                    LogoUrl = "https://worldvectorlogo.com/logo/lenovo-2",
+                    CreatedAt = DateTime.UtcNow
+                },
+                new
+                {
+                    Id = 7,
+                    Name = "MSI",
+                    Slug = "msi",
+                    Country = "Taiwan",
+                    LogoUrl = "https://worldvectorlogo.com/logo/msi-5",
+                    CreatedAt = DateTime.UtcNow
+                },
+                new
+                {
+                    Id = 8,
+                    Name = "HP",
+                    Slug = "hp",
+                    Country = "USA",
+                    LogoUrl = "https://worldvectorlogo.com/logo/HP-5",
+                    CreatedAt = DateTime.UtcNow
+                }
+            );
 
         }
     }

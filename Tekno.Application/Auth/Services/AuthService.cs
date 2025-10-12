@@ -12,6 +12,7 @@ namespace Tekno.Application.Auth.Services
         private readonly IJwtProvider _jwtProvider;
         private readonly IAppLogger<AuthService> _logger;
 
+
         public AuthService(
             IUserRepository userRepo,
             IPasswordHasher passwordHasher,

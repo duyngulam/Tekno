@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Tekno.Application.Catalog
+namespace Tekno.Application.Catalog.Interface
 {
-    public class ProductDto
+    public interface ICategoryRepository
     {
+        
     }
 }

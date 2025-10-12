@@ -23,6 +23,7 @@ namespace Tekno.Infrastructure.Persistence.Configurations
 
             builder.Property(v => v.Stock).HasDefaultValue(0);
             builder.Property(v => v.Status).HasDefaultValue("available");
+            builder.Property(v => v.VariantSpecsJson).HasColumnType("jsonb");
 
             builder.Property(v => v.CreatedAt)
                 .HasColumnType("timestamptz")
