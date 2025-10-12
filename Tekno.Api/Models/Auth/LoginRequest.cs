@@ -1,4 +1,4 @@
-﻿namespace Tekno.Api.Auth.Models
+﻿namespace Tekno.Api.Models.Auth
 {
     public class LoginRequest
     {

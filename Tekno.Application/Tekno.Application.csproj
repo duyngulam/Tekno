@@ -14,4 +14,9 @@
     <ProjectReference Include="..\Tekno.Domain\Tekno.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Catalog\DTOs\" />
+    <Folder Include="Catalog\Services\" />
+  </ItemGroup>
+
 </Project>

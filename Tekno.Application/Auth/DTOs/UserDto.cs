@@ -11,6 +11,8 @@ namespace Tekno.Application.Auth.DTOs
         public int Id { get; set; }
         public string Email { get; set; } = string.Empty;
         public string Role { get; set; } = "Customer";
+        public string Token { get; set; } = string.Empty;
+        public DateTime ExpiresAt { get; set; }
     }
 }
 

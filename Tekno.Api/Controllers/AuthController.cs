@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Tekno.Application.Auth.Services;
-using Tekno.Api.Auth.Models;
+using Tekno.Api.Models.Auth;
 using Tekno.Application.Auth.DTOs;
+using Microsoft.AspNetCore.Authorization;
 namespace Tekno.Api.Controllers
 {
     [ApiController]
@@ -34,17 +35,18 @@ namespace Tekno.Api.Controllers
             return Ok(userDto);
         }
         //---------------Register----------------
+        
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            _logger.LogInformation("Registration attempt for user {Username}", request.Username);
-            var userDto = await _authService.RegisterAsync(request);
+            _logger.LogInformation("Registration attempt for user {Username}", request.Email);
+            var userDto = await _authService.RegisterAsync(request.Email,request.Password,request.Role);
             if (userDto == null)
             {
-                _logger.LogWarning("Failed registration attempt for user {Username}", request.Username);
+                _logger.LogWarning("Failed registration attempt for user {Username}", request.Email);
                 return BadRequest(new { message = "Username already exists" });
             }
-            _logger.LogInformation("User {Username} registered successfully", request.Username);
+            _logger.LogInformation("User {Username} registered successfully", request.Email);
             return Ok(userDto);
         }
 

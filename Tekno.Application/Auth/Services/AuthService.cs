@@ -12,6 +12,7 @@ namespace Tekno.Application.Auth.Services
         private readonly IJwtProvider _jwtProvider;
         private readonly IAppLogger<AuthService> _logger;
 
+
         public AuthService(
             IUserRepository userRepo,
             IPasswordHasher passwordHasher,
@@ -25,7 +26,7 @@ namespace Tekno.Application.Auth.Services
         }
 
         // Login
-        public async Task<AuthResponse?> LoginAsync(string email, string password)
+        public async Task<UserDto?> LoginAsync(string email, string password)
         {
             var user = await _userRepo.GetByEmailAsync(email);
 
@@ -37,7 +38,7 @@ namespace Tekno.Application.Auth.Services
 
             var (token, expiresAt) = _jwtProvider.GenerateToken(user);
 
-            return new AuthResponse
+            return new UserDto
             {
                 Id = user.Id,
                 Email = user.Email,
@@ -48,32 +49,31 @@ namespace Tekno.Application.Auth.Services
         }
 
         // Register
-        public async Task<AuthResponse?> RegisterAsync(RegisterRequest request)
+        public async Task<UserDto?> RegisterAsync(string email,string password,string rrole)
         {
-            var existingUser = await _userRepo.GetByEmailAsync(request.Username);
+            var existingUser = await _userRepo.GetByEmailAsync(email);
             if (existingUser != null)
             {
-                _logger.LogWarning("Register failed: Username {email} already exists", request.Email);
+                _logger.LogWarning("Register failed: Email {email} already exists", email);
                 return null;
             }
 
-            var hashedPassword = _passwordHasher.Hash(request.Password);
+            var hashedPassword = _passwordHasher.Hash(password);
 
-            var role = await _userRepo.GetRoleByNameAsync(request.Role)
+            var role = await _userRepo.GetRoleByNameAsync(rrole)
                        ?? throw new Exception("Role not found");
 
-            var newUser = new User(request.Username,request.Email, hashedPassword, role.Id);
+            var newUser = new User(email, hashedPassword, role.Id);
 
             await _userRepo.AddAsync(newUser);
 
             var (token, expiresAt) = _jwtProvider.GenerateToken(newUser);
 
-            _logger.LogInformation("New user registered: {Username}", request.Username);
+            _logger.LogInformation("New user registered: {Username}", email);
 
-            return new AuthResponse
+            return new UserDto
             {
                 Id = newUser.Id,
-                
                 Email = newUser.Email,
                 Role = newUser.Role.Name,
                 Token = token,

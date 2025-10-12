@@ -41,6 +41,11 @@ namespace Tekno.Api
                               .AllowCredentials(); // nếu dùng cookie-based token
                     });
             });
+            builder.Services.AddControllers(options =>
+            {
+                // register validation filter globally
+                options.Filters.Add<ValidationFilterAttribute>();
+            });
 
             // =======================================================
             // 3. AUTHENTICATION & AUTHORIZATION
@@ -118,17 +123,25 @@ namespace Tekno.Api
             // =======================================================
             // 8. MIDDLEWARE PIPELINE
             // =======================================================
+            // 1. Request logging (incoming)
+            app.UseMiddleware<RequestLoggingMiddleware>();
+
+            // 2. Error handling (catch exceptions thrown by lower middleware/controllers)
+            app.UseMiddleware<ErrorHandlingMiddleware>();
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            
+            app.UseCors("AllowFrontend");
             app.UseHttpsRedirection();
-
+            // 3. Authentication & Authorization (use built-in)
             app.UseAuthentication();
             app.UseAuthorization();
 
+            // 4. Response wrapper (should be after controller executed)
+            app.UseMiddleware<ResponseWrapperMiddleware>();
             app.MapControllers();
 
             // =======================================================
