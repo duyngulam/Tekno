@@ -8,7 +8,7 @@ using Tekno.Api.Common.Responses;
 namespace Tekno.Api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
