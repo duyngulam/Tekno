@@ -6,6 +6,7 @@ namespace Tekno.Infrastructure.Persistence.Configurations
 {
     public class CategoryConfiguration : IEntityTypeConfiguration<Category>
     {
+        private static readonly DateTime SeedTime = new DateTime(2025, 10, 12, 9, 34, 0, DateTimeKind.Utc);
         public void Configure(EntityTypeBuilder<Category> builder)
         {
             builder.ToTable("category");
@@ -40,143 +41,177 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 // ===== Cấp cha =====
                 new
                 {
-                    id = 1,
-                    name = "Laptop",
-                    slug = "laptop",
-                    description = "All kinds of laptops",
-                    parentId = (int?)null
+                    Id = 1,
+                    Name = "Laptop",
+                    Slug = "laptop",
+                    Description = "All kinds of laptops",
+                    ParentId = (int?)null,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 2,
-                    name = "Smartphone",
-                    slug = "smartphone",
-                    description = "All kinds of smartphones",
-                    parentId = (int?)null
+                    Id = 2,
+                    Name = "Smartphone",
+                    Slug = "smartphone",
+                    Description = "All kinds of smartphones",
+                    ParentId = (int?)null,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 3,
-                    name = "Tablet",
-                    slug = "tablet",
-                    description = "All kinds of tablets",
-                    parentId = (int?)null
+                    Id = 3,
+                    Name = "Tablet",
+                    Slug = "tablet",
+                    Description = "All kinds of tablets",
+                    ParentId = (int?)null,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 4,
-                    name = "Accessory",
-                    slug = "accessory",
-                    description = "External product that enhances main product experience",
-                    parentId = (int?)null
+                    Id = 4,
+                    Name = "Accessory",
+                    Slug = "accessory",
+                    Description = "External product that enhances main product experience",
+                    ParentId = (int?)null,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 5,
-                    name = "Camera",
-                    slug = "camera",
-                    description = "All kinds of cameras",
-                    parentId = (int?)null
+                    Id = 5,
+                    Name = "Camera",
+                    Slug = "camera",
+                    Description = "All kinds of cameras",
+                    ParentId = (int?)null,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 6,
-                    name = "Computer & Office",
-                    slug = "computer-office",
-                    description = "PC and office related products",
-                    parentId = (int?)null
+                    Id = 6,
+                    Name = "Computer & Office",
+                    Slug = "computer-office",
+                    Description = "PC and office related products",
+                    ParentId = (int?)null,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 7,
-                    name = "Gaming",
-                    slug = "gaming",
-                    description = "Gaming products and accessories",
-                    parentId = (int?)null
+                    Id = 7,
+                    Name = "Gaming",
+                    Slug = "gaming",
+                    Description = "Gaming products and accessories",
+                    ParentId = (int?)null,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
 
                 // ===== Subcategories of Computer & Office =====
                 new
                 {
-                    id = 8,
-                    name = "Monitor",
-                    slug = "monitor",
-                    description = "All types of computer monitors",
-                    parentId = 6
+                    Id = 8,
+                    Name = "Monitor",
+                    Slug = "monitor",
+                    Description = "All types of computer monitors",
+                    ParentId = 6,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 9,
-                    name = "CPU",
-                    slug = "cpu",
-                    description = "Processors and chips for computers",
-                    parentId = 6
+                    Id = 9,
+                    Name = "CPU",
+                    Slug = "cpu",
+                    Description = "Processors and chips for computers",
+                    ParentId = 6,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 10,
-                    name = "GPU",
-                    slug = "gpu",
-                    description = "Graphics cards for PCs and laptops",
-                    parentId = 6
+                    Id = 10,
+                    Name = "GPU",
+                    Slug = "gpu",
+                    Description = "Graphics cards for PCs and laptops",
+                    ParentId = 6,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 11,
-                    name = "RAM",
-                    slug = "ram",
-                    description = "Memory modules for PCs and laptops",
-                    parentId = 6
+                    Id = 11,
+                    Name = "RAM",
+                    Slug = "ram",
+                    Description = "Memory modules for PCs and laptops",
+                    ParentId = 6,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 12,
-                    name = "Storage (SSD / HDD)",
-                    slug = "storage",
-                    description = "Storage devices: SSD, HDD, memory cards",
-                    parentId = 6
+                    Id = 12,
+                    Name = "Storage (SSD / HDD)",
+                    Slug = "storage",
+                    Description = "Storage devices: SSD, HDD, memory cards",
+                    ParentId = 6,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
 
                 // ===== Accessories (Global, dùng chung nhiều loại thiết bị) =====
                 new
                 {
-                    id = 13,
-                    name = "Keyboard",
-                    slug = "keyboard",
-                    description = "Keyboards for PC, Laptop, and Tablet",
-                    parentId = 4 // thuộc nhóm Accessory
+                    Id = 13,
+                    Name = "Keyboard",
+                    Slug = "keyboard",
+                    Description = "Keyboards for PC, Laptop, and Tablet",
+                    ParentId = 4, // thuộc nhóm Accessory
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 14,
-                    name = "Mouse",
-                    slug = "mouse",
-                    description = "Computer and laptop mice (wired, wireless, gaming)",
-                    parentId = 4 // thuộc nhóm Accessory
+                    Id = 14,
+                    Name = "Mouse",
+                    Slug = "mouse",
+                    Description = "Computer and laptop mice (wired, wireless, gaming)",
+                    ParentId = 4, // thuộc nhóm Accessory
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 15,
-                    name = "Headphone / Headset",
-                    slug = "headphone",
-                    description = "Audio accessories compatible with PC, Laptop, and Smartphone",
-                    parentId = 4 // thuộc nhóm Accessory
+                    Id = 15,
+                    Name = "Headphone / Headset",
+                    Slug = "headphone",
+                    Description = "Audio accessories compatible with PC, Laptop, and Smartphone",
+                    ParentId = 4, // thuộc nhóm Accessory
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 16,
-                    name = "Charger & Cable",
-                    slug = "charger-cable",
-                    description = "Chargers, adapters, and data cables for all devices",
-                    parentId = 4
+                    Id = 16,
+                    Name = "Charger & Cable",
+                    Slug = "charger-cable",
+                    Description = "Chargers, adapters, and data cables for all devices",
+                    ParentId = 4,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 },
                 new
                 {
-                    id = 17,
-                    name = "Case & Cover",
-                    slug = "case-cover",
-                    description = "Protective cases for phones, tablets, and laptops",
-                    parentId = 4
+                    Id = 17,
+                    Name = "Case & Cover",
+                    Slug = "case-cover",
+                    Description = "Protective cases for phones, tablets, and laptops",
+                    ParentId = 4,
+                    CreatedAt = SeedTime,
+                    UpdatedAt = SeedTime
                 }
             );
         }

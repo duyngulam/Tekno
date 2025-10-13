@@ -8,13 +8,13 @@ namespace Tekno.Domain.Catalog
 {
     public class ProductVariantAttribute
     {
-        public int VariantId { get; private set; }
-        public int AttributeId { get; private set; }
-        public int ValueId { get; private set; }
+        public int VariantId { get; set; }
+        public int AttributeId { get;  set; }
+        public int ValueId { get;  set; }
 
-        public ProductVariant Variant { get; private set; } = null!;
-        public ProductAttribute Attribute { get; private set; } = null!;
-        public AttributeValue Value { get; private set; } = null!;
+        public ProductVariant Variant { get;  set; } = null!;
+        public ProductAttribute Attribute { get;  set; } = null!;
+        public AttributeValue Value { get;  set; } = null!;
         public ProductVariantAttribute() { }
         public ProductVariantAttribute(int variantId, int attributeId, int valueId)
         {

@@ -3,10 +3,12 @@ using Tekno.Application.Auth.Services;
 using Tekno.Api.Models.Auth;
 using Tekno.Application.Auth.DTOs;
 using Microsoft.AspNetCore.Authorization;
+using Tekno.Api.Common.Responses;
+
 namespace Tekno.Api.Controllers
 {
     [ApiController]
-    [Route("api/auth")]
+    [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
@@ -17,39 +19,25 @@ namespace Tekno.Api.Controllers
             _authService = authService;
             _logger = logger;
         }
-        //---------------Login----------------
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            _logger.LogInformation("Login attempt for user {Email}", request.Email);
-
-            var userDto = await _authService.LoginAsync(request.Email, request.Password);
-
-            if (userDto == null)
-            {
-                _logger.LogWarning("Failed login attempt for user {Email}", request.Email);
-                return Unauthorized(new { message = "Invalid Email or password" });
-            }
-
-            _logger.LogInformation("User {Username} logged in successfully", request.Email);
-            return Ok(userDto);
+            var dto = await _authService.LoginAsync(request.Email, request.Password);
+            if (dto == null)
+                return Unauthorized(ApiResponse<string>.Fail("Invalid email or password"));
+            var result = AuthResponse.FromAppDto(dto);
+            return Ok(ApiResponse<AuthResponse>.Ok(result, "Login successful"));
         }
-        //---------------Register----------------
-        
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            _logger.LogInformation("Registration attempt for user {Username}", request.Email);
-            var userDto = await _authService.RegisterAsync(request.Email,request.Password,request.Role);
-            if (userDto == null)
-            {
-                _logger.LogWarning("Failed registration attempt for user {Username}", request.Email);
-                return BadRequest(new { message = "Username already exists" });
-            }
-            _logger.LogInformation("User {Username} registered successfully", request.Email);
-            return Ok(userDto);
+            var dto = await _authService.RegisterAsync(request.Email, request.Password, request.Role);
+            if (dto == null)
+                return BadRequest(ApiResponse<string>.Fail("User already exists"));
+            var result = AuthResponse.FromAppDto(dto);
+            return Ok(ApiResponse<AuthResponse>.Ok(result, "Register successful"));
         }
-
     }
-
 }

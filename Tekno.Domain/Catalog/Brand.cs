@@ -14,6 +14,7 @@ namespace Tekno.Domain.Catalog
         public string? Country { get; private set; }
         public string? LogoUrl { get; private set; }
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
 
         public ICollection<Product> Products { get; private set; } = new List<Product>();
 
