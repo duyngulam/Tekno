@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Tekno.Application.Auth.DTOs;
 namespace Tekno.Api.Models.Auth
 {
     public class AuthResponse
@@ -13,5 +14,16 @@ namespace Tekno.Api.Models.Auth
 
         public string Token { get; set; } = string.Empty;
         public DateTime ExpiresAt { get; set; }
+        public static AuthResponse FromAppDto(UserDto dto)
+        {
+            return new AuthResponse
+            {
+                Id = dto.Id,
+                Email = dto.Email,
+                Role = dto.Role,
+                Token = dto.Token,
+                ExpiresAt = dto.ExpiresAt
+            };
+        }
     }
 }

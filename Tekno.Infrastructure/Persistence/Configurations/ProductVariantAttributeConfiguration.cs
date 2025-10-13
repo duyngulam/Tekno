@@ -26,7 +26,7 @@ namespace Tekno.Infrastructure.Persistence.Configurations
             // ===================== SEED DỮ LIỆU CHO PRODUCT VARIANT ATTRIBUTES =====================
             builder.HasData(
                 // ====== Laptop: Dell XPS 13 ======
-                new { VariantId = 1, AttributeId = 1, ValueId = 1 },   // Color = Silver
+                new { VariantId = 1, AttributeId = 1, ValueId = 1 },  // Color = Silver
                 new { VariantId = 1, AttributeId = 12, ValueId = 21 }, // RAM = 8GB
                 new { VariantId = 1, AttributeId = 13, ValueId = 31 }, // Storage = 512GB
 

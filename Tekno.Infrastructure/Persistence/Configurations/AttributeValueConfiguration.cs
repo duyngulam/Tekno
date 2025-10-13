@@ -4,7 +4,7 @@ using Tekno.Domain.Catalog;
 
 namespace Tekno.Infrastructure.Persistence.Configurations
 {
-    public class ProductAttributeValueConfiguration : IEntityTypeConfiguration<AttributeValue>
+    public class AttributeValueConfiguration : IEntityTypeConfiguration<AttributeValue>
     {
         public void Configure(EntityTypeBuilder<AttributeValue> builder)
         {
@@ -77,6 +77,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 new { Id = 83, AttributeId = 81, Value = "Bluetooth" },
                 new { Id = 84, AttributeId = 91, Value = "3.5mm" },
                 new { Id = 85, AttributeId = 91, Value = "USB-C" },
+                //===== Charger ====
+                new { Id = 90, AttributeId = 100, Value = "USB-C" },
+                new { Id = 91, AttributeId = 101, Value ="65" },
 
                 // ===== Material (Case & Cover) =====
                 new { Id = 100, AttributeId = 110, Value = "Silicone" },

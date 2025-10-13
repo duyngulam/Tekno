@@ -10,7 +10,7 @@ namespace Tekno.Infrastructure.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
-            builder.ToTable("User");
+            builder.ToTable("user");
 
             builder.HasKey(u => u.Id);
 
