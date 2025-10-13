@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Tekno.Application.Auth.Services;
-using Tekno.Api.Auth.Models;
-
+using Tekno.Api.Models.Auth;
+using Tekno.Application.Auth.DTOs;
+using Microsoft.AspNetCore.Authorization;
 namespace Tekno.Api.Controllers
 {
     [ApiController]
@@ -16,23 +17,39 @@ namespace Tekno.Api.Controllers
             _authService = authService;
             _logger = logger;
         }
-
+        //---------------Login----------------
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            _logger.LogInformation("Login attempt for user {Username}", request.Username);
+            _logger.LogInformation("Login attempt for user {Email}", request.Email);
 
-            var userDto = await _authService.LoginAsync(request.Username, request.Password);
+            var userDto = await _authService.LoginAsync(request.Email, request.Password);
 
             if (userDto == null)
             {
-                _logger.LogWarning("Failed login attempt for user {Username}", request.Username);
-                return Unauthorized(new { message = "Invalid username or password" });
+                _logger.LogWarning("Failed login attempt for user {Email}", request.Email);
+                return Unauthorized(new { message = "Invalid Email or password" });
             }
 
-            _logger.LogInformation("User {Username} logged in successfully", request.Username);
+            _logger.LogInformation("User {Username} logged in successfully", request.Email);
             return Ok(userDto);
         }
+        //---------------Register----------------
+        
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        {
+            _logger.LogInformation("Registration attempt for user {Username}", request.Email);
+            var userDto = await _authService.RegisterAsync(request.Email,request.Password,request.Role);
+            if (userDto == null)
+            {
+                _logger.LogWarning("Failed registration attempt for user {Username}", request.Email);
+                return BadRequest(new { message = "Username already exists" });
+            }
+            _logger.LogInformation("User {Username} registered successfully", request.Email);
+            return Ok(userDto);
+        }
+
     }
 
 }

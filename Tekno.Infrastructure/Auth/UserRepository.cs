@@ -1,9 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Tekno.Application.Auth.Interfaces;
 using Tekno.Domain.Auth;
-using Tekno.Infrastructure.Persistence;
 
-namespace Tekno.Infrastructure.Auth
+namespace Tekno.Infrastructure.Persistence
 {
     public class UserRepository : IUserRepository
     {
@@ -14,23 +13,25 @@ namespace Tekno.Infrastructure.Auth
             _context = context;
         }
 
-        public async Task<User?> GetByUsernameAsync(string username)
+        public async Task<User?> GetByEmailAsync(string email)
         {
-            return await _context.Users
-                .Include(u => u.Role)  
-                .FirstOrDefaultAsync(u => u.Username == username);
+            return await _context.Users.Include(u => u.Role)
+                                       .FirstOrDefaultAsync(u => u.Email == email);
         }
 
+        public async Task<Role?> GetRoleByNameAsync(string roleName)
+        {
+            return await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+        }
 
         public async Task AddAsync(User user)
         {
-            await _context.Users.AddAsync(user);
+            _context.Users.Add(user);
             await _context.SaveChangesAsync();
         }
-
-        public async Task<bool> ExistsAsync(string username)
+        public async Task<bool> ExistsAsync(string email)
         {
-            return await _context.Users.AnyAsync(u => u.Username == username);
+            return await _context.Users.AnyAsync(u => u.Email == email);
         }
     }
 }

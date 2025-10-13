@@ -3,17 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-namespace Tekno.Application.Auth.DTOs
+namespace Tekno.Api.Models.Auth
 {
-    public class UserDto
+    public class AuthResponse
     {
         public int Id { get; set; }
         public string Email { get; set; } = string.Empty;
-        public string Role { get; set; } = "Customer";
+        public string Role { get; set; } = string.Empty;
+
         public string Token { get; set; } = string.Empty;
         public DateTime ExpiresAt { get; set; }
     }
 }
-
-

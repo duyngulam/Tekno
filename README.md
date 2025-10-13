@@ -5,9 +5,9 @@ and open
 http://localhost:5000/swagger
 on browser to test API with swagger
 testing account:
-admin
+admin@tekno.com
 admin123
-customer
+customer@tekno.com
 customer123
 if you want to use VScode after builder docker Ctrl C to stop API + db
 now run
