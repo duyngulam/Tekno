@@ -1,0 +1,68 @@
+import Image from "next/image";
+import { Product } from "@/type/product";
+
+interface ProductCardProps {
+  product: Product;
+}
+
+export default function ProductCard({ product }: ProductCardProps) {
+  return (
+    <div className="relative bg-white rounded-2xl shadow-md hover:shadow-lg transition p-4 flex flex-col w-60 h-fit">
+      {/* --- Badge giảm giá --- */}
+      <div className="absolute z-1000 top-3 bg-blue-100 text-blue-600 text-sm font-semibold px-2 py-1 rounded-r-lg">
+        -12%
+      </div>
+
+      {/* --- Ảnh sản phẩm --- */}
+      <div className="relative w-full h-44 mt-5 overflow-hidden rounded-lg flex items-center justify-center">
+        <img
+          src={product.primaryImageUrl}
+          alt={product.name}
+          width={256}
+          height={190}
+          className="object-cover w-full h-full"
+        />
+
+        {/* --- Màu sắc bên phải --- */}
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2">
+          <div className="w-4 h-4 bg-black rounded-full border border-gray-300 cursor-pointer"></div>
+          <div className="w-4 h-4 bg-white rounded-full border border-gray-300 cursor-pointer"></div>
+          <div className="w-4 h-4 bg-gray-400 rounded-full border border-gray-300 cursor-pointer"></div>
+          <button className="text-lg font-semibold text-gray-500">+</button>
+        </div>
+      </div>
+
+      {/* --- Đường ngăn cách --- */}
+      <hr className="w-full border-gray-200 my-3" />
+
+      {/* --- Tên sản phẩm --- */}
+      <p className="text-gray-900 text-sm font-medium truncate w-full">
+        {product.name}
+      </p>
+
+      {/* --- Giá và Rating --- */}
+      <div className="flex items-center justify-between w-full mt-2">
+        <div className="flex flex-col">
+          <p className="text-gray-400 text-sm line-through">
+            ${(product.basePrice + 111.87).toFixed(2)}
+          </p>
+          <p className="text-lg font-semibold text-black">
+            ${product.basePrice.toFixed(2)}
+          </p>
+        </div>
+
+        <div className="flex items-center text-yellow-500">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+            className="w-5 h-5"
+          >
+            <path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.871L19.8 24 12 19.897 4.2 24l1.864-8.823L0 9.306l8.332-1.151z" />
+          </svg>
+          <span className="ml-1 font-medium text-base">4.9</span>
+        </div>
+      </div>
+    </div>
+  );
+}

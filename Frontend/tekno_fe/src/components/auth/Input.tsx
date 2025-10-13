@@ -3,6 +3,7 @@ import clsx from "clsx";
 
 interface InputProps {
   label: string;
+  name: string;
   placeholder?: string;
   type?: string;
   leftIcon?: React.ReactNode;
@@ -16,6 +17,7 @@ interface InputProps {
 
 export default function Input({
   label,
+  name,
   placeholder,
   type = "text",
   leftIcon,

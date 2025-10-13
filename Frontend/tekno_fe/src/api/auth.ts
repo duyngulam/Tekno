@@ -40,3 +40,11 @@ export async function loginApi(data: { email: string; password: string }) {
   return res.json();
 }
 
+export async function getCurrentUserApi() {
+  const res = await fetch(`${API_BASE_URL}/auth/me`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Không thể lấy thông tin người dùng");
+  return await res.json();
+}
