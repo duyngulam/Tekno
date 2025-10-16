@@ -75,6 +75,7 @@ export default function Input({
 
         {/* Input field */}
         <input
+          name={name}
           type={type}
           placeholder={placeholder}
           disabled={disabled}

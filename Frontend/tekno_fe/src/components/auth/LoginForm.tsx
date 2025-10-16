@@ -3,14 +3,16 @@
 import React, { useState } from "react";
 import Input from "./Input";
 import { useRouter } from "next/navigation";
-import { loginApi } from "@/api/auth";
+import { useAuthContext } from "@/context/AuthContext"; // ✅ thêm dòng này
 
 type LoginFormProps = {
-  onClose?: () => void; // ✅ thêm prop này
+  onClose?: () => void;
 };
 
 export default function LoginForm({ onClose }: LoginFormProps) {
   const router = useRouter();
+  const { login } = useAuthContext(); // ✅ gọi login từ context
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,16 +26,12 @@ export default function LoginForm({ onClose }: LoginFormProps) {
     const password = formData.get("password") as string;
 
     try {
-      const data = await loginApi({ email, password });
-
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
-
+      await login(email, password); // ✅ dùng context login
       alert("Đăng nhập thành công!");
-      router.push("/dashboard");
+      onClose?.();
+      router.push("/");
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Đăng nhập thất bại");
     } finally {
       setLoading(false);
     }

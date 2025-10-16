@@ -24,6 +24,7 @@ export async function signupApi(data: { username: string; email: string; passwor
 }
 
 export async function loginApi(data: { email: string; password: string }) {
+  console.log(data)
   const res = await fetch("http://localhost:5000/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -40,11 +41,11 @@ export async function loginApi(data: { email: string; password: string }) {
   return res.json();
 }
 
-export async function getCurrentUserApi() {
-  const res = await fetch(`${API_BASE_URL}/auth/me`, {
-    method: "GET",
-    credentials: "include",
-  });
-  if (!res.ok) throw new Error("Không thể lấy thông tin người dùng");
-  return await res.json();
-}
+// export async function getCurrentUserApi() {
+//   const res = await fetch(`${API_BASE_URL}/auth/me`, {
+//     method: "GET",
+//     credentials: "include",
+//   });
+//   if (!res.ok) throw new Error("Không thể lấy thông tin người dùng");
+//   return await res.json();
+// }

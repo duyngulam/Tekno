@@ -20,7 +20,7 @@ export default function ClientLayout({
         <AuthProvider>
           <Header />
           <main className="flex-1 mx-auto max-w-screen">
-            <div className="py-3 md: py-3">{children}</div>
+            <div className="py-3 md:py-3">{children}</div>
           </main>
           <Footer />
         </AuthProvider>

@@ -1,13 +1,13 @@
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
-import { loginApi, getCurrentUserApi } from "@/api/auth";
-//import { loginApi, logoutApi, getCurrentUserApi } from "@/api/auth";
+import { loginApi } from "@/api/auth";
 
 export interface User {
-  id: string;
-  username: string;
+  id: number;
   email: string;
-  role: "user" | "admin" | string;
+  role: string;
+  token: string;
+  expiresAt?: string;
 }
 
 interface AuthContextType {
@@ -15,8 +15,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   hasRole: (role: string) => boolean;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,48 +24,49 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
-  // 🧭 Lấy user khi mở lại tab hoặc reload
   useEffect(() => {
-    (async () => {
-      try {
-        const saved = localStorage.getItem("user");
-        if (saved) setUser(JSON.parse(saved));
-        else {
-          const data = await getCurrentUserApi();
-          setUser(data.user);
-          localStorage.setItem("user", JSON.stringify(data.user));
-        }
-      } catch {
-        setUser(null);
-      }
-    })();
+    try {
+      const saved = localStorage.getItem("user");
+      if (saved) setUser(JSON.parse(saved));
+    } catch {
+      setUser(null);
+    }
   }, []);
 
-  // 🧩 Đăng nhập
   const login = async (email: string, password: string) => {
-    const data = await loginApi({ email, password });
-    setUser(data.user);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    const res = await loginApi({ email, password });
+    const userData = res.data;
+
+    if (userData) {
+      const userInfo: User = {
+        id: userData.id,
+        email: userData.email,
+        role: userData.role,
+        token: userData.token,
+        expiresAt: userData.expiresAt,
+      };
+
+      setUser(userInfo);
+      localStorage.setItem("user", JSON.stringify(userInfo));
+      localStorage.setItem("token", userData.token);
+    }
   };
 
-  //   🧩 Đăng xuất
-  const logout = async () => {
-    //     try {
-    //       await logoutApi();
-    //     } finally {
-    //       setUser(null);
-    //       localStorage.removeItem("user");
-    //     }
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
   };
 
-  const hasRole = (role: string) => user?.role === role;
+  const hasRole = (role: string) =>
+    user?.role?.toLowerCase() === role.toLowerCase();
 
   return (
     <AuthContext.Provider
       value={{
         user,
         isAuthenticated: !!user,
-        isAdmin: user?.role === "admin",
+        isAdmin: user?.role?.toLowerCase() === "admin",
         hasRole,
         login,
         logout,
