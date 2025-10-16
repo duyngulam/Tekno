@@ -1,4 +1,49 @@
 @import "tailwindcss";
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "mytheme";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  /* Base (Neutral) */
+  --color-base-100: #FFFFFF;
+  /* trắng */
+  --color-base-200: #DCDCDC;
+  /* xám nhạt */
+  --color-base-300: #000000;
+  /* đen */
+  --color-base-content: #000000;
+  /* chữ mặc định */
+
+  /* Main colors */
+  --color-primary: #FFD500;
+  --color-primary-content: #000000;
+  /* text trên nền vàng */
+
+  --color-secondary: #002D9B;
+  --color-secondary-content: #FFFFFF;
+  /* text trên nền xanh đậm */
+
+  /* Neutral */
+  --color-neutral: #DCDCDC;
+  --color-neutral-content: #000000;
+
+  /* Status colors */
+  --color-error: #E53935;
+  --color-error-content: #FFFFFF;
+
+  --color-warning: #FBC02D;
+  --color-warning-content: #000000;
+
+  --color-success: #388E3C;
+  --color-success-content: #FFFFFF;
+
+  --color-info: #0288D1;
+  --color-info-content: #FFFFFF;
+}
+
 
 /* ============================= */
 /* THEME TOKENS (COLOR + TYPO)   */
@@ -75,6 +120,7 @@
   --font-weight-overline-lg: 300;
   --text-overline-sm: 12px;
   --font-weight-overline-sm: 500;
+  
 }
 
 /* ============================= */
