@@ -8,6 +8,7 @@ namespace Tekno.Domain.Auth
     public class User
     {
         public int Id { get; private set; }
+        public string Fullname { get; private set; } = string.Empty;
         public string Email { get; private set; }
         public string PasswordHash { get; private set; }
         public int RoleId { get; private set; }

@@ -12,8 +12,8 @@ using Tekno.Infrastructure.Persistence;
 namespace Tekno.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251012185226_DB4")]
-    partial class DB4
+    [Migration("20251017024547_DB")]
+    partial class DB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -68,6 +68,11 @@ namespace Tekno.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<string>("Fullname")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
@@ -86,6 +91,7 @@ namespace Tekno.Infrastructure.Migrations
                         {
                             Id = 1,
                             Email = "admin@tekno.com",
+                            Fullname = "admin",
                             PasswordHash = "$2a$11$W/ZYaZwxFhbSWpJNtPMAfetjQIsqJ1rYdiP2GQoF1.Hr7aqFmtaya",
                             RoleId = 1
                         },
@@ -93,6 +99,7 @@ namespace Tekno.Infrastructure.Migrations
                         {
                             Id = 2,
                             Email = "customer@tekno.com",
+                            Fullname = "customer",
                             PasswordHash = "$2a$11$ZKxnFd0g1qcrtOgFJrbYiOOnKrtsA6flk4msMC0Uf/qcmqYzoUlSq",
                             RoleId = 2
                         });
@@ -595,6 +602,13 @@ namespace Tekno.Infrastructure.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
+
+                    b.Property<string>("IconPath")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasDefaultValue("https://res.cloudinary.com/dwa3wh9yb/image/upload/v1760540871/tekno/category/icon/f0p9oqwzazwy19qvhclr.png");
 
                     b.Property<string>("Name")
                         .IsRequired()

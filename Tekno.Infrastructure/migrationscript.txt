@@ -1,0 +1,3 @@
+﻿dotnet ef migrations add DB --startup-project ..\Tekno.Api
+dotnet ef database drop --startup-project ..\Tekno.Api -f
+dotnet ef database update --startup-project ..\Tekno.Api

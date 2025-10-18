@@ -22,7 +22,7 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 # Chạy HTTP để tránh vấn đề certificate trong Docker
-ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_URLS=http://+:${PORT}
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 
 EXPOSE 8080

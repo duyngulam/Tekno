@@ -1,4 +1,5 @@
-﻿using Tekno.Application.Auth.DTOs;
+﻿using AutoMapper;
+using Tekno.Application.Auth.DTOs;
 using Tekno.Application.Auth.Interfaces;
 using Tekno.Application.Common.Interfaces;
 using Tekno.Domain.Auth;
@@ -11,18 +12,21 @@ namespace Tekno.Application.Auth.Services
         private readonly IPasswordHasher _passwordHasher;
         private readonly IJwtProvider _jwtProvider;
         private readonly IAppLogger<AuthService> _logger;
+        private readonly IMapper _mapper;
 
 
         public AuthService(
             IUserRepository userRepo,
             IPasswordHasher passwordHasher,
             IJwtProvider jwtProvider,
-            IAppLogger<AuthService> logger)
+            IAppLogger<AuthService> logger,
+            IMapper mapper)
         {
             _userRepo = userRepo;
             _passwordHasher = passwordHasher;
             _jwtProvider = jwtProvider;
             _logger = logger;
+            _mapper = mapper;
         }
 
         // Login
@@ -32,20 +36,16 @@ namespace Tekno.Application.Auth.Services
 
             if (user == null || !_passwordHasher.Verify(password, user.PasswordHash))
             {
-                _logger.LogWarning("Login failed for {email}", email);
                 return null;
             }
 
             var (token, expiresAt) = _jwtProvider.GenerateToken(user);
 
-            return new UserDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                Role = user.Role.Name,
-                Token = token,
-                ExpiresAt = expiresAt
-            };
+            var dto = _mapper.Map<UserDto>(user);
+            dto.Token = token;
+            dto.ExpiresAt = expiresAt;
+
+            return dto;
         }
 
         // Register
@@ -71,14 +71,11 @@ namespace Tekno.Application.Auth.Services
 
             _logger.LogInformation("New user registered: {Username}", email);
 
-            return new UserDto
-            {
-                Id = newUser.Id,
-                Email = newUser.Email,
-                Role = newUser.Role.Name,
-                Token = token,
-                ExpiresAt = expiresAt
-            };
+            var dto = _mapper.Map<UserDto>(newUser);
+            dto.Token = token;
+            dto.ExpiresAt = expiresAt;
+
+            return dto;
         }
     }
 }
