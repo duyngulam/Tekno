@@ -1,13 +1,21 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
 using System.Text;
+using Tekno.Application.Auth.DTOs;
 using Tekno.Application.Auth.Interfaces;
 using Tekno.Application.Auth.Services;
+using Tekno.Application.Catalog.Services;
+using Tekno.Application.Cloudinary.Services;
 using Tekno.Application.Common.Interfaces;
 using Tekno.Infrastructure.Auth;
 using Tekno.Infrastructure.Logging;
 using Tekno.Infrastructure.Persistence;
+using Tekno.Infrastructure.Services;
+using Tekno.Application.Catalog.Interface;
+using Tekno.Infrastructure.Catalog;
 
 namespace Tekno.Api
 {
@@ -45,8 +53,16 @@ namespace Tekno.Api
             {
                 // register validation filter globally
                 options.Filters.Add<ValidationFilterAttribute>();
+            })
+            .ConfigureApiBehaviorOptions(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true; // cho phép filter hoạt động
             });
-
+            builder.Services.AddAutoMapper(cfg =>
+            {
+                cfg.AddMaps(Assembly.GetExecutingAssembly()); // quét profile trong API project
+                cfg.AddMaps(typeof(AuthProfile).Assembly); // quét profile trong Application project
+            });
             // =======================================================
             // 3. AUTHENTICATION & AUTHORIZATION
             // =======================================================
@@ -80,7 +96,10 @@ namespace Tekno.Api
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
             builder.Services.AddScoped<IJwtProvider, JwtProvider>();
-
+            builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+            builder.Services.AddScoped<MediaService>();
+            builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+            builder.Services.AddScoped<CategoryService>();
             // =======================================================
             // 5. DATABASE
             // =======================================================
@@ -104,7 +123,7 @@ namespace Tekno.Api
                 var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                var retries = 10;
+                var retries = 5;
                 for (var i = 0; i < retries; i++)
                 {
                     try

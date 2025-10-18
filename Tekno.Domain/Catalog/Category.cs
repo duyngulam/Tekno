@@ -11,6 +11,7 @@ namespace Tekno.Domain.Catalog
         public int Id { get; private set; }
         public string Name { get; private set; } = string.Empty;
         public string Slug { get; private set; } = string.Empty;
+        public string IconPath { get; private set; } = string.Empty;
         public int? ParentId { get; private set; }
         public string? Description { get; private set; }
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;

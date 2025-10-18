@@ -13,7 +13,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
             builder.ToTable("user");
 
             builder.HasKey(u => u.Id);
-
+            builder.Property(u => u.Fullname)
+                .IsRequired()
+                .HasMaxLength(100);
             builder.Property(u => u.Email)
                 .IsRequired()
                 .HasMaxLength(255);
@@ -28,7 +30,7 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                  new
                  {
                      Id = 1,
-                     Username = "admin",
+                     Fullname = "admin",
                      Email = "admin@tekno.com",
                      PasswordHash = "$2a$11$W/ZYaZwxFhbSWpJNtPMAfetjQIsqJ1rYdiP2GQoF1.Hr7aqFmtaya",
                      RoleId = 1
@@ -36,7 +38,7 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                  new
                  {
                      Id = 2,
-                     Username = "customer",
+                     Fullname = "customer",
                      Email = "customer@tekno.com",
                      PasswordHash = "$2a$11$ZKxnFd0g1qcrtOgFJrbYiOOnKrtsA6flk4msMC0Uf/qcmqYzoUlSq",
                      RoleId = 2

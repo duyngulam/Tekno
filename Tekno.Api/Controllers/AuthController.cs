@@ -9,6 +9,7 @@ namespace Tekno.Api.Controllers
 {
     [ApiController]
     [Route("api/auth")]
+    [ValidationFilter]
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
@@ -24,20 +25,22 @@ namespace Tekno.Api.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var dto = await _authService.LoginAsync(request.Email, request.Password);
+
             if (dto == null)
                 return Unauthorized(ApiResponse<string>.Fail("Invalid email or password"));
-            var result = AuthResponse.FromAppDto(dto);
-            return Ok(ApiResponse<AuthResponse>.Ok(result, "Login successful"));
+
+            return Ok(ApiResponse<UserDto>.Ok(dto, "Login successful"));
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             var dto = await _authService.RegisterAsync(request.Email, request.Password, request.Role);
+
             if (dto == null)
                 return BadRequest(ApiResponse<string>.Fail("User already exists"));
-            var result = AuthResponse.FromAppDto(dto);
-            return Ok(ApiResponse<AuthResponse>.Ok(result, "Register successful"));
+
+            return Ok(ApiResponse<UserDto>.Ok(dto, "Register successful"));
         }
     }
 }

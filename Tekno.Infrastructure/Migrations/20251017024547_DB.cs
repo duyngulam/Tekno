@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Tekno.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class DB4 : Migration
+    public partial class DB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -40,6 +40,7 @@ namespace Tekno.Infrastructure.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Slug = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
+                    IconPath = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false, defaultValue: "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1760540871/tekno/category/icon/f0p9oqwzazwy19qvhclr.png"),
                     ParentId = table.Column<int>(type: "integer", nullable: true),
                     Description = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
@@ -132,6 +133,7 @@ namespace Tekno.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Fullname = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Email = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     PasswordHash = table.Column<string>(type: "text", nullable: false),
                     RoleId = table.Column<int>(type: "integer", nullable: false)
@@ -403,11 +405,11 @@ namespace Tekno.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "user",
-                columns: new[] { "Id", "Email", "PasswordHash", "RoleId" },
+                columns: new[] { "Id", "Email", "Fullname", "PasswordHash", "RoleId" },
                 values: new object[,]
                 {
-                    { 1, "admin@tekno.com", "$2a$11$W/ZYaZwxFhbSWpJNtPMAfetjQIsqJ1rYdiP2GQoF1.Hr7aqFmtaya", 1 },
-                    { 2, "customer@tekno.com", "$2a$11$ZKxnFd0g1qcrtOgFJrbYiOOnKrtsA6flk4msMC0Uf/qcmqYzoUlSq", 2 }
+                    { 1, "admin@tekno.com", "admin", "$2a$11$W/ZYaZwxFhbSWpJNtPMAfetjQIsqJ1rYdiP2GQoF1.Hr7aqFmtaya", 1 },
+                    { 2, "customer@tekno.com", "customer", "$2a$11$ZKxnFd0g1qcrtOgFJrbYiOOnKrtsA6flk4msMC0Uf/qcmqYzoUlSq", 2 }
                 });
 
             migrationBuilder.InsertData(

@@ -20,7 +20,8 @@ namespace Tekno.Infrastructure.Persistence.Configurations
             builder.Property(c => c.Slug)
                 .IsRequired()
                 .HasMaxLength(120);
-
+            builder.Property(c => c.IconPath)
+                .HasMaxLength(255).HasDefaultValue("https://res.cloudinary.com/dwa3wh9yb/image/upload/v1760540871/tekno/category/icon/f0p9oqwzazwy19qvhclr.png");
             builder.HasIndex(c => c.Slug).IsUnique();
 
             builder.Property(c => c.Description)
