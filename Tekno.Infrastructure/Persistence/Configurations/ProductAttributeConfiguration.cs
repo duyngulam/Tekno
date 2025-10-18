@@ -6,6 +6,7 @@ namespace Tekno.Infrastructure.Persistence.Configurations
 {
     public class ProductAttributeConfiguration : IEntityTypeConfiguration<ProductAttribute>
     {
+        private static readonly DateTime SeedTime = new DateTime(2025, 10, 12, 9, 34, 0, DateTimeKind.Utc);
         public void Configure(EntityTypeBuilder<ProductAttribute> builder)
         {
             builder.ToTable("product_attribute");
@@ -40,69 +41,69 @@ namespace Tekno.Infrastructure.Persistence.Configurations
             // ====== Seed data cho thuộc tính sản phẩm ======
             builder.HasData(
                 // ===== Global Attributes =====
-                new { id = 1, name = "Color", inputType = "select", isGlobal = true },
-                new { id = 2, name = "Warranty Period", inputType = "number", isGlobal = true },
+                new { Id = 1, Name = "Color", InputType = "select", IsGlobal = true, CreatedAt = SeedTime },
+                new { Id = 2, Name = "Warranty Period", InputType = "number", IsGlobal = true, CreatedAt = SeedTime },
 
-                // ===== Laptop =====
-                new { id = 10, name = "Screen Size", inputType = "select", categoryId = 1 },
-                new { id = 11, name = "CPU", inputType = "select", categoryId = 1 },
-                new { id = 12, name = "RAM", inputType = "select", categoryId = 1 },
-                new { id = 13, name = "Storage", inputType = "select", categoryId = 1 },
-                new { id = 14, name = "GPU", inputType = "select", categoryId = 1 },
+                // ===== Laptop (CategoryId = 1) =====
+                new { Id = 10, Name = "Screen Size", InputType = "select", CategoryId = 1, CreatedAt = SeedTime },
+                new { Id = 11, Name = "CPU", InputType = "select", CategoryId = 1, CreatedAt = SeedTime },
+                new { Id = 12, Name = "RAM", InputType = "select", CategoryId = 1, CreatedAt = SeedTime },
+                new { Id = 13, Name = "Storage", InputType = "select", CategoryId = 1, CreatedAt = SeedTime },
+                new { Id = 14, Name = "GPU", InputType = "select", CategoryId = 1, CreatedAt = SeedTime },
 
-                // ===== Smartphone =====
-                new { id = 20, name = "Screen Size", inputType = "select", categoryId = 2 },
-                new { id = 21, name = "Battery Capacity", inputType = "number", categoryId = 2 },
-                new { id = 22, name = "Camera Resolution", inputType = "select", categoryId = 2 },
-                new { id = 23, name = "RAM", inputType = "select", categoryId = 2 },
-                new { id = 24, name = "Storage", inputType = "select", categoryId = 2 },
+                // ===== Smartphone (CategoryId = 2) =====
+                new { Id = 20, Name = "Screen Size", InputType = "select", CategoryId = 2, CreatedAt = SeedTime },
+                new { Id = 21, Name = "Battery Capacity", InputType = "number", CategoryId = 2, CreatedAt = SeedTime },
+                new { Id = 22, Name = "Camera Resolution", InputType = "select", CategoryId = 2, CreatedAt = SeedTime },
+                new { Id = 23, Name = "RAM", InputType = "select", CategoryId = 2, CreatedAt = SeedTime },
+                new { Id = 24, Name = "Storage", InputType = "select", CategoryId = 2, CreatedAt = SeedTime },
 
-                // ===== Tablet =====
-                new { id = 30, name = "Screen Size", inputType = "select", categoryId = 3 },
-                new { id = 31, name = "Battery Capacity", inputType = "number", categoryId = 3 },
-                new { id = 32, name = "RAM", inputType = "select", categoryId = 3 },
-                new { id = 33, name = "Storage", inputType = "select", categoryId = 3 },
+                // ===== Tablet (CategoryId = 3) =====
+                new { Id = 30, Name = "Screen Size", InputType = "select", CategoryId = 3, CreatedAt = SeedTime },
+                new { Id = 31, Name = "Battery Capacity", InputType = "number", CategoryId = 3, CreatedAt = SeedTime },
+                new { Id = 32, Name = "RAM", InputType = "select", CategoryId = 3, CreatedAt = SeedTime },
+                new { Id = 33, Name = "Storage", InputType = "select", CategoryId = 3, CreatedAt = SeedTime },
 
                 // ===== Computer & Office (CategoryId = 6) =====
-                new { id = 40, name = "Processor Type", inputType = "select", categoryId = 6 },
-                new { id = 41, name = "RAM Type", inputType = "select", categoryId = 6 },
-                new { id = 42, name = "GPU Model", inputType = "select", categoryId = 6 },
+                new { Id = 40, Name = "Processor Type", InputType = "select", CategoryId = 6, CreatedAt = SeedTime },
+                new { Id = 41, Name = "RAM Type", InputType = "select", CategoryId = 6, CreatedAt = SeedTime },
+                new { Id = 42, Name = "GPU Model", InputType = "select", CategoryId = 6, CreatedAt = SeedTime },
 
-                // ===== Monitor =====
-                new { id = 50, name = "Screen Size", inputType = "select", categoryId = 8 },
-                new { id = 51, name = "Refresh Rate", inputType = "select", categoryId = 8 },
-                new { id = 52, name = "Resolution", inputType = "select", categoryId = 8 },
-                new { id = 53, name = "Panel Type", inputType = "select", categoryId = 8 },
+                // ===== Monitor (CategoryId = 8) =====
+                new { Id = 50, Name = "Screen Size", InputType = "select", CategoryId = 8, CreatedAt = SeedTime },
+                new { Id = 51, Name = "Refresh Rate", InputType = "select", CategoryId = 8, CreatedAt = SeedTime },
+                new { Id = 52, Name = "Resolution", InputType = "select", CategoryId = 8, CreatedAt = SeedTime },
+                new { Id = 53, Name = "Panel Type", InputType = "select", CategoryId = 8, CreatedAt = SeedTime },
 
                 // ===== Accessories (CategoryId = 4) =====
-                new { id = 60, name = "Compatibility", inputType = "select", categoryId = 4 },
-                new { id = 61, name = "Connection Type", inputType = "select", categoryId = 4 },
+                new { Id = 60, Name = "Compatibility", InputType = "select", CategoryId = 4, CreatedAt = SeedTime },
+                new { Id = 61, Name = "Connection Type", InputType = "select", CategoryId = 4, CreatedAt = SeedTime },
 
-                // ===== Keyboard =====
-                new { id = 70, name = "Switch Type", inputType = "select", categoryId = 13 },
-                new { id = 71, name = "Backlight", inputType = "select", categoryId = 13 },
-                new { id = 72, name = "Layout", inputType = "select", categoryId = 13 },
-                new { id = 73, name = "Connection Type", inputType = "select", categoryId = 13 },
+                // ===== Keyboard (CategoryId = 13) =====
+                new { Id = 70, Name = "Switch Type", InputType = "select", CategoryId = 13, CreatedAt = SeedTime },
+                new { Id = 71, Name = "Backlight", InputType = "select", CategoryId = 13, CreatedAt = SeedTime },
+                new { Id = 72, Name = "Layout", InputType = "select", CategoryId = 13, CreatedAt = SeedTime },
+                new { Id = 73, Name = "Connection Type", InputType = "select", CategoryId = 13, CreatedAt = SeedTime },
 
-                // ===== Mouse =====
-                new { id = 80, name = "DPI", inputType = "number", categoryId = 14 },
-                new { id = 81, name = "Connection Type", inputType = "select", categoryId = 14 },
-                new { id = 82, name = "RGB Lighting", inputType = "select", categoryId = 14 },
+                // ===== Mouse (CategoryId = 14) =====
+                new { Id = 80, Name = "DPI", InputType = "number", CategoryId = 14, CreatedAt = SeedTime },
+                new { Id = 81, Name = "Connection Type", InputType = "select", CategoryId = 14, CreatedAt = SeedTime },
+                new { Id = 82, Name = "RGB Lighting", InputType = "select", CategoryId = 14, CreatedAt = SeedTime },
 
-                // ===== Headphones =====
-                new { id = 90, name = "Type", inputType = "select", categoryId = 15 },
-                new { id = 91, name = "Connection Type", inputType = "select", categoryId = 15 },
-                new { id = 92, name = "Has Microphone", inputType = "select", categoryId = 15 },
+                // ===== Headphones (CategoryId = 15) =====
+                new { Id = 90, Name = "Type", InputType = "select", CategoryId = 15, CreatedAt = SeedTime },
+                new { Id = 91, Name = "Connection Type", InputType = "select", CategoryId = 15, CreatedAt = SeedTime },
+                new { Id = 92, Name = "Has Microphone", InputType = "select", CategoryId = 15, CreatedAt = SeedTime },
 
-                // ===== Charger & Cable =====
-                new { id = 100, name = "Connector Type", inputType = "select", categoryId = 16 },
-                new { id = 101, name = "Power Output (W)", inputType = "number", categoryId = 16 },
-                new { id = 102, name = "Cable Length (m)", inputType = "number", categoryId = 16 },
+                // ===== Charger & Cable (CategoryId = 16) =====
+                new { Id = 100, Name = "Connector Type", InputType = "select", CategoryId = 16, CreatedAt = SeedTime },
+                new { Id = 101, Name = "Power Output (W)", InputType = "number", CategoryId = 16, CreatedAt = SeedTime },
+                new { Id = 102, Name = "Cable Length (m)", InputType = "number", CategoryId = 16, CreatedAt = SeedTime },
 
-                // ===== Case & Cover =====
-                new { id = 110, name = "Material", inputType = "select", categoryId = 17 },
-                new { id = 111, name = "Device Type", inputType = "select", categoryId = 17 },
-                new { id = 112, name = "Shock Resistant", inputType = "select", categoryId = 17 }
+                // ===== Case & Cover (CategoryId = 17) =====
+                new { Id = 110, Name = "Material", InputType = "select", CategoryId = 17, CreatedAt = SeedTime },
+                new { Id = 111, Name = "Device Type", InputType = "select", CategoryId = 17, CreatedAt = SeedTime },
+                new { Id = 112, Name = "Shock Resistant", InputType = "select", CategoryId = 17 }
             );
         }
     }
