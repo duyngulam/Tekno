@@ -10,25 +10,22 @@ using Tekno.Infrastructure.Persistence;
 
 namespace Tekno.Infrastructure.Catalog
 {
-    public class CategoryRepository : ICategoryRepository
+    public class BrandRepository : IBrandRepository
     {
         private readonly AppDbContext _context;
-        public CategoryRepository(AppDbContext context)
+        public BrandRepository (AppDbContext context)
         {
             _context = context;
         }
-        public async Task<List<Category>> GetAllCategoriesAsync()
+        public async Task <List<Brand?>> GetAllBrandsAsync()
         {
-
-            return await _context.Categories.AsNoTracking().ToListAsync();
+            return await _context.Brands.AsNoTracking().ToListAsync();
         }
-        public async Task<Category?> GetCategoryBySlugAsync(string slug)
+        public async Task <Brand?> GetBrandBySlugAsync(string slug)
         {
-            return await _context.Categories
-                .Include(c => c.SubCategories)
+            return await _context.Brands
                 .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Slug == slug);
+                .FirstOrDefaultAsync(b => b.Slug == slug);
         }
-
     }
 }

@@ -45,5 +45,10 @@ namespace Tekno.Application.Catalog.Services
 
             return BuildTree(null); // categories cha (ParentId = null)
         }
-    }
+        public async Task<CategoryDto?> GetCategoryBySlugAsync(string slug)
+        {
+            var category = await _categoryRepository.GetCategoryBySlugAsync(slug);
+            return category == null ? null : _mapper.Map<CategoryDto>(category);
+        }
+        }
 }

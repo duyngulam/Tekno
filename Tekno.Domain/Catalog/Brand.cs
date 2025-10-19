@@ -12,7 +12,7 @@ namespace Tekno.Domain.Catalog
         public string Name { get; private set; } = string.Empty;
         public string Slug { get; private set; } = string.Empty;
         public string? Country { get; private set; }
-        public string? LogoUrl { get; private set; }
+        public string? LogoPath { get; private set; }
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
 
@@ -20,12 +20,12 @@ namespace Tekno.Domain.Catalog
 
         public Brand() { }
 
-        public Brand(string name, string slug, string? country = null, string? logoUrl = null)
+        public Brand(string name, string slug, string? country = null, string? logoPath = null)
         {
             Name = name;
             Slug = slug;
             Country = country;
-            LogoUrl = logoUrl;
+            LogoPath = logoPath;
         }
     }
 }

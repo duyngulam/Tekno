@@ -16,4 +16,11 @@ namespace Tekno.Application.Catalog.DTOs
             CreateMap<CategoryDto, CategoryTreeDto>().ReverseMap();
         }
     }
+    public class BrandProfile : Profile
+    {
+        public BrandProfile()
+        {
+            CreateMap<Brand,BrandDto>().ReverseMap();
+        }
+    }
 }

@@ -21,8 +21,8 @@ namespace Tekno.Api.Controllers
             _mapper = mapper;
         }
 
-        // GET /api/categories/landing
-        [HttpGet("landing")]
+        // GET /api/categories/list
+        [HttpGet("list")]
         public async Task<IActionResult> GetCategories()
         {
             var categories = await _categoryService.GetAllCategoriesAsync();
@@ -39,6 +39,18 @@ namespace Tekno.Api.Controllers
             var result = _mapper.Map<List<CategoryTreeLandingDto>>(categoryTree);
 
             return Ok(ApiResponse<List<CategoryTreeLandingDto>>.Ok(result, "Category tree loaded successfully"));
+        }
+        [HttpGet("{slug}")]
+        public async Task<IActionResult> GetCategoryBySlug(string slug)
+        {
+            var categories = await _categoryService.GetCategoryTreeAsync();
+            var category = categories.FirstOrDefault(c => c.Slug == slug);
+            if (category == null)
+            {
+                return NotFound(ApiResponse<string>.Fail("Category not found"));
+            }
+            var result = _mapper.Map<CategoryTreeLandingDto>(category);
+            return Ok(ApiResponse<CategoryTreeLandingDto>.Ok(result, "Category loaded successfully"));
         }
     }
 }

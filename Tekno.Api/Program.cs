@@ -100,6 +100,8 @@ namespace Tekno.Api
             builder.Services.AddScoped<MediaService>();
             builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
             builder.Services.AddScoped<CategoryService>();
+            builder.Services.AddScoped<IBrandRepository, BrandRepository>();
+            builder.Services.AddScoped<BrandService>();
             // =======================================================
             // 5. DATABASE
             // =======================================================

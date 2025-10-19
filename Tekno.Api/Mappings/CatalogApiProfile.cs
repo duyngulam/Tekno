@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using System.Runtime.InteropServices;
 using Tekno.Api.Models.Catalog;
 using Tekno.Application.Catalog.DTOs;
 
@@ -13,6 +14,13 @@ namespace Tekno.Api.Mappings
 
             // map list đệ quy
             CreateMap<CategoryDto, CategoryTreeLandingDto>();
+        }
+    }
+    public class BrandApiProfile : Profile
+    {
+        public BrandApiProfile()
+        {
+            CreateMap<BrandDto, BrandApiDto>();
         }
     }
 }

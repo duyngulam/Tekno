@@ -12,7 +12,7 @@ using Tekno.Infrastructure.Persistence;
 namespace Tekno.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251017024547_DB")]
+    [Migration("20251019023657_DB")]
     partial class DB
     {
         /// <inheritdoc />
@@ -388,7 +388,7 @@ namespace Tekno.Infrastructure.Migrations
                         .HasColumnType("timestamptz")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<string>("LogoUrl")
+                    b.Property<string>("LogoPath")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -420,7 +420,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 1,
                             Country = "USA",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/dell-2",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/dell-2.svg",
                             Name = "Dell",
                             Slug = "dell",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -430,7 +430,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 2,
                             Country = "USA",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/apple-13",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/apple-13.svg",
                             Name = "Apple",
                             Slug = "apple",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -440,7 +440,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 3,
                             Country = "Taiwan",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/asus-4",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/asus-4.svg",
                             Name = "Asus",
                             Slug = "asus",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -450,7 +450,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 4,
                             Country = "USA",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/HP-5",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/HP-5.svg",
                             Name = "HP",
                             Slug = "hp",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -460,7 +460,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 5,
                             Country = "China",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/lenovo-2",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/lenovo-2.svg",
                             Name = "Lenovo",
                             Slug = "lenovo",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -470,7 +470,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 6,
                             Country = "Korea",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/samsung-8",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/samsung-8.svg",
                             Name = "Samsung",
                             Slug = "samsung",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -480,7 +480,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 7,
                             Country = "USA",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/google-1",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/google-1.svg",
                             Name = "Google",
                             Slug = "google",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -490,7 +490,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 8,
                             Country = "China",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/xiaomi-5",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/xiaomi-1.svg",
                             Name = "Xiaomi",
                             Slug = "xiaomi",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -500,7 +500,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 9,
                             Country = "China",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/oneplus-2",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/oneplus-2.svg",
                             Name = "OnePlus",
                             Slug = "oneplus",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -510,7 +510,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 10,
                             Country = "Korea",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/lg",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/lg.svg",
                             Name = "LG",
                             Slug = "lg",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -520,7 +520,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 11,
                             Country = "Switzerland",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/logitech-gaming-2",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/logitech-gaming-2.svg",
                             Name = "Logitech",
                             Slug = "logitech",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -530,7 +530,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 12,
                             Country = "USA",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/razer-1",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/razer-1.svg",
                             Name = "Razer",
                             Slug = "razer",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -540,7 +540,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 13,
                             Country = "Japan",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/sony-2",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/sony-2svg",
                             Name = "Sony",
                             Slug = "sony",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -550,7 +550,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 14,
                             Country = "China",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://worldvectorlogo.com/logo/anker-logo-1",
+                            LogoPath = "https://cdn.worldvectorlogo.com/logos/anker-logo-1.svg",
                             Name = "Anker",
                             Slug = "anker",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -560,7 +560,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 15,
                             Country = "China",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://mms.img.susercontent.com/vn-11134216-7r98o-lnicyi57m5x6fd",
+                            LogoPath = "https://mms.img.susercontent.com/vn-11134216-7r98o-lnicyi57m5x6fd",
                             Name = "Baseus",
                             Slug = "baseus",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -570,7 +570,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 16,
                             Country = "USA",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://spigen.vn/wp-content/uploads/2023/09/Spigen_Header_New_Logo.png",
+                            LogoPath = "https://spigen.vn/wp-content/uploads/2023/09/Spigen_Header_New_Logo.png",
                             Name = "Spigen",
                             Slug = "spigen",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
@@ -580,7 +580,7 @@ namespace Tekno.Infrastructure.Migrations
                             Id = 17,
                             Country = "USA",
                             CreatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc),
-                            LogoUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlpSaYkZMxWktmvmvOx7mDurTEDu0KXqz1HQ&s",
+                            LogoPath = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlpSaYkZMxWktmvmvOx7mDurTEDu0KXqz1HQ&s",
                             Name = "UAG",
                             Slug = "uag",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)

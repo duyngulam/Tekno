@@ -7,10 +7,9 @@ using Tekno.Domain.Catalog;
 
 namespace Tekno.Application.Catalog.Interface
 {
-    public interface ICategoryRepository
+    public interface IBrandRepository
     {
-       Task<List<Category>> GetAllCategoriesAsync();
-       Task<Category?> GetCategoryBySlugAsync(string slug);
+        Task<List<Brand?>> GetAllBrandsAsync();
+        Task<Brand?> GetBrandBySlugAsync(string slug);
     }
 }
-    
