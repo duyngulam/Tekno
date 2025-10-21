@@ -2,7 +2,7 @@ name: Build and Test (.NET + Next.js)
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ master, develop,auth,catalog ]
   pull_request:
     branches: [ master, develop ]
 

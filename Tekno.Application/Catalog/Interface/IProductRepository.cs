@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Tekno.Domain.Catalog;
+using Tekno.Application.Common;
 using Tekno.Application.Common.Paging;
+using Tekno.Domain.Catalog;
 
 namespace Tekno.Application.Catalog.Interface
 {
@@ -16,8 +17,7 @@ namespace Tekno.Application.Catalog.Interface
             string? sort,
             string? minPrice,
             string? maxPrice,
-            int pageNumber,
-            int pageSize);
+            PagingParams paging);
         Task<Product?> GetProductBySlugAsync(string slug);
     }
 }
