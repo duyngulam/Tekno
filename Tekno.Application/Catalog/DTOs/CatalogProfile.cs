@@ -23,4 +23,18 @@ namespace Tekno.Application.Catalog.DTOs
             CreateMap<Brand,BrandDto>().ReverseMap();
         }
     }
+    public class ProductProfile : Profile
+    {
+        public ProductProfile()
+        {
+            CreateMap<Product, ProductSummaryDto>()
+                .ForMember(dest => dest.PrimaryImagePath,
+                    opt => opt.MapFrom(src =>
+                        src.Images.FirstOrDefault(i => i.IsPrimary) != null
+                            ? src.Images.First(i => i.IsPrimary).ImageUrl
+                            : "https://i.pinimg.com/736x/bd/e2/b8/bde2b888e9f57b2eee6f5ce3c90ce400.jpg"
+                    ))
+                .ForMember(dest => dest.DiscountPercent, opt => opt.Ignore());
+        }
+    }
 }
