@@ -35,6 +35,12 @@ namespace Tekno.Application.Catalog.DTOs
                             : "https://i.pinimg.com/736x/bd/e2/b8/bde2b888e9f57b2eee6f5ce3c90ce400.jpg"
                     ))
                 .ForMember(dest => dest.DiscountPercent, opt => opt.Ignore());
+            CreateMap<ProductVariant, ProductVariantDto>()
+                .ForMember(d => d.Attributes, o => o.MapFrom(s =>
+                    s.VariantAttributes.ToDictionary(
+                        va => va.Attribute.Name,
+                        va => va.Value.Value // ⚠️ Nếu Value là entity có property Value
+                    )));
         }
     }
 }

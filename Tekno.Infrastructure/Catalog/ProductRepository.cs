@@ -1,10 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Common;
 using Tekno.Application.Common.Paging;
@@ -13,13 +7,15 @@ using Tekno.Infrastructure.Persistence;
 
 namespace Tekno.Infrastructure.Catalog
 {
-    public class ProductRepository:IProductRepository
+    public class ProductRepository : IProductRepository
     {
         private readonly AppDbContext _context;
+
         public ProductRepository(AppDbContext context)
         {
             _context = context;
         }
+
         public async Task<PagedResult<Product>> GetPagedProductAsync(
             string? categorySlug,
             string? brandSlug,
@@ -29,14 +25,14 @@ namespace Tekno.Infrastructure.Catalog
             string? maxPrice,
             PagingParams paging)
         {
-            // --- 1️⃣ Base query
+            // 1️⃣ Base query
             var query = _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Images)
                 .AsQueryable();
 
-            // --- 2️⃣ Filtering
+            // 2️⃣ Filtering
             if (!string.IsNullOrWhiteSpace(categorySlug))
                 query = query.Where(p => p.Category.Slug == categorySlug);
 
@@ -52,7 +48,7 @@ namespace Tekno.Infrastructure.Catalog
             if (decimal.TryParse(maxPrice, out var max))
                 query = query.Where(p => p.BasePrice <= max);
 
-            // --- 3️⃣ Sorting
+            // 3️⃣ Sorting
             query = sort switch
             {
                 "price_asc" => query.OrderBy(p => p.BasePrice),
@@ -63,7 +59,7 @@ namespace Tekno.Infrastructure.Catalog
                 _ => query.OrderByDescending(p => p.CreatedAt)
             };
 
-            // --- 4️⃣ Paging
+            // 4️⃣ Paging
             var totalRecords = await query.CountAsync();
 
             var data = await query
@@ -71,12 +67,19 @@ namespace Tekno.Infrastructure.Catalog
                 .Take(paging.PageSize)
                 .ToListAsync();
 
-            // --- 5️⃣ Return PagedResult
             return new PagedResult<Product>(data, totalRecords, paging.Page, paging.PageSize);
         }
-        public Task<Product?> GetProductBySlugAsync(string slug)
+
+        public async Task<Product?> GetProductBySlugAsync(string slug)
         {
-            throw new NotImplementedException();
+            return await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.Images)
+                .Include(p => p.Detail)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.VariantAttributes)
+                .FirstOrDefaultAsync(p => p.Slug == slug);
         }
     }
 }

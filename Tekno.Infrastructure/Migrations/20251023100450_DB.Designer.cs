@@ -12,7 +12,7 @@ using Tekno.Infrastructure.Persistence;
 namespace Tekno.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251019023657_DB")]
+    [Migration("20251023100450_DB")]
     partial class DB
     {
         /// <inheritdoc />
@@ -827,6 +827,9 @@ namespace Tekno.Infrastructure.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
+
+                    b.Property<decimal?>("DiscountPercent")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("Name")
                         .IsRequired()
