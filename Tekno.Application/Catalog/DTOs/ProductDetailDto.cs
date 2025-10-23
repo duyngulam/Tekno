@@ -20,7 +20,6 @@
         public string? Description { get; set; }
         public string? WarrantyInfo { get; set; }
 
-        // JSON specs (ví dụ {"Display":"13.4-inch FHD", "CPU":"Intel i7"})
         public Dictionary<string, string>? Specs { get; set; }
 
         public List<string> Images { get; set; } = new();

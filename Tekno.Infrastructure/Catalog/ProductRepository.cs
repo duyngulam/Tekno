@@ -73,13 +73,18 @@ namespace Tekno.Infrastructure.Catalog
         public async Task<Product?> GetProductBySlugAsync(string slug)
         {
             return await _context.Products
-                .Include(p => p.Category)
                 .Include(p => p.Brand)
-                .Include(p => p.Images)
+                .Include(p => p.Category)
                 .Include(p => p.Detail)
+                .Include(p => p.Images)
                 .Include(p => p.Variants)
                     .ThenInclude(v => v.VariantAttributes)
+                        .ThenInclude(va => va.Attribute)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.VariantAttributes)
+                        .ThenInclude(va => va.Value)
                 .FirstOrDefaultAsync(p => p.Slug == slug);
+
         }
     }
 }
