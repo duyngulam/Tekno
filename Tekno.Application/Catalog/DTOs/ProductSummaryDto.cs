@@ -10,6 +10,8 @@ namespace Tekno.Application.Catalog.DTOs
     public class ProductSummaryDto
     {
         public int Id { get; set; }
+        public string BrandName { get; set; } = string.Empty;
+        public string CategoryName { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public decimal BasePrice { get; set; }

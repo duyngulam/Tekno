@@ -2,20 +2,21 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Nest;
 using System.Reflection;
 using System.Text;
 using Tekno.Application.Auth.DTOs;
 using Tekno.Application.Auth.Interfaces;
 using Tekno.Application.Auth.Services;
+using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Catalog.Services;
 using Tekno.Application.Cloudinary.Services;
 using Tekno.Application.Common.Interfaces;
 using Tekno.Infrastructure.Auth;
+using Tekno.Infrastructure.Catalog;
 using Tekno.Infrastructure.Logging;
 using Tekno.Infrastructure.Persistence;
 using Tekno.Infrastructure.Services;
-using Tekno.Application.Catalog.Interface;
-using Tekno.Infrastructure.Catalog;
 
 namespace Tekno.Api
 {
@@ -63,6 +64,12 @@ namespace Tekno.Api
                 cfg.AddMaps(Assembly.GetExecutingAssembly()); // quét profile trong API project
                 cfg.AddMaps(typeof(AuthProfile).Assembly); // quét profile trong Application project
             });
+            builder.Services.AddSingleton<IElasticClient>(sp =>
+            {
+                var client = ElasticSearchConfig.CreateClient("http://localhost:9200");
+                return client;
+            });
+
             // =======================================================
             // 3. AUTHENTICATION & AUTHORIZATION
             // =======================================================
@@ -102,6 +109,8 @@ namespace Tekno.Api
             builder.Services.AddScoped<CategoryService>();
             builder.Services.AddScoped<IBrandRepository, BrandRepository>();
             builder.Services.AddScoped<BrandService>();
+            builder.Services.AddScoped<IProductRepository, ProductRepository>();
+            builder.Services.AddScoped<ProductService>();
             // =======================================================
             // 5. DATABASE
             // =======================================================
