@@ -11,7 +11,7 @@ type LoginFormProps = {
 
 export default function LoginForm({ onClose }: LoginFormProps) {
   const router = useRouter();
-  const { login } = useAuthContext(); // ✅ gọi login từ context
+  const { login, isAdmin, user } = useAuthContext(); // ✅ gọi login từ context
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,10 +26,13 @@ export default function LoginForm({ onClose }: LoginFormProps) {
     const password = formData.get("password") as string;
 
     try {
-      await login(email, password); // ✅ dùng context login
+      const user = await login(email, password); // ✅ user trả về ngay dữ liệu đúng
       alert("Đăng nhập thành công!");
       onClose?.();
-      router.push("/");
+
+      if (user && user.role.toLowerCase() === "admin")
+        router.push("/dashboard");
+      else router.push("/");
     } catch (err: any) {
       setError(err.message || "Đăng nhập thất bại");
     } finally {
