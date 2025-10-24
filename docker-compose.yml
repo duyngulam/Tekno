@@ -2,7 +2,7 @@
   api:
     build:
       context: .
-      dockerfile: Tekno.Api/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "5000:8080"  # Host 5000 -> container 8080
     depends_on:

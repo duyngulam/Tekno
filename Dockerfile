@@ -8,7 +8,8 @@ COPY Tekno.Api/*.csproj Tekno.Api/
 COPY Tekno.Domain/*.csproj Tekno.Domain/
 COPY Tekno.Infrastructure/*.csproj Tekno.Infrastructure/
 COPY Tekno.Application/*.csproj Tekno.Application/
-
+COPY Tests/Domain.Tests/*.csproj Tests/Domain.Tests/
+COPY Tests/Application.Tests/*.csproj Tests/Application.Tests/
 RUN dotnet restore
 
 # Copy toàn bộ source và build
@@ -22,7 +23,7 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 # Chạy HTTP để tránh vấn đề certificate trong Docker
-ENV ASPNETCORE_URLS=http://+:${PORT}
+ENV ASPNETCORE_URLS=http://+:8080
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 
 EXPOSE 8080
