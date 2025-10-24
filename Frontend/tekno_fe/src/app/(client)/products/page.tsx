@@ -1,11 +1,31 @@
-import React from "react";
+"use client";
+import React, { useEffect, useState } from "react";
 
 import Filter from "@/components/product/Filter";
 import Categories from "@/components/product/Categories";
 import ProductCard from "@/components/product/ProductCard";
 import type { Product } from "@/type/product";
+import { getCategoriesList } from "@/api/categories";
+import { Category } from "@/type/categories";
 
 export default function Products() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  useEffect(() => {
+    const fetchBranches = async () => {
+      // try {
+      const data = await getCategoriesList();
+      setCategories(data);
+      // } catch (err: any) {
+      //   setError(err.message);
+      // } finally {
+      //   setLoading(false);
+      // }
+    };
+
+    fetchBranches();
+  }, []);
+  console.log("Categories:", categories);
+
   const res = {
     success: true,
     data: [
@@ -63,11 +83,11 @@ export default function Products() {
         </ul>
       </div>
 
-      <div className="flex flex-wrap gap-4">
-        <Categories />
-        <Categories />
-        <Categories />
-        <Categories />
+      <div className="flex justify-center">
+        <div className="flex flex-wrap gap-4">
+          {categories &&
+            categories.map((category) => <Categories category={category} />)}
+        </div>
       </div>
 
       {/* filter chip */}

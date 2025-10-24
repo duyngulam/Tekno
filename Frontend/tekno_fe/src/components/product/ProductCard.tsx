@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Product } from "@/type/product";
+import { HeartIcon, ShoppingCartIcon } from "@heroicons/react/24/outline";
 
 interface ProductCardProps {
   product: Product;
@@ -7,7 +8,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   return (
-    <div className="relative bg-white rounded-2xl shadow-md hover:shadow-lg transition flex flex-col w-60 h-fit">
+    <div className="relative bg-white rounded-2xl shadow-md hover:shadow-lg transition flex flex-col w-60 h-fit group">
       {/* --- Badge giảm giá --- */}
       <div className="absolute z-1000 top-3 bg-blue-100 text-blue-600 text-sm font-semibold px-2 py-1 rounded-r-lg">
         -12%
@@ -42,26 +43,41 @@ export default function ProductCard({ product }: ProductCardProps) {
         </p>
 
         {/* --- Giá và Rating --- */}
-        <div className="flex items-center justify-between w-full mt-2">
-          <div className="flex flex-col">
-            <p className="text-gray-400 text-sm line-through">
-              ${(product.basePrice + 111.87).toFixed(2)}
-            </p>
-            <p className="text-lg font-semibold text-black">
-              ${product.basePrice.toFixed(2)}
-            </p>
+
+        <div className="relative flex items-center justify-between w-full mt-2">
+          {/* --- Layer Hover (Add to cart + Heart) --- */}
+          <div className="absolute inset-0 flex items-center justify-center gap-5 bg-white opacity-0 transition-all duration-100 group-hover:opacity-100 rounded-md">
+            <button className="w-fit h-auto flex items-center gap-2 border border-yellow-400 text-yellow-500 px-4 py-2 rounded-md hover:bg-yellow-400 hover:text-white transition-all">
+              <ShoppingCartIcon width={32} />
+              Add to cart
+            </button>
+            <HeartIcon
+              width={32}
+              className="text-yellow-500 cursor-pointer hover:fill-yellow-500"
+            />
           </div>
 
-          <div className="flex items-center text-yellow-500">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-              className="w-5 h-5"
-            >
-              <path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.871L19.8 24 12 19.897 4.2 24l1.864-8.823L0 9.306l8.332-1.151z" />
-            </svg>
-            <span className="ml-1 font-medium text-base">4.9</span>
+          {/* --- Layer Default (Giá + Rating) --- */}
+          <div className="flex items-center justify-between w-full mt-2">
+            <div className="flex flex-col">
+              <p className="text-gray-400 text-sm line-through">
+                ${(product.basePrice + 111.87).toFixed(2)}
+              </p>
+              <p className="text-lg font-semibold text-black">
+                ${product.basePrice.toFixed(2)}
+              </p>
+            </div>
+            <div className="flex items-center text-yellow-500">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                className="w-5 h-5"
+              >
+                <path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.871L19.8 24 12 19.897 4.2 24l1.864-8.823L0 9.306l8.332-1.151z" />
+              </svg>
+              <span className="ml-1 font-medium text-base">4.9</span>
+            </div>
           </div>
         </div>
       </div>

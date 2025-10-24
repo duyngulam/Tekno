@@ -1,6 +1,10 @@
+import { Category } from "@/type/categories";
 import React from "react";
 
-export default function Categories() {
+export interface CategoriesProps {
+  category: Category;
+}
+export default function Categories({ category }: CategoriesProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 cursor-pointer hover:text-primary active:border-b-2 active:border-primary">
       <svg
@@ -18,7 +22,7 @@ export default function Categories() {
         />
       </svg>
 
-      <p>Mobile</p>
+      <p>?{category.name}</p>
     </div>
   );
 }
