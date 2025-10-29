@@ -31,7 +31,7 @@ namespace Tekno.Infrastructure.Catalog
         {
             await _context.Brands.AddAsync(brand);
             await _context.SaveChangesAsync();
-            return brand; // trả về object đã có ID
+            return brand;
         }
 
         public async Task<bool> UpdateAsync(Brand brand)

@@ -25,6 +25,7 @@ namespace Tekno.Api.Controllers
             var brands = await _brandService.GetAllBrandsAsync();
             var result = _mapper.Map<List<BrandApiDto>>(brands);
             return Ok(ApiResponse<List<BrandApiDto>>.Ok(result, "Brands loaded successfully"));
+
         }
         [HttpGet("{slug}")]
         public async Task<IActionResult> GetBrandBySlug(string slug)

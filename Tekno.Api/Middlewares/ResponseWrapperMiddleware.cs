@@ -4,85 +4,122 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-public class ResponseWrapperMiddleware
+namespace Tekno.Api.Middlewares
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<ResponseWrapperMiddleware> _logger;
-    private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-
-    public ResponseWrapperMiddleware(RequestDelegate next, ILogger<ResponseWrapperMiddleware> logger)
+    public class ResponseWrapperMiddleware
     {
-        _next = next;
-        _logger = logger;
-    }
-
-    public async Task InvokeAsync(HttpContext context)
-    {
-        // Only process JSON responses for non-error status codes
-        var originalBodyStream = context.Response.Body;
-
-        using var memStream = new MemoryStream();
-        context.Response.Body = memStream;
-
-        await _next(context);
-
-        context.Response.Body.Seek(0, SeekOrigin.Begin);
-        var bodyText = await new StreamReader(context.Response.Body).ReadToEndAsync();
-        context.Response.Body.Seek(0, SeekOrigin.Begin);
-
-        var contentType = context.Response.ContentType ?? string.Empty;
-
-        // If not JSON or empty body (204), just copy through
-        if (!contentType.Contains("application/json", StringComparison.OrdinalIgnoreCase)
-            || string.IsNullOrWhiteSpace(bodyText)
-            || context.Response.StatusCode >= 400) // errors handled by ErrorHandlingMiddleware
+        private readonly RequestDelegate _next;
+        private readonly ILogger<ResponseWrapperMiddleware> _logger;
+        private readonly JsonSerializerOptions _jsonOptions = new()
         {
-            memStream.Seek(0, SeekOrigin.Begin);
-            await memStream.CopyToAsync(originalBodyStream);
-            context.Response.Body = originalBodyStream;
-            return;
-        }
-
-        try
-        {
-            // Check if body is already ApiResponse by parsing top-level "success" property
-            using var doc = JsonDocument.Parse(bodyText);
-            if (doc.RootElement.TryGetProperty("success", out _))
-            {
-                // Already wrapped; return as-is
-                memStream.Seek(0, SeekOrigin.Begin);
-                await memStream.CopyToAsync(originalBodyStream);
-                context.Response.Body = originalBodyStream;
-                return;
-            }
-        }
-        catch (JsonException)
-        {
-            // If parse fails, treat as raw and wrap
-        }
-
-        // Wrap the raw JSON payload in ApiResponse<object>
-        object? originalData = null;
-        try
-        {
-            originalData = JsonSerializer.Deserialize<object>(bodyText, _jsonOptions);
-        }
-        catch
-        {
-            originalData = bodyText; // fallback to raw string
-        }
-
-        var wrapped = new
-        {
-            success = true,
-            message = "Success",
-            data = originalData,
-            timestamp = DateTime.UtcNow
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false
         };
 
-        var wrappedJson = JsonSerializer.Serialize(wrapped, _jsonOptions);
-        context.Response.ContentLength = Encoding.UTF8.GetByteCount(wrappedJson);
-        context.Response.Body = originalBodyStream;
-        await context.Response.WriteAsync(wrappedJson);
+        public ResponseWrapperMiddleware(RequestDelegate next, ILogger<ResponseWrapperMiddleware> logger)
+        {
+            _next = next;
+            _logger = logger;
+        }
+
+        public async Task InvokeAsync(HttpContext context)
+        {
+            // ⛔️ Bỏ qua Swagger, healthcheck, file tĩnh
+            var path = context.Request.Path.Value ?? string.Empty;
+            if (path.StartsWith("/swagger") || path.StartsWith("/health") || path.StartsWith("/favicon"))
+            {
+                await _next(context);
+                return;
+            }
+
+            var originalBody = context.Response.Body;
+            await using var memStream = new MemoryStream();
+            context.Response.Body = memStream;
+
+            try
+            {
+                await _next(context);
+            }
+            catch (Exception ex)
+            {
+                // Nếu có lỗi, trả lại stream gốc cho ExceptionMiddleware xử lý
+                _logger.LogError(ex, "Error before response wrapping.");
+                context.Response.Body = originalBody;
+                throw;
+            }
+
+            // Nếu statusCode không phải 2xx, không wrap
+            if (context.Response.StatusCode < 200 || context.Response.StatusCode >= 300)
+            {
+                memStream.Seek(0, SeekOrigin.Begin);
+                await memStream.CopyToAsync(originalBody);
+                context.Response.Body = originalBody;
+                return;
+            }
+
+            // Đọc nội dung body
+            memStream.Seek(0, SeekOrigin.Begin);
+            var bodyText = await new StreamReader(memStream).ReadToEndAsync();
+
+            // Nếu không phải JSON → bỏ qua
+            if (string.IsNullOrWhiteSpace(context.Response.ContentType) ||
+                !context.Response.ContentType.Contains("application/json", StringComparison.OrdinalIgnoreCase))
+            {
+                memStream.Seek(0, SeekOrigin.Begin);
+                await memStream.CopyToAsync(originalBody);
+                context.Response.Body = originalBody;
+                return;
+            }
+
+            // Nếu body rỗng → wrap mặc định
+            if (string.IsNullOrWhiteSpace(bodyText))
+            {
+                bodyText = "{}";
+            }
+
+            // Kiểm tra nếu đã có property "success" → không wrap lại
+            bool alreadyWrapped = false;
+            try
+            {
+                using var doc = JsonDocument.Parse(bodyText);
+                alreadyWrapped = doc.RootElement.TryGetProperty("success", out _);
+            }
+            catch (JsonException)
+            {
+                // ignore
+            }
+
+            string output;
+            if (alreadyWrapped)
+            {
+                output = bodyText;
+            }
+            else
+            {
+                object? parsedData = null;
+                try
+                {
+                    parsedData = JsonSerializer.Deserialize<object>(bodyText, _jsonOptions);
+                }
+                catch
+                {
+                    parsedData = bodyText;
+                }
+
+                var wrapped = new
+                {
+                    success = true,
+                    message = "Success",
+                    data = parsedData,
+                    timestamp = DateTime.UtcNow
+                };
+
+                output = JsonSerializer.Serialize(wrapped, _jsonOptions);
+            }
+
+            context.Response.Body = originalBody;
+            context.Response.ContentLength = Encoding.UTF8.GetByteCount(output);
+            await context.Response.WriteAsync(output);
+        }
     }
 }

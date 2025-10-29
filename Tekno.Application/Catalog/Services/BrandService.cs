@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Tekno.Application.Catalog.DTOs;
 using Tekno.Application.Catalog.Interface;
+using Tekno.Application.Common.Exceptions;
 using Tekno.Domain.Catalog;
 
 namespace Tekno.Application.Catalog.Services
@@ -30,6 +31,10 @@ namespace Tekno.Application.Catalog.Services
         }
         public async Task<Brand> CreateAsync(BrandDto brandDto)
         {
+            if(await _brandRepository.GetBrandBySlugAsync(brandDto.Slug) != null)
+            {
+                throw new ConflictException($"Brand '{brandDto.Slug}' already exists.", "BRAND_DUPLICATE");
+            }
             var brand = _mapper.Map<Brand>(brandDto);
             return await _brandRepository.CreateAsync(brand);
         }

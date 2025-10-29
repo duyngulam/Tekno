@@ -12,7 +12,7 @@ using Tekno.Application.Cloudinary.Services;
 namespace Tekno.Api.Controllers.admin
 {
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     [Route("api/admin/brands")]
     public class BrandAdminController : ControllerBase
     {
@@ -27,7 +27,7 @@ namespace Tekno.Api.Controllers.admin
             _mapper = mapper;
             _Media = media;
         }
-        [HttpGet]
+        [HttpGet("list")]
         public async Task<IActionResult> GetAllBrands()
         {
             var brands = await _brandService.GetAllBrandsAsync();

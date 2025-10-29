@@ -7,7 +7,6 @@ namespace Tekno.Infrastructure.Persistence.Configurations
 {
     public class BrandConfiguration : IEntityTypeConfiguration<Brand>
     {
-        // Sử dụng thời gian tĩnh đã thống nhất để tránh lỗi Non-Deterministic Model
         private static readonly DateTime SeedTime = new DateTime(2025, 10, 12, 9, 34, 0, DateTimeKind.Utc);
 
         public void Configure(EntityTypeBuilder<Brand> builder)

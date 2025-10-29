@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using Nest;
 using System.Reflection;
 using System.Text;
+using Tekno.Api.Middlewares;
 using Tekno.Application.Auth.DTOs;
 using Tekno.Application.Auth.Interfaces;
 using Tekno.Application.Auth.Services;
@@ -183,31 +184,39 @@ namespace Tekno.Api
             // =======================================================
             // 8. MIDDLEWARE PIPELINE
             // =======================================================
-            // 1. Request logging (incoming)
+
+            // 1️⃣ Logging request đầu vào
             app.UseMiddleware<RequestLoggingMiddleware>();
 
-            // 2. Error handling (catch exceptions thrown by lower middleware/controllers)
-            app.UseMiddleware<ErrorHandlingMiddleware>();
-
+            // 2️⃣ Swagger luôn nằm TRƯỚC các middleware xử lý response
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            // 3️⃣ Exception handler – nằm NGOÀI CÙNG để bắt tất cả lỗi
+            app.UseMiddleware<ExceptionMiddleware>();
+
+            // 4️⃣ Response wrapper – sau Exception, chỉ chạy khi response thành công
+            app.UseMiddleware<ResponseWrapperMiddleware>();
+
+            // 5️⃣ CORS và HTTPS redirect
             app.UseCors("AllowFrontend");
             app.UseHttpsRedirection();
-            // 3. Authentication & Authorization (use built-in)
+
+            // 6️⃣ Authentication & Authorization
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // 4. Response wrapper (should be after controller executed)
-            app.UseMiddleware<ResponseWrapperMiddleware>();
+            // 7️⃣ Map controllers (đăng ký route)
             app.MapControllers();
 
             // =======================================================
             // 9. RUN APP
             // =======================================================
             app.Run();
+
         }
     }
 }
