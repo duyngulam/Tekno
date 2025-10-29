@@ -825,6 +825,9 @@ namespace Tekno.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<decimal?>("DiscountPercent")
+                        .HasColumnType("numeric");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)

@@ -27,5 +27,35 @@ namespace Tekno.Infrastructure.Catalog
                 .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.Slug == slug);
         }
+        public async Task<Brand> CreateAsync(Brand brand)
+        {
+            await _context.Brands.AddAsync(brand);
+            await _context.SaveChangesAsync();
+            return brand;
+        }
+
+        public async Task<bool> UpdateAsync(Brand brand)
+        {
+            var existing = await _context.Brands.FindAsync(brand.Id);
+            if (existing == null) return false;
+
+            existing.Name = brand.Name;
+            existing.Slug = brand.Slug;
+            existing.Country = brand.Country;
+            existing.LogoPath = brand.LogoPath;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var brand = await _context.Brands.FindAsync(id);
+            if (brand == null) return false;
+
+            _context.Brands.Remove(brand);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

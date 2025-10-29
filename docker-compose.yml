@@ -1,9 +1,8 @@
-
-services:
+﻿services:
   api:
     build:
       context: .
-      dockerfile: Tekno.Api/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "5000:8080"  # Host 5000 -> container 8080
     depends_on:
@@ -26,6 +25,17 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     restart: unless-stopped
-
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false   
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
 volumes:
   db_data:
+  esdata:

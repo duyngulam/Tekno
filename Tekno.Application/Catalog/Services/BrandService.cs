@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Tekno.Application.Catalog.DTOs;
 using Tekno.Application.Catalog.Interface;
+using Tekno.Application.Common.Exceptions;
+using Tekno.Domain.Catalog;
 
 namespace Tekno.Application.Catalog.Services
 {
@@ -21,11 +23,30 @@ namespace Tekno.Application.Catalog.Services
         public async Task<List<BrandDto>> GetAllBrandsAsync()
         {
             var brands = await _brandRepository.GetAllBrandsAsync();
-            return _mapper.Map<List<DTOs.BrandDto>>(brands);
+            return _mapper.Map<List<BrandDto>>(brands);
         }
         public async Task<BrandDto> GetBrandBySlugAsync(string slug) {
             var brand = await _brandRepository.GetBrandBySlugAsync(slug);
             return _mapper.Map<BrandDto>(brand);
+        }
+        public async Task<Brand> CreateAsync(BrandDto brandDto)
+        {
+            if(await _brandRepository.GetBrandBySlugAsync(brandDto.Slug) != null)
+            {
+                throw new ConflictException($"Brand '{brandDto.Slug}' already exists.", "BRAND_DUPLICATE");
+            }
+            var brand = _mapper.Map<Brand>(brandDto);
+            return await _brandRepository.CreateAsync(brand);
+        }
+        public async Task<bool> UpdateAsync(BrandDto brandDto)
+        {
+            var brand = _mapper.Map<Brand>(brandDto);
+            return await _brandRepository.UpdateAsync(brand);
+        }
+        public async Task<bool> DeleteAsync(BrandDto brandDto)
+        {
+            var brand = _mapper.Map<Brand>(brandDto);
+            return await _brandRepository.DeleteAsync(brand.Id);
         }
     }
 }

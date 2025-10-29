@@ -13,6 +13,7 @@ namespace Tekno.Domain.Catalog
         public int BrandId { get; private set; }
         public string Name { get; private set; } = string.Empty;
         public string Slug { get; private set; } = string.Empty;
+        public decimal? DiscountPercent { get; private set; }
         public string Status { get; private set; } = "available";
         public decimal BasePrice { get; private set; }
         public string? Description { get; private set; }

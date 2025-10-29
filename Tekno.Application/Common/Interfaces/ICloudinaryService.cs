@@ -6,6 +6,6 @@ namespace Tekno.Application.Common.Interfaces
     public interface ICloudinaryService
     {
         Task<string> UploadImageAsync(IFormFile file, string folderPath);
-        Task<bool> DeleteImageAsync(string publicId);
+        Task<bool> DeleteImageByUrlAsync(string imageUrl);
     }
 }
