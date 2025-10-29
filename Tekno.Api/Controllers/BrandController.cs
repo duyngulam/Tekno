@@ -20,7 +20,7 @@ namespace Tekno.Api.Controllers
         }
         // GET /api/brands/list
         [HttpGet("list")]
-        public async Task<IActionResult> GertBrands()
+        public async Task<IActionResult> GetBrands()
         {
             var brands = await _brandService.GetAllBrandsAsync();
             var result = _mapper.Map<List<BrandApiDto>>(brands);

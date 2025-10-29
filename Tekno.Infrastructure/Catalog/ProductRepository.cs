@@ -11,6 +11,7 @@ namespace Tekno.Infrastructure.Catalog
     {
         private readonly AppDbContext _context;
 
+
         public ProductRepository(AppDbContext context)
         {
             _context = context;

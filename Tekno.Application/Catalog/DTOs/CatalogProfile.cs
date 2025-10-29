@@ -5,6 +5,21 @@ using Tekno.Application.Catalog.DTOs;
 
 namespace Tekno.Application.Catalog.DTOs
 {
+    public class CategoryProfile : Profile
+    {
+        public CategoryProfile()
+        {
+            CreateMap<Category, CategoryDto>().ReverseMap();
+            CreateMap<CategoryDto, CategoryTreeDto>().ReverseMap();
+        }
+    }
+    public class BrandProfile : Profile
+    {
+        public BrandProfile()
+        {
+            CreateMap<Brand, BrandDto>().ReverseMap();
+        }
+    }
     public class ProductProfile : Profile
     {
         public ProductProfile()
