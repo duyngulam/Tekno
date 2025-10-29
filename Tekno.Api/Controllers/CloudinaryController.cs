@@ -43,5 +43,16 @@ namespace Tekno.Api.Controllers
             var url = await _mediaService.UploadProductImageAsync(request.File);
             return Ok(new { Url = url });
         }
+        [HttpDelete]
+        public async Task<IActionResult> DeleteImage([FromQuery] string Url)
+        {
+            if (string.IsNullOrEmpty(Url))
+                return BadRequest("PublicId is required.");
+            var result = await _mediaService.DeleteImageAsync(Url);
+            if (result)
+                return Ok(new { Message = "Image deleted successfully." });
+            else
+                return NotFound(new { Message = "Image not found." });
+        }
     }
 }

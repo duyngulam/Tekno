@@ -2,7 +2,7 @@
 
 namespace Tekno.Api.Models.Catalog.Admin
 {
-    public class CreateBrandFormDto
+    public class CreateBrandApiDto
     {
         [Required]
         public string Name { get; set; } = string.Empty;

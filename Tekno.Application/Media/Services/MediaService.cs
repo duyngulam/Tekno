@@ -36,6 +36,10 @@ namespace Tekno.Application.Cloudinary.Services
             ValidateFile(file);
             return await _cloudinary.UploadImageAsync(file, folder);
         }
+        public async Task<bool> DeleteImageAsync(string url)
+        {
+            return await _cloudinary.DeleteImageByUrlAsync(url);
+        }
         private void ValidateFile(IFormFile file)
         {
             if (file == null || file.Length == 0)

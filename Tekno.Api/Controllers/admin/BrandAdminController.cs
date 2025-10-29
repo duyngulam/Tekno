@@ -42,7 +42,7 @@ namespace Tekno.Api.Controllers.admin
             return Ok(ApiResponse<BrandApiDto>.Ok(result, "Brand loaded successfully"));
         }
         [HttpPost("create")]
-        public async Task<IActionResult> CreateBrand([FromForm] CreateBrandFormDto createBrandFormDto)
+        public async Task<IActionResult> CreateBrand([FromForm] CreateBrandApiDto createBrandFormDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ApiResponse<BrandApiDto>.Fail("Invalid brand data"));
@@ -61,26 +61,31 @@ namespace Tekno.Api.Controllers.admin
 
         }
         [HttpPut("update")]
-        public async Task<IActionResult> UpdateBrand([FromBody] BrandApiDto brandApiDto)
+        public async Task<IActionResult> UpdateBrand([FromBody]UpdateBrandApiDto apiDto)
         {
-            var brandDto = _mapper.Map<BrandDto>(brandApiDto);
+            var brandDto = _mapper.Map<BrandDto>(apiDto);
             var updated = await _brandService.UpdateAsync(brandDto);
             if (!updated)
             {
-                return BadRequest(ApiResponse<BrandApiDto>.Fail("Failed to update brand"));
+                return BadRequest(ApiResponse<UpdateBrandApiDto>.Fail("Failed to update brand"));
             }
-            return Ok(ApiResponse<BrandApiDto>.Ok(brandApiDto, "Brand updated successfully"));
+            return Ok(ApiResponse<UpdateBrandApiDto>.Ok(apiDto, "Brand updated successfully"));
         }
         [HttpDelete("delete")]
-        public async Task<IActionResult> DeleteBrand([FromBody] BrandApiDto brandApiDto)
+        public async Task<IActionResult> DeleteBrand([FromBody] DeleteBrandApiDto apiDto)
         {
-            var brandDto = _mapper.Map<BrandDto>(brandApiDto);
+            var brandDto = _mapper.Map<BrandDto>(apiDto);
+            var logoPath = brandDto.LogoPath;
             var deleted = await _brandService.DeleteAsync(brandDto);
             if (!deleted)
             {
-                return BadRequest(ApiResponse<BrandApiDto>.Fail("Failed to delete brand"));
+                return BadRequest(ApiResponse<DeleteBrandApiDto>.Fail("Failed to delete brand"));
             }
-            return Ok(ApiResponse<BrandApiDto>.Ok(brandApiDto, "Brand deleted successfully"));
+            if (!string.IsNullOrEmpty(logoPath))
+            {
+                await _Media.DeleteImageAsync(logoPath);
+            }
+            return Ok(ApiResponse<DeleteBrandApiDto>.Ok(apiDto, "Brand deleted successfully"));
         }
     }
 }
