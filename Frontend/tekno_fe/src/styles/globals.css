@@ -1,242 +1,451 @@
-@import "tailwindcss";
-@plugin "daisyui";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
 
-@plugin "daisyui/theme" {
-  name: "mytheme";
-  default: true;
-  prefersdark: false;
-  color-scheme: light;
+@custom-variant dark (&:is(.dark *));
 
-  /* Base (Neutral) */
-  --color-base-100: #FFFFFF;
-  /* trắng */
-  --color-base-200: #DCDCDC;
-  /* xám nhạt */
-  --color-base-300: #000000;
-  /* đen */
-  --color-base-content: #000000;
-  /* chữ mặc định */
+:root {
+  /* ============================================
+     COLOR PALETTE - TEKNO DESIGN SYSTEM
+     ============================================ */
 
-  /* Main colors */
-  --color-primary: #FFD500;
-  --color-primary-content: #000000;
-  /* text trên nền vàng */
+  /* Main Colors */
+  --primary: #FFD400;
+  /* Primary Yellow */
+  --primary-foreground: #000000;
+  --secondary: #003D6D;
+  /* Secondary Blue */
+  --secondary-foreground: #FFFFFF;
 
-  --color-secondary: #002D9B;
-  --color-secondary-content: #FFFFFF;
-  /* text trên nền xanh đậm */
+  /* Yellow Tints & Shades */
+  --yellow-50: #FFFBEB;
+  --yellow-100: #FFF6CC;
+  --yellow-200: #FFED99;
+  --yellow-300: #FFE566;
+  --yellow-400: #FFD400;
+  /* Primary */
+  --yellow-500: #FFCA00;
+  --yellow-600: #E6B800;
+  --yellow-700: #CC9F00;
+  --yellow-800: #B38800;
+  --yellow-900: #997300;
 
-  /* Neutral */
-  --color-neutral: #DCDCDC;
-  --color-neutral-content: #000000;
+  /* Blue Tints & Shades */
+  --blue-50: #E6F0F7;
+  --blue-100: #CCE1EF;
+  --blue-200: #99C3DF;
+  --blue-300: #66A5CF;
+  --blue-400: #3387BF;
+  --blue-500: #0069AF;
+  --blue-600: #005899;
+  --blue-700: #004B83;
+  --blue-800: #003D6D;
+  /* Secondary */
+  --blue-900: #003057;
 
-  /* Status colors */
-  --color-error: #E53935;
-  --color-error-content: #FFFFFF;
+  /* Neutral Colors */
+  --black: #000000;
+  --white: #FFFFFF;
+  --gray-50: #F9F9F9;
+  --gray-100: #F3F3F3;
+  --gray-200: #E8E8E8;
+  --gray-300: #D1D1D1;
+  --gray-400: #A3A3A3;
+  --gray-500: #737373;
+  --gray-600: #525252;
+  --gray-700: #404040;
+  --gray-800: #262626;
+  --gray-900: #171717;
 
-  --color-warning: #FBC02D;
-  --color-warning-content: #000000;
+  /* Status Colors */
+  --success: #00A86B;
+  --success-foreground: #FFFFFF;
+  --success-light: #B3F5DC;
+  --error: #D32F2F;
+  --error-foreground: #FFFFFF;
+  --error-light: #FFCDD2;
 
-  --color-success: #388E3C;
-  --color-success-content: #FFFFFF;
+  /* Background & Foreground */
+  --background: #FFFFFF;
+  --foreground: #000000;
 
-  --color-info: #0288D1;
-  --color-info-content: #FFFFFF;
+  /* UI Elements */
+  --card: #FFFFFF;
+  --card-foreground: #000000;
+  --popover: #FFFFFF;
+  --popover-foreground: #000000;
+  --muted: #F3F3F3;
+  --muted-foreground: #737373;
+  --accent: #FFD400;
+  --accent-foreground: #000000;
+  --destructive: #D32F2F;
+  --destructive-foreground: #FFFFFF;
+  --border: #E8E8E8;
+  --input: transparent;
+  --input-background: #F9F9F9;
+  --switch-background: #D1D1D1;
+  --ring: #FFD400;
+
+  /* ============================================
+     TYPOGRAPHY - INTER FONT SYSTEM
+     ============================================ */
+
+  /* Font Family */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Font Sizes - Based on Typography Specs */
+  --text-display-1: 4rem;
+  /* 64px */
+  --text-display-2: 3.5rem;
+  /* 56px */
+  --text-h1: 2.75rem;
+  /* 44px */
+  --text-h2: 2.5rem;
+  /* 40px */
+  --text-h3: 2rem;
+  /* 32px */
+  --text-h4: 1.5rem;
+  /* 24px */
+  --text-h5: 1.25rem;
+  /* 20px */
+  --text-h6: 1rem;
+  /* 16px */
+  --text-body-xl: 1.25rem;
+  /* 20px */
+  --text-body-lg: 1.125rem;
+  /* 18px */
+  --text-body-md: 1rem;
+  /* 16px */
+  --text-body-sm: 0.875rem;
+  /* 14px */
+  --text-body-xs: 0.75rem;
+  /* 12px */
+  --text-caption-md: 0.875rem;
+  /* 14px */
+  --text-caption-sm: 0.75rem;
+  /* 12px */
+  --text-caption-xs: 0.625rem;
+  /* 10px */
+  --text-button-lg: 1rem;
+  /* 16px */
+  --text-button-md: 0.875rem;
+  /* 14px */
+  --text-button-sm: 1rem;
+  /* 16px */
+
+  /* Base font size */
+  --font-size: 16px;
+
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* Other Design Tokens */
+  --radius: 0.5rem;
+  --chart-1: var(--yellow-400);
+  --chart-2: var(--blue-600);
+  --chart-3: var(--gray-400);
+  --chart-4: var(--yellow-600);
+  --chart-5: var(--blue-400);
+
+  /* Sidebar */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #000000;
+  --sidebar-primary: #003D6D;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F9F9F9;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #E8E8E8;
+  --sidebar-ring: #FFD400;
 }
 
+.dark {
+  /* Dark Mode Color Overrides */
+  --background: #171717;
+  --foreground: #FFFFFF;
+  --card: #262626;
+  --card-foreground: #FFFFFF;
+  --popover: #262626;
+  --popover-foreground: #FFFFFF;
+  --primary: #FFD400;
+  --primary-foreground: #000000;
+  --secondary: #3387BF;
+  --secondary-foreground: #FFFFFF;
+  --muted: #404040;
+  --muted-foreground: #A3A3A3;
+  --accent: #FFD400;
+  --accent-foreground: #000000;
+  --destructive: #D32F2F;
+  --destructive-foreground: #FFFFFF;
+  --border: #404040;
+  --input: #404040;
+  --ring: #FFD400;
 
-/* ============================= */
-/* THEME TOKENS (COLOR + TYPO)   */
-/* ============================= */
-@theme {
-  --font-sans: "Inter", "Helvetica Neue", Arial, sans-serif;
-
-  /* Main colors */
-  --color-primary: #FFD500;
-  --color-secondary: #002B6B;
-
-  /* Neutral */
-  --color-black: #0D0C0C;
-  --color-white: #FFFFFF;
-  --color-gray-50: #FAFAFA;
-  --color-gray-100: #F5F5F5;
-  --color-gray-200: #E5E5E5;
-  --color-gray-300: #D4D4D4;
-  --color-gray-400: #A3A3A3;
-  --color-gray-500: #737373;
-  --color-gray-600: #525252;
-  --color-gray-700: #404040;
-  --color-gray-800: #262626;
-  --color-gray-900: #171717;
-
-  /* Status */
-  --color-error: #F44336;
-  --color-error-light: #FFCDD2;
-  --color-success: #388E3C;
-  --color-success-light: #C8E6C9;
-  --color-warning: #FF9800;
-  --color-info: #2196F3;
-
-  /* Typography */
-  --text-display-1: 64px;
-  --font-weight-display-1: 600;
-  --text-display-2: 56px;
-  --font-weight-display-2: 600;
-
-  --text-h1: 44px;
-  --font-weight-h1: 500;
-  --text-h2: 40px;
-  --font-weight-h2: 500;
-  --text-h3: 32px;
-  --font-weight-h3: 500;
-  --text-h4: 24px;
-  --font-weight-h4: 500;
-  --text-h5: 20px;
-  --font-weight-h5: 500;
-  --text-h6: 16px;
-  --font-weight-h6: 500;
-
-  --text-body-xl: 20px;
-  --font-weight-body-xl: 300;
-  --text-body-lg: 18px;
-  --font-weight-body-lg: 300;
-  --text-body-md: 16px;
-  --font-weight-body-md: 300;
-  --text-body-sm: 14px;
-  --font-weight-body-sm: 300;
-  --text-body-xs: 12px;
-  --font-weight-body-xs: 300;
-
-  --text-caption-lg: 14px;
-  --font-weight-caption-lg: 500;
-  --text-caption-md: 12px;
-  --font-weight-caption-md: 500;
-  --text-caption-sm: 10px;
-  --font-weight-caption-sm: 500;
-
-  --text-button-lg: 16px;
-  --font-weight-button-lg: 300;
-  --text-overline-lg: 16px;
-  --font-weight-overline-lg: 300;
-  --text-overline-sm: 12px;
-  --font-weight-overline-sm: 500;
-  
+  /* Dark Mode Sidebar */
+  --sidebar: #262626;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #FFD400;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #404040;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #404040;
+  --sidebar-ring: #FFD400;
 }
 
-/* ============================= */
-/* BASE SETUP                    */
-/* ============================= */
-html {
-  font-family: var(--font-sans);
-  color: var(--color-gray-900);
-  background: var(--color-white);
+@theme inline {
+  /* Main Colors */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  /* Yellow Scale */
+  --color-yellow-50: var(--yellow-50);
+  --color-yellow-100: var(--yellow-100);
+  --color-yellow-200: var(--yellow-200);
+  --color-yellow-300: var(--yellow-300);
+  --color-yellow-400: var(--yellow-400);
+  --color-yellow-500: var(--yellow-500);
+  --color-yellow-600: var(--yellow-600);
+  --color-yellow-700: var(--yellow-700);
+  --color-yellow-800: var(--yellow-800);
+  --color-yellow-900: var(--yellow-900);
+
+  /* Blue Scale */
+  --color-blue-50: var(--blue-50);
+  --color-blue-100: var(--blue-100);
+  --color-blue-200: var(--blue-200);
+  --color-blue-300: var(--blue-300);
+  --color-blue-400: var(--blue-400);
+  --color-blue-500: var(--blue-500);
+  --color-blue-600: var(--blue-600);
+  --color-blue-700: var(--blue-700);
+  --color-blue-800: var(--blue-800);
+  --color-blue-900: var(--blue-900);
+
+  /* Gray Scale */
+  --color-gray-50: var(--gray-50);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
+
+  /* Status Colors */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-light: var(--success-light);
+  --color-error: var(--error);
+  --color-error-foreground: var(--error-foreground);
+  --color-error-light: var(--error-light);
+
+  /* Background & Foreground */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Border Radius */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* ============================= */
-/* TYPOGRAPHY ALIASES            */
-/* ============================= */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    line-height: var(--line-height-normal);
+    font-weight: var(--font-weight-normal);
+  }
+}
+
+/**
+ * Base typography based on Inter font system
+ * This is not applied to elements which have an ancestor with a Tailwind text class.
+ */
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-size: var(--text-h1);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--line-height-tight);
+    }
+
+    h2 {
+      font-size: var(--text-h2);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--line-height-tight);
+    }
+
+    h3 {
+      font-size: var(--text-h3);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--line-height-tight);
+    }
+
+    h4 {
+      font-size: var(--text-h4);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--line-height-normal);
+    }
+
+    h5 {
+      font-size: var(--text-h5);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--line-height-normal);
+    }
+
+    h6 {
+      font-size: var(--text-h6);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--line-height-normal);
+    }
+
+    p {
+      font-size: var(--text-body-md);
+      font-weight: var(--font-weight-light);
+      line-height: var(--line-height-normal);
+    }
+
+    label {
+      font-size: var(--text-body-md);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--line-height-normal);
+    }
+
+    button {
+      font-size: var(--text-button-md);
+      font-weight: var(--font-weight-light);
+      line-height: var(--line-height-normal);
+    }
+
+    input,
+    textarea,
+    select {
+      font-size: var(--text-body-md);
+      font-weight: var(--font-weight-light);
+      line-height: var(--line-height-normal);
+    }
+
+    small {
+      font-size: var(--text-body-sm);
+      font-weight: var(--font-weight-light);
+      line-height: var(--line-height-normal);
+    }
+  }
+}
+
+/* Utility classes for display typography */
 @layer utilities {
-
-  /* Display */
-  .display-1 {
+  .text-display-1 {
     font-size: var(--text-display-1);
-    font-weight: var(--font-weight-display-1);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
   }
 
-  .display-2 {
+  .text-display-2 {
     font-size: var(--text-display-2);
-    font-weight: var(--font-weight-display-2);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
   }
 
-  /* Headings */
-  .h1 {
-    font-size: var(--text-h1);
-    font-weight: var(--font-weight-h1);
-  }
-
-  .h2 {
-    font-size: var(--text-h2);
-    font-weight: var(--font-weight-h2);
-  }
-
-  .h3 {
-    font-size: var(--text-h3);
-    font-weight: var(--font-weight-h3);
-  }
-
-  .h4 {
-    font-size: var(--text-h4);
-    font-weight: var(--font-weight-h4);
-  }
-
-  .h5 {
-    font-size: var(--text-h5);
-    font-weight: var(--font-weight-h5);
-  }
-
-  .h6 {
-    font-size: var(--text-h6);
-    font-weight: var(--font-weight-h6);
-  }
-
-  /* Body */
-  .body-xl {
+  .text-body-xl {
     font-size: var(--text-body-xl);
-    font-weight: var(--font-weight-body-xl);
+    font-weight: var(--font-weight-light);
+    line-height: var(--line-height-relaxed);
   }
 
-  .body-lg {
+  .text-body-lg {
     font-size: var(--text-body-lg);
-    font-weight: var(--font-weight-body-lg);
+    font-weight: var(--font-weight-light);
+    line-height: var(--line-height-relaxed);
   }
 
-  .body-md {
+  .text-body-md {
     font-size: var(--text-body-md);
-    font-weight: var(--font-weight-body-md);
+    font-weight: var(--font-weight-light);
+    line-height: var(--line-height-normal);
   }
 
-  .body-sm {
+  .text-body-sm {
     font-size: var(--text-body-sm);
-    font-weight: var(--font-weight-body-sm);
+    font-weight: var(--font-weight-light);
+    line-height: var(--line-height-normal);
   }
 
-  .body-xs {
+  .text-body-xs {
     font-size: var(--text-body-xs);
-    font-weight: var(--font-weight-body-xs);
+    font-weight: var(--font-weight-light);
+    line-height: var(--line-height-normal);
   }
 
-  /* Caption */
-  .caption-lg {
-    font-size: var(--text-caption-lg);
-    font-weight: var(--font-weight-caption-lg);
-  }
-
-  .caption-md {
+  .text-caption-md {
     font-size: var(--text-caption-md);
-    font-weight: var(--font-weight-caption-md);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
   }
 
-  .caption-sm {
+  .text-caption-sm {
     font-size: var(--text-caption-sm);
-    font-weight: var(--font-weight-caption-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
   }
 
-  /* Button & Overline */
-  .button-lg {
-    font-size: var(--text-button-lg);
-    font-weight: var(--font-weight-button-lg);
-    text-transform: uppercase;
+  .text-caption-xs {
+    font-size: var(--text-caption-xs);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
   }
+}
 
-  .overline-lg {
-    font-size: var(--text-overline-lg);
-    font-weight: var(--font-weight-overline-lg);
-    text-transform: uppercase;
-  }
-
-  .overline-sm {
-    font-size: var(--text-overline-sm);
-    font-weight: var(--font-weight-overline-sm);
-    text-transform: uppercase;
-  }
+html {
+  font-size: var(--font-size);
 }

@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
-import { loginApi } from "@/api/auth";
+import { loginApi } from "@/services/auth";
 import { userInfo } from "os";
 
 export interface User {
@@ -16,7 +16,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   hasRole: (role: string) => boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void | User>;
   logout: () => void;
 }
 

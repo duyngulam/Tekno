@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Input from "./Input";
 import { useRouter } from "next/navigation";
-import { signupApi } from "@/api/auth";
+import { signupApi } from "@/services/auth";
 
 type SignupFormProps = {
   setActiveTab?: React.Dispatch<React.SetStateAction<"login" | "register">>;

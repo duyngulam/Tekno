@@ -3,13 +3,11 @@ import Link from "next/link";
 import logo from "../../../src/asset/MainLogo.png";
 import Image from "next/image";
 import React, { useState } from "react";
-import {
-  MagnifyingGlassIcon,
-  ShoppingCartIcon,
-} from "@heroicons/react/24/outline";
+import { Search, ShoppingBasket, UserRound } from "lucide-react";
 import { usePathname } from "next/navigation";
 import AuthModal from "../auth/AuthModal";
 import { useAuth } from "@/hook/useAuth";
+import { Button } from "../ui/button";
 
 const Header = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -20,7 +18,7 @@ const Header = () => {
   const navItems = [
     { href: "/", label: "Home" },
     { href: "/products", label: "Products" },
-    { href: "/blog", label: "Blog" },
+    { href: "/blog", label: "Blogs" },
     { href: "/faq", label: "FAQ" },
     { href: "/contact-us", label: "Contact us" },
   ];
@@ -61,26 +59,26 @@ const Header = () => {
 
       {/* Actions */}
       <div className="flex items-center gap-4">
-        <MagnifyingGlassIcon className="h-6 w-6 cursor-pointer hover:text-primary active:text-primary transition max-md:hidden" />
-        <ShoppingCartIcon className="h-6 w-6 cursor-pointer hover:text-primary active:text-primary transition" />
+        <Search className="h-6 w-6 cursor-pointer hover:text-primary active:text-primary transition max-md:hidden" />
+        <ShoppingBasket className="h-6 w-6 cursor-pointer hover:text-primary active:text-primary transition" />
 
         {isAuthenticated ? (
           <div className="flex items-center gap-2">
             <span className="font-medium">{user?.email}</span>
-            <button
+            <Button
               className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300"
               onClick={logout}
             >
               Logout
-            </button>
+            </Button>
           </div>
         ) : (
-          <button
-            className="bg-primary text-white py-2 px-4 rounded-md hover:bg-primary/60 active:bg-primary"
+          <Button
+            //className="bg-primary text-white py-2 px-4 rounded-md hover:bg-primary/60 active:bg-primary"
             onClick={() => setIsLoginOpen(true)}
           >
             Login / Sign Up
-          </button>
+          </Button>
         )}
       </div>
       {/* AuthModal renders outside the flex row, so it overlays the page */}
