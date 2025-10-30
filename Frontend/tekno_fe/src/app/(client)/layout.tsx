@@ -1,6 +1,6 @@
 // layout cho client
 import Header from "@/components/MainLayout/Header";
-import "../../styles/globals.css";
+import "@/styles/globals.css";
 import Footer from "@/components/MainLayout/Footer";
 import { AuthProvider } from "@/context/AuthContext";
 
