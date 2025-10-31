@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Tekno.Application.Media.DTOs
+namespace Tekno.Application.Common.Media.DTOs
 {
     public class UploadResultDto
     {

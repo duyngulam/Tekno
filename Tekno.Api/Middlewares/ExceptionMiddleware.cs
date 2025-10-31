@@ -21,8 +21,8 @@ namespace Tekno.Api.Middlewares {
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unhandled exceptioccccccccccccccccccccccccn: {Message}", ex.Message);
-                _logger.LogWarning("🎯 ExceptionMiddleware caught: {Type}", ex.GetType().Name);
+                _logger.LogError(ex, "Unhandled exception: {Message}", ex.Message);
+                _logger.LogWarning("ExceptionMiddleware caught: {Type}", ex.GetType().Name);
                 await HandleExceptionAsync(context, ex);
             }
         }

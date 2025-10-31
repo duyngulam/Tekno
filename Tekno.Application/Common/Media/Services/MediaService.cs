@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Tekno.Application.Common.Interfaces;
 using Tekno.Domain.Constants;
 
-namespace Tekno.Application.Cloudinary.Services
+namespace Tekno.Application.Common.Media.Services
 {
     public class MediaService
     {
@@ -43,15 +44,15 @@ namespace Tekno.Application.Cloudinary.Services
         private void ValidateFile(IFormFile file)
         {
             if (file == null || file.Length == 0)
-                throw new ArgumentException("File cannot be empty.");
+                throw new ValidationException("File cannot be empty.");
 
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!allowedExtensions.Contains(extension))
-                throw new InvalidOperationException("Invalid image format. Allowed: jpg, jpeg, png, webp");
+                throw new ValidationException("Invalid image format. Allowed: jpg, jpeg, png, webp");
 
             if (file.Length > 2 * 1024 * 1024) // 2MB
-                throw new InvalidOperationException("File size must be under 2MB.");
+                throw new ValidationException("File size must be under 2MB.");
         }
 
     }

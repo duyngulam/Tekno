@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using Tekno.Application.Cloudinary.Services;
 using Tekno.Api.Models;
+using Tekno.Application.Common.Media.Services;
 
 namespace Tekno.Api.Controllers
 {

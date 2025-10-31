@@ -243,11 +243,17 @@ namespace Tekno.Infrastructure.Migrations
                 {
                     VariantId = table.Column<int>(type: "integer", nullable: false),
                     AttributeId = table.Column<int>(type: "integer", nullable: false),
-                    ValueId = table.Column<int>(type: "integer", nullable: false)
+                    ValueId = table.Column<int>(type: "integer", nullable: false),
+                    AttributeValueId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_product_variant_attribute", x => new { x.VariantId, x.AttributeId });
+                    table.ForeignKey(
+                        name: "FK_product_variant_attribute_attribute_value_AttributeValueId",
+                        column: x => x.AttributeValueId,
+                        principalTable: "attribute_value",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_product_variant_attribute_attribute_value_ValueId",
                         column: x => x.ValueId,
@@ -493,19 +499,19 @@ namespace Tekno.Infrastructure.Migrations
                 columns: new[] { "ProductId", "LongDescription", "Specs", "WarrantyInfo" },
                 values: new object[,]
                 {
-                    { 1, null, "{\r\n    \"Display\": \"13.4-inch FHD+ InfinityEdge\",\r\n    \"CPU\": \"Intel Core i5 / i7\",\r\n    \"RAM\": \"8GB / 16GB\",\r\n    \"Storage\": \"512GB / 1TB SSD\",\r\n    \"Weight\": \"1.2kg\",\r\n    \"Battery\": \"52Wh\",\r\n    \"OS\": \"Windows 11\",\r\n    \"Warranty\": \"12 months\"\r\n}", null },
-                    { 2, null, "{\r\n    \"Display\": \"13.6-inch Liquid Retina\",\r\n    \"Chip\": \"Apple M2\",\r\n    \"RAM\": \"8GB / 16GB\",\r\n    \"Storage\": \"256GB / 512GB\",\r\n    \"Battery\": \"52.6Wh up to 18h\",\r\n    \"OS\": \"macOS\",\r\n    \"Weight\": \"1.24kg\"\r\n}", null },
-                    { 3, null, "{\r\n    \"Display\": \"14-inch OLED 2.8K\",\r\n    \"CPU\": \"Intel i5 / i7 or Ryzen 7\",\r\n    \"RAM\": \"8GB / 16GB\",\r\n    \"Storage\": \"512GB / 1TB SSD\",\r\n    \"OS\": \"Windows 11\",\r\n    \"Weight\": \"1.3kg\"\r\n}", null },
-                    { 4, null, "{\r\n    \"Display\": \"13.5-inch 2-in-1 Touch OLED\",\r\n    \"CPU\": \"Intel Core i5 / i7\",\r\n    \"RAM\": \"8GB / 16GB\",\r\n    \"Storage\": \"512GB / 1TB\",\r\n    \"Convertible\": true,\r\n    \"OS\": \"Windows 11 Home\"\r\n}", null },
-                    { 5, null, "{\r\n    \"Display\": \"14-inch IPS 2.8K\",\r\n    \"CPU\": \"Intel i5 / i7\",\r\n    \"RAM\": \"8GB / 16GB\",\r\n    \"Storage\": \"512GB / 1TB\",\r\n    \"Security\": \"Fingerprint + TPM 2.0\",\r\n    \"OS\": \"Windows 11 Pro\"\r\n}", null },
-                    { 10, null, "{\r\n    \"Display\": \"6.1-inch OLED 120Hz\",\r\n    \"Chip\": \"Apple A17 Pro\",\r\n    \"RAM\": \"6GB\",\r\n    \"Storage\": \"128GB / 256GB\",\r\n    \"Camera\": \"48MP + 12MP + 12MP\",\r\n    \"Battery\": \"3279mAh\",\r\n    \"OS\": \"iOS 17\"\r\n}", null },
-                    { 11, null, "{\r\n    \"Display\": \"6.7-inch Dynamic AMOLED 120Hz\",\r\n    \"Chip\": \"Snapdragon 8 Gen 3\",\r\n    \"RAM\": \"8GB\",\r\n    \"Storage\": \"128GB / 256GB\",\r\n    \"Camera\": \"200MP + 12MP + 10MP\",\r\n    \"Battery\": \"5000mAh\",\r\n    \"OS\": \"Android 14\"\r\n}", null },
-                    { 12, null, "{\r\n    \"Display\": \"6.3-inch AMOLED 120Hz\",\r\n    \"Chip\": \"Google Tensor G4\",\r\n    \"RAM\": \"8GB\",\r\n    \"Storage\": \"128GB / 256GB\",\r\n    \"Camera\": \"50MP + 12MP\",\r\n    \"Battery\": \"4700mAh\",\r\n    \"OS\": \"Android 14\"\r\n}", null },
-                    { 13, null, "{\r\n    \"Display\": \"6.7-inch AMOLED QHD+\",\r\n    \"Chip\": \"Snapdragon 8 Gen 3\",\r\n    \"RAM\": \"12GB\",\r\n    \"Storage\": \"256GB / 512GB\",\r\n    \"Camera\": \"50MP + 50MP + 50MP (Leica)\",\r\n    \"OS\": \"HyperOS (Android 14)\"\r\n}", null },
-                    { 14, null, "{\r\n    \"Display\": \"6.8-inch AMOLED 120Hz\",\r\n    \"Chip\": \"Snapdragon 8 Gen 3\",\r\n    \"RAM\": \"12GB\",\r\n    \"Storage\": \"256GB / 512GB\",\r\n    \"Battery\": \"5400mAh 100W charging\",\r\n    \"OS\": \"OxygenOS 14\"\r\n}", null },
-                    { 20, null, "{\r\n    \"Display\": \"12.9-inch Liquid Retina XDR\",\r\n    \"Chip\": \"Apple M2\",\r\n    \"RAM\": \"8GB / 16GB\",\r\n    \"Storage\": \"128GB / 256GB\",\r\n    \"OS\": \"iPadOS 17\",\r\n    \"PencilSupport\": \"Apple Pencil 2\"\r\n}", null },
-                    { 21, null, "{\r\n    \"Display\": \"11-inch AMOLED 120Hz\",\r\n    \"Chip\": \"Snapdragon 8 Gen 2\",\r\n    \"RAM\": \"8GB / 12GB\",\r\n    \"Storage\": \"128GB / 256GB\",\r\n    \"OS\": \"Android 14\"\r\n}", null },
-                    { 22, null, "{\r\n    \"Display\": \"12.7-inch LCD 144Hz\",\r\n    \"Chip\": \"MediaTek Dimensity 7050\",\r\n    \"RAM\": \"8GB\",\r\n    \"Storage\": \"128GB\",\r\n    \"Battery\": \"10200mAh\",\r\n    \"OS\": \"Android 13\"\r\n}", null }
+                    { 1, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"13.4-inch FHD+ InfinityEdge\"]},\r\n    {\"Name\":\"CPU\",\"Value\":[\"Intel i5\",\"Intel i7\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"512GB\",\"1TB SSD\"]},\r\n    {\"Name\":\"Weight\",\"Value\":[\"1.2kg\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"52Wh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Windows 11\"]},\r\n    {\"Name\":\"Warranty\",\"Value\":[\"12 months\"]}\r\n]", null },
+                    { 2, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"13.6-inch Liquid Retina\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Apple M2\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"256GB\",\"512GB\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"52.6Wh up to 18h\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"macOS\"]},\r\n    {\"Name\":\"Weight\",\"Value\":[\"1.24kg\"]}\r\n]", null },
+                    { 3, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"14-inch OLED 2.8K\"]},\r\n    {\"Name\":\"CPU\",\"Value\":[\"Intel i5\",\"Intel i7\",\"Ryzen 7\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"512GB\",\"1TB SSD\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Windows 11\"]},\r\n    {\"Name\":\"Weight\",\"Value\":[\"1.3kg\"]}\r\n]", null },
+                    { 4, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"13.5-inch 2-in-1 Touch OLED\"]},\r\n    {\"Name\":\"CPU\",\"Value\":[\"Intel i5\",\"Intel i7\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"512GB\",\"1TB\"]},\r\n    {\"Name\":\"Convertible\",\"Value\":[\"true\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Windows 11 Home\"]}\r\n]", null },
+                    { 5, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"14-inch IPS 2.8K\"]},\r\n    {\"Name\":\"CPU\",\"Value\":[\"Intel i5\",\"Intel i7\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"512GB\",\"1TB\"]},\r\n    {\"Name\":\"Security\",\"Value\":[\"Fingerprint\",\"TPM 2.0\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Windows 11 Pro\"]}\r\n]", null },
+                    { 10, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.1-inch OLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Apple A17 Pro\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"6GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"Camera\",\"Value\":[\"48MP\",\"12MP\",\"12MP\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"3279mAh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"iOS 17\"]}\r\n]", null },
+                    { 11, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.7-inch Dynamic AMOLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Snapdragon 8 Gen 3\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"Camera\",\"Value\":[\"200MP\",\"12MP\",\"10MP\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"5000mAh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Android 14\"]}\r\n]", null },
+                    { 12, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.3-inch AMOLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Google Tensor G4\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"Camera\",\"Value\":[\"50MP\",\"12MP\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"4700mAh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Android 14\"]}\r\n]", null },
+                    { 13, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.7-inch AMOLED QHD+\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Snapdragon 8 Gen 3\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"12GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"256GB\",\"512GB\"]},\r\n    {\"Name\":\"Camera\",\"Value\":[\"50MP\",\"50MP\",\"50MP (Leica)\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"HyperOS (Android 14)\"]}\r\n]", null },
+                    { 14, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.8-inch AMOLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Snapdragon 8 Gen 3\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"12GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"256GB\",\"512GB\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"5400mAh 100W charging\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"OxygenOS 14\"]}\r\n]", null },
+                    { 20, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"12.9-inch Liquid Retina XDR\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Apple M2\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"iPadOS 17\"]},\r\n    {\"Name\":\"PencilSupport\",\"Value\":[\"Apple Pencil 2\"]}\r\n]", null },
+                    { 21, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"11-inch AMOLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Snapdragon 8 Gen 2\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"12GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Android 14\"]}\r\n]", null },
+                    { 22, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"12.7-inch LCD 144Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"MediaTek Dimensity 7050\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"10200mAh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Android 13\"]}\r\n]", null }
                 });
 
             migrationBuilder.InsertData(
@@ -559,18 +565,18 @@ namespace Tekno.Infrastructure.Migrations
                 columns: new[] { "ProductId", "LongDescription", "Specs", "WarrantyInfo" },
                 values: new object[,]
                 {
-                    { 30, null, "{\r\n    \"Display\": \"27-inch IPS 4K UHD\",\r\n    \"Resolution\": \"3840x2160\",\r\n    \"RefreshRate\": \"60Hz\",\r\n    \"Ports\": \"HDMI, DisplayPort, USB-C\",\r\n    \"ColorGamut\": \"99% sRGB\",\r\n    \"Warranty\": \"24 months\"\r\n}", null },
-                    { 31, null, "{\r\n    \"Display\": \"32-inch VA QHD\",\r\n    \"Resolution\": \"2560x1440\",\r\n    \"RefreshRate\": \"165Hz\",\r\n    \"Ports\": \"HDMI, DisplayPort\",\r\n    \"Sync\": \"G-Sync Compatible\"\r\n}", null },
-                    { 40, null, "{ \"Type\": \"Wireless\", \"Layout\": \"Full-size\", \"Backlight\": \"Yes\", \"Battery\": \"USB-C rechargeable\" }", null },
-                    { 41, null, "{ \"Type\": \"Mechanical\", \"Switch\": \"Razer Green\", \"Backlight\": \"RGB\", \"Connection\": \"Wired\" }", null },
-                    { 50, null, "{ \"Sensor\": \"Logitech Darkfield\", \"Connection\": \"Bluetooth / USB\", \"Battery\": \"70 days\", \"Buttons\": 7 }", null },
-                    { 51, null, "{ \"Sensor\": \"Focus Pro 30K\", \"Weight\": \"58g\", \"Connection\": \"Wireless\", \"Battery\": \"80h\" }", null },
-                    { 60, null, "{ \"Type\": \"Over-ear\", \"ANC\": \"Yes\", \"Battery\": \"30h\", \"Charging\": \"USB-C\", \"Microphone\": \"Yes\" }", null },
-                    { 61, null, "{ \"Type\": \"In-ear\", \"ANC\": \"Yes\", \"Battery\": \"6h + 24h\", \"Wireless\": \"Bluetooth 5.3\" }", null },
-                    { 70, null, "{ \"Power\": \"65W\", \"Ports\": \"2x USB-C, 1x USB-A\", \"Material\": \"GaN\", \"Input\": \"100–240V\" }", null },
-                    { 71, null, "{ \"Length\": \"1.5m\", \"Connector\": \"USB-C to USB-C\", \"Material\": \"Nylon braided\", \"MaxPower\": \"100W\" }", null },
-                    { 80, null, "{ \"Material\": \"TPU\", \"ShockResistant\": \"Yes\", \"CompatibleDevices\": \"iPhone 15\" }", null },
-                    { 81, null, "{ \"Material\": \"Ballistic Nylon\", \"Fits\": \"13–15 inch laptops\", \"WaterResistant\": \"Yes\" }", null }
+                    { 30, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"27-inch IPS 4K UHD\"]},\r\n    {\"Name\":\"Resolution\",\"Value\":[\"3840x2160\"]},\r\n    {\"Name\":\"RefreshRate\",\"Value\":[\"60Hz\"]},\r\n    {\"Name\":\"Ports\",\"Value\":[\"HDMI\",\"DisplayPort\",\"USB-C\"]},\r\n    {\"Name\":\"ColorGamut\",\"Value\":[\"99% sRGB\"]},\r\n    {\"Name\":\"Warranty\",\"Value\":[\"24 months\"]}\r\n]", null },
+                    { 31, null, "[\r\n    {\"Name\":\"Display\",\"Value\":[\"32-inch VA QHD\"]},\r\n    {\"Name\":\"Resolution\",\"Value\":[\"2560x1440\"]},\r\n    {\"Name\":\"RefreshRate\",\"Value\":[\"165Hz\"]},\r\n    {\"Name\":\"Ports\",\"Value\":[\"HDMI\",\"DisplayPort\"]},\r\n    {\"Name\":\"Sync\",\"Value\":[\"G-Sync Compatible\"]}\r\n]", null },
+                    { 40, null, "[\r\n    {\"Name\":\"Type\",\"Value\":[\"Wireless\"]},\r\n    {\"Name\":\"Layout\",\"Value\":[\"Full-size\"]},\r\n    {\"Name\":\"Backlight\",\"Value\":[\"Yes\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"USB-C rechargeable\"]}\r\n]", null },
+                    { 41, null, "[\r\n    {\"Name\":\"Type\",\"Value\":[\"Mechanical\"]},\r\n    {\"Name\":\"Switch\",\"Value\":[\"Razer Green\"]},\r\n    {\"Name\":\"Backlight\",\"Value\":[\"RGB\"]},\r\n    {\"Name\":\"Connection\",\"Value\":[\"Wired\"]}\r\n]", null },
+                    { 50, null, "[\r\n    {\"Name\":\"Sensor\",\"Value\":[\"Logitech Darkfield\"]},\r\n    {\"Name\":\"Connection\",\"Value\":[\"Bluetooth\",\"USB\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"70 days\"]},\r\n    {\"Name\":\"Buttons\",\"Value\":[\"7\"]}\r\n]", null },
+                    { 51, null, "[\r\n    {\"Name\":\"Sensor\",\"Value\":[\"Focus Pro 30K\"]},\r\n    {\"Name\":\"Weight\",\"Value\":[\"58g\"]},\r\n    {\"Name\":\"Connection\",\"Value\":[\"Wireless\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"80h\"]}\r\n]", null },
+                    { 60, null, "[\r\n    {\"Name\":\"Type\",\"Value\":[\"Over-ear\"]},\r\n    {\"Name\":\"ANC\",\"Value\":[\"Yes\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"30h\"]},\r\n    {\"Name\":\"Charging\",\"Value\":[\"USB-C\"]},\r\n    {\"Name\":\"Microphone\",\"Value\":[\"Yes\"]}\r\n]", null },
+                    { 61, null, "[\r\n    {\"Name\":\"Type\",\"Value\":[\"In-ear\"]},\r\n    {\"Name\":\"ANC\",\"Value\":[\"Yes\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"6h\",\"24h\"]},\r\n    {\"Name\":\"Wireless\",\"Value\":[\"Bluetooth 5.3\"]}\r\n]", null },
+                    { 70, null, "[\r\n    {\"Name\":\"Power\",\"Value\":[\"65W\"]},\r\n    {\"Name\":\"Ports\",\"Value\":[\"2x USB-C\",\"1x USB-A\"]},\r\n    {\"Name\":\"Material\",\"Value\":[\"GaN\"]},\r\n    {\"Name\":\"Input\",\"Value\":[\"100–240V\"]}\r\n]", null },
+                    { 71, null, "[\r\n    {\"Name\":\"Length\",\"Value\":[\"1.5m\"]},\r\n    {\"Name\":\"Connector\",\"Value\":[\"USB-C to USB-C\"]},\r\n    {\"Name\":\"Material\",\"Value\":[\"Nylon braided\"]},\r\n    {\"Name\":\"MaxPower\",\"Value\":[\"100W\"]}\r\n]", null },
+                    { 80, null, "[\r\n    {\"Name\":\"Material\",\"Value\":[\"TPU\"]},\r\n    {\"Name\":\"ShockResistant\",\"Value\":[\"Yes\"]},\r\n    {\"Name\":\"CompatibleDevices\",\"Value\":[\"iPhone 15\"]}\r\n]", null },
+                    { 81, null, "[\r\n    {\"Name\":\"Material\",\"Value\":[\"Ballistic Nylon\"]},\r\n    {\"Name\":\"Fits\",\"Value\":[\"13–15 inch laptops\"]},\r\n    {\"Name\":\"WaterResistant\",\"Value\":[\"Yes\"]}\r\n]", null }
                 });
 
             migrationBuilder.InsertData(
@@ -598,47 +604,47 @@ namespace Tekno.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "product_variant_attribute",
-                columns: new[] { "AttributeId", "VariantId", "ValueId" },
+                columns: new[] { "AttributeId", "VariantId", "AttributeValueId", "ValueId" },
                 values: new object[,]
                 {
-                    { 1, 1, 1 },
-                    { 12, 1, 21 },
-                    { 13, 1, 31 },
-                    { 1, 2, 2 },
-                    { 12, 2, 22 },
-                    { 13, 2, 32 },
-                    { 1, 3, 3 },
-                    { 12, 3, 21 },
-                    { 13, 3, 30 },
-                    { 1, 4, 1 },
-                    { 12, 4, 22 },
-                    { 13, 4, 31 },
-                    { 1, 11, 1 },
-                    { 24, 11, 30 },
-                    { 1, 12, 2 },
-                    { 24, 12, 31 },
-                    { 1, 13, 3 },
-                    { 24, 13, 30 },
-                    { 1, 14, 4 },
-                    { 24, 14, 31 },
-                    { 1, 17, 1 },
-                    { 33, 17, 30 },
-                    { 1, 18, 2 },
-                    { 33, 18, 31 },
-                    { 50, 21, 40 },
-                    { 52, 21, 42 },
-                    { 70, 23, 50 },
-                    { 73, 23, 60 },
-                    { 80, 25, 70 },
-                    { 81, 25, 60 },
-                    { 90, 27, 80 },
-                    { 91, 27, 60 },
-                    { 92, 27, 81 },
-                    { 100, 29, 90 },
-                    { 101, 29, 91 },
-                    { 110, 31, 100 },
-                    { 111, 31, 101 },
-                    { 112, 31, 102 }
+                    { 1, 1, null, 1 },
+                    { 12, 1, null, 21 },
+                    { 13, 1, null, 31 },
+                    { 1, 2, null, 2 },
+                    { 12, 2, null, 22 },
+                    { 13, 2, null, 32 },
+                    { 1, 3, null, 3 },
+                    { 12, 3, null, 21 },
+                    { 13, 3, null, 30 },
+                    { 1, 4, null, 1 },
+                    { 12, 4, null, 22 },
+                    { 13, 4, null, 31 },
+                    { 1, 11, null, 1 },
+                    { 24, 11, null, 30 },
+                    { 1, 12, null, 2 },
+                    { 24, 12, null, 31 },
+                    { 1, 13, null, 3 },
+                    { 24, 13, null, 30 },
+                    { 1, 14, null, 4 },
+                    { 24, 14, null, 31 },
+                    { 1, 17, null, 1 },
+                    { 33, 17, null, 30 },
+                    { 1, 18, null, 2 },
+                    { 33, 18, null, 31 },
+                    { 50, 21, null, 40 },
+                    { 52, 21, null, 42 },
+                    { 70, 23, null, 50 },
+                    { 73, 23, null, 60 },
+                    { 80, 25, null, 70 },
+                    { 81, 25, null, 60 },
+                    { 90, 27, null, 80 },
+                    { 91, 27, null, 60 },
+                    { 92, 27, null, 81 },
+                    { 100, 29, null, 90 },
+                    { 101, 29, null, 91 },
+                    { 110, 31, null, 100 },
+                    { 111, 31, null, 101 },
+                    { 112, 31, null, 102 }
                 });
 
             migrationBuilder.CreateIndex(
@@ -705,6 +711,11 @@ namespace Tekno.Infrastructure.Migrations
                 name: "IX_product_variant_attribute_AttributeId",
                 table: "product_variant_attribute",
                 column: "AttributeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_product_variant_attribute_AttributeValueId",
+                table: "product_variant_attribute",
+                column: "AttributeValueId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_product_variant_attribute_ValueId",

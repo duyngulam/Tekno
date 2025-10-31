@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Nest;
 using Tekno.Api.Common.Responses;
 using Tekno.Api.Models.Catalog;
-using Tekno.Api.Models.Catalog.Admin;
+using Tekno.Api.Models.Catalog.Admin.brand;
 using Tekno.Application.Catalog.DTOs;
 using Tekno.Application.Catalog.Services;
-using Tekno.Application.Cloudinary.Services;
+using Tekno.Application.Common.Media.Services;
 
 namespace Tekno.Api.Controllers.admin
 {
@@ -31,21 +31,21 @@ namespace Tekno.Api.Controllers.admin
         public async Task<IActionResult> GetAllBrands()
         {
             var brands = await _brandService.GetAllBrandsAsync();
-            var result = _mapper.Map<List<BrandApiDto>>(brands);
-            return Ok(ApiResponse<List<BrandApiDto>>.Ok(result, "Brands loaded successfully"));
+            var result = _mapper.Map<List<BrandDto>>(brands);
+            return Ok(ApiResponse<List<BrandDto>>.Ok(result, "Brands loaded successfully"));
         }
-        [HttpGet("{id}")]
+        [HttpGet("{slug}")]
         public async Task<IActionResult> GetBrandBySlug(string slug)
         {
             var brand = await _brandService.GetBrandBySlugAsync(slug);
-            var result = _mapper.Map<BrandApiDto>(brand);
-            return Ok(ApiResponse<BrandApiDto>.Ok(result, "Brand loaded successfully"));
+            var result = _mapper.Map<BrandDto>(brand);
+            return Ok(ApiResponse<BrandDto>.Ok(result, "Brand loaded successfully"));
         }
         [HttpPost("create")]
         public async Task<IActionResult> CreateBrand([FromForm] CreateBrandApiDto createBrandFormDto)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ApiResponse<BrandApiDto>.Fail("Invalid brand data"));
+                return BadRequest(ApiResponse<BrandDto>.Fail("Invalid brand data"));
             string? logoUrl = null;
             if (createBrandFormDto != null && createBrandFormDto.LogoFile != null) {
                 logoUrl = await _Media.UploadBrandLogoAsync(createBrandFormDto.LogoFile);
@@ -74,7 +74,11 @@ namespace Tekno.Api.Controllers.admin
         [HttpDelete("delete")]
         public async Task<IActionResult> DeleteBrand([FromBody] DeleteBrandApiDto apiDto)
         {
-            var brandDto = _mapper.Map<BrandDto>(apiDto);
+            var brandDto = await _brandService.GetBrandByIdAsync(apiDto.Id);
+            if (brandDto == null)
+            {
+                return NotFound(ApiResponse<DeleteBrandApiDto>.Fail("Brand not found"));
+            }
             var logoPath = brandDto.LogoPath;
             var deleted = await _brandService.DeleteAsync(brandDto);
             if (!deleted)

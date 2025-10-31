@@ -12,19 +12,21 @@ using Tekno.Application.Auth.Interfaces;
 using Tekno.Application.Auth.Services;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Catalog.Services;
-using Tekno.Application.Cloudinary.Services;
 using Tekno.Application.Common.Interfaces;
+using Tekno.Application.Common.Media.Services;
+using Tekno.Infrastructure;
 using Tekno.Infrastructure.Auth;
 using Tekno.Infrastructure.Catalog;
 using Tekno.Infrastructure.Logging;
 using Tekno.Infrastructure.Persistence;
+using Tekno.Infrastructure.Search;
 using Tekno.Infrastructure.Services;
 
 namespace Tekno.Api
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -95,11 +97,6 @@ namespace Tekno.Api
                 cfg.AddMaps(Assembly.GetExecutingAssembly()); // quét profile trong API project
                 cfg.AddMaps(typeof(AuthProfile).Assembly); // quét profile trong Application project
             });
-            builder.Services.AddSingleton<IElasticClient>(sp =>
-            {
-                var client = ElasticSearchConfig.CreateClient("http://localhost:9200");
-                return client;
-            });
 
             // =======================================================
             // 3. AUTHENTICATION & AUTHORIZATION
@@ -129,25 +126,12 @@ namespace Tekno.Api
             // =======================================================
             // 4. APPLICATION & INFRASTRUCTURE DEPENDENCIES
             // =======================================================
-            builder.Services.AddScoped<AuthService>(); // Business logic Auth
-            builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
-            builder.Services.AddScoped<IJwtProvider, JwtProvider>();
-            builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
-            builder.Services.AddScoped<MediaService>();
-            builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+            builder.Services.AddInfrastructure(builder.Configuration);
+            builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<CategoryService>();
-            builder.Services.AddScoped<IBrandRepository, BrandRepository>();
             builder.Services.AddScoped<BrandService>();
-            builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddScoped<ProductService>();
-            // =======================================================
-            // 5. DATABASE
-            // =======================================================
-            builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
-
+            builder.Services.AddScoped<MediaService>();
             // =======================================================
             // 6. LOGGING
             // =======================================================
@@ -179,6 +163,17 @@ namespace Tekno.Api
                         Thread.Sleep(2000);
                     }
                 }
+            }
+            using (var scope = app.Services.CreateScope())
+            {
+                // 1️⃣ Tạo index nếu chưa có
+                var client = scope.ServiceProvider.GetRequiredService<IElasticClient>();
+                ElasticMappings.CreateProductIndex(client);
+                ElasticMappings.CreateProductDetailIndex(client);
+
+                // 2️⃣ Chạy bulk index
+                var bulkIndexer = scope.ServiceProvider.GetRequiredService<ElasticBulkIndexer>();
+                await bulkIndexer.RunAsync();
             }
 
             // =======================================================

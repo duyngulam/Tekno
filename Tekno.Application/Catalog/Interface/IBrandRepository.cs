@@ -11,6 +11,7 @@ namespace Tekno.Application.Catalog.Interface
     {
         Task<List<Brand?>> GetAllBrandsAsync();
         Task<Brand?> GetBrandBySlugAsync(string slug);
+        Task<Brand?> GetBrandByIdAsync(int id);
         Task<Brand> CreateAsync(Brand brand);
         Task<bool> UpdateAsync(Brand brand);
         Task<bool> DeleteAsync(int id);

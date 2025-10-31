@@ -85,7 +85,12 @@ namespace Tekno.Infrastructure.Catalog
                     .ThenInclude(v => v.VariantAttributes)
                         .ThenInclude(va => va.Value)
                 .FirstOrDefaultAsync(p => p.Slug == slug);
-
+        }
+        public async Task<IEnumerable<Product>> GetAllProductsWithDetailAsync()
+        {
+            return await _context.Products
+                .Include(p => p.Detail)
+                .ToListAsync();
         }
     }
 }

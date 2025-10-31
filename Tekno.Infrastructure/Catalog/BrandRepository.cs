@@ -27,6 +27,12 @@ namespace Tekno.Infrastructure.Catalog
                 .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.Slug == slug);
         }
+        public async Task<Brand?> GetBrandByIdAsync(int id)
+        {
+            return await _context.Brands
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == id);
+        }
         public async Task<Brand> CreateAsync(Brand brand)
         {
             await _context.Brands.AddAsync(brand);

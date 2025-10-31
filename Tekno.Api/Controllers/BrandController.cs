@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Tekno.Api.Common.Responses;
 using Tekno.Api.Models.Catalog;
+using Tekno.Application.Catalog.DTOs;
 using Tekno.Application.Catalog.Services;
 using Tekno.Infrastructure.Catalog;
 
@@ -23,8 +24,8 @@ namespace Tekno.Api.Controllers
         public async Task<IActionResult> GetBrands()
         {
             var brands = await _brandService.GetAllBrandsAsync();
-            var result = _mapper.Map<List<BrandApiDto>>(brands);
-            return Ok(ApiResponse<List<BrandApiDto>>.Ok(result, "Brands loaded successfully"));
+            var result = _mapper.Map<List<BrandDto>>(brands);
+            return Ok(ApiResponse<List<BrandDto>>.Ok(result, "Brands loaded successfully"));
 
         }
         [HttpGet("{slug}")]
@@ -35,8 +36,8 @@ namespace Tekno.Api.Controllers
             {
                 return NotFound(ApiResponse<string>.Fail("Brand not found"));
             }
-            var result = _mapper.Map<BrandApiDto>(brand);
-            return Ok(ApiResponse<BrandApiDto>.Ok(result, "Brand loaded successfully"));
+            var result = _mapper.Map<BrandDto>(brand);
+            return Ok(ApiResponse<BrandDto>.Ok(result, "Brand loaded successfully"));
         }
     }
 }

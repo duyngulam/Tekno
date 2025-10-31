@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Tekno.Application.Catalog.DTOs;
 using Tekno.Application.Catalog.Interface;
+using Tekno.Application.Common.Cache;
 using Tekno.Application.Common.Exceptions;
 using Tekno.Domain.Catalog;
 
@@ -15,18 +16,28 @@ namespace Tekno.Application.Catalog.Services
     {
         private readonly IBrandRepository _brandRepository;
         private readonly IMapper _mapper;
-        public BrandService(IBrandRepository brandRepository, IMapper mapper)
+        private readonly ICacheService _cache;
+        public BrandService(IBrandRepository brandRepository, IMapper mapper, ICacheService cache)
         {
             _brandRepository = brandRepository;
             _mapper = mapper;
+            _cache = cache;
         }
         public async Task<List<BrandDto>> GetAllBrandsAsync()
         {
-            var brands = await _brandRepository.GetAllBrandsAsync();
-            return _mapper.Map<List<BrandDto>>(brands);
+            return await _cache.CacheOrGetAsync(
+            CachePolicies.BrandKey,
+            async () => _mapper.Map<List<BrandDto>>(await _brandRepository.GetAllBrandsAsync()),
+            CachePolicies.BrandTtl
+        );
         }
         public async Task<BrandDto> GetBrandBySlugAsync(string slug) {
             var brand = await _brandRepository.GetBrandBySlugAsync(slug);
+            return _mapper.Map<BrandDto>(brand);
+        }
+        public async Task<BrandDto> GetBrandByIdAsync(int id)
+        {
+            var brand = await _brandRepository.GetBrandByIdAsync(id);
             return _mapper.Map<BrandDto>(brand);
         }
         public async Task<Brand> CreateAsync(BrandDto brandDto)

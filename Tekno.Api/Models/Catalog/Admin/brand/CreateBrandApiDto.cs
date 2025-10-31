@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Tekno.Api.Models.Catalog.Admin
+namespace Tekno.Api.Models.Catalog.Admin.brand
 {
     public class CreateBrandApiDto
     {
