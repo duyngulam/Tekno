@@ -19,5 +19,6 @@ namespace Tekno.Application.Catalog.Interface
             string? maxPrice,
             PagingParams paging);
         Task<Product?> GetProductBySlugAsync(string slug);
+        Task<IEnumerable<Product>> GetAllProductsWithDetailAsync();
     }
 }

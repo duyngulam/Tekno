@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Tekno.Api.Common.Responses;
+using Tekno.Api.Models.Catalog;
 using Tekno.Application.Catalog.DTOs;
-using Tekno.Application.Catalog.Interface;
+using Tekno.Application.Catalog.DTOs.Products;
 using Tekno.Application.Catalog.Services;
 using Tekno.Application.Common;
 using Tekno.Application.Common.Paging;
@@ -20,20 +21,9 @@ namespace Tekno.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetPaged(
-            [FromQuery] string? category,
-            [FromQuery] string? brand,
-            [FromQuery] string? search,
-            [FromQuery] string? sort,
-            [FromQuery] string? minPrice,
-            [FromQuery] string? maxPrice,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 12)
+        public async Task<IActionResult> GetPaged([FromQuery] ProductSearchRequestDto request)
         {
-            var result = await _productService.GetPagedProductAsync(
-                category, brand, search, sort, minPrice, maxPrice,
-                new PagingParams(page, pageSize));
-
+            var result = await _productService.GetPagedProductAsync(request);
             return Ok(ApiResponse<PagedResult<ProductSummaryDto>>.Ok(result));
         }
 

@@ -11,6 +11,9 @@ namespace Tekno.Application.Catalog.Interface
     {
        Task<List<Category>> GetAllCategoriesAsync();
        Task<Category?> GetCategoryBySlugAsync(string slug);
+       Task<Category?> GetCategoryByIdAsync(int id);
+       Task<Category> CreateAsync(Category category);
+       Task<bool> UpdateAsync(Category category);
+       Task<bool> DeleteAsync(int id);
     }
 }
-    

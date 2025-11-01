@@ -1,12 +1,12 @@
-﻿namespace Tekno.Application.Catalog.DTOs
+﻿namespace Tekno.Application.Catalog.DTOs.Products
 {
     public class ProductDetailDto
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
-        public string Brand { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
+        public string BrandName { get; set; } = string.Empty;
+        public string CategoryName { get; set; } = string.Empty;
 
         public decimal BasePrice { get; set; }
         public decimal? DiscountPercent { get; set; }
@@ -20,7 +20,7 @@
         public string? Description { get; set; }
         public string? WarrantyInfo { get; set; }
 
-        public Dictionary<string, string>? Specs { get; set; }
+        public List<ProductAttributeDto> Specs { get; set; } = new();
 
         public List<string> Images { get; set; } = new();
         public List<ProductVariantDto> Variants { get; set; } = new();
