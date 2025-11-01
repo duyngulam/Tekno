@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using System.Runtime.InteropServices;
 using Tekno.Api.Models.Catalog;
+using Tekno.Api.Models.Catalog.Admin;
+using Tekno.Api.Models.Catalog.Admin.brand;
 using Tekno.Application.Catalog.DTOs;
 
 namespace Tekno.Api.Mappings
@@ -9,18 +11,22 @@ namespace Tekno.Api.Mappings
     {
         public CategoryApiProfile()
         {
-            // map cơ bản cho từng node
-            CreateMap<CategoryTreeDto, CategoryTreeLandingDto>();
 
             // map list đệ quy
-            CreateMap<CategoryDto, CategoryTreeLandingDto>();
+            CreateMap<CategoryDto, CategoryTreeDto>();
+            // admin mappings
+            CreateMap<CategoryDto, CreateCategoryApiDto>().ReverseMap();
+            CreateMap<CategoryDto, UpdateCategoryApiDto>().ReverseMap();
+            CreateMap<CategoryDto, DeleteCategoryApiDto>().ReverseMap();
         }
     }
     public class BrandApiProfile : Profile
     {
         public BrandApiProfile()
         {
-            CreateMap<BrandDto, BrandApiDto>();
+            CreateMap<BrandDto, CreateBrandApiDto>().ReverseMap();
+            CreateMap<BrandDto, DeleteBrandApiDto>().ReverseMap();
+            CreateMap<BrandDto, UpdateBrandApiDto>().ReverseMap();
         }
     }
 }

@@ -1,7 +1,7 @@
 
 export async function getCategoriesList() {
   try {
-    const res = await fetch("https://localhost:5000/api/categories/list", {
+    const res = await fetch("http://localhost:5000/api/categories/list", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

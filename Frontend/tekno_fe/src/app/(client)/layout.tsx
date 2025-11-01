@@ -3,6 +3,7 @@ import Header from "@/components/MainLayout/Header";
 import "../../styles/globals.css";
 import Footer from "@/components/MainLayout/Footer";
 import { AuthProvider } from "@/context/AuthContext";
+import { Breadcrumb } from "@/components/share/breadcumbCustom";
 
 // Đặt metadata cho layout
 export const metadata = {
@@ -19,8 +20,9 @@ export default function ClientLayout({
       <body className="bg-white text-gray-900 h-full flex flex-col">
         <AuthProvider>
           <Header />
+
           <main className="flex-1 mx-auto max-w-screen">
-            <div className="py-3 md:py-3">{children}</div>
+            <div className="py-2 md:py-3">{children}</div>
           </main>
           <Footer />
         </AuthProvider>

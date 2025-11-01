@@ -1,34 +1,46 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+export function Breadcrumb() {
+  const pathname = usePathname(); // ví dụ: "/products/laptop/macbook-pro"
+  const segments = pathname.split("/").filter(Boolean); // ["products", "laptop", "macbook-pro"]
 
-export function BreadcrumbWithCustomSeparator() {
+  // Tạo danh sách breadcrumb
+  const breadcrumbItems = segments.map((segment, index) => {
+    const href = "/" + segments.slice(0, index + 1).join("/");
+    return {
+      label: decodeURIComponent(segment.replace(/-/g, " ")), // đổi "macbook-pro" → "macbook pro"
+      href,
+    };
+  });
+
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link href="/">Home</Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link href="/components">Components</Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbPage>Breadcrumb</BreadcrumbPage>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
+    <nav className="flex items-center text-sm text-gray-500 space-x-1">
+      {/* Trang chủ */}
+      <Link href="/" className="hover:text-blue-600 transition">
+        Trang chủ
+      </Link>
+
+      {breadcrumbItems.map((item, index) => (
+        <div key={item.href} className="flex items-center space-x-1">
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+          {index === breadcrumbItems.length - 1 ? (
+            <span className="text-gray-800 font-semibold capitalize">
+              {item.label}
+            </span>
+          ) : (
+            <Link
+              href={item.href}
+              className="hover:text-blue-600 transition capitalize"
+            >
+              {item.label}
+            </Link>
+          )}
+        </div>
+      ))}
+    </nav>
   );
 }

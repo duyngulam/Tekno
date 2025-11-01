@@ -1,12 +1,12 @@
 "use client";
 import React from "react";
-import { BreadcrumbWithCustomSeparator } from "@/components/share/breadcumbCustom";
 import { Grid3x3, List, ChevronDown } from "lucide-react";
 import { FilterChips } from "@/components/product/FilterChips";
 import { CategoryTabs } from "@/components/product/CategoryTabs";
 import FilterCategories from "@/components/product/FilterCategories";
 import ProductCard from "@/components/product/ProductCard";
 import { Product } from "@/type/product";
+import { Breadcrumb } from "@/components/share/breadcumbCustom";
 
 export default function Products() {
   const products: Product[] = [
@@ -80,11 +80,14 @@ export default function Products() {
     <div className="px-6 lg:px-12 py-8 bg-gray-50 min-h-screen">
       {/* Breadcrumb */}
       <div className="mb-6">
-        <BreadcrumbWithCustomSeparator />
+        <Breadcrumb />
       </div>
 
       {/* Categories + Chips */}
-      <CategoryTabs />
+      <div className="mt-4 mb-8 relative">
+        <CategoryTabs />
+      </div>
+
       <div className="mt-4 mb-8">
         <FilterChips />
       </div>

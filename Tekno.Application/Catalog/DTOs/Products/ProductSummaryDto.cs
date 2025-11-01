@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Tekno.Application.Catalog.DTOs
+namespace Tekno.Application.Catalog.DTOs.Products
 {
     public class ProductSummaryDto
     {
@@ -16,7 +16,6 @@ namespace Tekno.Application.Catalog.DTOs
         public string Slug { get; set; } = string.Empty;
         public decimal BasePrice { get; set; }
         public decimal? DiscountPercent { get; set; }
-        [JsonIgnore]
         public decimal FinalPrice => DiscountPercent.HasValue
        ? Math.Round(BasePrice * (1 - DiscountPercent.Value / 100), 2)
        : BasePrice;
