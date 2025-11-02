@@ -7,6 +7,7 @@ import FilterCategories from "@/components/product/FilterCategories";
 import ProductCard from "@/components/product/ProductCard";
 import { Product } from "@/type/product";
 import { Breadcrumb } from "@/components/share/breadcumbCustom";
+import { Container } from "@/components/MainLayout/Container";
 
 export default function Products() {
   const products: Product[] = [
@@ -77,40 +78,40 @@ export default function Products() {
   ];
 
   return (
-    <div className="px-6 lg:px-12 py-8 bg-gray-50 min-h-screen">
-      {/* Breadcrumb */}
-      <div className="mb-6">
-        <Breadcrumb />
-      </div>
+    <>
+      {/* Breadcrumb nằm ngoài grid để full width nếu muốn */}
+      {/* <div className="bg-gray-50 py-4 mb-6">
+        <Container></Container>
+      </div> */}
 
-      {/* Categories + Chips */}
-      <div className="mt-4 mb-8 relative">
-        <CategoryTabs />
-      </div>
-
-      <div className="mt-4 mb-8">
-        <FilterChips />
-      </div>
-
-      <div className="grid lg:grid-cols-4 gap-8">
+      {/* Container chính */}
+      <Container>
+        <div className="col-span-12">
+          <Breadcrumb />
+        </div>
         {/* Sidebar */}
-        <aside className="hidden lg:block">
+        <aside className="hidden lg:block col-span-3">
           <FilterCategories />
         </aside>
 
-        {/* Main Content */}
-        <section className="lg:col-span-3">
-          {/* Toolbar */}
-          <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-4 mb-6 flex items-center justify-between flex-wrap gap-4">
+        {/* Content chính */}
+        <section className="col-span-12 lg:col-span-9 space-y-8">
+          {/* Bộ lọc */}
+          <div>
+            <CategoryTabs />
+            <FilterChips />
+          </div>
+
+          {/* Thanh công cụ */}
+          <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-wrap justify-between items-center gap-4 shadow-sm">
             <p className="text-gray-600 text-sm">
               Showing <span className="font-semibold text-gray-800">254</span>{" "}
               results
             </p>
 
             <div className="flex items-center gap-4">
-              {/* View Toggle */}
               <div className="flex items-center gap-1 border border-gray-300 rounded-lg p-1 bg-gray-50">
-                <button className="p-2 bg-primary text-white rounded transition hover:bg-primary/90">
+                <button className="p-2 bg-primary text-white rounded hover:bg-primary/90 transition">
                   <Grid3x3 className="w-4 h-4" />
                 </button>
                 <button className="p-2 text-gray-600 hover:bg-gray-100 rounded transition">
@@ -118,7 +119,6 @@ export default function Products() {
                 </button>
               </div>
 
-              {/* Sort */}
               <div className="relative">
                 <select className="appearance-none px-4 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer bg-white">
                   <option>Sort by: Featured</option>
@@ -132,14 +132,14 @@ export default function Products() {
             </div>
           </div>
 
-          {/* Products Grid */}
+          {/* Danh sách sản phẩm */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
 
-          {/* Pagination */}
+          {/* Phân trang */}
           <div className="flex justify-center items-center gap-2 mt-10">
             <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-sm transition">
               Previous
@@ -158,7 +158,7 @@ export default function Products() {
             </button>
           </div>
         </section>
-      </div>
-    </div>
+      </Container>
+    </>
   );
 }
