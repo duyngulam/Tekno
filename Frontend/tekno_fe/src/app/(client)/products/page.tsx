@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Grid3x3, List, ChevronDown } from "lucide-react";
 import { FilterChips } from "@/components/product/FilterChips";
 import { CategoryTabs } from "@/components/product/CategoryTabs";
@@ -8,86 +8,32 @@ import ProductCard from "@/components/product/ProductCard";
 import { Product } from "@/type/product";
 import { Breadcrumb } from "@/components/share/breadcumbCustom";
 import { Container } from "@/components/MainLayout/Container";
+import { getProductList } from "@/services/products";
+import Link from "next/link";
 
 export default function Products() {
-  const products: Product[] = [
-    {
-      id: 1,
-      name: 'MacBook Pro 16" M2 Max',
-      slug: "macbook-pro-16-m2-max",
-      basePrice: 2499,
-      overview:
-        "Powerful laptop with Apple M2 Max chip and Liquid Retina XDR display.",
-      brandName: "Apple",
-      primaryImageUrl:
-        "https://images.unsplash.com/photo-1754928864131-21917af96dfd?w=400",
-    },
-    {
-      id: 2,
-      name: 'iPad Pro 12.9" 256GB',
-      slug: "ipad-pro-12-9-256gb",
-      basePrice: 1099,
-      overview: "High-performance tablet with M2 chip and ProMotion display.",
-      brandName: "Apple",
-      primaryImageUrl:
-        "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400",
-    },
-    {
-      id: 3,
-      name: "Sony WH-1000XM5 Headphones",
-      slug: "sony-wh-1000xm5-headphones",
-      basePrice: 349,
-      overview:
-        "Noise-cancelling wireless headphones with exceptional sound quality.",
-      brandName: "Sony",
-      primaryImageUrl:
-        "https://images.unsplash.com/photo-1660391532247-4a8ad1060817?w=400",
-    },
-    {
-      id: 4,
-      name: "Logitech MX Master 3S",
-      slug: "logitech-mx-master-3s",
-      basePrice: 99,
-      overview:
-        "Ergonomic wireless mouse with advanced precision and quiet clicks.",
-      brandName: "Logitech",
-      primaryImageUrl:
-        "https://images.unsplash.com/photo-1660491083562-d91a64d6ea9c?w=400",
-    },
-    {
-      id: 5,
-      name: "Samsung Galaxy S24 Ultra",
-      slug: "samsung-galaxy-s24-ultra",
-      basePrice: 1199,
-      overview:
-        "Flagship smartphone with pro-grade camera and AI-powered performance.",
-      brandName: "Samsung",
-      primaryImageUrl:
-        "https://images.unsplash.com/photo-1675953935267-e039f13ddd79?w=400",
-    },
-    {
-      id: 6,
-      name: 'Dell UltraSharp 27" 4K',
-      slug: "dell-ultrasharp-27-4k",
-      basePrice: 599,
-      overview: "27-inch 4K monitor with ultra-thin bezels and color accuracy.",
-      brandName: "Dell",
-      primaryImageUrl:
-        "https://images.unsplash.com/photo-1593833210845-d9935371664e?w=400",
-    },
-  ];
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      const data = await getProductList();
+      //const data = await res.json();
+      setProducts(data);
+    }
+    fetchProducts();
+  }, []);
 
   return (
     <>
-      {/* Breadcrumb nằm ngoài grid để full width nếu muốn */}
-      {/* <div className="bg-gray-50 py-4 mb-6">
-        <Container></Container>
-      </div> */}
-
       {/* Container chính */}
       <Container>
         <div className="col-span-12">
           <Breadcrumb />
+        </div>
+
+        <div className="col-span-12">
+          <CategoryTabs />
+          <FilterChips />
         </div>
         {/* Sidebar */}
         <aside className="hidden lg:block col-span-3">
@@ -97,10 +43,6 @@ export default function Products() {
         {/* Content chính */}
         <section className="col-span-12 lg:col-span-9 space-y-8">
           {/* Bộ lọc */}
-          <div>
-            <CategoryTabs />
-            <FilterChips />
-          </div>
 
           {/* Thanh công cụ */}
           <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-wrap justify-between items-center gap-4 shadow-sm">
