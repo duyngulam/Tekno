@@ -7,6 +7,7 @@ using Nest;
 using Tekno.Application.Catalog.DTOs.Products;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Common.Paging;
+using Tekno.Domain.Catalog;
 
 namespace Tekno.Infrastructure.Search
 {
@@ -47,58 +48,134 @@ namespace Tekno.Infrastructure.Search
                 var fullProduct = await _productRepository.GetProductBySlugAsync(product.Slug);
                 var specsJson = fullProduct?.Detail?.Specs;
 
+                bool fallbackParse = false;
+
                 if (!string.IsNullOrWhiteSpace(specsJson))
                 {
-                    // Deserialize as Dictionary<string, string[]> (array of values)
+                    // try deserialize to list of ProductAttributeDto (Name + Value[])
                     try
                     {
-                        var dict = JsonSerializer.Deserialize<Dictionary<string, string[]>>(specsJson);
-                        if (dict != null)
+                        var list = JsonSerializer.Deserialize<List<ProductAttributeDto>>(specsJson);
+                        if (list != null && list.Any())
                         {
-                            foreach (var kv in dict)
+                            foreach (var item in list)
                             {
-                                var name = kv.Key?.Trim().ToLowerInvariant() ?? string.Empty;
-                                var values = kv.Value?.Where(v => !string.IsNullOrWhiteSpace(v))
-                                                      .Select(v => v.Trim().ToLowerInvariant())
-                                                      .ToList() ?? new List<string>();
-
+                                var name = (item.Name ?? string.Empty).Trim().ToLowerInvariant();
+                                var values = (item.Value ?? new List<string>()).Where(v => !string.IsNullOrWhiteSpace(v))
+                                                                          .Select(v => v.Trim().ToLowerInvariant())
+                                                                          .Distinct()
+                                                                          .ToList();
                                 if (!string.IsNullOrEmpty(name) && values.Any())
                                 {
-                                    doc.Specs.Add(new ProductAttributeDto
-                                    {
-                                        Name = name,
-                                        Value = values
-                                    });
+                                    doc.Specs.Add(new ProductAttributeDto { Name = name, Value = values });
                                 }
                             }
+                        }
+                        else
+                        {
+                            // fallback to other shapes below
+                            fallbackParse = true;
                         }
                     }
                     catch (JsonException)
                     {
-                        // fallback: single string values
-                        var dict2 = JsonSerializer.Deserialize<Dictionary<string, string>>(specsJson);
-                        if (dict2 != null)
+                        // not array-of-objects -> try other shapes
+                        fallbackParse = true;
+                    }
+
+                    if (fallbackParse)
+                    {
+                        try
                         {
-                            foreach (var kv in dict2)
+                            // try dictionary<string,string[]>
+                            var dictArr = JsonSerializer.Deserialize<Dictionary<string, string[]>>(specsJson);
+                            if (dictArr != null && dictArr.Any())
                             {
-                                var name = kv.Key?.Trim().ToLowerInvariant() ?? string.Empty;
-                                var value = kv.Value?.Trim().ToLowerInvariant() ?? string.Empty;
-                                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(value))
+                                foreach (var kv in dictArr)
                                 {
-                                    doc.Specs.Add(new ProductAttributeDto
+                                    var name = (kv.Key ?? string.Empty).Trim().ToLowerInvariant();
+                                    var values = (kv.Value ?? Array.Empty<string>()).Where(v => !string.IsNullOrWhiteSpace(v))
+                                                                               .Select(v => v.Trim().ToLowerInvariant())
+                                                                               .Distinct()
+                                                                               .ToList();
+                                    if (!string.IsNullOrEmpty(name) && values.Any())
                                     {
-                                        Name = name,
-                                        Value = new List<string> { value }
-                                    });
+                                        doc.Specs.Add(new ProductAttributeDto { Name = name, Value = values });
+                                    }
                                 }
                             }
+                            else
+                            {
+                                // try dictionary<string,string>
+                                var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(specsJson);
+                                if (dict != null && dict.Any())
+                                {
+                                    foreach (var kv in dict)
+                                    {
+                                        var name = (kv.Key ?? string.Empty).Trim().ToLowerInvariant();
+                                        var value = (kv.Value ?? string.Empty).Trim().ToLowerInvariant();
+                                        if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(value))
+                                        {
+                                            doc.Specs.Add(new ProductAttributeDto { Name = name, Value = new List<string> { value } });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            // ignore parse errors; will fallback to attribute relation below if needed
+                        }
+                    }
+                }
+
+                // 2) Fallback: if no JSON specs, build specs from Product -> Variants -> VariantAttributes -> Attribute & Value
+                if ((doc.Specs == null) || !doc.Specs.Any())
+                {
+                    if (fullProduct != null)
+                    {
+                        var map = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+
+                        // collect attribute values from variants
+                        if (fullProduct.Variants != null)
+                        {
+                            foreach (var variant in fullProduct.Variants)
+                            {
+                                if (variant.VariantAttributes == null) continue;
+                                foreach (var va in variant.VariantAttributes)
+                                {
+                                    var attrName = va.Attribute?.Name?.Trim();
+                                    var val = va.Value?.Value?.Trim(); // AttributeValue.Value property name assumed 'Value'
+                                    if (string.IsNullOrEmpty(attrName) || string.IsNullOrEmpty(val)) continue;
+
+                                    var key = attrName.ToLowerInvariant();
+                                    var v = val.ToLowerInvariant();
+
+                                    if (!map.TryGetValue(key, out var set))
+                                    {
+                                        set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                                        map[key] = set;
+                                    }
+                                    set.Add(v);
+                                }
+                            }
+                        }
+
+                        // map -> doc.Specs
+                        foreach (var kv in map)
+                        {
+                            doc.Specs.Add(new ProductAttributeDto
+                            {
+                                Name = kv.Key.Trim().ToLowerInvariant(),
+                                Value = kv.Value.Select(x => x.Trim().ToLowerInvariant()).Distinct().ToList()
+                            });
                         }
                     }
                 }
             }
             catch
             {
-                // ignore DB errors here
+                // ignore DB errors here (optionally log)
             }
 
             var indexResp = await _client.IndexAsync(doc, i => i.Index(IndexName).Id(doc.Id));
@@ -140,7 +217,6 @@ namespace Tekno.Infrastructure.Search
                     Fields = Infer.Fields<ProductSearchDocument>(p => p.Name),
                     Query = keyword,
                     Fuzziness = Fuzziness.Auto,
-                    Operator = Operator.And
                 });
             }
 
