@@ -8,6 +8,7 @@ using Tekno.Application.Catalog.DTOs;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Common.Cache;
 using Tekno.Application.Common.Exceptions;
+using Tekno.Application.Common.Media.Services;
 using Tekno.Domain.Catalog;
 
 namespace Tekno.Application.Catalog.Services
@@ -17,6 +18,7 @@ namespace Tekno.Application.Catalog.Services
         private readonly ICategoryRepository _categoryRepository;
         private readonly IMapper _mapper;
         private readonly ICacheService _cache;
+        private readonly MediaService _mediaService;
         public CategoryService(ICategoryRepository categoryRepository, IMapper mapper, ICacheService cacheService)
         {
             _categoryRepository = categoryRepository;

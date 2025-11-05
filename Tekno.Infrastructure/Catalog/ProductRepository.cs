@@ -90,6 +90,12 @@ namespace Tekno.Infrastructure.Catalog
         {
             return await _context.Products
                 .Include(p => p.Detail)
+                .Include(p => p.Brand)
+                .Include(p => p.Category)
+                .Include(p => p.Images)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.VariantAttributes)
+                        .ThenInclude(va => va.Attribute)
                 .ToListAsync();
         }
     }

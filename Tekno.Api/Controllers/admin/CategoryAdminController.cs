@@ -75,17 +75,39 @@ namespace Tekno.Api.Controllers.admin
             };
 
             var created = await _categoryService.CreateAsync(categoryDto);
-            var mapped = _mapper.Map<CategoryTreeDto>(_mapper.Map<CategoryDto>(created));
-            return Ok(ApiResponse<CategoryTreeDto>.Ok(mapped, "Category created successfully"));
+            var mapped = _mapper.Map<CategoryDto>(_mapper.Map<CategoryDto>(created));
+            return Ok(ApiResponse<CategoryDto>.Ok(mapped, "Category created successfully"));
         }
 
         [HttpPut("update")]
         public async Task<IActionResult> UpdateCategory([FromBody] UpdateCategoryApiDto apiDto)
         {
-            var categoryDto = _mapper.Map<CategoryDto>(apiDto);
+            var existingCategory = await _categoryService.GetCategoryByIdAsync(apiDto.Id);
+            if (existingCategory == null)
+            {
+                return NotFound(ApiResponse<UpdateCategoryApiDto>.Fail("Category not found"));
+            }
+            var iconPath = "";
+            if (apiDto.IconFile != null)
+            {
+                var iconUrl = await _Media.UploadCategoryIconAsync(apiDto.IconFile);
+                iconPath = iconUrl;
+            }
+            var categoryDto = new CategoryDto
+            {
+                Id = apiDto.Id,
+                Name = apiDto.Name,
+                Slug = apiDto.Slug,
+                ParentId = apiDto.ParentId,
+                IconPath = string.IsNullOrEmpty(iconPath) ? existingCategory.IconPath : iconPath
+            };
             var updated = await _categoryService.UpdateAsync(categoryDto);
             if (!updated)
             {
+                if (!string.IsNullOrEmpty(iconPath))
+                {
+                    await _Media.DeleteImageAsync(iconPath);
+                }
                 return BadRequest(ApiResponse<UpdateCategoryApiDto>.Fail("Failed to update category"));
             }
             return Ok(ApiResponse<UpdateCategoryApiDto>.Ok(apiDto, "Category updated successfully"));

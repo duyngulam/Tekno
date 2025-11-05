@@ -15,6 +15,6 @@ namespace Tekno.Api.Models.Catalog.Admin
 
         public int? ParentId { get; set; }
 
-        public string? IconPath { get; set; }
+        public IFormFile? IconFile { get; set; }
     }
 }
