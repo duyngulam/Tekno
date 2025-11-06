@@ -5,15 +5,27 @@ import Image from "next/image";
 import React, { useState } from "react";
 import { Search, ShoppingBasket, UserRound } from "lucide-react";
 import { usePathname } from "next/navigation";
-import AuthModal from "../auth/AuthModal";
+
 import { useAuth } from "@/hook/useAuth";
 import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { AuthModal } from "../auth/AuthModal";
+import LoginForm from "../auth/LoginForm";
+import SignUpForm from "../auth/SignUpForm";
 
 const Header = () => {
   const { user, isAuthenticated, logout } = useAuth();
 
   const pathname = usePathname();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [mode, setMode] = useState<"login" | "register">("login");
 
   const navItems = [
     { href: "/", label: "Home" },
@@ -73,16 +85,28 @@ const Header = () => {
             </Button>
           </div>
         ) : (
-          <Button
-            //className="bg-primary text-white py-2 px-4 rounded-md hover:bg-primary/60 active:bg-primary"
-            onClick={() => setIsLoginOpen(true)}
-          >
-            Login / Sign Up
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button onClick={() => setMode("login")}>Đăng nhập</Button>
+            </DialogTrigger>
+            <hr></hr>
+            <DialogTrigger asChild>
+              <Button onClick={() => setMode("register")}>Đăng kí</Button>
+            </DialogTrigger>
+            <DialogContent
+              onInteractOutside={(e) => e.preventDefault()}
+              onEscapeKeyDown={(e) => e.preventDefault()}
+            >
+              {/* <AuthModal mode={mode} /> */}
+              {mode === "login" ? (
+                <LoginForm switchToRegister={() => setMode("register")} />
+              ) : (
+                <SignUpForm switchToLogin={() => setMode("login")} />
+              )}
+            </DialogContent>
+          </Dialog>
         )}
       </div>
-      {/* AuthModal renders outside the flex row, so it overlays the page */}
-      <AuthModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </div>
   );
 };
