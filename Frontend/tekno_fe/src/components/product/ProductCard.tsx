@@ -9,7 +9,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   return (
-    <div className="relative bg-white rounded-2xl shadow-md hover:shadow-lg transition flex flex-col w-60 h-fit group">
+    <div className="relative bg-white rounded-2xl shadow-md hover:shadow-lg transition flex flex-col w-70 h-fit group">
       {/* --- Badge giảm giá --- */}
       <div className="absolute z-10 top-3 bg-blue-100 text-blue-600 text-sm font-semibold px-2 py-1 rounded-r-lg">
         -12%
@@ -19,7 +19,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* --- Ảnh sản phẩm --- */}
         <div className="relative w-full h-44 mt-5 overflow-hidden rounded-lg flex items-center justify-center">
           <img
-            src={product.primaryImageUrl}
+            src={product.primaryImagePath}
             alt={product.name}
             width={256}
             height={190}

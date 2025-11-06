@@ -39,7 +39,7 @@ export default function Page() {
         <section className="col-span-12 md:col-span-9 space-y-6">
           <Accordion type="multiple">
             <AccordionItem value="item-1">
-              <AccordionTrigger className="text-yellow-700 font-medium">
+              <AccordionTrigger className="text-primary font-medium">
                 Is it accessible?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700">
@@ -48,7 +48,7 @@ export default function Page() {
             </AccordionItem>
 
             <AccordionItem value="item-2">
-              <AccordionTrigger className="text-yellow-700 font-medium">
+              <AccordionTrigger className="text-primary font-medium">
                 How secure is my information?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700">

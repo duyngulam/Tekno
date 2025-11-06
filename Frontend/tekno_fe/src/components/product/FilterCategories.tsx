@@ -1,7 +1,27 @@
 import { Search, SlidersHorizontal } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { Checkbox } from "../ui/checkbox";
+import { Label } from "../ui/label";
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Brand } from "@/type/brand";
+import { getBrandList } from "@/services/brand";
 
 export default function FilterCategories() {
+  const [brandList, setbrandList] = useState<Brand[]>([]);
+
+  useEffect(() => {
+    async function fetchBrandList() {
+      const data = await getBrandList();
+      setbrandList(data.data);
+    }
+    fetchBrandList();
+  }, []);
   return (
     <div>
       <aside className="lg:col-span-1">
@@ -16,17 +36,31 @@ export default function FilterCategories() {
             </button>
           </div>
 
-          {/* Search */}
-          <div className="mb-6">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
-            </div>
-          </div>
+          <Accordion
+            type="multiple"
+            defaultValue={[
+              "brand",
+              "color",
+              "ram",
+              "screen",
+              "processor",
+              "gpu",
+              "drive",
+            ]}
+          >
+            <AccordionItem value="brand">
+              <AccordionTrigger>Brand</AccordionTrigger>
+              <AccordionContent>
+                {brandList &&
+                  brandList.map((brand) => (
+                    <div className="flex items-center space-x-2 space-y-2">
+                      <Checkbox id={brand.id.toString()} />
+                      <Label htmlFor={brand.id.toString()}>{brand.name}</Label>
+                    </div>
+                  ))}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
           {/* Categories */}
           <div className="mb-6 pb-6 border-b border-gray-200">
@@ -80,6 +114,10 @@ export default function FilterCategories() {
           <div className="mb-6 pb-6 border-b border-gray-200">
             <h4 className="mb-3">Brands</h4>
             <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox id="terms" />
+                <Label htmlFor="terms">Accept terms and conditions</Label>
+              </div>
               {/* {brands.map((brand, index) => (
                 <label
                   key={index}

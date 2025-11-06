@@ -18,9 +18,30 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useEffect, useState } from "react";
+import { getProductDetail } from "@/services/products";
+import { ProductDetail } from "@/type/product";
 
 export default function ProductDetailPage() {
   const { slug } = useParams(); // 👈 lấy slug từ URL
+
+  const [product, setProduct] = useState<ProductDetail | null>(null);
+
+  useEffect(() => {
+    const fetchProductDetail = async () => {
+      try {
+        const data = await getProductDetail(slug?.toString() || "");
+        setProduct(data);
+      } catch (error) {
+        console.error("Error fetching product detail:", error);
+      }
+    };
+
+    fetchProductDetail();
+  }, [slug]); //Thay doi khi slug thay doi
+
+  if (!product) return <p>Đang tải sản phẩm...</p>;
+  console.log("Product Detail:", product);
 
   return (
     <>
@@ -33,7 +54,9 @@ export default function ProductDetailPage() {
         <div className="col-span-9">
           <div className="flex gap-4">
             <div className="flex-5">Image</div>
-            <div className="flex-4">Info</div>
+            <div className="flex-4 border-amber-700">
+              <p>{product.name}</p>
+            </div>
           </div>
           {/* Technical Details*/}
           <div className="">

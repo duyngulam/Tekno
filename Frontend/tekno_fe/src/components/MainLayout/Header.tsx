@@ -87,11 +87,15 @@ const Header = () => {
         ) : (
           <Dialog>
             <DialogTrigger asChild>
-              <Button onClick={() => setMode("login")}>Đăng nhập</Button>
+              <Button variant="ghost" onClick={() => setMode("login")}>
+                Đăng nhập
+              </Button>
             </DialogTrigger>
             <hr></hr>
             <DialogTrigger asChild>
-              <Button onClick={() => setMode("register")}>Đăng kí</Button>
+              <Button variant="ghost" onClick={() => setMode("register")}>
+                Đăng kí
+              </Button>
             </DialogTrigger>
             <DialogContent
               onInteractOutside={(e) => e.preventDefault()}
