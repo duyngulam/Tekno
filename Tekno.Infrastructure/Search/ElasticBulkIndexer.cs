@@ -83,7 +83,7 @@ namespace Tekno.Infrastructure.Search
                 {
                     Id = product.Id,
                     Name = product.Name,
-                    Slug = product.Slug?.ToLowerInvariant() ?? string.Empty,
+                    Slug = product.Slug?.ToLowerInvariant() ?? string.Empty, 
                     Brand = product.Brand?.Name?.ToLowerInvariant() ?? string.Empty,
                     Category = product.Category?.Name?.ToLowerInvariant() ?? string.Empty,
                     Price = product.BasePrice,
