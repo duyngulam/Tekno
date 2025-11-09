@@ -68,19 +68,17 @@ export function CategoryTabs({ onCategoryChange }: CategoryTabsProps) {
                     value={cat.slug}
                     className="
                       relative flex flex-col items-center justify-center 
-                      text-center px-3 py-2 text-gray-600 
-                      data-[state=active]:text-primary
-                      data-[state=hover]:text-secondary 
+                      text-center px-3 py-2 text-gray-900 
                       w-20 break-words
                     "
                   >
                     <img
                       src={cat.iconPath}
                       alt={cat.slug}
-                      className="w-7 h-7"
+                      className="w-7 h-7 "
                     ></img>
 
-                    <span className="text-[11px] font-medium leading-tight pt-3">
+                    <span className="text-[14px] font-medium leading-tight pt-3">
                       {cat.name}
                     </span>
                     <span

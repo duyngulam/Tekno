@@ -305,6 +305,9 @@
     line-height: var(--line-height-normal);
     font-weight: var(--font-weight-normal);
   }
+  .hoverEffect{
+    @apply transition-all duration-300 ease-in-out;
+  }
 }
 
 /**
