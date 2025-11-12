@@ -5,7 +5,7 @@ export default function MobileMenu() {
   return (
     <>
       <button>
-        <AlignLeft className="md:hidden md:gap-0 hover:text-primary hoverEffect" />
+        <AlignLeft className="md:hidden hover:text-primary hoverEffect" />
       </button>
     </>
   );

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import React from "react";
-import logo from "../../asset/MainLogo.png";
+import logo from "../../../asset/MainLogo.png";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 

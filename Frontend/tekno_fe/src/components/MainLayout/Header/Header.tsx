@@ -1,13 +1,9 @@
 "use client";
-import Link from "next/link";
-import logo from "../../../src/asset/MainLogo.png";
-import Image from "next/image";
 import React, { useState } from "react";
 import { Search, ShoppingBasket, UserRound } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { useAuth } from "@/hook/useAuth";
-import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
@@ -16,10 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { AuthModal } from "../auth/AuthModal";
-import LoginForm from "../auth/LoginForm";
-import SignUpForm from "../auth/SignUpForm";
-import { Container } from "./Container";
+import { Container } from "../Container";
 import Logo from "./Logo";
 import HeaderMenu from "./HeaderMenu";
 import SearchBar from "./SearchBar";
@@ -119,7 +112,7 @@ const Header = () => {
     //     )}
     //   </div>
     // </header>
-    <header className="bg-white border-b border-b-secondary py-5">
+    <header className="bg-white/70 md:border-b md:border-b-secondary py-5 sticky top-0 z-50 backdrop-blur-md">
       <Container className="flex items-center justify-between">
         {/* logo */}
         <div className="w-auto md:w-1/3 flex items-center gap-2.5 justify-start md:gap-0">

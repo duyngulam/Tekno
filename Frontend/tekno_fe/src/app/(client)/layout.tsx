@@ -1,14 +1,19 @@
 // layout cho client
-import Header from "@/components/MainLayout/Header";
+import Header from "@/components/MainLayout/Header/Header";
 import "../../styles/globals.css";
-import Footer from "@/components/MainLayout/Footer";
+import Footer from "@/components/MainLayout/Footer/Footer";
 import { AuthProvider } from "@/context/AuthContext";
 import { Breadcrumb } from "@/components/share/breadcumbCustom";
 import { Container } from "@/components/MainLayout/Container";
+import { Metadata } from "next";
 
 // Đặt metadata cho layout
-export const metadata = {
-  title: "Tekno",
+export const metadata: Metadata = {
+  title: {
+    template: "%s - Tekno online store",
+    default: "Tekno - online store",
+  },
+  description: "technology online shopping",
 };
 
 export default function ClientLayout({
@@ -20,9 +25,11 @@ export default function ClientLayout({
     <html lang="en" className="h-full">
       <body className="bg-white text-gray-900 flex flex-col min-h-screen">
         <AuthProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
         </AuthProvider>
       </body>
     </html>
