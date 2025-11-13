@@ -1,8 +1,13 @@
 import Login from "@/components/auth/LoginForm";
-import CategoryTabBar from "@/components/landing/CategoryTabBar";
 import HomeBanner from "@/components/landing/HomeBanner";
 import { Container } from "@/components/MainLayout/Container";
-import { Breadcrumb } from "@/components/share/breadcumbCustom";
+import HomeCategoryTabBar from "@/components/landing/HomeCategoryTabBar";
+import ProductsOnSale from "@/components/landing/ProductsOnSale";
+import NewProducts from "@/components/landing/NewProducts";
+import BestSell from "@/components/landing/BestSell";
+import TopBrand from "@/components/landing/TopBrand";
+import FooterTop from "@/components/MainLayout/Footer/FooterTop";
+import OurBlogs from "@/components/landing/OurBlogs";
 
 // HomePage
 export default function Home() {
@@ -10,8 +15,14 @@ export default function Home() {
     <Container>
       <HomeBanner />
       <div className="space-y-10 py-10">
-        <CategoryTabBar />
+        <HomeCategoryTabBar />
+        <ProductsOnSale />
+        <NewProducts />
+        <BestSell />
+        <TopBrand />
+        <OurBlogs />
       </div>
+      <FooterTop />
     </Container>
   );
 }

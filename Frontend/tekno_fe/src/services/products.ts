@@ -1,9 +1,9 @@
 const API_BASE_URL = "http://localhost:5000/api"; // đổi theo API thật của bạn
 
 // services/products.ts
-export async function getProductsList(page:number, pageSize: number, selectedCategory: string, sortBy: string) {
+export async function getProductsList(page?:number, pageSize?: number, selectedCategory?: string, sortBy?: string) {
 try {
-    const res = await fetch(`http://localhost:5000/api/products?Page=${page}&PageSize=${pageSize}&Category=${selectedCategory} `, {
+    const res = await fetch(`http://localhost:5000/api/products?Page=${page}&PageSize=${pageSize}&Category=${selectedCategory}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
