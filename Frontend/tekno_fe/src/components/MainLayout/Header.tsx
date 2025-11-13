@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import logo from "../../../src/asset/MainLogo.png";
+import logo from "@asset/MainLogo.png";
 import Image from "next/image";
 import React, { useState } from "react";
 import { Search, ShoppingBasket, UserRound } from "lucide-react";
