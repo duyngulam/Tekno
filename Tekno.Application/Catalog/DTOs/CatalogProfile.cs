@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Tekno.Domain.Catalog;
 using Tekno.Application.Catalog.DTOs;
 using Tekno.Application.Catalog.DTOs.Products;
+using Tekno.Application.Catalog.DTOs.Admin;
 
 namespace Tekno.Application.Catalog.DTOs
 {
@@ -35,12 +36,13 @@ namespace Tekno.Application.Catalog.DTOs
                     src.Images.FirstOrDefault(i => i.IsPrimary) != null
                         ? src.Images.First(i => i.IsPrimary).ImageUrl
                         : "https://i.pinimg.com/736x/bd/e2/b8/bde2b888e9f57b2eee6f5ce3c90ce400.jpg"))
-                .ForMember(dest => dest.DiscountPercent, opt => opt.MapFrom(src => src.DiscountPercent));
+                .ForMember(dest => dest.DiscountPercent, opt => opt.MapFrom(src => src.DiscountPercent))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt));
 
             // ===== ProductVariant =====
             CreateMap<ProductVariant, ProductVariantDto>()
                 .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src => src.VariantAttributes))
-                .ForMember(dest => dest.Stock, opt => opt.MapFrom(src => src.Stock > 0)); // vì Stock là bool trong DTO
+                .ForMember(dest => dest.Stock, opt => opt.MapFrom(src => src.Stock));
 
             // ===== ProductVariantAttribute → ProductAttributeDto =====
             // Map the selected value (the variant's actual value), not all possible attribute values.
@@ -50,7 +52,6 @@ namespace Tekno.Application.Catalog.DTOs
                     src.Value != null
                         ? new List<string> { src.Value.Value ?? string.Empty }
                         : new List<string>()));
-
             // ===== ProductDetail =====
             CreateMap<Product, ProductDetailDto>()
                 .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.Brand.Name))
@@ -58,11 +59,34 @@ namespace Tekno.Application.Catalog.DTOs
                 .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.Images.Select(i => i.ImageUrl)))
                 .ForMember(dest => dest.Variants, opt => opt.MapFrom(src => src.Variants))
                 .ForMember(dest => dest.Specs, opt => opt.MapFrom((src, dest) =>
-                    (src.Detail != null && !string.IsNullOrWhiteSpace(src.Detail.Specs))
-                        ? JsonSerializer.Deserialize<List<ProductAttributeDto>>(src.Detail.Specs)
-                        ?? new List<ProductAttributeDto>()
-                        : BuildSpecsFromVariants(src)
-                ));
+                {
+                    if (string.IsNullOrWhiteSpace(src.Specs))
+                    {
+                        // KẾT QUẢ 3: Trả về logic fallback
+                        return BuildSpecsFromVariants(src);
+                    }
+
+                    try
+                    {
+                        // KẾT QUẢ 1 & 2: Cố gắng Deserialize và xử lý null
+                        return JsonSerializer.Deserialize<List<ProductAttributeDto>>(src.Specs)
+                               ?? new List<ProductAttributeDto>();
+                    }
+                    catch (JsonException)
+                    {
+                        return new List<ProductAttributeDto>();
+                    }
+                }));
+            // ===== CreateProduct =====
+            // Map from domain to DTO (ignore Images mapping)
+            CreateMap<Product, CreateProductDto>()
+                .ForMember(dest => dest.Images, opt => opt.Ignore());
+
+            // Map from DTO to domain. Images (IFormFile) must be uploaded and converted to ProductImage separately.
+            CreateMap<CreateProductDto, Product>()
+                .ForMember(dest => dest.Images, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
         }
 
         private static List<ProductAttributeDto> BuildSpecsFromVariants(Product src)

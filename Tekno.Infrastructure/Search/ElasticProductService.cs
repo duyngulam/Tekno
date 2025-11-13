@@ -40,13 +40,17 @@ namespace Tekno.Infrastructure.Search
                 Price = product.FinalPrice,
                 ImageUrl = product.PrimaryImagePath ?? string.Empty,
                 DiscountPercent = product.DiscountPercent.HasValue ? (int)product.DiscountPercent.Value : 0,
-                Specs = new List<ProductAttributeDto>()
+                Specs = new List<ProductAttributeDto>(),
+                CreatedAt = product.CreatedAt
             };
 
             try
             {
                 var fullProduct = await _productRepository.GetProductBySlugAsync(product.Slug);
-                var specsJson = fullProduct?.Detail?.Specs;
+                // set created date from DB product (fallback to UtcNow)
+                doc.CreatedAt = fullProduct?.CreatedAt ?? DateTime.UtcNow;
+
+                var specsJson = fullProduct?.Specs;
 
                 bool fallbackParse = false;
 
@@ -193,6 +197,28 @@ namespace Tekno.Infrastructure.Search
                 throw new Exception($"Elasticsearch delete error: {resp.ServerError?.ToString() ?? resp.OriginalException?.Message}");
             }
         }
+        public async Task<bool> IsProductExistBySlug(string slug)
+        { 
+            var normalizedSlug = (slug ?? string.Empty).Trim().ToLowerInvariant();
+
+            if (string.IsNullOrEmpty(normalizedSlug))
+            {
+                return false;
+            }
+
+            var resp = await _client.CountAsync<ProductSearchDocument>(c => c
+                .Index(IndexName)
+                .Query(q => q
+                    .Term(t => t.Field(p => p.Slug).Value(normalizedSlug))
+                )
+            );
+
+            if (!resp.IsValid)
+            {
+                return false;
+            }
+            return resp.Count > 0;
+        }
 
         public async Task<PagedResult<ProductSummaryDto>> SearchProductsAsync(
             string? keyword,
@@ -201,6 +227,7 @@ namespace Tekno.Infrastructure.Search
             Dictionary<string, string>? filters,
             decimal? minPrice,
             decimal? maxPrice,
+            string? sort,
             int page,
             int pageSize)
         {
@@ -270,12 +297,63 @@ namespace Tekno.Infrastructure.Search
                     Filter = filterQueries
                 };
 
+            // capture sort parts
+            var sortField = "date";
+            var sortDir = "desc";
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                var parts = sort.ToLowerInvariant().Split(new[] { '_', ':' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length > 0) sortField = parts[0];
+                if (parts.Length > 1) sortDir = parts[1] == "asc" ? "asc" : "desc";
+            }
+
             var resp = await _client.SearchAsync<ProductSearchDocument>(s => s
                 .Index(IndexName)
                 .From(from)
                 .Size(pageSize)
                 .TrackTotalHits()
                 .Query(q => finalQuery)
+                .Sort(sd =>
+                {
+                    // If no explicit sort and keyword exists, sort by relevance (_score)
+                    if (string.IsNullOrWhiteSpace(sort))
+                    {
+                        if (!string.IsNullOrWhiteSpace(keyword))
+                            return sd.Descending(SortSpecialField.Score);
+                        // default: no sort (or you can choose price/created default)
+                        return sd;
+                    }
+
+                    // map supported sort fields (price or date)
+                    switch (sortField)
+                    {
+                        case "price":
+                            return sortDir == "asc"
+                                ? sd.Field(f => f.Field(p => p.Price).Order(SortOrder.Ascending))
+                                : sd.Field(f => f.Field(p => p.Price).Order(SortOrder.Descending));
+                        case "date":
+                        case "created":
+                        case "createdat":
+                            return sortDir == "asc"
+                                ? sd.Field(f => f.Field(p => p.CreatedAt).Order(SortOrder.Ascending))
+                                : sd.Field(f => f.Field(p => p.CreatedAt).Order(SortOrder.Descending));
+                        // keep other cases if needed
+                        case "discount":
+                        case "discountpercent":
+                            return sortDir == "asc"
+                                ? sd.Field(f => f.Field(p => p.DiscountPercent).Order(SortOrder.Ascending))
+                                : sd.Field(f => f.Field(p => p.DiscountPercent).Order(SortOrder.Descending));
+                        case "rating":
+                            return sortDir == "asc"
+                                ? sd.Field(f => f.Field(p => p.Rating).Order(SortOrder.Ascending))
+                                : sd.Field(f => f.Field(p => p.Rating).Order(SortOrder.Descending));
+                        default:
+                            // unknown sort field -> fallback to score if keyword present
+                            if (!string.IsNullOrWhiteSpace(keyword))
+                                return sd.Descending(SortSpecialField.Score);
+                            return sd;
+                    }
+                })
             );
 
             if (!resp.IsValid)
@@ -283,6 +361,7 @@ namespace Tekno.Infrastructure.Search
 
             var docs = resp.Hits.Select(h => h.Source!).ToList();
 
+            // when mapping search results back to DTOs, assign CreatedAt
             var mapped = docs.Select(d => new ProductSummaryDto
             {
                 Id = d.Id,
@@ -291,7 +370,9 @@ namespace Tekno.Infrastructure.Search
                 BrandName = d.Brand,
                 CategoryName = d.Category,
                 BasePrice = d.Price,
-                DiscountPercent = d.DiscountPercent
+                DiscountPercent = d.DiscountPercent,
+                CreatedAt = d.CreatedAt,
+                PrimaryImagePath = d.ImageUrl
             }).ToList();
 
             var total = resp.Total > 0 ? (int)resp.Total : mapped.Count;

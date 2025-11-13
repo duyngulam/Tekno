@@ -57,7 +57,6 @@ namespace Tekno.Application.Tests.Auth
             _userRepoMock.Verify(r => r.GetByEmailAsync(email), Times.Once);
             _passwordHasherMock.Verify(h => h.Verify(password, "hashed_pw"), Times.Once);
         }
-
         [Fact]
         public async Task LoginAsync_Should_Return_Null_When_User_Not_Found()
         {

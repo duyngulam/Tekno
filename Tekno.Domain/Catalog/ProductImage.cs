@@ -16,9 +16,8 @@ namespace Tekno.Domain.Catalog
 
         public Product Product { get; private set; } = null!;
         public ProductImage() { }
-        public ProductImage(int id, int productId, string imageUrl, bool isPrimary, int sortOrder)
+        public ProductImage(int productId, string imageUrl, bool isPrimary, int sortOrder)
         {
-            Id = id;
             ProductId = productId;
             ImageUrl = imageUrl;
             IsPrimary = isPrimary;

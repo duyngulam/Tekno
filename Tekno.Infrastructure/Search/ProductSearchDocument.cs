@@ -1,4 +1,5 @@
 ﻿using Nest;
+using System;
 using System.Collections.Generic;
 using Tekno.Application.Catalog.DTOs.Products;
 
@@ -29,13 +30,16 @@ namespace Tekno.Infrastructure.Search
         [Keyword(Name = "imageUrl")]
         public string ImageUrl { get; set; } = string.Empty;
 
-        // ✅ specs có thể filter theo nested
+        // ✅ specs can be filtered as nested
         [Nested(Name = "specs")]
         public List<ProductAttributeDto> Specs { get; set; } = new();
 
         [Number(NumberType.Double, Name = "rating")]
         public double? Rating { get; set; }
 
+        // Add CreatedAt so we can sort by date
+        [Date(Name = "createdAt")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
 

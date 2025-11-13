@@ -11,7 +11,7 @@ namespace Tekno.Application.Catalog.DTOs.Products
         public int Id { get; set; }
         public string Sku { get; set; } = string.Empty;
         public decimal Price { get; set; }
-        public bool Stock { get; set; }
+        public int Stock { get; set; }
         public List<ProductAttributeDto> Attributes { get; set; } = new();
     }
 }

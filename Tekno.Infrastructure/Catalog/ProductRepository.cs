@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Nest;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Common;
 using Tekno.Application.Common.Paging;
@@ -70,13 +71,18 @@ namespace Tekno.Infrastructure.Catalog
 
             return new PagedResult<Product>(data, totalRecords, paging.Page, paging.PageSize);
         }
+        public async Task<bool> IsProductExistBySlug(string slug)
+        {
+                 return await _context.Products
+                .AsNoTracking()
+                .AnyAsync(p => p.Slug == slug);
+        }
 
         public async Task<Product?> GetProductBySlugAsync(string slug)
         {
             return await _context.Products
                 .Include(p => p.Brand)
                 .Include(p => p.Category)
-                .Include(p => p.Detail)
                 .Include(p => p.Images)
                 .Include(p => p.Variants)
                     .ThenInclude(v => v.VariantAttributes)
@@ -86,10 +92,25 @@ namespace Tekno.Infrastructure.Catalog
                         .ThenInclude(va => va.Value)
                 .FirstOrDefaultAsync(p => p.Slug == slug);
         }
+
+        public async Task<Product?> GetProductByIdAsync(int id)
+        {
+            return await _context.Products
+                .Include(p => p.Brand)
+                .Include(p => p.Category)
+                .Include(p => p.Images)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.VariantAttributes)
+                        .ThenInclude(va => va.Attribute)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.VariantAttributes)
+                        .ThenInclude(va => va.Value)
+                .FirstOrDefaultAsync(p => p.Id == id);
+        }
+
         public async Task<IEnumerable<Product>> GetAllProductsWithDetailAsync()
         {
             return await _context.Products
-                .Include(p => p.Detail)
                 .Include(p => p.Brand)
                 .Include(p => p.Category)
                 .Include(p => p.Images)
@@ -97,6 +118,25 @@ namespace Tekno.Infrastructure.Catalog
                     .ThenInclude(v => v.VariantAttributes)
                         .ThenInclude(va => va.Attribute)
                 .ToListAsync();
+        }
+        public async Task<Product> AddProductAsync(Product newProduct)
+        {
+            _context.Products.Add(newProduct);
+            await _context.SaveChangesAsync();
+            return newProduct;
+        }
+
+        public async Task<Product> UpdateProductAsync(Product product)
+        {
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+            return product;
+        }
+
+        public async Task DeleteProductAsync(Product product)
+        {
+            _context.Products.Remove(product);
+            await _context.SaveChangesAsync();
         }
     }
 }

@@ -20,7 +20,9 @@ namespace Tekno.Application.Catalog.Interface
             Dictionary<string, string>? filters,
             decimal? minPrice,
             decimal? maxPrice,
+            string? sort,
             int page,
             int pageSize);
+        Task<bool> IsProductExistBySlug(string slug);
     }
 }
