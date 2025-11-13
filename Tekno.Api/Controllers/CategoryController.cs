@@ -26,9 +26,9 @@ namespace Tekno.Api.Controllers
         public async Task<IActionResult> GetCategories()
         {
             var categories = await _categoryService.GetAllCategoriesAsync();
-            var result = _mapper.Map<List<CategoryTreeLandingDto>>(categories);
+            var result = _mapper.Map<List<CategoryDto>>(categories);
 
-            return Ok(ApiResponse<List<CategoryTreeLandingDto>>.Ok(result, "Categories loaded successfully"));
+            return Ok(ApiResponse<List<CategoryDto>>.Ok(result, "Categories loaded successfully"));
         }
 
         // GET /api/categories/tree
@@ -36,9 +36,9 @@ namespace Tekno.Api.Controllers
         public async Task<IActionResult> GetCategoryTree()
         {
             var categoryTree = await _categoryService.GetCategoryTreeAsync();
-            var result = _mapper.Map<List<CategoryTreeLandingDto>>(categoryTree);
+            var result = _mapper.Map<List<CategoryTreeDto>>(categoryTree);
 
-            return Ok(ApiResponse<List<CategoryTreeLandingDto>>.Ok(result, "Category tree loaded successfully"));
+            return Ok(ApiResponse<List<CategoryTreeDto>>.Ok(result, "Category tree loaded successfully"));
         }
         [HttpGet("{slug}")]
         public async Task<IActionResult> GetCategoryBySlug(string slug)
@@ -49,8 +49,8 @@ namespace Tekno.Api.Controllers
             {
                 return NotFound(ApiResponse<string>.Fail("Category not found"));
             }
-            var result = _mapper.Map<CategoryTreeLandingDto>(category);
-            return Ok(ApiResponse<CategoryTreeLandingDto>.Ok(result, "Category loaded successfully"));
+            var result = _mapper.Map<CategoryTreeDto>(category);
+            return Ok(ApiResponse<CategoryTreeDto>.Ok(result, "Category loaded successfully"));
         }
     }
 }

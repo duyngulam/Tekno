@@ -11,6 +11,7 @@ namespace Tekno.Infrastructure.Catalog
     {
         private readonly AppDbContext _context;
 
+
         public ProductRepository(AppDbContext context)
         {
             _context = context;
@@ -84,7 +85,18 @@ namespace Tekno.Infrastructure.Catalog
                     .ThenInclude(v => v.VariantAttributes)
                         .ThenInclude(va => va.Value)
                 .FirstOrDefaultAsync(p => p.Slug == slug);
-
+        }
+        public async Task<IEnumerable<Product>> GetAllProductsWithDetailAsync()
+        {
+            return await _context.Products
+                .Include(p => p.Detail)
+                .Include(p => p.Brand)
+                .Include(p => p.Category)
+                .Include(p => p.Images)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.VariantAttributes)
+                        .ThenInclude(va => va.Attribute)
+                .ToListAsync();
         }
     }
 }

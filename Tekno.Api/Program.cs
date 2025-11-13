@@ -2,27 +2,31 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Nest;
 using System.Reflection;
 using System.Text;
+using Tekno.Api.Middlewares;
 using Tekno.Application.Auth.DTOs;
 using Tekno.Application.Auth.Interfaces;
 using Tekno.Application.Auth.Services;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Catalog.Services;
-using Tekno.Application.Cloudinary.Services;
 using Tekno.Application.Common.Interfaces;
+using Tekno.Application.Common.Media.Services;
+using Tekno.Infrastructure;
 using Tekno.Infrastructure.Auth;
 using Tekno.Infrastructure.Catalog;
 using Tekno.Infrastructure.Logging;
 using Tekno.Infrastructure.Persistence;
+using Tekno.Infrastructure.Search;
 using Tekno.Infrastructure.Services;
 
 namespace Tekno.Api
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -38,7 +42,36 @@ namespace Tekno.Api
             // =======================================================
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Tekno API", Version = "v1" });
+
+                // 🔑 cấu hình JWT trong Swagger
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "Nhập token JWT (ví dụ: Bearer eyJhbGciOi...)",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                            }
+                        },
+                    Array.Empty<string>()
+                    }
+                });
+            });
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontend",
@@ -63,11 +96,6 @@ namespace Tekno.Api
             {
                 cfg.AddMaps(Assembly.GetExecutingAssembly()); // quét profile trong API project
                 cfg.AddMaps(typeof(AuthProfile).Assembly); // quét profile trong Application project
-            });
-            builder.Services.AddSingleton<IElasticClient>(sp =>
-            {
-                var client = ElasticSearchConfig.CreateClient("http://localhost:9200");
-                return client;
             });
 
             // =======================================================
@@ -98,25 +126,12 @@ namespace Tekno.Api
             // =======================================================
             // 4. APPLICATION & INFRASTRUCTURE DEPENDENCIES
             // =======================================================
-            builder.Services.AddScoped<AuthService>(); // Business logic Auth
-            builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
-            builder.Services.AddScoped<IJwtProvider, JwtProvider>();
-            builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
-            builder.Services.AddScoped<MediaService>();
-            builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+            builder.Services.AddInfrastructure(builder.Configuration);
+            builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<CategoryService>();
-            builder.Services.AddScoped<IBrandRepository, BrandRepository>();
             builder.Services.AddScoped<BrandService>();
-            builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddScoped<ProductService>();
-            // =======================================================
-            // 5. DATABASE
-            // =======================================================
-            builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
-
+            builder.Services.AddScoped<MediaService>();
             // =======================================================
             // 6. LOGGING
             // =======================================================
@@ -149,35 +164,54 @@ namespace Tekno.Api
                     }
                 }
             }
+            using (var scope = app.Services.CreateScope())
+            {
+                // 1️⃣ Tạo index nếu chưa có
+                var client = scope.ServiceProvider.GetRequiredService<IElasticClient>();
+                ElasticMappings.CreateProductIndex(client);
+                ElasticMappings.CreateProductDetailIndex(client);
+
+                // 2️⃣ Chạy bulk index
+                var bulkIndexer = scope.ServiceProvider.GetRequiredService<ElasticBulkIndexer>();
+                await bulkIndexer.RunAsync();
+            }
 
             // =======================================================
             // 8. MIDDLEWARE PIPELINE
             // =======================================================
-            // 1. Request logging (incoming)
+
+            // 1️⃣ Logging request đầu vào
             app.UseMiddleware<RequestLoggingMiddleware>();
 
-            // 2. Error handling (catch exceptions thrown by lower middleware/controllers)
-            app.UseMiddleware<ErrorHandlingMiddleware>();
-
+            // 2️⃣ Swagger luôn nằm TRƯỚC các middleware xử lý response
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            // 3️⃣ Exception handler – nằm NGOÀI CÙNG để bắt tất cả lỗi
+            app.UseMiddleware<ExceptionMiddleware>();
+
+            // 4️⃣ Response wrapper – sau Exception, chỉ chạy khi response thành công
+            app.UseMiddleware<ResponseWrapperMiddleware>();
+
+            // 5️⃣ CORS và HTTPS redirect
             app.UseCors("AllowFrontend");
             app.UseHttpsRedirection();
-            // 3. Authentication & Authorization (use built-in)
+
+            // 6️⃣ Authentication & Authorization
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // 4. Response wrapper (should be after controller executed)
-            app.UseMiddleware<ResponseWrapperMiddleware>();
+            // 7️⃣ Map controllers (đăng ký route)
             app.MapControllers();
 
             // =======================================================
             // 9. RUN APP
             // =======================================================
             app.Run();
+
         }
     }
 }

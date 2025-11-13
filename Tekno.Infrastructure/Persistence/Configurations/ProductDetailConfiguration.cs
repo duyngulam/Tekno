@@ -25,74 +25,74 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 {
                     ProductId = 1,
                     Specs = """
-                    {
-                        "Display": "13.4-inch FHD+ InfinityEdge",
-                        "CPU": "Intel Core i5 / i7",
-                        "RAM": "8GB / 16GB",
-                        "Storage": "512GB / 1TB SSD",
-                        "Weight": "1.2kg",
-                        "Battery": "52Wh",
-                        "OS": "Windows 11",
-                        "Warranty": "12 months"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["13.4-inch FHD+ InfinityEdge"]},
+            {"Name":"CPU","Value":["Intel i5","Intel i7"]},
+            {"Name":"RAM","Value":["8GB","16GB"]},
+            {"Name":"Storage","Value":["512GB","1TB SSD"]},
+            {"Name":"Weight","Value":["1.2kg"]},
+            {"Name":"Battery","Value":["52Wh"]},
+            {"Name":"OS","Value":["Windows 11"]},
+            {"Name":"Warranty","Value":["12 months"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 2,
                     Specs = """
-                    {
-                        "Display": "13.6-inch Liquid Retina",
-                        "Chip": "Apple M2",
-                        "RAM": "8GB / 16GB",
-                        "Storage": "256GB / 512GB",
-                        "Battery": "52.6Wh up to 18h",
-                        "OS": "macOS",
-                        "Weight": "1.24kg"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["13.6-inch Liquid Retina"]},
+            {"Name":"Chip","Value":["Apple M2"]},
+            {"Name":"RAM","Value":["8GB","16GB"]},
+            {"Name":"Storage","Value":["256GB","512GB"]},
+            {"Name":"Battery","Value":["52.6Wh up to 18h"]},
+            {"Name":"OS","Value":["macOS"]},
+            {"Name":"Weight","Value":["1.24kg"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 3,
                     Specs = """
-                    {
-                        "Display": "14-inch OLED 2.8K",
-                        "CPU": "Intel i5 / i7 or Ryzen 7",
-                        "RAM": "8GB / 16GB",
-                        "Storage": "512GB / 1TB SSD",
-                        "OS": "Windows 11",
-                        "Weight": "1.3kg"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["14-inch OLED 2.8K"]},
+            {"Name":"CPU","Value":["Intel i5","Intel i7","Ryzen 7"]},
+            {"Name":"RAM","Value":["8GB","16GB"]},
+            {"Name":"Storage","Value":["512GB","1TB SSD"]},
+            {"Name":"OS","Value":["Windows 11"]},
+            {"Name":"Weight","Value":["1.3kg"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 4,
                     Specs = """
-                    {
-                        "Display": "13.5-inch 2-in-1 Touch OLED",
-                        "CPU": "Intel Core i5 / i7",
-                        "RAM": "8GB / 16GB",
-                        "Storage": "512GB / 1TB",
-                        "Convertible": true,
-                        "OS": "Windows 11 Home"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["13.5-inch 2-in-1 Touch OLED"]},
+            {"Name":"CPU","Value":["Intel i5","Intel i7"]},
+            {"Name":"RAM","Value":["8GB","16GB"]},
+            {"Name":"Storage","Value":["512GB","1TB"]},
+            {"Name":"Convertible","Value":["true"]},
+            {"Name":"OS","Value":["Windows 11 Home"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 5,
                     Specs = """
-                    {
-                        "Display": "14-inch IPS 2.8K",
-                        "CPU": "Intel i5 / i7",
-                        "RAM": "8GB / 16GB",
-                        "Storage": "512GB / 1TB",
-                        "Security": "Fingerprint + TPM 2.0",
-                        "OS": "Windows 11 Pro"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["14-inch IPS 2.8K"]},
+            {"Name":"CPU","Value":["Intel i5","Intel i7"]},
+            {"Name":"RAM","Value":["8GB","16GB"]},
+            {"Name":"Storage","Value":["512GB","1TB"]},
+            {"Name":"Security","Value":["Fingerprint","TPM 2.0"]},
+            {"Name":"OS","Value":["Windows 11 Pro"]}
+        ]
+        """
                 },
 
                 // ===== Smartphones =====
@@ -100,74 +100,74 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 {
                     ProductId = 10,
                     Specs = """
-                    {
-                        "Display": "6.1-inch OLED 120Hz",
-                        "Chip": "Apple A17 Pro",
-                        "RAM": "6GB",
-                        "Storage": "128GB / 256GB",
-                        "Camera": "48MP + 12MP + 12MP",
-                        "Battery": "3279mAh",
-                        "OS": "iOS 17"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["6.1-inch OLED 120Hz"]},
+            {"Name":"Chip","Value":["Apple A17 Pro"]},
+            {"Name":"RAM","Value":["6GB"]},
+            {"Name":"Storage","Value":["128GB","256GB"]},
+            {"Name":"Camera","Value":["48MP","12MP","12MP"]},
+            {"Name":"Battery","Value":["3279mAh"]},
+            {"Name":"OS","Value":["iOS 17"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 11,
                     Specs = """
-                    {
-                        "Display": "6.7-inch Dynamic AMOLED 120Hz",
-                        "Chip": "Snapdragon 8 Gen 3",
-                        "RAM": "8GB",
-                        "Storage": "128GB / 256GB",
-                        "Camera": "200MP + 12MP + 10MP",
-                        "Battery": "5000mAh",
-                        "OS": "Android 14"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["6.7-inch Dynamic AMOLED 120Hz"]},
+            {"Name":"Chip","Value":["Snapdragon 8 Gen 3"]},
+            {"Name":"RAM","Value":["8GB"]},
+            {"Name":"Storage","Value":["128GB","256GB"]},
+            {"Name":"Camera","Value":["200MP","12MP","10MP"]},
+            {"Name":"Battery","Value":["5000mAh"]},
+            {"Name":"OS","Value":["Android 14"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 12,
                     Specs = """
-                    {
-                        "Display": "6.3-inch AMOLED 120Hz",
-                        "Chip": "Google Tensor G4",
-                        "RAM": "8GB",
-                        "Storage": "128GB / 256GB",
-                        "Camera": "50MP + 12MP",
-                        "Battery": "4700mAh",
-                        "OS": "Android 14"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["6.3-inch AMOLED 120Hz"]},
+            {"Name":"Chip","Value":["Google Tensor G4"]},
+            {"Name":"RAM","Value":["8GB"]},
+            {"Name":"Storage","Value":["128GB","256GB"]},
+            {"Name":"Camera","Value":["50MP","12MP"]},
+            {"Name":"Battery","Value":["4700mAh"]},
+            {"Name":"OS","Value":["Android 14"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 13,
                     Specs = """
-                    {
-                        "Display": "6.7-inch AMOLED QHD+",
-                        "Chip": "Snapdragon 8 Gen 3",
-                        "RAM": "12GB",
-                        "Storage": "256GB / 512GB",
-                        "Camera": "50MP + 50MP + 50MP (Leica)",
-                        "OS": "HyperOS (Android 14)"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["6.7-inch AMOLED QHD+"]},
+            {"Name":"Chip","Value":["Snapdragon 8 Gen 3"]},
+            {"Name":"RAM","Value":["12GB"]},
+            {"Name":"Storage","Value":["256GB","512GB"]},
+            {"Name":"Camera","Value":["50MP","50MP","50MP (Leica)"]},
+            {"Name":"OS","Value":["HyperOS (Android 14)"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 14,
                     Specs = """
-                    {
-                        "Display": "6.8-inch AMOLED 120Hz",
-                        "Chip": "Snapdragon 8 Gen 3",
-                        "RAM": "12GB",
-                        "Storage": "256GB / 512GB",
-                        "Battery": "5400mAh 100W charging",
-                        "OS": "OxygenOS 14"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["6.8-inch AMOLED 120Hz"]},
+            {"Name":"Chip","Value":["Snapdragon 8 Gen 3"]},
+            {"Name":"RAM","Value":["12GB"]},
+            {"Name":"Storage","Value":["256GB","512GB"]},
+            {"Name":"Battery","Value":["5400mAh 100W charging"]},
+            {"Name":"OS","Value":["OxygenOS 14"]}
+        ]
+        """
                 },
 
                 // ===== Tablets =====
@@ -175,42 +175,42 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 {
                     ProductId = 20,
                     Specs = """
-                    {
-                        "Display": "12.9-inch Liquid Retina XDR",
-                        "Chip": "Apple M2",
-                        "RAM": "8GB / 16GB",
-                        "Storage": "128GB / 256GB",
-                        "OS": "iPadOS 17",
-                        "PencilSupport": "Apple Pencil 2"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["12.9-inch Liquid Retina XDR"]},
+            {"Name":"Chip","Value":["Apple M2"]},
+            {"Name":"RAM","Value":["8GB","16GB"]},
+            {"Name":"Storage","Value":["128GB","256GB"]},
+            {"Name":"OS","Value":["iPadOS 17"]},
+            {"Name":"PencilSupport","Value":["Apple Pencil 2"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 21,
                     Specs = """
-                    {
-                        "Display": "11-inch AMOLED 120Hz",
-                        "Chip": "Snapdragon 8 Gen 2",
-                        "RAM": "8GB / 12GB",
-                        "Storage": "128GB / 256GB",
-                        "OS": "Android 14"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["11-inch AMOLED 120Hz"]},
+            {"Name":"Chip","Value":["Snapdragon 8 Gen 2"]},
+            {"Name":"RAM","Value":["8GB","12GB"]},
+            {"Name":"Storage","Value":["128GB","256GB"]},
+            {"Name":"OS","Value":["Android 14"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 22,
                     Specs = """
-                    {
-                        "Display": "12.7-inch LCD 144Hz",
-                        "Chip": "MediaTek Dimensity 7050",
-                        "RAM": "8GB",
-                        "Storage": "128GB",
-                        "Battery": "10200mAh",
-                        "OS": "Android 13"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["12.7-inch LCD 144Hz"]},
+            {"Name":"Chip","Value":["MediaTek Dimensity 7050"]},
+            {"Name":"RAM","Value":["8GB"]},
+            {"Name":"Storage","Value":["128GB"]},
+            {"Name":"Battery","Value":["10200mAh"]},
+            {"Name":"OS","Value":["Android 13"]}
+        ]
+        """
                 },
 
                 // ===== Monitors =====
@@ -218,80 +218,149 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 {
                     ProductId = 30,
                     Specs = """
-                    {
-                        "Display": "27-inch IPS 4K UHD",
-                        "Resolution": "3840x2160",
-                        "RefreshRate": "60Hz",
-                        "Ports": "HDMI, DisplayPort, USB-C",
-                        "ColorGamut": "99% sRGB",
-                        "Warranty": "24 months"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["27-inch IPS 4K UHD"]},
+            {"Name":"Resolution","Value":["3840x2160"]},
+            {"Name":"RefreshRate","Value":["60Hz"]},
+            {"Name":"Ports","Value":["HDMI","DisplayPort","USB-C"]},
+            {"Name":"ColorGamut","Value":["99% sRGB"]},
+            {"Name":"Warranty","Value":["24 months"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 31,
                     Specs = """
-                    {
-                        "Display": "32-inch VA QHD",
-                        "Resolution": "2560x1440",
-                        "RefreshRate": "165Hz",
-                        "Ports": "HDMI, DisplayPort",
-                        "Sync": "G-Sync Compatible"
-                    }
-                    """
+        [
+            {"Name":"Display","Value":["32-inch VA QHD"]},
+            {"Name":"Resolution","Value":["2560x1440"]},
+            {"Name":"RefreshRate","Value":["165Hz"]},
+            {"Name":"Ports","Value":["HDMI","DisplayPort"]},
+            {"Name":"Sync","Value":["G-Sync Compatible"]}
+        ]
+        """
                 },
 
                 // ===== Accessories =====
                 new
                 {
                     ProductId = 40,
-                    Specs = """{ "Type": "Wireless", "Layout": "Full-size", "Backlight": "Yes", "Battery": "USB-C rechargeable" }"""
+                    Specs = """
+        [
+            {"Name":"Type","Value":["Wireless"]},
+            {"Name":"Layout","Value":["Full-size"]},
+            {"Name":"Backlight","Value":["Yes"]},
+            {"Name":"Battery","Value":["USB-C rechargeable"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 41,
-                    Specs = """{ "Type": "Mechanical", "Switch": "Razer Green", "Backlight": "RGB", "Connection": "Wired" }"""
+                    Specs = """
+        [
+            {"Name":"Type","Value":["Mechanical"]},
+            {"Name":"Switch","Value":["Razer Green"]},
+            {"Name":"Backlight","Value":["RGB"]},
+            {"Name":"Connection","Value":["Wired"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 50,
-                    Specs = """{ "Sensor": "Logitech Darkfield", "Connection": "Bluetooth / USB", "Battery": "70 days", "Buttons": 7 }"""
+                    Specs = """
+        [
+            {"Name":"Sensor","Value":["Logitech Darkfield"]},
+            {"Name":"Connection","Value":["Bluetooth","USB"]},
+            {"Name":"Battery","Value":["70 days"]},
+            {"Name":"Buttons","Value":["7"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 51,
-                    Specs = """{ "Sensor": "Focus Pro 30K", "Weight": "58g", "Connection": "Wireless", "Battery": "80h" }"""
+                    Specs = """
+        [
+            {"Name":"Sensor","Value":["Focus Pro 30K"]},
+            {"Name":"Weight","Value":["58g"]},
+            {"Name":"Connection","Value":["Wireless"]},
+            {"Name":"Battery","Value":["80h"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 60,
-                    Specs = """{ "Type": "Over-ear", "ANC": "Yes", "Battery": "30h", "Charging": "USB-C", "Microphone": "Yes" }"""
+                    Specs = """
+        [
+            {"Name":"Type","Value":["Over-ear"]},
+            {"Name":"ANC","Value":["Yes"]},
+            {"Name":"Battery","Value":["30h"]},
+            {"Name":"Charging","Value":["USB-C"]},
+            {"Name":"Microphone","Value":["Yes"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 61,
-                    Specs = """{ "Type": "In-ear", "ANC": "Yes", "Battery": "6h + 24h", "Wireless": "Bluetooth 5.3" }"""
+                    Specs = """
+        [
+            {"Name":"Type","Value":["In-ear"]},
+            {"Name":"ANC","Value":["Yes"]},
+            {"Name":"Battery","Value":["6h","24h"]},
+            {"Name":"Wireless","Value":["Bluetooth 5.3"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 70,
-                    Specs = """{ "Power": "65W", "Ports": "2x USB-C, 1x USB-A", "Material": "GaN", "Input": "100–240V" }"""
+                    Specs = """
+        [
+            {"Name":"Power","Value":["65W"]},
+            {"Name":"Ports","Value":["2x USB-C","1x USB-A"]},
+            {"Name":"Material","Value":["GaN"]},
+            {"Name":"Input","Value":["100–240V"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 71,
-                    Specs = """{ "Length": "1.5m", "Connector": "USB-C to USB-C", "Material": "Nylon braided", "MaxPower": "100W" }"""
+                    Specs = """
+        [
+            {"Name":"Length","Value":["1.5m"]},
+            {"Name":"Connector","Value":["USB-C to USB-C"]},
+            {"Name":"Material","Value":["Nylon braided"]},
+            {"Name":"MaxPower","Value":["100W"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 80,
-                    Specs = """{ "Material": "TPU", "ShockResistant": "Yes", "CompatibleDevices": "iPhone 15" }"""
+                    Specs = """
+        [
+            {"Name":"Material","Value":["TPU"]},
+            {"Name":"ShockResistant","Value":["Yes"]},
+            {"Name":"CompatibleDevices","Value":["iPhone 15"]}
+        ]
+        """
                 },
                 new
                 {
                     ProductId = 81,
-                    Specs = """{ "Material": "Ballistic Nylon", "Fits": "13–15 inch laptops", "WaterResistant": "Yes" }"""
+                    Specs = """
+        [
+            {"Name":"Material","Value":["Ballistic Nylon"]},
+            {"Name":"Fits","Value":["13–15 inch laptops"]},
+            {"Name":"WaterResistant","Value":["Yes"]}
+        ]
+        """
                 }
             );
         }

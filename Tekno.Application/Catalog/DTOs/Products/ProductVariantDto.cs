@@ -1,0 +1,18 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Tekno.Application.Catalog.DTOs.Products
+{
+    public class ProductVariantDto
+    {
+        public int Id { get; set; }
+        public string Sku { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public bool Stock { get; set; }
+        public List<ProductAttributeDto> Attributes { get; set; } = new();
+    }
+}
+
