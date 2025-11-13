@@ -89,7 +89,8 @@ namespace Tekno.Infrastructure.Search
                     Price = product.BasePrice,
                     DiscountPercent = (int)(product.DiscountPercent ?? 0),
                     ImageUrl = imageUrl,
-                    Specs = specsList
+                    Specs = specsList,
+                    CreatedAt = product.CreatedAt
                 });
             }
 

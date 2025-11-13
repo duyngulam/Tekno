@@ -35,6 +35,7 @@ namespace Tekno.Application.Catalog.Services
                     request.Filters,
                     request.MinPrice,
                     request.MaxPrice,
+                    request.Sort,
                     paging.Page,
                     paging.PageSize);
 

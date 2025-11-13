@@ -12,7 +12,7 @@ using Tekno.Infrastructure.Persistence;
 namespace Tekno.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251101082959_DB")]
+    [Migration("20251113050718_DB")]
     partial class DB
     {
         /// <inheritdoc />

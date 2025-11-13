@@ -36,6 +36,9 @@ namespace Tekno.Infrastructure.Search
                                 .Keyword(k => k.Name(a => a.Value).Normalizer("lowercase_normalizer"))
                             )
                         )
+                        // created date for sorting
+                        .Date(d => d.Name(n => n.CreatedAt).Format("strict_date_optional_time||epoch_millis"))
+                        .Number(nu => nu.Name(n => n.Rating).Type(NumberType.Double))
                     )
                 )
             );

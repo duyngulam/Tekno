@@ -40,7 +40,7 @@ namespace Tekno.Application.Catalog.DTOs
             // ===== ProductVariant =====
             CreateMap<ProductVariant, ProductVariantDto>()
                 .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src => src.VariantAttributes))
-                .ForMember(dest => dest.Stock, opt => opt.MapFrom(src => src.Stock > 0)); // vì Stock là bool trong DTO
+                .ForMember(dest => dest.Stock, opt => opt.MapFrom(src => src.Stock));
 
             // ===== ProductVariantAttribute → ProductAttributeDto =====
             // Map the selected value (the variant's actual value), not all possible attribute values.

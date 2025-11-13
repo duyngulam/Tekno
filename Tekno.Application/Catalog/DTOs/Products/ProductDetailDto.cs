@@ -1,5 +1,6 @@
 ﻿namespace Tekno.Application.Catalog.DTOs.Products
 {
+    //dùng để hiện trang xem chi tiết
     public class ProductDetailDto
     {
         public int Id { get; set; }
