@@ -53,14 +53,13 @@ namespace Tekno.Infrastructure.Search
             var docs = new List<ProductSearchDocument>();
             foreach (var product in allProducts)
             {
-                var detail = product.Detail;
                 var specsList = new List<ProductAttributeDto>();
 
-                if (!string.IsNullOrEmpty(detail?.Specs))
+                if (!string.IsNullOrEmpty(product?.Specs))
                 {
                     try
                     {
-                        specsList = JsonSerializer.Deserialize<List<ProductAttributeDto>>(detail.Specs)
+                        specsList = JsonSerializer.Deserialize<List<ProductAttributeDto>>(product.Specs)
                                      ?? new List<ProductAttributeDto>();
 
                         // normalize name/value

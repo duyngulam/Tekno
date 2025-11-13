@@ -14,7 +14,6 @@ namespace Tekno.Infrastructure.Persistence
         public DbSet<Product> Products => Set<Product>();
         public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
         public DbSet<ProductImage> ProductImages => Set<ProductImage>();
-        public DbSet<ProductDetail> ProductDetails => Set<ProductDetail>();
         public DbSet<ProductAttribute> Attributes => Set<ProductAttribute>();
         public DbSet<AttributeValue> AttributeValues => Set<AttributeValue>();
         public DbSet<ProductVariantAttribute> ProductVariantAttributes => Set<ProductVariantAttribute>();
@@ -38,7 +37,6 @@ namespace Tekno.Infrastructure.Persistence
             modelBuilder.ApplyConfiguration(new ProductConfiguration());
             modelBuilder.ApplyConfiguration(new ProductVariantConfiguration());
             modelBuilder.ApplyConfiguration(new ProductImageConfiguration());
-            modelBuilder.ApplyConfiguration(new ProductDetailConfiguration());
             modelBuilder.ApplyConfiguration(new ProductAttributeConfiguration());
             modelBuilder.ApplyConfiguration(new AttributeValueConfiguration());
             modelBuilder.ApplyConfiguration(new ProductVariantAttributeConfiguration());

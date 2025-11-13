@@ -21,10 +21,9 @@ namespace Tekno.Application.Catalog.DTOs.Products
         public string? Overview { get; private set; }
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
-
+        public string Specs { get; private set; } = "{}"; // JSONB
         public Category Category { get; private set; } = null!;
         public Brand Brand { get; private set; } = null!;
-        public ProductDetail? Detail { get; private set; }
         public ICollection<ProductVariant> Variants { get; private set; } = new List<ProductVariant>();
         public ICollection<ProductImage> Images { get; private set; } = new List<ProductImage>();
 }

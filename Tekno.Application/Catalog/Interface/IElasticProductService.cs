@@ -23,5 +23,6 @@ namespace Tekno.Application.Catalog.Interface
             string? sort,
             int page,
             int pageSize);
+        Task<bool> IsProductExistBySlug(string slug);
     }
 }

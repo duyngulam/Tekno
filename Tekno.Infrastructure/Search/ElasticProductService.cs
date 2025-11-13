@@ -50,7 +50,7 @@ namespace Tekno.Infrastructure.Search
                 // set created date from DB product (fallback to UtcNow)
                 doc.CreatedAt = fullProduct?.CreatedAt ?? DateTime.UtcNow;
 
-                var specsJson = fullProduct?.Detail?.Specs;
+                var specsJson = fullProduct?.Specs;
 
                 bool fallbackParse = false;
 
@@ -196,6 +196,28 @@ namespace Tekno.Infrastructure.Search
             {
                 throw new Exception($"Elasticsearch delete error: {resp.ServerError?.ToString() ?? resp.OriginalException?.Message}");
             }
+        }
+        public async Task<bool> IsProductExistBySlug(string slug)
+        { 
+            var normalizedSlug = (slug ?? string.Empty).Trim().ToLowerInvariant();
+
+            if (string.IsNullOrEmpty(normalizedSlug))
+            {
+                return false;
+            }
+
+            var resp = await _client.CountAsync<ProductSearchDocument>(c => c
+                .Index(IndexName)
+                .Query(q => q
+                    .Term(t => t.Field(p => p.Slug).Value(normalizedSlug))
+                )
+            );
+
+            if (!resp.IsValid)
+            {
+                return false;
+            }
+            return resp.Count > 0;
         }
 
         public async Task<PagedResult<ProductSummaryDto>> SearchProductsAsync(
@@ -349,7 +371,8 @@ namespace Tekno.Infrastructure.Search
                 CategoryName = d.Category,
                 BasePrice = d.Price,
                 DiscountPercent = d.DiscountPercent,
-                CreatedAt = d.CreatedAt
+                CreatedAt = d.CreatedAt,
+                PrimaryImagePath = d.ImageUrl
             }).ToList();
 
             var total = resp.Total > 0 ? (int)resp.Total : mapped.Count;
