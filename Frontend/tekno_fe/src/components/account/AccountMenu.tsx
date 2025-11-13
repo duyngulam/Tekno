@@ -15,7 +15,7 @@ export const AccountItemsData = [
 ];
 
 export default function AccountMenu() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const pathname = usePathname();
 
   return (
@@ -46,7 +46,7 @@ export default function AccountMenu() {
           />
         </Link>
       ))}
-      <div className="text-red-500 hoverEffect relative group ">
+      <div className="text-red-500 hoverEffect relative group" onClick={logout}>
         <div className="flex items-center justify-start gap-4 pl-10 my-3 px-4">
           <LogOut className="text-black" />
           Log out
