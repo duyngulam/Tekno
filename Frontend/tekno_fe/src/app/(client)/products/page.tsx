@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/pagination";
 import { Category } from "@/type/categories";
 import NoProductAvailable from "@/components/product/NoProductAvailable";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function Products() {
   const [loading, setLoading] = useState(false);
@@ -49,7 +51,15 @@ export default function Products() {
   const [totalRecords, setTotalRecords] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
 
-  const params = { category: selectedCategory.toLocaleLowerCase() };
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryCategory = searchParams.get("category") || "";
+
+  useEffect(() => {
+    if (queryCategory) {
+      setSelectedCategory(queryCategory);
+    }
+  }, [queryCategory]);
   useEffect(() => {
     const fecthProductList = async () => {
       setLoading(true);
@@ -83,8 +93,8 @@ export default function Products() {
   };
 
   const handleCategoryChange = (category: Category) => {
-    console.log("✅ Category được chọn:", category);
     setSelectedCategory(category.slug);
+    router.push(`/products?category=${category.slug}`, { scroll: false });
   };
 
   // useEffect(() => {
@@ -113,14 +123,10 @@ export default function Products() {
   return (
     <>
       {/* Container chính */}
-      <Container>
-        <div className="col-span-12">
-          <Breadcrumb />
-        </div>
+      <Container className="flex flex-col space-y-5 my-10">
+        <Breadcrumb />
+        <CategoryTabs />
 
-        <div className="col-span-12">
-          <CategoryTabs onCategoryChange={handleCategoryChange} />
-        </div>
         <div className="col-span-12">
           <FilterChips
             filters={filters}

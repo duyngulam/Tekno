@@ -34,9 +34,11 @@ export default function NewProducts() {
       </div>
       <div className="grid grid-col-2 md:grid-cols-4">
         {products &&
-          products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          products
+            .slice(0, 4)
+            .map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
       </div>
     </div>
   );

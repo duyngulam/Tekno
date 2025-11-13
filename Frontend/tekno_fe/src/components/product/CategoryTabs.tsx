@@ -12,6 +12,8 @@ import {
 import { getCategoriesList } from "@/services/categories";
 import { Category } from "@/type/categories";
 import { Laptop } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 interface CategoryTabsProps {
   onCategoryChange?: (category: Category) => void;
@@ -23,6 +25,9 @@ export function CategoryTabs({ onCategoryChange }: CategoryTabsProps) {
     null
   );
 
+  const searchParams = useSearchParams();
+  const queryCategory = searchParams.get("category") || "";
+
   useEffect(() => {
     async function loadCategories() {
       try {
@@ -30,8 +35,8 @@ export function CategoryTabs({ onCategoryChange }: CategoryTabsProps) {
         setCategories(data.data);
         // chọn mặc định category đầu tiên
         if (data.data.length > 0) {
-          setSelectedCategory(data.data[0]);
-          onCategoryChange?.(data.data[0]);
+          //setSelectedCategory(data.data[0]);
+          //onCategoryChange?.(data.data[0]);
         }
       } catch (error) {
         console.error("❌ Lỗi khi lấy categories:", error);
@@ -46,55 +51,36 @@ export function CategoryTabs({ onCategoryChange }: CategoryTabsProps) {
   };
 
   return (
-    <Tabs
-      value={selectedCategory?.slug ?? ""}
-      onValueChange={(val) => {
-        const cat = categories.find((c) => c.slug === val);
-        if (cat) handleCategorySelect(cat);
-      }}
-      className="w-full flex justify-center h-max-content p-6"
-    >
-      {/* ✅ TabsList bọc Carousel */}
-      <TabsList className="w-full bg-transparent px-4">
-        <div className="relative w-full">
-          <Carousel className="w-full mx-5">
-            <CarouselContent>
-              {categories.map((cat) => (
-                <CarouselItem
-                  key={cat.id}
-                  className="basis-1/5 md:basis-1/10 flex justify-center"
-                >
-                  <TabsTrigger
-                    value={cat.slug}
-                    className="
-                      relative flex flex-col items-center justify-center 
-                      text-center px-3 py-2 text-gray-900 
-                      w-20 break-words
-                    "
-                  >
-                    <img
-                      src={cat.iconPath}
-                      alt={cat.slug}
-                      className="w-7 h-7 "
-                    ></img>
+    <div className="flex overflow-x-auto scroll-smooth no-scrollbar gap-2 mx-30">
+      {categories.map((category) => (
+        <Link
+          href={`/products?category=${category.slug}`}
+          key={category.id}
+          className="flex flex-col items-center gap-2 min-w-30 relative group"
+          // onClick={() => handleCategorySelect(category)}
+        >
+          <img
+            src={category.iconPath}
+            alt={category.slug}
+            className="w-7 h-7 "
+          ></img>
 
-                    <span className="text-[14px] font-medium leading-tight pt-3">
-                      {cat.name}
-                    </span>
-                    <span
-                      className="absolute bottom-0 left-0 w-full h-[3px] bg-primary 
-                      scale-x-0 data-[state=active]:scale-x-100 
+          <div className="text-[14px] text-center font-medium leading-tight pt-3">
+            {category.name}
+          </div>
+          <span
+            className={`absolute -bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full hoverEffect ${
+              category.slug == queryCategory && "w-full"
+            } 
+              `}
+          />
+          {/* <span
+            className="absolute bottom-0 left-0 w-full h-1 bg-primary 
+                      scale-x-0 data-[state=active]:scale-x-100 hover:scale-x-100
                       transition-transform origin-center rounded-full"
-                    />
-                  </TabsTrigger>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
-        </div>
-      </TabsList>
-    </Tabs>
+          /> */}
+        </Link>
+      ))}
+    </div>
   );
 }
