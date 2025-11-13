@@ -21,7 +21,7 @@ export function Breadcrumb() {
     <nav className="flex items-center text-sm text-gray-500 space-x-1">
       {/* Trang chủ */}
       <Link href="/" className="hover:text-blue-600 transition">
-        Trang chủ
+        Home
       </Link>
 
       {breadcrumbItems.map((item, index) => (

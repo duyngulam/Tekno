@@ -1,16 +1,33 @@
 "use client";
 
 import React, { useState } from "react";
-import Input from "./Input";
-import { useRouter } from "next/navigation";
 import { signupApi } from "@/services/auth";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSeparator,
+  FieldSet,
+  FieldTitle,
+} from "@/components/ui/field";
+import { Input } from "../ui/input";
+import { Checkbox } from "../ui/checkbox";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "../ui/input-group";
+import { KeyIcon, MailIcon, UserRound } from "lucide-react";
 
 type SignupFormProps = {
-  setActiveTab?: React.Dispatch<React.SetStateAction<"login" | "register">>;
+  switchToLogin: () => void;
 };
 
-export default function SignUpForm({ setActiveTab }: SignupFormProps) {
-  const router = useRouter();
+export default function SignUpForm({ switchToLogin }: SignupFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +37,7 @@ export default function SignUpForm({ setActiveTab }: SignupFormProps) {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const username = formData.get("name") as string;
+    const username = formData.get("username") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const role = "Customer";
@@ -33,8 +50,6 @@ export default function SignUpForm({ setActiveTab }: SignupFormProps) {
       }
 
       alert("Đăng ký thành công! Hãy đăng nhập để tiếp tục.");
-
-      setActiveTab?.("login");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -43,16 +58,68 @@ export default function SignUpForm({ setActiveTab }: SignupFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-center font-semibold text-lg mb-4">
-        Create your account
-      </h2>
+    <form onSubmit={handleSubmit} className="space-y-4 px-6  py-6">
+      <FieldSet>
+        <FieldLegend className="w-full text-center font-bold ">
+          Create your account
+        </FieldLegend>
+        <FieldGroup>
+          <Field>
+            <InputGroup>
+              <InputGroupInput
+                id="username"
+                type="text"
+                name="username"
+                autoComplete="off"
+                placeholder="Your username"
+              />
+              <InputGroupAddon>
+                <UserRound />
+              </InputGroupAddon>
+            </InputGroup>
+          </Field>
+          <Field>
+            <InputGroup>
+              <InputGroupInput
+                type="email"
+                id="email"
+                name="email"
+                autoComplete="off"
+                placeholder="Enter your email"
+              />
+              <InputGroupAddon>
+                <MailIcon />
+              </InputGroupAddon>
+            </InputGroup>
+          </Field>
+          <Field>
+            <InputGroup>
+              <InputGroupInput
+                type="password"
+                id="password"
+                name="password"
+                autoComplete="off"
+                placeholder="Your Password"
+              />
+              <InputGroupAddon>
+                <KeyIcon />
+              </InputGroupAddon>
+            </InputGroup>
+          </Field>
+          <Field orientation="horizontal">
+            <Checkbox id="checkout-7j9-same-as-shipping-wgm" defaultChecked />
+            <FieldLabel
+              htmlFor="checkout-7j9-same-as-shipping-wgm"
+              className="font-normal"
+            >
+              I agree to all Terms & Conditions
+            </FieldLabel>
+          </Field>
+        </FieldGroup>
+        <FieldError>{error}</FieldError>
+      </FieldSet>
 
-      <Input label="Name" name="name" type="text" />
-      <Input label="E-mail" name="email" type="email" />
-      <Input label="Password" name="password" type="password" />
-
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {/* {error && <p className="text-red-500 text-sm">{error}</p>} */}
 
       <button
         type="submit"
@@ -61,6 +128,15 @@ export default function SignUpForm({ setActiveTab }: SignupFormProps) {
       >
         {loading ? "Creating..." : "Create Account"}
       </button>
+      <p className="text-sm text-center text-muted-foreground">
+        Chưa có tài khoản?{" "}
+        <span
+          className="text-primary cursor-pointer hover:underline"
+          onClick={switchToLogin}
+        >
+          Đăng nhập
+        </span>
+      </p>
     </form>
   );
 }
