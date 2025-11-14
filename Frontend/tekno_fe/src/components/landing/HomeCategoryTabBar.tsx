@@ -1,30 +1,12 @@
-"use client";
 import { getCategoriesList } from "@/services/categories";
 import { Category } from "@/type/categories";
 import { log } from "console";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React from "react";
 
-export default function HomeCategoryTabBar() {
-  const [categoriesList, setCategoriesList] = useState<Category[]>([]);
-  const [selectedTab, setSelectedTab] = useState<string>(
-    categoriesList[0]?.name || ""
-  );
-
-  useEffect(() => {
-    const fetchCategoriesList = async () => {
-      try {
-        const res = await getCategoriesList();
-        console.log(res);
-        setCategoriesList(res.data);
-      } catch (error) {
-        console.log("error in fetching category:", error);
-      }
-    };
-    fetchCategoriesList();
-  }, [selectedTab]);
-
+export default async function HomeCategoryTabBar() {
+  const categoriesList = await getCategoriesList();
   if (categoriesList && !categoriesList?.length) {
     return <div>Rỗng</div>;
   }

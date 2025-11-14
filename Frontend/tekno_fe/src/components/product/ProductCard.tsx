@@ -15,7 +15,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         -12%
       </div>
 
-      <Link href={`/products/${product.slug}`} className="m-4 block">
+      <Link href={`/products/${product?.slug}`} className="m-4 block">
         {/* --- Ảnh sản phẩm --- */}
         <div className="relative w-full h-44 mt-5 overflow-hidden rounded-lg flex items-center justify-center">
           <img

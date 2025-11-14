@@ -33,7 +33,8 @@ export default function OurBlogs() {
         </button>
       </div>
       <div className="grid grid-col-2 md:grid-cols-4">
-        {products && products.map((product) => <div>blog</div>)}
+        {products &&
+          products.map((product) => <div key={product.id}>blog</div>)}
       </div>
     </div>
   );

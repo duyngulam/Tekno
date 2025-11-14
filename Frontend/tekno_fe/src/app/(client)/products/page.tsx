@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { Grid3x3, List, ChevronDown, Loader2 } from "lucide-react";
 import { FilterChips } from "@/components/product/FilterChips";
-import { CategoryTabs } from "@/components/product/CategoryTabs";
 import Filter from "@/components/product/Filter";
 import ProductCard from "@/components/product/ProductCard";
 import { Product } from "@/type/product";
@@ -33,8 +32,9 @@ import { Category } from "@/type/categories";
 import NoProductAvailable from "@/components/product/NoProductAvailable";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
+import { CategoryTabs } from "@/components/product/CategoryTabs";
 
-export default function Products() {
+export default function ProductPage() {
   const [loading, setLoading] = useState(false);
   const [productsList, setproductsList] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -54,6 +54,7 @@ export default function Products() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryCategory = searchParams.get("category") || "";
+  console.log(queryCategory);
 
   useEffect(() => {
     if (queryCategory) {
@@ -79,7 +80,7 @@ export default function Products() {
       }
     };
     fecthProductList();
-  }, [selectedCategory]);
+  }, [selectedCategory, page, pageSize, sortBy]);
 
   const HandleAddFilter = (f: string) => {
     setFilters((prev) => {
@@ -97,35 +98,12 @@ export default function Products() {
     router.push(`/products?category=${category.slug}`, { scroll: false });
   };
 
-  // useEffect(() => {
-  //   async function fetchproductsList(
-  //     page: number,
-  //     pageSize: number,
-  //     selectedCategory: string,
-  //     sortBy: string
-  //   ) {
-  //     const data = await getProductsList(
-  //       page,
-  //       pageSize,
-  //       selectedCategory,
-  //       sortBy
-  //     );
-  //     console.log(data);
-  //     setproductsList(data.data);
-  //     setTotalRecords(data.totalRecords);
-  //     setTotalPages(data.totalPages);
-  //   }
-  //   fetchproductsList(page, pageSize, selectedCategory, sortBy);
-  // }, [page, pageSize, selectedCategory]);
-
-  //console.log("productsList:", productsList);
-
   return (
     <>
       {/* Container chính */}
       <Container className="flex flex-col space-y-5 my-10">
         <Breadcrumb />
-        <CategoryTabs />
+        <CategoryTabs queryCategory={queryCategory} />
 
         <div className="col-span-12">
           <FilterChips

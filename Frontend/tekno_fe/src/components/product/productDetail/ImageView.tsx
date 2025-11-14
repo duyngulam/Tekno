@@ -1,0 +1,56 @@
+"use client";
+import { AnimatePresence, motion } from "motion/react";
+import Image from "next/image";
+import React, { useState } from "react";
+
+interface Props {
+  images?: string[];
+  isStock?: boolean;
+}
+export default function ImageView({ images = [], isStock }: Props) {
+  const [active, setActive] = useState(images[0]);
+  return (
+    <div className="w-full md:w-1/2 space-y-2 md:space-y-4">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={active}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-h-[550] min-h-[500] border border-secondary/10 rounded-md group overflow-hidden"
+        >
+          <Image
+            src={active}
+            alt="productImage"
+            width={700}
+            height={700}
+            priority
+            className={`w-full h-96 max-h-[550px] min-h-[500] object-contain group-hover:scale-110 hoverEffect rounded-md ${
+              isStock === false ? "opacity-50" : ""
+            }`}
+          />
+        </motion.div>
+      </AnimatePresence>
+      <div className="gric grid-cols-6 gap-2 h-20 md:h-24">
+        {images.map((image) => (
+          <button
+            key={image}
+            onClick={() => setActive(image)}
+            className={`border rounded-md overflow-hidden ${
+              active === image ? "border-gray-900 opacity-100" : "opacity-80"
+            }`}
+          >
+            <Image
+              src={image}
+              alt="image"
+              width={100}
+              height={100}
+              className="w-full h-auto object-contain"
+            />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}

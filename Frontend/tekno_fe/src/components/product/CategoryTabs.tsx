@@ -1,54 +1,26 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 import { getCategoriesList } from "@/services/categories";
 import { Category } from "@/type/categories";
-import { Laptop } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-interface CategoryTabsProps {
-  onCategoryChange?: (category: Category) => void;
-}
-
-export function CategoryTabs({ onCategoryChange }: CategoryTabsProps) {
+export function CategoryTabs({ queryCategory }: { queryCategory: string }) {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null
-  );
-
-  const searchParams = useSearchParams();
-  const queryCategory = searchParams.get("category") || "";
+  //const searchParams = useSearchParams();
+  //const queryCategory = searchParams.get("category") || "";
 
   useEffect(() => {
     async function loadCategories() {
       try {
         const data = await getCategoriesList();
-        setCategories(data.data);
-        // chọn mặc định category đầu tiên
-        if (data.data.length > 0) {
-          //setSelectedCategory(data.data[0]);
-          //onCategoryChange?.(data.data[0]);
-        }
+        setCategories(data);
       } catch (error) {
         console.error("❌ Lỗi khi lấy categories:", error);
       }
     }
     loadCategories();
   }, []);
-
-  const handleCategorySelect = (cat: Category) => {
-    setSelectedCategory(cat);
-    onCategoryChange?.(cat);
-  };
 
   return (
     <div className="flex overflow-x-auto scroll-smooth no-scrollbar gap-2 mx-30">
@@ -74,11 +46,6 @@ export function CategoryTabs({ onCategoryChange }: CategoryTabsProps) {
             } 
               `}
           />
-          {/* <span
-            className="absolute bottom-0 left-0 w-full h-1 bg-primary 
-                      scale-x-0 data-[state=active]:scale-x-100 hover:scale-x-100
-                      transition-transform origin-center rounded-full"
-          /> */}
         </Link>
       ))}
     </div>
