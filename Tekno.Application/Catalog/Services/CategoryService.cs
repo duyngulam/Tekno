@@ -10,6 +10,7 @@ using Tekno.Application.Common.Cache;
 using Tekno.Application.Common.Exceptions;
 using Tekno.Application.Common.Media.Services;
 using Tekno.Domain.Catalog;
+using Tekno.Application.Catalog.DTOs.Products;
 
 namespace Tekno.Application.Catalog.Services
 {
@@ -90,6 +91,13 @@ namespace Tekno.Application.Catalog.Services
         {
             var category = _mapper.Map<Category>(categoryDto);
             return await _categoryRepository.DeleteAsync(category.Id);
+        }
+
+        // NEW: expose attributes for a category (includes global attributes)
+        public async Task<List<ProductAttributeDto>> GetAttributesByCategoryIdAsync(int categoryId)
+        {
+            var attrs = await _categoryRepository.GetAttributesForCategoryAsync(categoryId);
+            return _mapper.Map<List<ProductAttributeDto>>(attrs);
         }
     }
 }

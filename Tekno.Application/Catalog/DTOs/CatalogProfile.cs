@@ -87,6 +87,11 @@ namespace Tekno.Application.Catalog.DTOs
                 .ForMember(dest => dest.Images, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
+
+            // ===== ProductAttribute -> ProductAttributeDto =====
+            CreateMap<ProductAttribute, ProductAttributeDto>()
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                .ForMember(dest => dest.Value, opt => opt.MapFrom(src => src.Values.Select(v => v.Value).ToList()));
         }
 
         private static List<ProductAttributeDto> BuildSpecsFromVariants(Product src)

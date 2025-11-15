@@ -4,6 +4,7 @@ using Tekno.Application.Catalog.Services;
 using Tekno.Application.Catalog.DTOs;
 using Tekno.Api.Models.Catalog;
 using AutoMapper;
+using Tekno.Application.Catalog.DTOs.Products;
 
 namespace Tekno.Api.Controllers
 {
@@ -51,6 +52,14 @@ namespace Tekno.Api.Controllers
             }
             var result = _mapper.Map<CategoryTreeDto>(category);
             return Ok(ApiResponse<CategoryTreeDto>.Ok(result, "Category loaded successfully"));
+        }
+
+        // GET /api/categories/{id}/attributes
+        [HttpGet("{id:int}/attributes")]
+        public async Task<IActionResult> GetAttributesByCategoryId(int id)
+        {
+            var attributes = await _categoryService.GetAttributesByCategoryIdAsync(id);
+            return Ok(ApiResponse<List<ProductAttributeDto>>.Ok(attributes, "Attributes loaded"));
         }
     }
 }
