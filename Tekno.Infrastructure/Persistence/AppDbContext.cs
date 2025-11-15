@@ -35,10 +35,11 @@ namespace Tekno.Infrastructure.Persistence
 
             // Các bảng phụ thuộc (product cần brand + category trước)
             modelBuilder.ApplyConfiguration(new ProductConfiguration());
-            modelBuilder.ApplyConfiguration(new ProductVariantConfiguration());
+
             modelBuilder.ApplyConfiguration(new ProductImageConfiguration());
             modelBuilder.ApplyConfiguration(new ProductAttributeConfiguration());
             modelBuilder.ApplyConfiguration(new AttributeValueConfiguration());
+            modelBuilder.ApplyConfiguration(new ProductVariantConfiguration());
             modelBuilder.ApplyConfiguration(new ProductVariantAttributeConfiguration());
         }
 
