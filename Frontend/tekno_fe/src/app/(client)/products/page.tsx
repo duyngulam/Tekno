@@ -65,12 +65,11 @@ export default function ProductPage() {
     const fecthProductList = async () => {
       setLoading(true);
       try {
-        const res = await getProductsList(
-          page,
-          pageSize,
-          selectedCategory,
-          sortBy
-        );
+        const res = await getProductsList({
+          category: selectedCategory,
+          page: page,
+          pageSize: pageSize,
+        });
         console.log("respon:", res);
         setproductsList(res.data);
       } catch (error) {

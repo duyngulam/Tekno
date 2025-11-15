@@ -1,15 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+images: {
+    domains: ["res.cloudinary.com"], // host ảnh cũ của bạn
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "i.pinimg.com",
+        port: "",
+        pathname: "/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
 
-// next.config.js
-module.exports = {
-  images: {
-    domains: ["res.cloudinary.com"],
-  },
-};
+
 
