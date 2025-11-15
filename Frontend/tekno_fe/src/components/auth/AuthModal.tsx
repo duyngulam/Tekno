@@ -1,69 +1,48 @@
 "use client";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
-import React, { useEffect, useRef, useState } from "react";
-import Input from "@/components/auth/Input";
-import LoginForm from "./LoginForm";
-import SignUpForm from "./SignUpForm";
+interface AuthModalProps {
+  mode: "login" | "register";
+}
 
-type ModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-};
+export function AuthModal({ mode }: AuthModalProps) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-export default function AuthModal({ isOpen, onClose }: ModalProps) {
-  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
-  const dialogRef = useRef<HTMLDialogElement | null>(null);
-
-  // Control open/close từ props
-  useEffect(() => {
-    if (!dialogRef.current) return;
-    if (isOpen && !dialogRef.current.open) {
-      dialogRef.current.showModal();
-    } else if (!isOpen && dialogRef.current.open) {
-      dialogRef.current.close();
-    }
-  }, [isOpen]);
+  const isLogin = mode === "login";
 
   return (
-    <dialog ref={dialogRef} className="modal" onClose={onClose}>
-      <div className="modal-box w-md md:w-lg max-w-full px-7 md:px-14">
-        {/* Tabs */}
-        <div className="flex mb-4">
-          {/* Login Tab */}
-          <button
-            onClick={() => setActiveTab("login")}
-            className={`flex-1 py-2 text-center font-medium border-b-2 transition-colors duration-300 ease-in-out
-          ${
-            activeTab === "login"
-              ? "text-secondary border-secondary"
-              : "text-gray-500 border-gray hover:text-primary"
-          }`}
-          >
-            Log in
-          </button>
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold text-center">
+        {isLogin ? "Đăng nhập" : "Tạo tài khoản"}
+      </h2>
 
-          {/* Register Tab */}
-          <button
-            onClick={() => setActiveTab("register")}
-            className={`flex-1 py-2 text-center font-medium border-b-2 transition-colors duration-300 ease-in-out
-          ${
-            activeTab === "register"
-              ? "text-secondary border-secondary"
-              : "text-gray-500 border-gray hover:text-primary"
-          }`}
-          >
-            Create Account
-          </button>
-        </div>
-        {activeTab === "login" && <LoginForm onClose={onClose} />}
-        {activeTab === "register" && <SignUpForm setActiveTab={setActiveTab} />}
-        {/* <Login /> */}
+      <div className="space-y-2">
+        <Input
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Input
+          placeholder="Mật khẩu"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        {!isLogin && <Input placeholder="Xác nhận mật khẩu" type="password" />}
       </div>
 
-      {/* Overlay click */}
-      <form method="dialog" className="modal-backdrop" onClick={onClose}>
-        <button>close</button>
-      </form>
-    </dialog>
+      <Button className="w-full">{isLogin ? "Đăng nhập" : "Đăng ký"}</Button>
+
+      <p className="text-sm text-center text-muted-foreground">
+        {isLogin ? "Chưa có tài khoản?" : "Đã có tài khoản?"}{" "}
+        <span className="text-primary cursor-pointer hover:underline">
+          {isLogin ? "Đăng ký ngay" : "Đăng nhập"}
+        </span>
+      </p>
+    </div>
   );
 }

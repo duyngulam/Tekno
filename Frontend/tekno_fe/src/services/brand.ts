@@ -1,6 +1,6 @@
-export async function getBranchList() {
+export async function getBrandList() {
   try {
-    const res = await fetch("https://localhost:5000/api/brands/list", {
+    const res = await fetch("http://localhost:5000/api/brands/list", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

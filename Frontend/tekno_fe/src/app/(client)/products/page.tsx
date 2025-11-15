@@ -1,164 +1,229 @@
 "use client";
-import React from "react";
-import { Grid3x3, List, ChevronDown } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Grid3x3, List, ChevronDown, Loader2 } from "lucide-react";
 import { FilterChips } from "@/components/product/FilterChips";
 import { CategoryTabs } from "@/components/product/CategoryTabs";
-import FilterCategories from "@/components/product/FilterCategories";
+import Filter from "@/components/product/Filter";
 import ProductCard from "@/components/product/ProductCard";
 import { Product } from "@/type/product";
 import { Breadcrumb } from "@/components/share/breadcumbCustom";
+import { Container } from "@/components/MainLayout/Container";
+import { getProductsList } from "@/services/products";
+
+import { AnimatePresence, motion } from "motion/react";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Category } from "@/type/categories";
+import NoProductAvailable from "@/components/product/NoProductAvailable";
 
 export default function Products() {
-  const products: Product[] = [
-    {
-      id: 1,
-      name: 'MacBook Pro 16" M2 Max',
-      slug: "macbook-pro-16-m2-max",
-      basePrice: 2499,
-      overview:
-        "Powerful laptop with Apple M2 Max chip and Liquid Retina XDR display.",
-      brandName: "Apple",
-      primaryImageUrl:
-        "https://images.unsplash.com/photo-1754928864131-21917af96dfd?w=400",
-    },
-    {
-      id: 2,
-      name: 'iPad Pro 12.9" 256GB',
-      slug: "ipad-pro-12-9-256gb",
-      basePrice: 1099,
-      overview: "High-performance tablet with M2 chip and ProMotion display.",
-      brandName: "Apple",
-      primaryImageUrl:
-        "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400",
-    },
-    {
-      id: 3,
-      name: "Sony WH-1000XM5 Headphones",
-      slug: "sony-wh-1000xm5-headphones",
-      basePrice: 349,
-      overview:
-        "Noise-cancelling wireless headphones with exceptional sound quality.",
-      brandName: "Sony",
-      primaryImageUrl:
-        "https://images.unsplash.com/photo-1660391532247-4a8ad1060817?w=400",
-    },
-    {
-      id: 4,
-      name: "Logitech MX Master 3S",
-      slug: "logitech-mx-master-3s",
-      basePrice: 99,
-      overview:
-        "Ergonomic wireless mouse with advanced precision and quiet clicks.",
-      brandName: "Logitech",
-      primaryImageUrl:
-        "https://images.unsplash.com/photo-1660491083562-d91a64d6ea9c?w=400",
-    },
-    {
-      id: 5,
-      name: "Samsung Galaxy S24 Ultra",
-      slug: "samsung-galaxy-s24-ultra",
-      basePrice: 1199,
-      overview:
-        "Flagship smartphone with pro-grade camera and AI-powered performance.",
-      brandName: "Samsung",
-      primaryImageUrl:
-        "https://images.unsplash.com/photo-1675953935267-e039f13ddd79?w=400",
-    },
-    {
-      id: 6,
-      name: 'Dell UltraSharp 27" 4K',
-      slug: "dell-ultrasharp-27-4k",
-      basePrice: 599,
-      overview: "27-inch 4K monitor with ultra-thin bezels and color accuracy.",
-      brandName: "Dell",
-      primaryImageUrl:
-        "https://images.unsplash.com/photo-1593833210845-d9935371664e?w=400",
-    },
-  ];
+  const [loading, setLoading] = useState(false);
+  const [productsList, setproductsList] = useState<Product[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [filters, setFilters] = useState<string[]>([
+    "Silver",
+    "Intel Core i9",
+    "Apple",
+    "12 GB",
+  ]);
+  const [sortBy, setSortBy] = useState("newest");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+  const [totalRecords, setTotalRecords] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+
+  const params = { category: selectedCategory.toLocaleLowerCase() };
+  useEffect(() => {
+    const fecthProductList = async () => {
+      setLoading(true);
+      try {
+        const res = await getProductsList(
+          page,
+          pageSize,
+          selectedCategory,
+          sortBy
+        );
+        console.log("respon:", res);
+        setproductsList(res.data);
+      } catch (error) {
+        console.error("Product fetch error", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fecthProductList();
+  }, [selectedCategory]);
+
+  const HandleAddFilter = (f: string) => {
+    setFilters((prev) => {
+      if (prev.includes(f)) return prev;
+      return [...prev, f];
+    });
+  };
+
+  const HandleRemoveFilter = (f: string) => {
+    setFilters((prev) => prev.filter((item) => item !== f));
+  };
+
+  const handleCategoryChange = (category: Category) => {
+    console.log("✅ Category được chọn:", category);
+    setSelectedCategory(category.slug);
+  };
+
+  // useEffect(() => {
+  //   async function fetchproductsList(
+  //     page: number,
+  //     pageSize: number,
+  //     selectedCategory: string,
+  //     sortBy: string
+  //   ) {
+  //     const data = await getProductsList(
+  //       page,
+  //       pageSize,
+  //       selectedCategory,
+  //       sortBy
+  //     );
+  //     console.log(data);
+  //     setproductsList(data.data);
+  //     setTotalRecords(data.totalRecords);
+  //     setTotalPages(data.totalPages);
+  //   }
+  //   fetchproductsList(page, pageSize, selectedCategory, sortBy);
+  // }, [page, pageSize, selectedCategory]);
+
+  //console.log("productsList:", productsList);
 
   return (
-    <div className="px-6 lg:px-12 py-8 bg-gray-50 min-h-screen">
-      {/* Breadcrumb */}
-      <div className="mb-6">
-        <Breadcrumb />
-      </div>
+    <>
+      {/* Container chính */}
+      <Container>
+        <div className="col-span-12">
+          <Breadcrumb />
+        </div>
 
-      {/* Categories + Chips */}
-      <div className="mt-4 mb-8 relative">
-        <CategoryTabs />
-      </div>
-
-      <div className="mt-4 mb-8">
-        <FilterChips />
-      </div>
-
-      <div className="grid lg:grid-cols-4 gap-8">
+        <div className="col-span-12">
+          <CategoryTabs onCategoryChange={handleCategoryChange} />
+        </div>
+        <div className="col-span-12">
+          <FilterChips
+            filters={filters}
+            HandleRemoveFilter={HandleRemoveFilter}
+          />
+        </div>
         {/* Sidebar */}
-        <aside className="hidden lg:block">
-          <FilterCategories />
-        </aside>
+        {/* tutu tinh */}
+        <div className="flex">
+          <div className="hidden lg:block w-3/12">
+            <Filter />
+          </div>
 
-        {/* Main Content */}
-        <section className="lg:col-span-3">
-          {/* Toolbar */}
-          <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-4 mb-6 flex items-center justify-between flex-wrap gap-4">
-            <p className="text-gray-600 text-sm">
-              Showing <span className="font-semibold text-gray-800">254</span>{" "}
-              results
-            </p>
+          {/* Content chính */}
+          <div className="w-full md:w-9/12 space-y-8">
+            {/* Bộ lọc */}
 
-            <div className="flex items-center gap-4">
-              {/* View Toggle */}
-              <div className="flex items-center gap-1 border border-gray-300 rounded-lg p-1 bg-gray-50">
-                <button className="p-2 bg-primary text-white rounded transition hover:bg-primary/90">
-                  <Grid3x3 className="w-4 h-4" />
-                </button>
-                <button className="p-2 text-gray-600 hover:bg-gray-100 rounded transition">
-                  <List className="w-4 h-4" />
-                </button>
-              </div>
+            {/* Thanh công cụ */}
+            <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-wrap justify-between items-center gap-4 shadow-sm">
+              <p className="text-gray-600 text-sm">
+                Showing{" "}
+                <span className="font-semibold text-gray-800">
+                  {totalRecords}
+                </span>{" "}
+                results
+              </p>
 
-              {/* Sort */}
-              <div className="relative">
-                <select className="appearance-none px-4 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer bg-white">
-                  <option>Sort by: Featured</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
-                  <option>Newest First</option>
-                  <option>Best Rating</option>
-                </select>
-                <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <div className="flex items-center gap-4">
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="asc">Price: Low to High</SelectItem>
+                    <SelectItem value="dasc">Price: High to Low</SelectItem>
+                    <SelectItem value="best">Best Rating</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          </div>
 
-          {/* Products Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+            {/* Danh sách sản phẩm */}
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-10 min-h-80 gap-4 bg-gray-100 w-full mt-10">
+                <div className="space-x-2 flex items-center">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Product is loading...</span>
+                </div>
+              </div>
+            ) : productsList?.length ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 ">
+                {productsList.map((product) => (
+                  <AnimatePresence key={product?.id}>
+                    <motion.div>
+                      <ProductCard key={product.id} product={product} />
+                    </motion.div>
+                  </AnimatePresence>
+                ))}
+              </div>
+            ) : (
+              <NoProductAvailable selectedCategory={selectedCategory} />
+            )}
+            <div></div>
 
-          {/* Pagination */}
-          <div className="flex justify-center items-center gap-2 mt-10">
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-sm transition">
-              Previous
-            </button>
-            <button className="px-4 py-2 bg-primary text-white rounded-lg shadow-sm">
-              1
-            </button>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-sm transition">
-              2
-            </button>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-sm transition">
-              3
-            </button>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-sm transition">
-              Next
-            </button>
+            {/* Phân trang */}
+            <Pagination>
+              <PaginationContent>
+                {/* Nút Previous */}
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                  />
+                </PaginationItem>
+
+                {/* Các trang */}
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <PaginationItem key={i}>
+                    <PaginationLink
+                      href="#"
+                      isActive={page === i + 1}
+                      onClick={() => setPage(i + 1)}
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                {/* Nút Next */}
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={() =>
+                      setPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
-        </section>
-      </div>
-    </div>
+        </div>
+      </Container>
+    </>
   );
 }
