@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Headers;
 using Tekno.Domain.Auth;
+using Tekno.Domain.Blog;
 using Tekno.Domain.Catalog;
 using Tekno.Domain.Promotion;
 using Tekno.Domain.Cart;
@@ -41,6 +42,11 @@ namespace Tekno.Infrastructure.Persistence
         // Order entities (simplified for purchase verification)
         public DbSet<Tekno.Domain.Order.Order> Orders => Set<Tekno.Domain.Order.Order>();
         public DbSet<Tekno.Domain.Order.OrderItem> OrderItems => Set<Tekno.Domain.Order.OrderItem>();
+        
+        // Blog entities
+        public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
+        public DbSet<BlogPostTag> BlogPostTags => Set<BlogPostTag>();
+        public DbSet<BlogPostProduct> BlogPostProducts => Set<BlogPostProduct>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
@@ -84,6 +90,11 @@ namespace Tekno.Infrastructure.Persistence
             // Order configurations
             modelBuilder.ApplyConfiguration(new OrderConfiguration());
             modelBuilder.ApplyConfiguration(new OrderItemConfiguration());
+            
+            // Blog configurations
+            modelBuilder.ApplyConfiguration(new BlogPostConfiguration());
+            modelBuilder.ApplyConfiguration(new BlogPostTagConfiguration());
+            modelBuilder.ApplyConfiguration(new BlogPostProductConfiguration());
         }
     }
 }

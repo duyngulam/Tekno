@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Nest;
 using Tekno.Application.Auth.Interfaces;
 using Tekno.Application.Auth.Services;
+using Tekno.Application.Blog.Interface;
+using Tekno.Application.Blog.Services;
 using Tekno.Application.Cart.Interface;
 using Tekno.Application.Cart.Services;
 using Tekno.Application.Catalog.Interface;
@@ -18,6 +20,7 @@ using Tekno.Application.Promotion.Services;
 using Tekno.Application.Review.Interface;
 using Tekno.Application.Review.Services;
 using Tekno.Infrastructure.Auth;
+using Tekno.Infrastructure.Blog;
 using Tekno.Infrastructure.Cart;
 using Tekno.Infrastructure.Catalog;
 using Tekno.Infrastructure.Logging;
@@ -70,7 +73,6 @@ namespace Tekno.Infrastructure
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
             services.AddScoped<ICacheService, RedisCacheService>();
 
-
             // ===================================================
             // 5️⃣ REPOSITORIES
             // ===================================================
@@ -95,6 +97,9 @@ namespace Tekno.Infrastructure
             
             // Order
             services.AddScoped<IOrderRepository, OrderRepository>();
+            
+            // Blog
+            services.AddScoped<IBlogPostRepository, BlogPostRepository>();
 
             // ===================================================
             // 6️⃣ APPLICATION SERVICES
@@ -121,6 +126,9 @@ namespace Tekno.Infrastructure
             
             // Review
             services.AddScoped<ReviewService>();
+            
+            // Blog
+            services.AddScoped<BlogPostService>();
 
             // ===================================================
             // 7️⃣ ELASTICSEARCH SERVICES
