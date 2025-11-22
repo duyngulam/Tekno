@@ -10,6 +10,8 @@ using Tekno.Api.Middlewares;
 using Tekno.Application.Auth.DTOs;
 using Tekno.Application.Auth.Interfaces;
 using Tekno.Application.Auth.Services;
+using Tekno.Application.Cart.Interface;
+using Tekno.Application.Cart.Services;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Catalog.Services;
 using Tekno.Application.Common.Interfaces;
@@ -18,6 +20,7 @@ using Tekno.Application.Promotion.Interface;
 using Tekno.Application.Promotion.Services;
 using Tekno.Infrastructure;
 using Tekno.Infrastructure.Auth;
+using Tekno.Infrastructure.Cart;
 using Tekno.Infrastructure.Catalog;
 using Tekno.Infrastructure.Logging;
 using Tekno.Infrastructure.Persistence;
@@ -138,7 +141,13 @@ namespace Tekno.Api
             
             // Coupon/Promotion services
             builder.Services.AddScoped<CouponService>();
-            builder.Services.AddScoped<ICouponRepository, CouponRepository>();
+            builder.Services.AddScoped<ICouponRepository,CouponRepository>();
+            
+            // Cart & Wishlist services
+            builder.Services.AddScoped<CartService>();
+            builder.Services.AddScoped<WishlistService>();
+            builder.Services.AddScoped<ICartRepository,CartRepository>();
+            builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
 
             // =======================================================
             // 6. LOGGING

@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using Tekno.Domain.Auth;
 using Tekno.Domain.Catalog;
 using Tekno.Domain.Promotion;
+using Tekno.Domain.Cart;
 using Tekno.Infrastructure.Persistence.Configurations;
 
 namespace Tekno.Infrastructure.Persistence
@@ -25,6 +26,11 @@ namespace Tekno.Infrastructure.Persistence
         public DbSet<CouponCategory> CouponCategories => Set<CouponCategory>();
         public DbSet<CouponProduct> CouponProducts => Set<CouponProduct>();
         public DbSet<CouponUsage> CouponUsages => Set<CouponUsage>();
+        
+        // Cart entities
+        public DbSet<UserCart> UserCarts => Set<UserCart>();
+        public DbSet<CartItem> CartItems => Set<CartItem>();
+        public DbSet<Wishlist> Wishlists => Set<Wishlist>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
@@ -54,6 +60,11 @@ namespace Tekno.Infrastructure.Persistence
             modelBuilder.ApplyConfiguration(new CouponCategoryConfiguration());
             modelBuilder.ApplyConfiguration(new CouponProductConfiguration());
             modelBuilder.ApplyConfiguration(new CouponUsageConfiguration());
+            
+            // Cart configurations
+            modelBuilder.ApplyConfiguration(new CartConfiguration());
+            modelBuilder.ApplyConfiguration(new CartItemConfiguration());
+            modelBuilder.ApplyConfiguration(new WishlistConfiguration());
         }
     }
 }
