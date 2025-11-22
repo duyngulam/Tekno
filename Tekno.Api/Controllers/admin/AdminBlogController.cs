@@ -13,7 +13,7 @@ namespace Tekno.Api.Controllers.Admin
     /// </summary>
     [ApiController]
     [Route("api/admin/blog")]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class AdminBlogController : ControllerBase
     {
         private readonly BlogPostService _blogPostService;

@@ -24,6 +24,9 @@ namespace Tekno.Infrastructure.Persistence
         public DbSet<AttributeValue> AttributeValues => Set<AttributeValue>();
         public DbSet<ProductVariantAttribute> ProductVariantAttributes => Set<ProductVariantAttribute>();
         
+        // Advertisement entities
+        public DbSet<ProductAdvertisement> ProductAdvertisements => Set<ProductAdvertisement>();
+        
         // Coupon entities
         public DbSet<Coupon> Coupons => Set<Coupon>();
         public DbSet<CouponCategory> CouponCategories => Set<CouponCategory>();
@@ -71,6 +74,9 @@ namespace Tekno.Infrastructure.Persistence
             modelBuilder.ApplyConfiguration(new AttributeValueConfiguration());
             modelBuilder.ApplyConfiguration(new ProductVariantConfiguration());
             modelBuilder.ApplyConfiguration(new ProductVariantAttributeConfiguration());
+            
+            // Advertisement configuration
+            modelBuilder.ApplyConfiguration(new ProductAdvertisementConfiguration());
             
             // Coupon configurations
             modelBuilder.ApplyConfiguration(new CouponConfiguration());
