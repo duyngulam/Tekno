@@ -134,6 +134,7 @@ namespace Tekno.Api
             // =======================================================
             builder.Services.AddInfrastructure(builder.Configuration);
             builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<ProfileService>();
             builder.Services.AddScoped<CategoryService>();
             builder.Services.AddScoped<BrandService>();
             builder.Services.AddScoped<ProductService>();

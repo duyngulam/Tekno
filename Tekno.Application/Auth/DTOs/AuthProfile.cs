@@ -14,8 +14,14 @@ namespace Tekno.Application.Auth.DTOs
     {
         public AuthProfile(){
             CreateMap<User, UserDto>()
+                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.Name));
+
+            CreateMap<User, UserProfileDto>()
                 .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.Name))
-                .ReverseMap();
+                .ForMember(dest => dest.Addresses, opt => opt.MapFrom(src => src.Addresses));
+
+            CreateMap<UserAddress, UserAddressDto>();
+            CreateMap<CreateAddressDto, UserAddress>();
         }
     }
 }

@@ -52,6 +52,7 @@ namespace Tekno.Infrastructure.Persistence
             // Thứ tự quan trọng: các bảng độc lập phải được seed trước
             modelBuilder.ApplyConfiguration(new RoleConfiguration());
             modelBuilder.ApplyConfiguration(new UserConfiguration());
+            modelBuilder.ApplyConfiguration(new UserAddressConfiguration());
 
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
             modelBuilder.ApplyConfiguration(new BrandConfiguration());
