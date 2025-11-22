@@ -7,6 +7,7 @@ using Tekno.Application.Cart.DTOs;
 using Tekno.Application.Cart.Interface;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Common.Exceptions;
+using Tekno.Application.Common.Interfaces;
 using Tekno.Domain.Cart;
 
 namespace Tekno.Application.Cart.Services
@@ -15,12 +16,12 @@ namespace Tekno.Application.Cart.Services
     {
         private readonly ICartRepository _cartRepository;
         private readonly IProductRepository _productRepository;
-        private readonly ILogger<CartService> _logger;
+        private readonly IAppLogger<CartService> _logger;
 
         public CartService(
             ICartRepository cartRepository,
             IProductRepository productRepository,
-            ILogger<CartService> logger)
+            IAppLogger<CartService> logger)
         {
             _cartRepository = cartRepository;
             _productRepository = productRepository;

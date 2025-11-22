@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Tekno.Application.Common;
 using Tekno.Application.Common.Exceptions;
+using Tekno.Application.Common.Interfaces;
 using Tekno.Application.Common.Paging;
 using Tekno.Application.Promotion.DTOs;
 using Tekno.Application.Promotion.Interface;
@@ -17,12 +18,12 @@ namespace Tekno.Application.Promotion.Services
     {
         private readonly ICouponRepository _couponRepository;
         private readonly IMapper _mapper;
-        private readonly ILogger<CouponService> _logger;
+        private readonly IAppLogger<CouponService> _logger;
 
         public CouponService(
             ICouponRepository couponRepository,
             IMapper mapper,
-            ILogger<CouponService> logger)
+            IAppLogger<CouponService> logger)
         {
             _couponRepository = couponRepository;
             _mapper = mapper;

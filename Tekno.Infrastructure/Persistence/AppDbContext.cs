@@ -4,6 +4,8 @@ using Tekno.Domain.Auth;
 using Tekno.Domain.Catalog;
 using Tekno.Domain.Promotion;
 using Tekno.Domain.Cart;
+using Tekno.Domain.Review;
+using Tekno.Domain.Order;
 using Tekno.Infrastructure.Persistence.Configurations;
 
 namespace Tekno.Infrastructure.Persistence
@@ -31,6 +33,14 @@ namespace Tekno.Infrastructure.Persistence
         public DbSet<UserCart> UserCarts => Set<UserCart>();
         public DbSet<CartItem> CartItems => Set<CartItem>();
         public DbSet<Wishlist> Wishlists => Set<Wishlist>();
+        
+        // Review entities
+        public DbSet<ProductReview> ProductReviews => Set<ProductReview>();
+        public DbSet<ReviewHelpfulness> ReviewHelpfulness => Set<ReviewHelpfulness>();
+        
+        // Order entities (simplified for purchase verification)
+        public DbSet<Tekno.Domain.Order.Order> Orders => Set<Tekno.Domain.Order.Order>();
+        public DbSet<Tekno.Domain.Order.OrderItem> OrderItems => Set<Tekno.Domain.Order.OrderItem>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
@@ -65,6 +75,14 @@ namespace Tekno.Infrastructure.Persistence
             modelBuilder.ApplyConfiguration(new CartConfiguration());
             modelBuilder.ApplyConfiguration(new CartItemConfiguration());
             modelBuilder.ApplyConfiguration(new WishlistConfiguration());
+            
+            // Review configurations
+            modelBuilder.ApplyConfiguration(new ProductReviewConfiguration());
+            modelBuilder.ApplyConfiguration(new ReviewHelpfulnessConfiguration());
+            
+            // Order configurations
+            modelBuilder.ApplyConfiguration(new OrderConfiguration());
+            modelBuilder.ApplyConfiguration(new OrderItemConfiguration());
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -10,6 +9,8 @@ using Tekno.Application.Catalog.DTOs.Admin;
 using Tekno.Application.Catalog.DTOs.Products;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Common;
+using Tekno.Application.Common.Exceptions;
+using Tekno.Application.Common.Interfaces;
 using Tekno.Application.Common.Media.Services;
 using Tekno.Application.Common.Paging;
 using Tekno.Domain.Catalog;
@@ -18,24 +19,24 @@ namespace Tekno.Application.Catalog.Services
 {
     public class ProductService
     {
-        private readonly ILogger<ProductService> _logger;
         private readonly IProductRepository _productRepository;
-        private readonly IMapper _mapper;
         private readonly IElasticProductService _elasticService;
+        private readonly IMapper _mapper;
         private readonly MediaService _mediaService;
+        private readonly IAppLogger<ProductService> _logger;
 
         public ProductService(
             IProductRepository productRepository,
-            IMapper mapper,
             IElasticProductService elasticService,
-            ILogger<ProductService> logger,
-            MediaService mediaService)
+            IMapper mapper,
+            MediaService mediaService,
+            IAppLogger<ProductService> logger)
         {
             _productRepository = productRepository;
-            _mapper = mapper;
             _elasticService = elasticService;
-            _logger = logger;
+            _mapper = mapper;
             _mediaService = mediaService;
+            _logger = logger;
         }
 
         public async Task<PagedResult<ProductSummaryDto>> GetPagedProductAsync(ProductSearchRequestDto request)

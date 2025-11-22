@@ -141,13 +141,20 @@ namespace Tekno.Api
             
             // Coupon/Promotion services
             builder.Services.AddScoped<CouponService>();
-            builder.Services.AddScoped<ICouponRepository,CouponRepository>();
+            builder.Services.AddScoped<ICouponRepository, CouponRepository>();
             
             // Cart & Wishlist services
             builder.Services.AddScoped<CartService>();
             builder.Services.AddScoped<WishlistService>();
-            builder.Services.AddScoped<ICartRepository,CartRepository>();
+            builder.Services.AddScoped<ICartRepository, CartRepository>();
             builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
+            
+            // Review services
+            builder.Services.AddScoped<Tekno.Application.Review.Services.ReviewService>();
+            builder.Services.AddScoped<Tekno.Application.Review.Interface.IReviewRepository, Tekno.Infrastructure.Review.ReviewRepository>();
+            
+            // Order services (simplified for purchase verification)
+            builder.Services.AddScoped<Tekno.Application.Order.Interface.IOrderRepository, Tekno.Infrastructure.Order.OrderRepository>();
 
             // =======================================================
             // 6. LOGGING

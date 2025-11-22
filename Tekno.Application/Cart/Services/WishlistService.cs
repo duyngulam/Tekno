@@ -7,6 +7,7 @@ using Tekno.Application.Cart.DTOs;
 using Tekno.Application.Cart.Interface;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Common.Exceptions;
+using Tekno.Application.Common.Interfaces;
 using Tekno.Domain.Cart;
 
 namespace Tekno.Application.Cart.Services
@@ -15,12 +16,12 @@ namespace Tekno.Application.Cart.Services
     {
         private readonly IWishlistRepository _wishlistRepository;
         private readonly IProductRepository _productRepository;
-        private readonly ILogger<WishlistService> _logger;
+        private readonly IAppLogger<WishlistService> _logger;
 
         public WishlistService(
             IWishlistRepository wishlistRepository,
             IProductRepository productRepository,
-            ILogger<WishlistService> logger)
+            IAppLogger<WishlistService> logger)
         {
             _wishlistRepository = wishlistRepository;
             _productRepository = productRepository;
