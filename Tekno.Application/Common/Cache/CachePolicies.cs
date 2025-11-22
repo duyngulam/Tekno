@@ -15,6 +15,8 @@ namespace Tekno.Application.Common.Cache
         public static readonly TimeSpan ProductListTtl = TimeSpan.FromMinutes(10);
         public static readonly TimeSpan SearchTtl = TimeSpan.FromMinutes(5);
         public static readonly TimeSpan BannerTtl = TimeSpan.FromHours(2);
+        public static readonly TimeSpan NewProductsTtl = TimeSpan.FromMinutes(10);
+        
         //Key prefixes
         public static string CategoryKey => "cache:category:all";
         public static string BrandKey => "cache:brand:all";
@@ -22,5 +24,7 @@ namespace Tekno.Application.Common.Cache
         public static string ProductListKey(int catId) => $"cache:product:cat:{catId}";
         public static string SearchKey(string keyword) => $"cache:search:{keyword.ToLower()}";
         public static string BannerKey => "cache:banner:active";
+        public static string NewProductsKey(string categorySlug, int count) => 
+            $"cache:products:new:{categorySlug}:{count}";
     }
 }

@@ -9,6 +9,7 @@ using Tekno.Application.Catalog.DTOs.Admin;
 using Tekno.Application.Catalog.DTOs.Products;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Common;
+using Tekno.Application.Common.Cache;
 using Tekno.Application.Common.Exceptions;
 using Tekno.Application.Common.Interfaces;
 using Tekno.Application.Common.Media.Services;
@@ -24,19 +25,22 @@ namespace Tekno.Application.Catalog.Services
         private readonly IMapper _mapper;
         private readonly MediaService _mediaService;
         private readonly IAppLogger<ProductService> _logger;
+        private readonly ICacheService _cacheService;
 
         public ProductService(
             IProductRepository productRepository,
             IElasticProductService elasticService,
             IMapper mapper,
             MediaService mediaService,
-            IAppLogger<ProductService> logger)
+            IAppLogger<ProductService> logger,
+            ICacheService cacheService)
         {
             _productRepository = productRepository;
             _elasticService = elasticService;
             _mapper = mapper;
             _mediaService = mediaService;
             _logger = logger;
+            _cacheService = cacheService;
         }
 
         public async Task<PagedResult<ProductSummaryDto>> GetPagedProductAsync(ProductSearchRequestDto request)
@@ -145,6 +149,9 @@ namespace Tekno.Application.Catalog.Services
 
                 await transaction.CommitAsync();
 
+                // Invalidate new products cache for this category
+                await InvalidateNewProductsCacheAsync(newProduct.CategoryId);
+
                 return _mapper.Map<CreateProductDto>(newProduct);
             }
             catch (Exception ex)
@@ -232,6 +239,9 @@ namespace Tekno.Application.Catalog.Services
 
                 _logger.LogInformation("Updated product ID {ProductId} ({ProductName})", id, dto.Name);
 
+                // Invalidate new products cache for this category
+                await InvalidateNewProductsCacheAsync(updated.CategoryId);
+
                 return _mapper.Map<ProductDetailDto>(updated);
             }
             catch (Exception ex)
@@ -262,6 +272,8 @@ namespace Tekno.Application.Catalog.Services
                 return false;
             }
 
+            var categoryId = product.CategoryId; // Store before deletion
+
             await using var transaction = await _productRepository.BeginTransactionAsync();
 
             try
@@ -273,6 +285,9 @@ namespace Tekno.Application.Catalog.Services
                 await _elasticService.DeleteProductAsync(id);
 
                 await transaction.CommitAsync();
+
+                // Invalidate new products cache for this category
+                await InvalidateNewProductsCacheAsync(categoryId);
 
                 // Clean up images from media store (after commit - best effort)
                 foreach (var img in product.Images.Select(i => i.ImageUrl).ToList())
@@ -311,6 +326,64 @@ namespace Tekno.Application.Catalog.Services
             }
 
              return _mapper.Map<ProductVariantDetailDto>(variant);
+        }
+
+        /// <summary>
+        /// Get top N newest products by category (with caching)
+        /// </summary>
+        public async Task<List<ProductSummaryDto>> GetTopNewProductsByCategoryAsync(string categorySlug, int count = 10)
+        {
+            if (count <= 0 || count > 100)
+            {
+                count = 10; // Default to 10, max 100
+            }
+
+            // Generate cache key
+            var cacheKey = CachePolicies.NewProductsKey(categorySlug, count);
+
+            // Try to get from cache
+            var cachedProducts = await _cacheService.GetAsync<List<ProductSummaryDto>>(cacheKey);
+            if (cachedProducts != null)
+            {
+                _logger.LogInformation("Retrieved {Count} newest products for category {CategorySlug} from cache", 
+                    cachedProducts.Count, categorySlug);
+                return cachedProducts;
+            }
+
+            // Not in cache, get from database
+            var products = await _productRepository.GetTopNewProductsByCategoryAsync(categorySlug, count);
+            var productDtos = _mapper.Map<List<ProductSummaryDto>>(products);
+            
+            // Cache the results
+            await _cacheService.SetAsync(cacheKey, productDtos, CachePolicies.NewProductsTtl);
+            
+            _logger.LogInformation("Retrieved {Count} newest products for category {CategorySlug} from database and cached", 
+                productDtos.Count, categorySlug);
+
+            return productDtos;
+        }
+
+        /// <summary>
+        /// Invalidate new products cache for a category
+        /// </summary>
+        private async Task InvalidateNewProductsCacheAsync(int categoryId)
+        {
+            // Get category to find its slug
+            var category = await _productRepository.GetProductByIdAsync(categoryId);
+            if (category?.Category != null)
+            {
+                var categorySlug = category.Category.Slug;
+                
+                // Invalidate cache for common count values (5, 10, 20, 50, 100)
+                var commonCounts = new[] { 5, 10, 20, 50, 100 };
+                foreach (var count in commonCounts)
+                {
+                    var cacheKey = CachePolicies.NewProductsKey(categorySlug, count);
+                    await _cacheService.RemoveAsync(cacheKey);
+                }
+                
+                _logger.LogInformation("Invalidated new products cache for category {CategorySlug}", categorySlug);
+            }
         }
     }
 }

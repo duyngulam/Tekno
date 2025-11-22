@@ -191,5 +191,29 @@ namespace Tekno.Infrastructure.Catalog
                 .AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Id == variantId);
         }
+
+        public async Task<List<Product>> GetTopNewProductsByCategoryAsync(string categorySlug, int count)
+        {
+            var query = _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.Images)
+                .AsNoTracking()
+                .Where(p => p.Status == "available");
+
+            // Filter by category slug
+            if (!string.IsNullOrWhiteSpace(categorySlug))
+            {
+                query = query.Where(p => p.Category.Slug == categorySlug);
+            }
+
+            // Get top N newest products
+            var products = await query
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(count)
+                .ToListAsync();
+
+            return products;
+        }
     }
 }

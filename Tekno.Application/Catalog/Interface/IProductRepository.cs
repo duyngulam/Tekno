@@ -32,6 +32,9 @@ namespace Tekno.Application.Catalog.Interface
         // Variant methods
         Task<ProductVariant?> GetProductVariantByIdAsync(int variantId);
         
+        // New products by category
+        Task<List<Product>> GetTopNewProductsByCategoryAsync(string categorySlug, int count);
+        
         // Transaction support
         IDbContextTransaction BeginTransaction();
         Task<IDbContextTransaction> BeginTransactionAsync();
