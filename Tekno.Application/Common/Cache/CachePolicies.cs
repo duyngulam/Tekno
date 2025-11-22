@@ -26,5 +26,45 @@ namespace Tekno.Application.Common.Cache
         public static string BannerKey => "cache:banner:active";
         public static string NewProductsKey(string categorySlug, int count) => 
             $"cache:products:new:{categorySlug}:{count}";
+        
+        /// <summary>
+        /// Generate cache key for product search with all parameters
+        /// </summary>
+        public static string SearchProductsKey(
+            string? keyword,
+            string? category,
+            string? brand,
+            Dictionary<string, string>? filters,
+            decimal? minPrice,
+            decimal? maxPrice,
+            string? sort,
+            int page,
+            int pageSize)
+        {
+            // Create a deterministic cache key based on all search parameters
+            var keyParts = new List<string>
+            {
+                "cache:search:products",
+                $"kw:{keyword?.ToLower() ?? "all"}",
+                $"cat:{category?.ToLower() ?? "all"}",
+                $"brand:{brand?.ToLower() ?? "all"}",
+                $"minp:{minPrice?.ToString() ?? "0"}",
+                $"maxp:{maxPrice?.ToString() ?? "0"}",
+                $"sort:{sort?.ToLower() ?? "default"}",
+                $"pg:{page}",
+                $"ps:{pageSize}"
+            };
+
+            // Add filters to key
+            if (filters != null && filters.Any())
+            {
+                var filterStr = string.Join(",", filters
+                    .OrderBy(kv => kv.Key)
+                    .Select(kv => $"{kv.Key.ToLower()}:{kv.Value.ToLower()}"));
+                keyParts.Add($"f:{filterStr}");
+            }
+
+            return string.Join(":", keyParts);
+        }
     }
 }

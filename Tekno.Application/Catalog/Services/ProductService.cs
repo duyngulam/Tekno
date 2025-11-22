@@ -50,7 +50,8 @@ namespace Tekno.Application.Catalog.Services
             // Use ES when keyword or spec filters present
             if (!string.IsNullOrEmpty(request.Keyword) || (request.Filters != null && request.Filters.Any()))
             {
-                return await _elasticService.SearchProductsAsync(
+                // Generate cache key for this search
+                var cacheKey = CachePolicies.SearchProductsKey(
                     request.Keyword,
                     request.Category,
                     request.Brand,
@@ -60,6 +61,34 @@ namespace Tekno.Application.Catalog.Services
                     request.Sort,
                     paging.Page,
                     paging.PageSize);
+
+                // Try to get from cache
+                var cachedResults = await _cacheService.GetAsync<PagedResult<ProductSummaryDto>>(cacheKey);
+                if (cachedResults != null)
+                {
+                    _logger.LogInformation("Retrieved search results from cache for keyword: {Keyword}", request.Keyword);
+                    return cachedResults;
+                }
+
+                // Cache miss - search Elasticsearch
+                var searchResults = await _elasticService.SearchProductsAsync(
+                    request.Keyword,
+                    request.Category,
+                    request.Brand,
+                    request.Filters,
+                    request.MinPrice,
+                    request.MaxPrice,
+                    request.Sort,
+                    paging.Page,
+                    paging.PageSize);
+
+                // Cache the search results
+                await _cacheService.SetAsync(cacheKey, searchResults, CachePolicies.SearchTtl);
+                
+                _logger.LogInformation("Search results cached for keyword: {Keyword}, category: {Category}, brand: {Brand}", 
+                    request.Keyword, request.Category, request.Brand);
+
+                return searchResults;
             }
 
             // Fallback to database
@@ -151,6 +180,9 @@ namespace Tekno.Application.Catalog.Services
 
                 // Invalidate new products cache for this category
                 await InvalidateNewProductsCacheAsync(newProduct.CategoryId);
+                
+                // Invalidate search cache
+                InvalidateSearchCache();
 
                 return _mapper.Map<CreateProductDto>(newProduct);
             }
@@ -241,6 +273,9 @@ namespace Tekno.Application.Catalog.Services
 
                 // Invalidate new products cache for this category
                 await InvalidateNewProductsCacheAsync(updated.CategoryId);
+                
+                // Invalidate search cache
+                InvalidateSearchCache();
 
                 return _mapper.Map<ProductDetailDto>(updated);
             }
@@ -288,6 +323,9 @@ namespace Tekno.Application.Catalog.Services
 
                 // Invalidate new products cache for this category
                 await InvalidateNewProductsCacheAsync(categoryId);
+                
+                // Invalidate search cache
+                InvalidateSearchCache();
 
                 // Clean up images from media store (after commit - best effort)
                 foreach (var img in product.Images.Select(i => i.ImageUrl).ToList())
@@ -384,6 +422,25 @@ namespace Tekno.Application.Catalog.Services
                 
                 _logger.LogInformation("Invalidated new products cache for category {CategorySlug}", categorySlug);
             }
+        }
+
+        /// <summary>
+        /// Invalidate search cache (pattern-based removal)
+        /// Since Redis doesn't support wildcard deletion easily with IDistributedCache,
+        /// we'll need to clear specific common search patterns or implement a cache tag system
+        /// For now, we log the invalidation need
+        /// </summary>
+        private void InvalidateSearchCache()
+        {
+            // Note: With IDistributedCache, we can't easily delete by pattern
+            // Options:
+            // 1. Accept that search cache will expire naturally (5 minutes)
+            // 2. Implement a tag-based cache system
+            // 3. Use Redis directly for pattern-based deletion
+            // 4. Keep track of search cache keys in a separate set
+            
+            _logger.LogInformation("Product changed - search cache will expire naturally in {Minutes} minutes", 
+                CachePolicies.SearchTtl.TotalMinutes);
         }
     }
 }
