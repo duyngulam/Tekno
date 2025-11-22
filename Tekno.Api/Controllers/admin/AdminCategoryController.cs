@@ -13,13 +13,13 @@ namespace Tekno.Api.Controllers.admin
     [ApiController]
     //[Authorize(Roles = "Admin")]
     [Route("api/admin/categories")]
-    public class CategoryAdminController : ControllerBase
+    public class AdminCategoryController : ControllerBase
     {
         private readonly CategoryService _categoryService;
-        private readonly ILogger<CategoryAdminController> _logger;
+        private readonly ILogger<AdminCategoryController> _logger;
         private readonly IMapper _mapper;
         private readonly MediaService _Media;
-        public CategoryAdminController(CategoryService categoryService, ILogger<CategoryAdminController> logger, IMapper mapper, MediaService media)
+        public AdminCategoryController(CategoryService categoryService, ILogger<AdminCategoryController> logger, IMapper mapper, MediaService media)
         {
             _categoryService = categoryService;
             _logger = logger;

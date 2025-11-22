@@ -2,7 +2,9 @@
 using System.Net.Http.Headers;
 using Tekno.Domain.Auth;
 using Tekno.Domain.Catalog;
+using Tekno.Domain.Promotion;
 using Tekno.Infrastructure.Persistence.Configurations;
+
 namespace Tekno.Infrastructure.Persistence
 {
     public class AppDbContext : DbContext
@@ -17,7 +19,12 @@ namespace Tekno.Infrastructure.Persistence
         public DbSet<ProductAttribute> Attributes => Set<ProductAttribute>();
         public DbSet<AttributeValue> AttributeValues => Set<AttributeValue>();
         public DbSet<ProductVariantAttribute> ProductVariantAttributes => Set<ProductVariantAttribute>();
-
+        
+        // Coupon entities
+        public DbSet<Coupon> Coupons => Set<Coupon>();
+        public DbSet<CouponCategory> CouponCategories => Set<CouponCategory>();
+        public DbSet<CouponProduct> CouponProducts => Set<CouponProduct>();
+        public DbSet<CouponUsage> CouponUsages => Set<CouponUsage>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
@@ -41,7 +48,12 @@ namespace Tekno.Infrastructure.Persistence
             modelBuilder.ApplyConfiguration(new AttributeValueConfiguration());
             modelBuilder.ApplyConfiguration(new ProductVariantConfiguration());
             modelBuilder.ApplyConfiguration(new ProductVariantAttributeConfiguration());
+            
+            // Coupon configurations
+            modelBuilder.ApplyConfiguration(new CouponConfiguration());
+            modelBuilder.ApplyConfiguration(new CouponCategoryConfiguration());
+            modelBuilder.ApplyConfiguration(new CouponProductConfiguration());
+            modelBuilder.ApplyConfiguration(new CouponUsageConfiguration());
         }
-
     }
 }

@@ -68,12 +68,12 @@ namespace Tekno.Infrastructure.Catalog
             return true;
         }
 
-        // NEW: return attributes that are global or specific to given category (include values)
+        // NEW: return attributes that are  specific to given category (include values)
         public async Task<List<ProductAttribute>> GetAttributesForCategoryAsync(int categoryId)
         {
             return await _context.Set<ProductAttribute>()
                 .Include(a => a.Values)
-                .Where(a => a.IsGlobal || a.CategoryId == categoryId)
+                .Where(a => !a.IsGlobal || a.CategoryId == categoryId)
                 .AsNoTracking()
                 .ToListAsync();
         }

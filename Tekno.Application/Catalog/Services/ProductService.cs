@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Globalization;
-using System.Security.Cryptography.X509Certificates;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Tekno.Application.Catalog.DTOs;
 using Tekno.Application.Catalog.DTOs.Admin;
 using Tekno.Application.Catalog.DTOs.Products;
@@ -22,7 +24,12 @@ namespace Tekno.Application.Catalog.Services
         private readonly IElasticProductService _elasticService;
         private readonly MediaService _mediaService;
 
-        public ProductService(IProductRepository productRepository, IMapper mapper, IElasticProductService elasticService, ILogger<ProductService> logger, MediaService mediaService)
+        public ProductService(
+            IProductRepository productRepository,
+            IMapper mapper,
+            IElasticProductService elasticService,
+            ILogger<ProductService> logger,
+            MediaService mediaService)
         {
             _productRepository = productRepository;
             _mapper = mapper;
@@ -35,10 +42,10 @@ namespace Tekno.Application.Catalog.Services
         {
             var paging = new PagingParams(request.Page, request.PageSize);
 
-            // Use ES when keyword or spec filters present (keeps previous behavior)
+            // Use ES when keyword or spec filters present
             if (!string.IsNullOrEmpty(request.Keyword) || (request.Filters != null && request.Filters.Any()))
             {
-                var elasticResult = await _elasticService.SearchProductsAsync(
+                return await _elasticService.SearchProductsAsync(
                     request.Keyword,
                     request.Category,
                     request.Brand,
@@ -48,8 +55,6 @@ namespace Tekno.Application.Catalog.Services
                     request.Sort,
                     paging.Page,
                     paging.PageSize);
-
-                return elasticResult;
             }
 
             // Fallback to database
@@ -68,107 +73,243 @@ namespace Tekno.Application.Catalog.Services
 
         public async Task<ProductDetailDto?> GetProductDetailAsync(string slug)
         {
+            if (string.IsNullOrWhiteSpace(slug))
+            {
+                _logger.LogWarning("GetProductDetailAsync called with empty slug");
+                return null;
+            }
+
             var product = await _productRepository.GetProductBySlugAsync(slug);
-            if (product == null) return null;
+            if (product == null)
+            {
+                _logger.LogInformation("Product not found with slug: {Slug}", slug);
+                return null;
+            }
+
+            return _mapper.Map<ProductDetailDto>(product);
+        }
+
+        public async Task<ProductDetailDto?> GetProductDetailByIdAsync(int id)
+        {
+            var product = await _productRepository.GetProductByIdAsync(id);
+            if (product == null)
+            {
+                _logger.LogInformation("Product not found with ID: {Id}", id);
+                return null;
+            }
+
             return _mapper.Map<ProductDetailDto>(product);
         }
 
         public async Task<CreateProductDto> CreateProductAsync(CreateProductDto dto)
         {
-            var existingProduct = await _elasticService.IsProductExistBySlug(dto.Slug);
-            if (existingProduct)
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+
+            // Check slug existence in both DB and ES in parallel
+            var existsInDbTask = _productRepository.IsProductExistBySlugAsync(dto.Slug);
+            var existsInEsTask = _elasticService.IsProductExistBySlug(dto.Slug);
+            await Task.WhenAll(existsInDbTask, existsInEsTask);
+
+            if (existsInDbTask.Result || existsInEsTask.Result)
             {
-                throw new Exception("Product with the same slug already exists.");
+                throw new InvalidOperationException($"Product with slug '{dto.Slug}' already exists");
             }
 
             var uploadedImages = new List<string>();
+            await using var transaction = await _productRepository.BeginTransactionAsync();
+
             try
             {
-                // Map DTO -> domain (Images handled separately)
+                // Map and create product
                 var newProduct = _mapper.Map<Product>(dto);
 
-                // Upload images and add to entity
+                // Upload images
                 int sort = 0;
-                foreach (var file in dto.Images)
+                foreach (var file in dto.Images ?? Enumerable.Empty<Microsoft.AspNetCore.Http.IFormFile>())
                 {
                     var imageUrl = await _mediaService.UploadImageAsync(file, $"tekno/product/{dto.Slug}");
                     uploadedImages.Add(imageUrl);
                     newProduct.AddImage(imageUrl, isPrimary: sort == 0, sortOrder: sort++);
                 }
 
-                // Save to db
+                // Save to DB
                 newProduct = await _productRepository.AddProductAsync(newProduct);
-                _logger.LogInformation("Created product {ProductName} with {ImageCount} images", dto.Name, uploadedImages.Count);
+                _logger.LogInformation("Created product {ProductName} (ID: {ProductId}) with {ImageCount} images",
+                    dto.Name, newProduct.Id, uploadedImages.Count);
 
-                // Index to Elastic (map domain -> summary DTO)
+                // Index to Elasticsearch
                 var summary = _mapper.Map<ProductSummaryDto>(newProduct);
-                _logger.LogInformation("Indexing product {ProductName} to ElasticSearch, with primary img {img}", summary.Name, summary.PrimaryImagePath);
                 await _elasticService.IndexProductAsync(summary);
+
+                await transaction.CommitAsync();
 
                 return _mapper.Map<CreateProductDto>(newProduct);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to create product {Name}", dto.Name);
+                await transaction.RollbackAsync();
 
-                // Delete uploaded images on failure
+                // Clean up uploaded images
                 foreach (var img in uploadedImages)
-                    await _mediaService.DeleteImageAsync(img);
+                {
+                    try { await _mediaService.DeleteImageAsync(img); }
+                    catch (Exception cleanupEx)
+                    {
+                        _logger.LogWarning(cleanupEx, "Failed to delete image {ImageUrl} during rollback", img);
+                    }
+                }
+
                 throw;
             }
         }
 
         public async Task<ProductDetailDto?> UpdateProductAsync(int id, CreateProductDto dto)
         {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+
             var existing = await _productRepository.GetProductByIdAsync(id);
-            if (existing == null) return null;
-
-            // Update scalar properties
-            existing.Name = dto.Name;
-            existing.Slug = dto.Slug;
-            existing.CategoryId = dto.CategoryId;
-            existing.BrandId = dto.BrandId;
-            existing.BasePrice = dto.BasePrice;
-            existing.Description = dto.Description;
-            existing.Overview = dto.Overview;
-            existing.Status = dto.Status ?? existing.Status;
-            existing.UpdatedAt = DateTime.UtcNow;
-
-            // Upload any new images and add
-            int sort = existing.Images?.Count ?? 0;
-            foreach (var file in dto.Images)
+            if (existing == null)
             {
-                var imageUrl = await _mediaService.UploadImageAsync(file, $"tekno/product/{dto.Slug}");
-                existing.AddImage(imageUrl, isPrimary: sort == 0, sortOrder: sort++);
+                _logger.LogWarning("Update failed: Product with ID {Id} not found", id);
+                return null;
             }
 
-            // Persist
-            var updated = await _productRepository.UpdateProductAsync(existing);
+            var uploadedImages = new List<string>();
+            await using var transaction = await _productRepository.BeginTransactionAsync();
 
-            // Reindex updated document
-            var summary = _mapper.Map<ProductSummaryDto>(updated);
-            await _elasticService.IndexProductAsync(summary);
+            try
+            {
+                // Check if slug changed and new slug already exists
+                if (existing.Slug != dto.Slug)
+                {
+                    var slugExistsDbTask = _productRepository.IsProductExistBySlugAsync(dto.Slug);
+                    var slugExistsEsTask = _elasticService.IsProductExistBySlug(dto.Slug);
+                    await Task.WhenAll(slugExistsDbTask, slugExistsEsTask);
 
-            return _mapper.Map<ProductDetailDto>(updated);
+                    if (slugExistsDbTask.Result || slugExistsEsTask.Result)
+                    {
+                        throw new InvalidOperationException($"Product with slug '{dto.Slug}' already exists");
+                    }
+                }
+
+                // Update scalar properties (null checks)
+                if (!string.IsNullOrWhiteSpace(dto.Name)) existing.Name = dto.Name;
+                if (!string.IsNullOrWhiteSpace(dto.Slug)) existing.Slug = dto.Slug;
+                if (dto.CategoryId > 0) existing.CategoryId = dto.CategoryId;
+                if (dto.BrandId > 0) existing.BrandId = dto.BrandId;
+                if (dto.BasePrice > 0) existing.BasePrice = dto.BasePrice;
+                
+                existing.Description = dto.Description;
+                existing.Overview = dto.Overview;
+                existing.DiscountPercent = dto.DiscountPercent;
+                existing.Status = dto.Status ?? existing.Status;
+                existing.UpdatedAt = DateTime.UtcNow;
+
+                // Upload new images if provided
+                if (dto.Images != null && dto.Images.Any())
+                {
+                    int sort = existing.Images?.Count ?? 0;
+                    foreach (var file in dto.Images)
+                    {
+                        var imageUrl = await _mediaService.UploadImageAsync(file, $"tekno/product/{dto.Slug}");
+                        uploadedImages.Add(imageUrl);
+                        existing.AddImage(imageUrl, isPrimary: sort == 0, sortOrder: sort++);
+                    }
+                }
+
+                // Persist changes
+                var updated = await _productRepository.UpdateProductAsync(existing);
+
+                // Reindex in Elasticsearch
+                var summary = _mapper.Map<ProductSummaryDto>(updated);
+                await _elasticService.IndexProductAsync(summary);
+
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Updated product ID {ProductId} ({ProductName})", id, dto.Name);
+
+                return _mapper.Map<ProductDetailDto>(updated);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update product ID {Id}", id);
+                await transaction.RollbackAsync();
+
+                // Clean up uploaded images
+                foreach (var img in uploadedImages)
+                {
+                    try { await _mediaService.DeleteImageAsync(img); }
+                    catch (Exception cleanupEx)
+                    {
+                        _logger.LogWarning(cleanupEx, "Failed to delete image {ImageUrl} during rollback", img);
+                    }
+                }
+
+                throw;
+            }
         }
 
         public async Task<bool> DeleteProductAsync(int id)
         {
             var product = await _productRepository.GetProductByIdAsync(id);
-            if (product == null) return false;
-
-            // Delete images from media store
-            foreach (var img in product.Images.Select(i => i.ImageUrl).ToList())
+            if (product == null)
             {
-                try { await _mediaService.DeleteImageAsync(img); } catch { /* loge */ }
+                _logger.LogWarning("Delete failed: Product with ID {Id} not found", id);
+                return false;
             }
 
-            await _productRepository.DeleteProductAsync(product);
+            await using var transaction = await _productRepository.BeginTransactionAsync();
 
-            // Delete from elastic
-            await _elasticService.DeleteProductAsync(id);
+            try
+            {
+                // Delete from database
+                await _productRepository.DeleteProductAsync(product);
 
-            return true;
+                // Delete from Elasticsearch
+                await _elasticService.DeleteProductAsync(id);
+
+                await transaction.CommitAsync();
+
+                // Clean up images from media store (after commit - best effort)
+                foreach (var img in product.Images.Select(i => i.ImageUrl).ToList())
+                {
+                    try { await _mediaService.DeleteImageAsync(img); }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to delete image {ImageUrl} for product ID {ProductId}", img, id);
+                    }
+                }
+
+                _logger.LogInformation("Deleted product ID {ProductId} ({ProductName})", id, product.Name);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to delete product ID {Id}", id);
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task<ProductVariantDetailDto?> GetProductVariantByIdAsync(int variantId)
+        {
+            if (variantId <= 0)
+            {
+                _logger.LogWarning("GetProductVariantByIdAsync called with invalid ID: {VariantId}", variantId);
+                return null;
+            }
+
+            var variant = await _productRepository.GetProductVariantByIdAsync(variantId);
+            if (variant == null)
+            {
+                _logger.LogInformation("Product variant not found with ID: {VariantId}", variantId);
+                return null;
+            }
+
+             return _mapper.Map<ProductVariantDetailDto>(variant);
         }
     }
 }

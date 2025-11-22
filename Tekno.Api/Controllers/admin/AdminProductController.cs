@@ -17,13 +17,13 @@ namespace Tekno.Api.Controllers.admin
     [ApiController]
     [Route("api/admin/products")]
     //[Authorize(Roles = "Admin")]
-    public class ProductAdminController : ControllerBase
+    public class AdminProductController : ControllerBase
     {
-        private readonly ILogger<ProductAdminController> _logger;
+        private readonly ILogger<AdminProductController> _logger;
         private readonly ProductService _productService;
         private readonly IMapper _mapper;
         private readonly MediaService _mediaService;
-        public ProductAdminController(ILogger<ProductAdminController> logger, ProductService productService, IMapper mapper, MediaService mediaService)
+        public AdminProductController(ILogger<AdminProductController> logger, ProductService productService, IMapper mapper, MediaService mediaService)
         {
             _logger = logger;
             _productService = productService;

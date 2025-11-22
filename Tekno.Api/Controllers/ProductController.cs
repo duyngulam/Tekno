@@ -36,5 +36,15 @@ namespace Tekno.Api.Controllers
 
             return Ok(ApiResponse<ProductDetailDto>.Ok(product));
         }
+
+        [HttpGet("variants/{ :int}")]
+        public async Task<IActionResult> GetVariantById(int variantId)
+        {
+            var variant = await _productService.GetProductVariantByIdAsync(variantId);
+            if (variant == null)
+                return NotFound(ApiResponse<ProductVariantDetailDto>.Fail("Product variant not found"));
+
+            return Ok(ApiResponse<ProductVariantDetailDto>.Ok(variant));
+        }
     }
 }

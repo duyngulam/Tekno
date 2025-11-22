@@ -14,11 +14,14 @@ using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Catalog.Services;
 using Tekno.Application.Common.Interfaces;
 using Tekno.Application.Common.Media.Services;
+using Tekno.Application.Promotion.Interface;
+using Tekno.Application.Promotion.Services;
 using Tekno.Infrastructure;
 using Tekno.Infrastructure.Auth;
 using Tekno.Infrastructure.Catalog;
 using Tekno.Infrastructure.Logging;
 using Tekno.Infrastructure.Persistence;
+using Tekno.Infrastructure.Promotion;
 using Tekno.Infrastructure.Search;
 using Tekno.Infrastructure.Services;
 
@@ -132,6 +135,11 @@ namespace Tekno.Api
             builder.Services.AddScoped<BrandService>();
             builder.Services.AddScoped<ProductService>();
             builder.Services.AddScoped<MediaService>();
+            
+            // Coupon/Promotion services
+            builder.Services.AddScoped<CouponService>();
+            builder.Services.AddScoped<ICouponRepository, CouponRepository>();
+
             // =======================================================
             // 6. LOGGING
             // =======================================================

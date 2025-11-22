@@ -28,6 +28,6 @@ namespace Tekno.Application.Catalog.DTOs.Admin
         public string? Overview { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public List<IFormFile> Images { get; set; } = new List<IFormFile>();
-
+        public decimal? DiscountPercent { get; internal set; }
     }
 }
