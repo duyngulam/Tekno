@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { Grid3x3, List, ChevronDown, Loader2 } from "lucide-react";
 import { FilterChips } from "@/components/product/FilterChips";
-import { CategoryTabs } from "@/components/product/CategoryTabs";
 import Filter from "@/components/product/Filter";
 import ProductCard from "@/components/product/ProductCard";
 import { Product } from "@/type/product";
@@ -31,8 +30,11 @@ import {
 } from "@/components/ui/pagination";
 import { Category } from "@/type/categories";
 import NoProductAvailable from "@/components/product/NoProductAvailable";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { CategoryTabs } from "@/components/product/CategoryTabs";
 
-export default function Products() {
+export default function ProductPage() {
   const [loading, setLoading] = useState(false);
   const [productsList, setproductsList] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -49,17 +51,25 @@ export default function Products() {
   const [totalRecords, setTotalRecords] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
 
-  const params = { category: selectedCategory.toLocaleLowerCase() };
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryCategory = searchParams.get("category") || "";
+  console.log(queryCategory);
+
+  useEffect(() => {
+    if (queryCategory) {
+      setSelectedCategory(queryCategory);
+    }
+  }, [queryCategory]);
   useEffect(() => {
     const fecthProductList = async () => {
       setLoading(true);
       try {
-        const res = await getProductsList(
-          page,
-          pageSize,
-          selectedCategory,
-          sortBy
-        );
+        const res = await getProductsList({
+          category: selectedCategory,
+          page: page,
+          pageSize: pageSize,
+        });
         console.log("respon:", res);
         setproductsList(res.data);
       } catch (error) {
@@ -69,7 +79,7 @@ export default function Products() {
       }
     };
     fecthProductList();
-  }, [selectedCategory]);
+  }, [selectedCategory, page, pageSize, sortBy]);
 
   const HandleAddFilter = (f: string) => {
     setFilters((prev) => {
@@ -83,44 +93,17 @@ export default function Products() {
   };
 
   const handleCategoryChange = (category: Category) => {
-    console.log("✅ Category được chọn:", category);
     setSelectedCategory(category.slug);
+    router.push(`/products?category=${category.slug}`, { scroll: false });
   };
-
-  // useEffect(() => {
-  //   async function fetchproductsList(
-  //     page: number,
-  //     pageSize: number,
-  //     selectedCategory: string,
-  //     sortBy: string
-  //   ) {
-  //     const data = await getProductsList(
-  //       page,
-  //       pageSize,
-  //       selectedCategory,
-  //       sortBy
-  //     );
-  //     console.log(data);
-  //     setproductsList(data.data);
-  //     setTotalRecords(data.totalRecords);
-  //     setTotalPages(data.totalPages);
-  //   }
-  //   fetchproductsList(page, pageSize, selectedCategory, sortBy);
-  // }, [page, pageSize, selectedCategory]);
-
-  //console.log("productsList:", productsList);
 
   return (
     <>
       {/* Container chính */}
-      <Container>
-        <div className="col-span-12">
-          <Breadcrumb />
-        </div>
+      <Container className="flex flex-col space-y-5 my-10">
+        <Breadcrumb />
+        <CategoryTabs queryCategory={queryCategory} />
 
-        <div className="col-span-12">
-          <CategoryTabs onCategoryChange={handleCategoryChange} />
-        </div>
         <div className="col-span-12">
           <FilterChips
             filters={filters}

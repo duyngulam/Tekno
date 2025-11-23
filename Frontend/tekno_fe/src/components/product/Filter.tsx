@@ -12,7 +12,6 @@ import {
 import { Brand } from "@/type/brand";
 import { getBrandList } from "@/services/brand";
 import { Slider } from "../ui/slider";
-import { RangeSlider } from "../ui/range-slide";
 import { Switch } from "../ui/switch";
 
 export default function Filter() {
@@ -60,7 +59,10 @@ export default function Filter() {
               <AccordionContent>
                 {brandList &&
                   brandList.map((brand) => (
-                    <div className="flex items-center space-x-2 space-y-2">
+                    <div
+                      key={brand.id}
+                      className="flex items-center space-x-2 space-y-2"
+                    >
                       <Checkbox id={brand.id.toString()} />
                       <Label htmlFor={brand.id.toString()}>{brand.name}</Label>
                     </div>

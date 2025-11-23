@@ -1,19 +1,19 @@
-export interface Product {
-  id: number;
-  name: string;
-  slug: string;
-  basePrice: number;
-  overview: string;
-  brandName: string;
-  categoryName: string;
-  finalPrice: number;
-  discountPercent: number | null;
-  primaryImagePath: string;
-}
+// export interface Product {
+//   id: number;
+//   name: string;
+//   slug: string;
+//   basePrice: number;
+//   overview: string;
+//   brandName: string;
+//   categoryName: string;
+//   finalPrice: number;
+//   discountPercent: number | null;
+//   primaryImagePath: string;
+// }
 
 
 
-export interface ProductDetail  {
+export interface Product  {
   id: number;
   name: string;
   slug: string;
@@ -29,6 +29,7 @@ export interface ProductDetail  {
     name: string;
     value: string[];
   }[];
+  primaryImagePath: string;
   images: string[];
   variants: {
     id: number;
