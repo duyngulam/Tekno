@@ -25,6 +25,9 @@ import FrequentlyBoughtTogether from "@/components/product/productDetail/Frequen
 import Comments from "@/components/product/productDetail/Comments";
 import TechnicalDetails from "@/components/product/productDetail/TechnicalDetails";
 import { Button } from "@/components/ui/button";
+import AddToFavorButton from "@/components/product/AddToFavorButton";
+import AddToCartButton from "@/components/product/AddToCartButton";
+import NotFoundPage from "../../not-found";
 
 export default async function SingleProductPage({
   params,
@@ -35,7 +38,7 @@ export default async function SingleProductPage({
   const product = await getProductDetail(slug);
   const isStock = product?.variants[0].stock;
 
-  if (!product) return <p>Đang tải sản phẩm...</p>;
+  if (!product) return NotFoundPage;
 
   return (
     <Container className="flex flex-col space-y-5 my-5 ">
@@ -129,10 +132,8 @@ export default async function SingleProductPage({
 
           {/* button add to cart and favor */}
           <div className="flex items-center justify-center gap-5">
-            <Button variant="outline" className="w-full">
-              Add to cart
-            </Button>
-            <Heart />
+            <AddToCartButton product={product} />
+            <AddToFavorButton product={product} className="relative" />
           </div>
         </div>
       </div>

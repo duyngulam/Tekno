@@ -2,6 +2,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import React, { useState } from "react";
+import logo from "@/asset/MainLogo.png";
 
 interface Props {
   images?: string[];
@@ -21,7 +22,7 @@ export default function ImageView({ images = [], isStock }: Props) {
           className="w-full max-h-[550] min-h-[500] border border-secondary/10 rounded-md group overflow-hidden"
         >
           <Image
-            src={active}
+            src={logo}
             alt="productImage"
             width={700}
             height={700}
