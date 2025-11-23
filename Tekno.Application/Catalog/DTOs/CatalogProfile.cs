@@ -44,6 +44,20 @@ namespace Tekno.Application.Catalog.DTOs
                 .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src => src.VariantAttributes))
                 .ForMember(dest => dest.Stock, opt => opt.MapFrom(src => src.Stock));
 
+            // ===== ProductVariantDetailDto =====
+            CreateMap<ProductVariant, ProductVariantDetailDto>()
+                .ForMember(dest => dest.ProductId, opt => opt.MapFrom(src => src.Product.Id))
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
+                .ForMember(dest => dest.ProductSlug, opt => opt.MapFrom(src => src.Product.Slug))
+                .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.Product.Brand != null ? src.Product.Brand.Name : string.Empty))
+                .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Product.Category != null ? src.Product.Category.Name : string.Empty))
+                .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src => src.VariantAttributes));
+
+            // ===== ProductVariantAttribute → VariantAttributeDto =====
+            CreateMap<ProductVariantAttribute, VariantAttributeDto>()
+                .ForMember(dest => dest.AttributeName, opt => opt.MapFrom(src => src.Attribute != null ? src.Attribute.Name : string.Empty))
+                .ForMember(dest => dest.AttributeValue, opt => opt.MapFrom(src => src.Value != null ? src.Value.Value : string.Empty));
+
             // ===== ProductVariantAttribute → ProductAttributeDto =====
             // Map the selected value (the variant's actual value), not all possible attribute values.
             CreateMap<ProductVariantAttribute, ProductAttributeDto>()
@@ -87,6 +101,11 @@ namespace Tekno.Application.Catalog.DTOs
                 .ForMember(dest => dest.Images, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
+
+            // ===== ProductAttribute -> ProductAttributeDto =====
+            CreateMap<ProductAttribute, ProductAttributeDto>()
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                .ForMember(dest => dest.Value, opt => opt.MapFrom(src => src.Values.Select(v => v.Value).ToList()));
         }
 
         private static List<ProductAttributeDto> BuildSpecsFromVariants(Product src)

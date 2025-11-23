@@ -14,13 +14,13 @@ namespace Tekno.Api.Controllers.admin
     [ApiController]
     //[Authorize(Roles = "Admin")]
     [Route("api/admin/brands")]
-    public class BrandAdminController : ControllerBase
+    public class AdminBrandController : ControllerBase
     {
         private readonly BrandService _brandService;
-        private readonly ILogger<BrandAdminController> _logger;
+        private readonly ILogger<AdminBrandController> _logger;
         private readonly IMapper _mapper;
         private readonly MediaService _Media;
-        public BrandAdminController(BrandService brandService, ILogger<BrandAdminController> logger, IMapper mapper, MediaService media)
+        public AdminBrandController(BrandService brandService, ILogger<AdminBrandController> logger, IMapper mapper, MediaService media)
         {
             _brandService = brandService;
             _logger = logger;

@@ -60,6 +60,11 @@ namespace Tekno.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -74,10 +79,20 @@ namespace Tekno.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<int>("RoleId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamptz");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.HasIndex("RoleId");
 
@@ -87,19 +102,306 @@ namespace Tekno.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@tekno.com",
-                            Fullname = "admin",
+                            Fullname = "Admin User",
                             PasswordHash = "$2a$11$W/ZYaZwxFhbSWpJNtPMAfetjQIsqJ1rYdiP2GQoF1.Hr7aqFmtaya",
                             RoleId = 1
                         },
                         new
                         {
                             Id = 2,
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "customer@tekno.com",
-                            Fullname = "customer",
+                            Fullname = "Customer User",
                             PasswordHash = "$2a$11$ZKxnFd0g1qcrtOgFJrbYiOOnKrtsA6flk4msMC0Uf/qcmqYzoUlSq",
                             RoleId = 2
                         });
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Auth.UserAddress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AddressLine1")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("AddressLine2")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("Vietnam");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<bool>("IsDefault")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("PostalCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("RecipientName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("user_addresses", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Blog.BlogPost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("FeaturedImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("PublishedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<int>("ViewCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("PublishedAt");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("blog_posts", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Blog.BlogPostProduct", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BlogPostId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BlogPostId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("BlogPostId", "ProductId")
+                        .IsUnique();
+
+                    b.ToTable("blog_post_products", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Blog.BlogPostTag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BlogPostId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Tag")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Tag");
+
+                    b.HasIndex("BlogPostId", "Tag");
+
+                    b.ToTable("blog_post_tags", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Cart.CartItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<int>("CartId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("Quantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<int>("VariantId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CartId", "VariantId")
+                        .IsUnique();
+
+                    b.ToTable("cart_items", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Cart.UserCart", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("user_carts", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Cart.Wishlist", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VariantId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "VariantId")
+                        .IsUnique();
+
+                    b.ToTable("wishlists", (string)null);
                 });
 
             modelBuilder.Entity("Tekno.Domain.Catalog.AttributeValue", b =>
@@ -158,129 +460,285 @@ namespace Tekno.Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = 6,
+                            AttributeId = 2,
+                            Value = "12"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            AttributeId = 2,
+                            Value = "24"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            AttributeId = 2,
+                            Value = "36"
+                        },
+                        new
+                        {
                             Id = 10,
-                            AttributeId = 2,
-                            Value = "Apple"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            AttributeId = 2,
-                            Value = "Samsung"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            AttributeId = 2,
-                            Value = "Asus"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            AttributeId = 2,
-                            Value = "HP"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            AttributeId = 2,
-                            Value = "Dell"
-                        },
-                        new
-                        {
-                            Id = 20,
-                            AttributeId = 11,
-                            Value = "Intel i5"
-                        },
-                        new
-                        {
-                            Id = 21,
-                            AttributeId = 11,
-                            Value = "Intel i7"
-                        },
-                        new
-                        {
-                            Id = 22,
-                            AttributeId = 11,
-                            Value = "AMD Ryzen 5"
-                        },
-                        new
-                        {
-                            Id = 23,
-                            AttributeId = 11,
-                            Value = "AMD Ryzen 7"
-                        },
-                        new
-                        {
-                            Id = 30,
-                            AttributeId = 12,
-                            Value = "8GB"
-                        },
-                        new
-                        {
-                            Id = 31,
-                            AttributeId = 12,
-                            Value = "16GB"
-                        },
-                        new
-                        {
-                            Id = 32,
-                            AttributeId = 12,
-                            Value = "32GB"
-                        },
-                        new
-                        {
-                            Id = 40,
-                            AttributeId = 13,
-                            Value = "256GB SSD"
-                        },
-                        new
-                        {
-                            Id = 41,
-                            AttributeId = 13,
-                            Value = "512GB SSD"
-                        },
-                        new
-                        {
-                            Id = 42,
-                            AttributeId = 13,
-                            Value = "1TB SSD"
-                        },
-                        new
-                        {
-                            Id = 50,
                             AttributeId = 10,
                             Value = "13 inch"
                         },
                         new
                         {
-                            Id = 51,
+                            Id = 11,
                             AttributeId = 10,
                             Value = "15 inch"
                         },
                         new
                         {
-                            Id = 52,
+                            Id = 12,
                             AttributeId = 10,
                             Value = "17 inch"
                         },
                         new
                         {
-                            Id = 60,
+                            Id = 13,
+                            AttributeId = 11,
+                            Value = "Intel i5"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            AttributeId = 11,
+                            Value = "Intel i7"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            AttributeId = 11,
+                            Value = "AMD Ryzen 5"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            AttributeId = 11,
+                            Value = "AMD Ryzen 7"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            AttributeId = 12,
+                            Value = "8GB"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            AttributeId = 12,
+                            Value = "16GB"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            AttributeId = 12,
+                            Value = "32GB"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            AttributeId = 13,
+                            Value = "256GB SSD"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            AttributeId = 13,
+                            Value = "512GB SSD"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            AttributeId = 13,
+                            Value = "1TB SSD"
+                        },
+                        new
+                        {
+                            Id = 23,
                             AttributeId = 14,
                             Value = "RTX 4060"
                         },
                         new
                         {
-                            Id = 61,
+                            Id = 24,
                             AttributeId = 14,
                             Value = "RTX 4070"
                         },
                         new
                         {
-                            Id = 62,
+                            Id = 25,
                             AttributeId = 14,
                             Value = "GTX 1650"
+                        },
+                        new
+                        {
+                            Id = 30,
+                            AttributeId = 20,
+                            Value = "5.5 inch"
+                        },
+                        new
+                        {
+                            Id = 31,
+                            AttributeId = 20,
+                            Value = "6.1 inch"
+                        },
+                        new
+                        {
+                            Id = 32,
+                            AttributeId = 20,
+                            Value = "6.7 inch"
+                        },
+                        new
+                        {
+                            Id = 33,
+                            AttributeId = 21,
+                            Value = "3000"
+                        },
+                        new
+                        {
+                            Id = 34,
+                            AttributeId = 21,
+                            Value = "4000"
+                        },
+                        new
+                        {
+                            Id = 35,
+                            AttributeId = 21,
+                            Value = "5000"
+                        },
+                        new
+                        {
+                            Id = 36,
+                            AttributeId = 22,
+                            Value = "12MP"
+                        },
+                        new
+                        {
+                            Id = 37,
+                            AttributeId = 22,
+                            Value = "48MP"
+                        },
+                        new
+                        {
+                            Id = 38,
+                            AttributeId = 22,
+                            Value = "108MP"
+                        },
+                        new
+                        {
+                            Id = 39,
+                            AttributeId = 23,
+                            Value = "4GB"
+                        },
+                        new
+                        {
+                            Id = 40,
+                            AttributeId = 23,
+                            Value = "6GB"
+                        },
+                        new
+                        {
+                            Id = 41,
+                            AttributeId = 23,
+                            Value = "8GB"
+                        },
+                        new
+                        {
+                            Id = 42,
+                            AttributeId = 24,
+                            Value = "64GB"
+                        },
+                        new
+                        {
+                            Id = 43,
+                            AttributeId = 24,
+                            Value = "128GB"
+                        },
+                        new
+                        {
+                            Id = 44,
+                            AttributeId = 24,
+                            Value = "256GB"
+                        },
+                        new
+                        {
+                            Id = 50,
+                            AttributeId = 50,
+                            Value = "21 inch"
+                        },
+                        new
+                        {
+                            Id = 51,
+                            AttributeId = 50,
+                            Value = "24 inch"
+                        },
+                        new
+                        {
+                            Id = 52,
+                            AttributeId = 50,
+                            Value = "27 inch"
+                        },
+                        new
+                        {
+                            Id = 53,
+                            AttributeId = 51,
+                            Value = "60Hz"
+                        },
+                        new
+                        {
+                            Id = 54,
+                            AttributeId = 51,
+                            Value = "120Hz"
+                        },
+                        new
+                        {
+                            Id = 55,
+                            AttributeId = 51,
+                            Value = "144Hz"
+                        },
+                        new
+                        {
+                            Id = 56,
+                            AttributeId = 52,
+                            Value = "1080p"
+                        },
+                        new
+                        {
+                            Id = 57,
+                            AttributeId = 52,
+                            Value = "1440p"
+                        },
+                        new
+                        {
+                            Id = 58,
+                            AttributeId = 52,
+                            Value = "4K"
+                        },
+                        new
+                        {
+                            Id = 60,
+                            AttributeId = 60,
+                            Value = "USB"
+                        },
+                        new
+                        {
+                            Id = 61,
+                            AttributeId = 60,
+                            Value = "USB-C"
+                        },
+                        new
+                        {
+                            Id = 62,
+                            AttributeId = 61,
+                            Value = "Wired"
+                        },
+                        new
+                        {
+                            Id = 63,
+                            AttributeId = 61,
+                            Value = "Wireless"
                         },
                         new
                         {
@@ -302,69 +760,117 @@ namespace Tekno.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = 80,
-                            AttributeId = 61,
+                            Id = 73,
+                            AttributeId = 73,
                             Value = "Wired"
                         },
                         new
                         {
-                            Id = 81,
-                            AttributeId = 61,
+                            Id = 74,
+                            AttributeId = 73,
                             Value = "Wireless"
                         },
                         new
                         {
+                            Id = 80,
+                            AttributeId = 80,
+                            Value = "800"
+                        },
+                        new
+                        {
+                            Id = 81,
+                            AttributeId = 80,
+                            Value = "1600"
+                        },
+                        new
+                        {
                             Id = 82,
-                            AttributeId = 73,
+                            AttributeId = 81,
                             Value = "Wired"
                         },
                         new
                         {
                             Id = 83,
                             AttributeId = 81,
-                            Value = "Bluetooth"
+                            Value = "Wireless"
                         },
                         new
                         {
-                            Id = 84,
+                            Id = 90,
+                            AttributeId = 90,
+                            Value = "In-Ear"
+                        },
+                        new
+                        {
+                            Id = 91,
+                            AttributeId = 90,
+                            Value = "Over-Ear"
+                        },
+                        new
+                        {
+                            Id = 92,
                             AttributeId = 91,
                             Value = "3.5mm"
                         },
                         new
                         {
-                            Id = 85,
+                            Id = 93,
                             AttributeId = 91,
                             Value = "USB-C"
                         },
                         new
                         {
-                            Id = 90,
+                            Id = 94,
+                            AttributeId = 91,
+                            Value = "Bluetooth"
+                        },
+                        new
+                        {
+                            Id = 100,
                             AttributeId = 100,
                             Value = "USB-C"
                         },
                         new
                         {
-                            Id = 91,
+                            Id = 101,
                             AttributeId = 101,
                             Value = "65"
                         },
                         new
                         {
-                            Id = 100,
+                            Id = 110,
                             AttributeId = 110,
                             Value = "Silicone"
                         },
                         new
                         {
-                            Id = 101,
+                            Id = 111,
                             AttributeId = 110,
                             Value = "Leather"
                         },
                         new
                         {
-                            Id = 102,
+                            Id = 112,
                             AttributeId = 110,
                             Value = "Plastic"
+                        },
+                        new
+                        {
+                            Id = 113,
+                            AttributeId = 111,
+                            Value = "IPhone 17"
+                        },
+                        new
+                        {
+                            Id = 114,
+                            AttributeId = 111,
+                            Value = "Samsung Galaxy S24"
+                        },
+                        new
+                        {
+                            Id = 115,
+                            AttributeId = 112,
+                            Value = "Yes"
                         });
                 });
 
@@ -1244,6 +1750,63 @@ namespace Tekno.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Tekno.Domain.Catalog.ProductAdvertisement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Position")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("HomeTop");
+
+                    b.Property<int>("Priority")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("timestamptz");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("Position");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("IsActive", "Position", "Priority");
+
+                    b.ToTable("product_advertisements", (string)null);
+                });
+
             modelBuilder.Entity("Tekno.Domain.Catalog.ProductAttribute", b =>
                 {
                     b.Property<int>("Id")
@@ -2023,17 +2586,12 @@ namespace Tekno.Infrastructure.Migrations
                     b.Property<int>("AttributeId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("AttributeValueId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("ValueId")
                         .HasColumnType("integer");
 
                     b.HasKey("VariantId", "AttributeId");
 
                     b.HasIndex("AttributeId");
-
-                    b.HasIndex("AttributeValueId");
 
                     b.HasIndex("ValueId");
 
@@ -2044,37 +2602,37 @@ namespace Tekno.Infrastructure.Migrations
                         {
                             VariantId = 1,
                             AttributeId = 1,
-                            ValueId = 1
+                            ValueId = 3
                         },
                         new
                         {
                             VariantId = 1,
                             AttributeId = 12,
-                            ValueId = 21
+                            ValueId = 17
                         },
                         new
                         {
                             VariantId = 1,
                             AttributeId = 13,
-                            ValueId = 31
+                            ValueId = 21
                         },
                         new
                         {
                             VariantId = 2,
                             AttributeId = 1,
-                            ValueId = 2
+                            ValueId = 1
                         },
                         new
                         {
                             VariantId = 2,
                             AttributeId = 12,
-                            ValueId = 22
+                            ValueId = 18
                         },
                         new
                         {
                             VariantId = 2,
                             AttributeId = 13,
-                            ValueId = 32
+                            ValueId = 22
                         },
                         new
                         {
@@ -2086,55 +2644,55 @@ namespace Tekno.Infrastructure.Migrations
                         {
                             VariantId = 3,
                             AttributeId = 12,
-                            ValueId = 21
+                            ValueId = 17
                         },
                         new
                         {
                             VariantId = 3,
                             AttributeId = 13,
-                            ValueId = 30
+                            ValueId = 20
                         },
                         new
                         {
                             VariantId = 4,
                             AttributeId = 1,
-                            ValueId = 1
+                            ValueId = 3
                         },
                         new
                         {
                             VariantId = 4,
                             AttributeId = 12,
-                            ValueId = 22
+                            ValueId = 18
                         },
                         new
                         {
                             VariantId = 4,
                             AttributeId = 13,
-                            ValueId = 31
+                            ValueId = 21
                         },
                         new
                         {
                             VariantId = 11,
+                            AttributeId = 1,
+                            ValueId = 3
+                        },
+                        new
+                        {
+                            VariantId = 11,
+                            AttributeId = 24,
+                            ValueId = 43
+                        },
+                        new
+                        {
+                            VariantId = 12,
                             AttributeId = 1,
                             ValueId = 1
                         },
                         new
                         {
-                            VariantId = 11,
-                            AttributeId = 24,
-                            ValueId = 30
-                        },
-                        new
-                        {
-                            VariantId = 12,
-                            AttributeId = 1,
-                            ValueId = 2
-                        },
-                        new
-                        {
                             VariantId = 12,
                             AttributeId = 24,
-                            ValueId = 31
+                            ValueId = 44
                         },
                         new
                         {
@@ -2146,7 +2704,7 @@ namespace Tekno.Infrastructure.Migrations
                         {
                             VariantId = 13,
                             AttributeId = 24,
-                            ValueId = 30
+                            ValueId = 43
                         },
                         new
                         {
@@ -2158,116 +2716,489 @@ namespace Tekno.Infrastructure.Migrations
                         {
                             VariantId = 14,
                             AttributeId = 24,
-                            ValueId = 31
+                            ValueId = 44
                         },
                         new
                         {
                             VariantId = 17,
+                            AttributeId = 1,
+                            ValueId = 3
+                        },
+                        new
+                        {
+                            VariantId = 17,
+                            AttributeId = 33,
+                            ValueId = 43
+                        },
+                        new
+                        {
+                            VariantId = 18,
                             AttributeId = 1,
                             ValueId = 1
                         },
                         new
                         {
-                            VariantId = 17,
-                            AttributeId = 33,
-                            ValueId = 30
-                        },
-                        new
-                        {
-                            VariantId = 18,
-                            AttributeId = 1,
-                            ValueId = 2
-                        },
-                        new
-                        {
                             VariantId = 18,
                             AttributeId = 33,
-                            ValueId = 31
+                            ValueId = 44
                         },
                         new
                         {
                             VariantId = 21,
                             AttributeId = 50,
-                            ValueId = 40
+                            ValueId = 52
                         },
                         new
                         {
                             VariantId = 21,
                             AttributeId = 52,
-                            ValueId = 42
+                            ValueId = 58
                         },
                         new
                         {
                             VariantId = 23,
                             AttributeId = 70,
-                            ValueId = 50
+                            ValueId = 70
                         },
                         new
                         {
                             VariantId = 23,
                             AttributeId = 73,
-                            ValueId = 60
+                            ValueId = 74
                         },
                         new
                         {
                             VariantId = 25,
                             AttributeId = 80,
-                            ValueId = 70
+                            ValueId = 80
                         },
                         new
                         {
                             VariantId = 25,
                             AttributeId = 81,
-                            ValueId = 60
+                            ValueId = 83
                         },
                         new
                         {
                             VariantId = 27,
                             AttributeId = 90,
-                            ValueId = 80
+                            ValueId = 91
                         },
                         new
                         {
                             VariantId = 27,
                             AttributeId = 91,
-                            ValueId = 60
-                        },
-                        new
-                        {
-                            VariantId = 27,
-                            AttributeId = 92,
-                            ValueId = 81
+                            ValueId = 94
                         },
                         new
                         {
                             VariantId = 29,
                             AttributeId = 100,
-                            ValueId = 90
+                            ValueId = 100
                         },
                         new
                         {
                             VariantId = 29,
                             AttributeId = 101,
-                            ValueId = 91
-                        },
-                        new
-                        {
-                            VariantId = 31,
-                            AttributeId = 110,
-                            ValueId = 100
-                        },
-                        new
-                        {
-                            VariantId = 31,
-                            AttributeId = 111,
                             ValueId = 101
                         },
                         new
                         {
                             VariantId = 31,
+                            AttributeId = 110,
+                            ValueId = 110
+                        },
+                        new
+                        {
+                            VariantId = 31,
+                            AttributeId = 111,
+                            ValueId = 113
+                        },
+                        new
+                        {
+                            VariantId = 31,
                             AttributeId = 112,
-                            ValueId = 102
+                            ValueId = 115
                         });
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Order.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Pending");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("orders", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Order.OrderItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VariantId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("order_items", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.Coupon", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<decimal?>("MaxDiscountAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int?>("MaxUsagePerUser")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("MinPurchaseAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Active");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<int>("UsedCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("coupons", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "PHVC000001",
+                            CreatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            EndDate = new DateTime(2022, 2, 23, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Holiday",
+                            Quantity = 10,
+                            StartDate = new DateTime(2023, 8, 23, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Status = "Active",
+                            Type = "FixedAmount",
+                            UpdatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsedCount = 0,
+                            Value = 300000m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "PHVC000002",
+                            CreatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            EndDate = new DateTime(2026, 2, 23, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Summer",
+                            Quantity = 10,
+                            StartDate = new DateTime(2025, 8, 23, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Status = "Active",
+                            Type = "FixedAmount",
+                            UpdatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsedCount = 0,
+                            Value = 300000m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Code = "PHVC000003",
+                            CreatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            EndDate = new DateTime(2026, 2, 23, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Return",
+                            Quantity = 10,
+                            StartDate = new DateTime(2025, 8, 23, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Status = "Active",
+                            Type = "FixedAmount",
+                            UpdatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsedCount = 0,
+                            Value = 300000m
+                        });
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.CouponCategory", b =>
+                {
+                    b.Property<int>("CouponId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CouponId", "CategoryId");
+
+                    b.ToTable("coupon_categories", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.CouponProduct", b =>
+                {
+                    b.Property<int>("CouponId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CouponId", "ProductId");
+
+                    b.ToTable("coupon_products", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.CouponUsage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CouponId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UsedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CouponId", "UserId");
+
+                    b.ToTable("coupon_usages", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Review.ProductReview", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<int?>("ApprovedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<int>("HelpfulCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<bool>("IsVerifiedPurchase")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("NotHelpfulCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Pending");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("VariantId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "ProductId")
+                        .IsUnique();
+
+                    b.ToTable("product_reviews", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Review.ReviewHelpfulness", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsHelpful")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ReviewId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("VotedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("review_helpfulness", (string)null);
                 });
 
             modelBuilder.Entity("Tekno.Domain.Auth.User", b =>
@@ -2279,6 +3210,50 @@ namespace Tekno.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Auth.UserAddress", b =>
+                {
+                    b.HasOne("Tekno.Domain.Auth.User", "User")
+                        .WithMany("Addresses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Blog.BlogPostProduct", b =>
+                {
+                    b.HasOne("Tekno.Domain.Blog.BlogPost", "BlogPost")
+                        .WithMany("RelatedProducts")
+                        .HasForeignKey("BlogPostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BlogPost");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Blog.BlogPostTag", b =>
+                {
+                    b.HasOne("Tekno.Domain.Blog.BlogPost", "BlogPost")
+                        .WithMany("Tags")
+                        .HasForeignKey("BlogPostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BlogPost");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Cart.CartItem", b =>
+                {
+                    b.HasOne("Tekno.Domain.Cart.UserCart", "Cart")
+                        .WithMany("Items")
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cart");
                 });
 
             modelBuilder.Entity("Tekno.Domain.Catalog.AttributeValue", b =>
@@ -2321,6 +3296,17 @@ namespace Tekno.Infrastructure.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("Tekno.Domain.Catalog.ProductAdvertisement", b =>
+                {
+                    b.HasOne("Tekno.Domain.Catalog.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("Tekno.Domain.Catalog.ProductAttribute", b =>
                 {
                     b.HasOne("Tekno.Domain.Catalog.Category", "Category")
@@ -2361,10 +3347,6 @@ namespace Tekno.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Tekno.Domain.Catalog.AttributeValue", null)
-                        .WithMany("ProductVariantAttribute")
-                        .HasForeignKey("AttributeValueId");
-
                     b.HasOne("Tekno.Domain.Catalog.AttributeValue", "Value")
                         .WithMany()
                         .HasForeignKey("ValueId")
@@ -2384,9 +3366,76 @@ namespace Tekno.Infrastructure.Migrations
                     b.Navigation("Variant");
                 });
 
-            modelBuilder.Entity("Tekno.Domain.Catalog.AttributeValue", b =>
+            modelBuilder.Entity("Tekno.Domain.Order.OrderItem", b =>
                 {
-                    b.Navigation("ProductVariantAttribute");
+                    b.HasOne("Tekno.Domain.Order.Order", "Order")
+                        .WithMany("Items")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.CouponCategory", b =>
+                {
+                    b.HasOne("Tekno.Domain.Promotion.Coupon", "Coupon")
+                        .WithMany("ApplicableCategories")
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Coupon");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.CouponProduct", b =>
+                {
+                    b.HasOne("Tekno.Domain.Promotion.Coupon", "Coupon")
+                        .WithMany("ApplicableProducts")
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Coupon");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.CouponUsage", b =>
+                {
+                    b.HasOne("Tekno.Domain.Promotion.Coupon", "Coupon")
+                        .WithMany("Usages")
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Coupon");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Review.ReviewHelpfulness", b =>
+                {
+                    b.HasOne("Tekno.Domain.Review.ProductReview", "Review")
+                        .WithMany()
+                        .HasForeignKey("ReviewId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Review");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Auth.User", b =>
+                {
+                    b.Navigation("Addresses");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Blog.BlogPost", b =>
+                {
+                    b.Navigation("RelatedProducts");
+
+                    b.Navigation("Tags");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Cart.UserCart", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Tekno.Domain.Catalog.Brand", b =>
@@ -2418,6 +3467,20 @@ namespace Tekno.Infrastructure.Migrations
             modelBuilder.Entity("Tekno.Domain.Catalog.ProductVariant", b =>
                 {
                     b.Navigation("VariantAttributes");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Order.Order", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.Coupon", b =>
+                {
+                    b.Navigation("ApplicableCategories");
+
+                    b.Navigation("ApplicableProducts");
+
+                    b.Navigation("Usages");
                 });
 #pragma warning restore 612, 618
         }

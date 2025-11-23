@@ -15,5 +15,8 @@ namespace Tekno.Application.Catalog.Interface
        Task<Category> CreateAsync(Category category);
        Task<bool> UpdateAsync(Category category);
        Task<bool> DeleteAsync(int id);
+
+       // NEW: get attributes applicable for a category (category-specific)
+       Task<List<ProductAttribute>> GetAttributesForCategoryAsync(int categoryId);
     }
 }

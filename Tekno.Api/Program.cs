@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Nest;
@@ -8,19 +7,9 @@ using System.Reflection;
 using System.Text;
 using Tekno.Api.Middlewares;
 using Tekno.Application.Auth.DTOs;
-using Tekno.Application.Auth.Interfaces;
-using Tekno.Application.Auth.Services;
-using Tekno.Application.Catalog.Interface;
-using Tekno.Application.Catalog.Services;
-using Tekno.Application.Common.Interfaces;
-using Tekno.Application.Common.Media.Services;
 using Tekno.Infrastructure;
-using Tekno.Infrastructure.Auth;
-using Tekno.Infrastructure.Catalog;
-using Tekno.Infrastructure.Logging;
 using Tekno.Infrastructure.Persistence;
 using Tekno.Infrastructure.Search;
-using Tekno.Infrastructure.Services;
 
 namespace Tekno.Api
 {
@@ -40,16 +29,27 @@ namespace Tekno.Api
             // =======================================================
             // 2. REGISTER FRAMEWORK SERVICES
             // =======================================================
-            builder.Services.AddControllers();
+            builder.Services.AddControllers(options =>
+            {
+                // Register validation filter globally
+                options.Filters.Add<ValidationFilterAttribute>();
+            })
+            .ConfigureApiBehaviorOptions(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true; // Allow filter to work
+            });
+
             builder.Services.AddEndpointsApiExplorer();
+            
+            // Swagger configuration with JWT support
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Tekno API", Version = "v1" });
 
-                // 🔑 cấu hình JWT trong Swagger
+                // JWT configuration in Swagger
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    Description = "Nhập token JWT (ví dụ: Bearer eyJhbGciOi...)",
+                    Description = "Enter JWT token (e.g., Bearer eyJhbGciOi...)",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.Http,
@@ -64,38 +64,33 @@ namespace Tekno.Api
                         {
                             Reference = new OpenApiReference
                             {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
                             }
                         },
-                    Array.Empty<string>()
+                        Array.Empty<string>()
                     }
                 });
             });
+
+            // CORS configuration
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontend",
                     policy =>
                     {
-                        policy.WithOrigins("http://localhost:3000") // FE domain
+                        policy.WithOrigins("http://localhost:3000") // Frontend domain
                               .AllowAnyHeader()
                               .AllowAnyMethod()
-                              .AllowCredentials(); // nếu dùng cookie-based token
+                              .AllowCredentials();
                     });
             });
-            builder.Services.AddControllers(options =>
-            {
-                // register validation filter globally
-                options.Filters.Add<ValidationFilterAttribute>();
-            })
-            .ConfigureApiBehaviorOptions(options =>
-            {
-                options.SuppressModelStateInvalidFilter = true; // cho phép filter hoạt động
-            });
+
+            // AutoMapper configuration
             builder.Services.AddAutoMapper(cfg =>
             {
-                cfg.AddMaps(Assembly.GetExecutingAssembly()); // quét profile trong API project
-                cfg.AddMaps(typeof(AuthProfile).Assembly); // quét profile trong Application project
+                cfg.AddMaps(Assembly.GetExecutingAssembly()); // Scan profiles in API project
+                cfg.AddMaps(typeof(AuthProfile).Assembly);     // Scan profiles in Application project
             });
 
             // =======================================================
@@ -108,32 +103,28 @@ namespace Tekno.Api
             })
             .AddJwtBearer(options =>
             {
-                options.RequireHttpsMetadata = false; // Dev có thể tắt HTTPS
+                options.RequireHttpsMetadata = false; // Can disable HTTPS in dev
                 options.SaveToken = true;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuer = false, // Nếu có domain thật -> bật true
+                    ValidateIssuer = false,
                     ValidateAudience = false,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-                    ClockSkew = TimeSpan.Zero // Tránh token hết hạn lệch giờ
+                    ClockSkew = TimeSpan.Zero // Prevent token expiry time drift
                 };
             });
 
             builder.Services.AddAuthorization();
 
             // =======================================================
-            // 4. APPLICATION & INFRASTRUCTURE DEPENDENCIES
+            // 4. INFRASTRUCTURE & APPLICATION DEPENDENCIES
             // =======================================================
             builder.Services.AddInfrastructure(builder.Configuration);
-            builder.Services.AddScoped<AuthService>();
-            builder.Services.AddScoped<CategoryService>();
-            builder.Services.AddScoped<BrandService>();
-            builder.Services.AddScoped<ProductService>();
-            builder.Services.AddScoped<MediaService>();
+
             // =======================================================
-            // 6. LOGGING
+            // 5. LOGGING
             // =======================================================
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
@@ -142,7 +133,7 @@ namespace Tekno.Api
             var app = builder.Build();
 
             // =======================================================
-            // 7. APPLY MIGRATIONS ON STARTUP
+            // 6. APPLY MIGRATIONS ON STARTUP
             // =======================================================
             using (var scope = app.Services.CreateScope())
             {
@@ -155,48 +146,70 @@ namespace Tekno.Api
                     try
                     {
                         db.Database.Migrate();
+                        logger.LogInformation("Database migration completed successfully");
                         break;
                     }
                     catch (Exception ex)
                     {
                         logger.LogWarning(ex, "Migration attempt {Attempt} failed, retrying...", i + 1);
+                        if (i == retries - 1)
+                        {
+                            logger.LogError(ex, "Database migration failed after {Retries} attempts", retries);
+                            throw;
+                        }
                         Thread.Sleep(2000);
                     }
                 }
             }
+
+            // =======================================================
+            // 7. INITIALIZE ELASTICSEARCH
+            // =======================================================
             using (var scope = app.Services.CreateScope())
             {
-                // 1️⃣ Tạo index nếu chưa có
-                var client = scope.ServiceProvider.GetRequiredService<IElasticClient>();
-                ElasticMappings.CreateProductIndex(client);
-                ElasticMappings.CreateProductDetailIndex(client);
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                
+                try
+                {
+                    // Create Elasticsearch indices if not exist
+                    var client = scope.ServiceProvider.GetRequiredService<IElasticClient>();
+                    ElasticMappings.CreateProductIndex(client);
+                    ElasticMappings.CreateProductDetailIndex(client);
 
-                // 2️⃣ Chạy bulk index
-                var bulkIndexer = scope.ServiceProvider.GetRequiredService<ElasticBulkIndexer>();
-                await bulkIndexer.RunAsync();
+                    // Run bulk indexing
+                    var bulkIndexer = scope.ServiceProvider.GetRequiredService<ElasticBulkIndexer>();
+                    await bulkIndexer.RunAsync();
+                    
+                    logger.LogInformation("Elasticsearch initialization completed successfully");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Elasticsearch initialization failed");
+                    // Don't throw - app can still run without Elasticsearch
+                }
             }
 
             // =======================================================
             // 8. MIDDLEWARE PIPELINE
             // =======================================================
 
-            // 1️⃣ Logging request đầu vào
+            // 1️⃣ Request logging
             app.UseMiddleware<RequestLoggingMiddleware>();
 
-            // 2️⃣ Swagger luôn nằm TRƯỚC các middleware xử lý response
+            // 2️⃣ Swagger - must be before response processing middleware
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
-            // 3️⃣ Exception handler – nằm NGOÀI CÙNG để bắt tất cả lỗi
+            // 3️⃣ Exception handler - outermost to catch all errors
             app.UseMiddleware<ExceptionMiddleware>();
 
-            // 4️⃣ Response wrapper – sau Exception, chỉ chạy khi response thành công
+            // 4️⃣ Response wrapper - after exception handler, only runs on success
             app.UseMiddleware<ResponseWrapperMiddleware>();
 
-            // 5️⃣ CORS và HTTPS redirect
+            // 5️⃣ CORS and HTTPS redirect
             app.UseCors("AllowFrontend");
             app.UseHttpsRedirection();
 
@@ -204,14 +217,13 @@ namespace Tekno.Api
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // 7️⃣ Map controllers (đăng ký route)
+            // 7️⃣ Map controllers (register routes)
             app.MapControllers();
 
             // =======================================================
             // 9. RUN APP
             // =======================================================
             app.Run();
-
         }
     }
 }

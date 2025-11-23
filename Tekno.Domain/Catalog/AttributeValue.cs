@@ -12,7 +12,6 @@ namespace Tekno.Domain.Catalog
         public string Value { get; private set; } = string.Empty;
 
         public ProductAttribute Attribute { get; private set; } = null!;
-        public ICollection<ProductVariantAttribute> ProductVariantAttribute { get; set; } = new List<ProductVariantAttribute>();
 
         public AttributeValue() { }
 

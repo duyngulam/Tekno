@@ -12,12 +12,8 @@ using Tekno.Infrastructure.Persistence;
 namespace Tekno.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-<<<<<<<< HEAD:Tekno.Infrastructure/Migrations/20251105035808_DB.Designer.cs
-    [Migration("20251105035808_DB")]
-========
-    [Migration("20251113053633_DB")]
->>>>>>>> f95fc7fb35090cdfb53e9e631762cb6512c794d5:Tekno.Infrastructure/Migrations/20251113053633_DB.Designer.cs
-    partial class DB
+    [Migration("20251122115633_AddAd")]
+    partial class AddAd
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -67,6 +63,11 @@ namespace Tekno.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -81,10 +82,20 @@ namespace Tekno.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<int>("RoleId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamptz");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.HasIndex("RoleId");
 
@@ -94,19 +105,185 @@ namespace Tekno.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@tekno.com",
-                            Fullname = "admin",
+                            Fullname = "Admin User",
                             PasswordHash = "$2a$11$W/ZYaZwxFhbSWpJNtPMAfetjQIsqJ1rYdiP2GQoF1.Hr7aqFmtaya",
                             RoleId = 1
                         },
                         new
                         {
                             Id = 2,
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "customer@tekno.com",
-                            Fullname = "customer",
+                            Fullname = "Customer User",
                             PasswordHash = "$2a$11$ZKxnFd0g1qcrtOgFJrbYiOOnKrtsA6flk4msMC0Uf/qcmqYzoUlSq",
                             RoleId = 2
                         });
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Auth.UserAddress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AddressLine1")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("AddressLine2")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("Vietnam");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<bool>("IsDefault")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("PostalCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("RecipientName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("user_addresses", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Cart.CartItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<int>("CartId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("Quantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<int>("VariantId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CartId", "VariantId")
+                        .IsUnique();
+
+                    b.ToTable("cart_items", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Cart.UserCart", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("user_carts", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Cart.Wishlist", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VariantId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "VariantId")
+                        .IsUnique();
+
+                    b.ToTable("wishlists", (string)null);
                 });
 
             modelBuilder.Entity("Tekno.Domain.Catalog.AttributeValue", b =>
@@ -165,129 +342,285 @@ namespace Tekno.Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = 6,
+                            AttributeId = 2,
+                            Value = "12"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            AttributeId = 2,
+                            Value = "24"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            AttributeId = 2,
+                            Value = "36"
+                        },
+                        new
+                        {
                             Id = 10,
-                            AttributeId = 2,
-                            Value = "Apple"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            AttributeId = 2,
-                            Value = "Samsung"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            AttributeId = 2,
-                            Value = "Asus"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            AttributeId = 2,
-                            Value = "HP"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            AttributeId = 2,
-                            Value = "Dell"
-                        },
-                        new
-                        {
-                            Id = 20,
-                            AttributeId = 11,
-                            Value = "Intel i5"
-                        },
-                        new
-                        {
-                            Id = 21,
-                            AttributeId = 11,
-                            Value = "Intel i7"
-                        },
-                        new
-                        {
-                            Id = 22,
-                            AttributeId = 11,
-                            Value = "AMD Ryzen 5"
-                        },
-                        new
-                        {
-                            Id = 23,
-                            AttributeId = 11,
-                            Value = "AMD Ryzen 7"
-                        },
-                        new
-                        {
-                            Id = 30,
-                            AttributeId = 12,
-                            Value = "8GB"
-                        },
-                        new
-                        {
-                            Id = 31,
-                            AttributeId = 12,
-                            Value = "16GB"
-                        },
-                        new
-                        {
-                            Id = 32,
-                            AttributeId = 12,
-                            Value = "32GB"
-                        },
-                        new
-                        {
-                            Id = 40,
-                            AttributeId = 13,
-                            Value = "256GB SSD"
-                        },
-                        new
-                        {
-                            Id = 41,
-                            AttributeId = 13,
-                            Value = "512GB SSD"
-                        },
-                        new
-                        {
-                            Id = 42,
-                            AttributeId = 13,
-                            Value = "1TB SSD"
-                        },
-                        new
-                        {
-                            Id = 50,
                             AttributeId = 10,
                             Value = "13 inch"
                         },
                         new
                         {
-                            Id = 51,
+                            Id = 11,
                             AttributeId = 10,
                             Value = "15 inch"
                         },
                         new
                         {
-                            Id = 52,
+                            Id = 12,
                             AttributeId = 10,
                             Value = "17 inch"
                         },
                         new
                         {
-                            Id = 60,
+                            Id = 13,
+                            AttributeId = 11,
+                            Value = "Intel i5"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            AttributeId = 11,
+                            Value = "Intel i7"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            AttributeId = 11,
+                            Value = "AMD Ryzen 5"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            AttributeId = 11,
+                            Value = "AMD Ryzen 7"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            AttributeId = 12,
+                            Value = "8GB"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            AttributeId = 12,
+                            Value = "16GB"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            AttributeId = 12,
+                            Value = "32GB"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            AttributeId = 13,
+                            Value = "256GB SSD"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            AttributeId = 13,
+                            Value = "512GB SSD"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            AttributeId = 13,
+                            Value = "1TB SSD"
+                        },
+                        new
+                        {
+                            Id = 23,
                             AttributeId = 14,
                             Value = "RTX 4060"
                         },
                         new
                         {
-                            Id = 61,
+                            Id = 24,
                             AttributeId = 14,
                             Value = "RTX 4070"
                         },
                         new
                         {
-                            Id = 62,
+                            Id = 25,
                             AttributeId = 14,
                             Value = "GTX 1650"
+                        },
+                        new
+                        {
+                            Id = 30,
+                            AttributeId = 20,
+                            Value = "5.5 inch"
+                        },
+                        new
+                        {
+                            Id = 31,
+                            AttributeId = 20,
+                            Value = "6.1 inch"
+                        },
+                        new
+                        {
+                            Id = 32,
+                            AttributeId = 20,
+                            Value = "6.7 inch"
+                        },
+                        new
+                        {
+                            Id = 33,
+                            AttributeId = 21,
+                            Value = "3000"
+                        },
+                        new
+                        {
+                            Id = 34,
+                            AttributeId = 21,
+                            Value = "4000"
+                        },
+                        new
+                        {
+                            Id = 35,
+                            AttributeId = 21,
+                            Value = "5000"
+                        },
+                        new
+                        {
+                            Id = 36,
+                            AttributeId = 22,
+                            Value = "12MP"
+                        },
+                        new
+                        {
+                            Id = 37,
+                            AttributeId = 22,
+                            Value = "48MP"
+                        },
+                        new
+                        {
+                            Id = 38,
+                            AttributeId = 22,
+                            Value = "108MP"
+                        },
+                        new
+                        {
+                            Id = 39,
+                            AttributeId = 23,
+                            Value = "4GB"
+                        },
+                        new
+                        {
+                            Id = 40,
+                            AttributeId = 23,
+                            Value = "6GB"
+                        },
+                        new
+                        {
+                            Id = 41,
+                            AttributeId = 23,
+                            Value = "8GB"
+                        },
+                        new
+                        {
+                            Id = 42,
+                            AttributeId = 24,
+                            Value = "64GB"
+                        },
+                        new
+                        {
+                            Id = 43,
+                            AttributeId = 24,
+                            Value = "128GB"
+                        },
+                        new
+                        {
+                            Id = 44,
+                            AttributeId = 24,
+                            Value = "256GB"
+                        },
+                        new
+                        {
+                            Id = 50,
+                            AttributeId = 50,
+                            Value = "21 inch"
+                        },
+                        new
+                        {
+                            Id = 51,
+                            AttributeId = 50,
+                            Value = "24 inch"
+                        },
+                        new
+                        {
+                            Id = 52,
+                            AttributeId = 50,
+                            Value = "27 inch"
+                        },
+                        new
+                        {
+                            Id = 53,
+                            AttributeId = 51,
+                            Value = "60Hz"
+                        },
+                        new
+                        {
+                            Id = 54,
+                            AttributeId = 51,
+                            Value = "120Hz"
+                        },
+                        new
+                        {
+                            Id = 55,
+                            AttributeId = 51,
+                            Value = "144Hz"
+                        },
+                        new
+                        {
+                            Id = 56,
+                            AttributeId = 52,
+                            Value = "1080p"
+                        },
+                        new
+                        {
+                            Id = 57,
+                            AttributeId = 52,
+                            Value = "1440p"
+                        },
+                        new
+                        {
+                            Id = 58,
+                            AttributeId = 52,
+                            Value = "4K"
+                        },
+                        new
+                        {
+                            Id = 60,
+                            AttributeId = 60,
+                            Value = "USB"
+                        },
+                        new
+                        {
+                            Id = 61,
+                            AttributeId = 60,
+                            Value = "USB-C"
+                        },
+                        new
+                        {
+                            Id = 62,
+                            AttributeId = 61,
+                            Value = "Wired"
+                        },
+                        new
+                        {
+                            Id = 63,
+                            AttributeId = 61,
+                            Value = "Wireless"
                         },
                         new
                         {
@@ -309,69 +642,117 @@ namespace Tekno.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = 80,
-                            AttributeId = 61,
+                            Id = 73,
+                            AttributeId = 73,
                             Value = "Wired"
                         },
                         new
                         {
-                            Id = 81,
-                            AttributeId = 61,
+                            Id = 74,
+                            AttributeId = 73,
                             Value = "Wireless"
                         },
                         new
                         {
+                            Id = 80,
+                            AttributeId = 80,
+                            Value = "800"
+                        },
+                        new
+                        {
+                            Id = 81,
+                            AttributeId = 80,
+                            Value = "1600"
+                        },
+                        new
+                        {
                             Id = 82,
-                            AttributeId = 73,
+                            AttributeId = 81,
                             Value = "Wired"
                         },
                         new
                         {
                             Id = 83,
                             AttributeId = 81,
-                            Value = "Bluetooth"
+                            Value = "Wireless"
                         },
                         new
                         {
-                            Id = 84,
+                            Id = 90,
+                            AttributeId = 90,
+                            Value = "In-Ear"
+                        },
+                        new
+                        {
+                            Id = 91,
+                            AttributeId = 90,
+                            Value = "Over-Ear"
+                        },
+                        new
+                        {
+                            Id = 92,
                             AttributeId = 91,
                             Value = "3.5mm"
                         },
                         new
                         {
-                            Id = 85,
+                            Id = 93,
                             AttributeId = 91,
                             Value = "USB-C"
                         },
                         new
                         {
-                            Id = 90,
+                            Id = 94,
+                            AttributeId = 91,
+                            Value = "Bluetooth"
+                        },
+                        new
+                        {
+                            Id = 100,
                             AttributeId = 100,
                             Value = "USB-C"
                         },
                         new
                         {
-                            Id = 91,
+                            Id = 101,
                             AttributeId = 101,
                             Value = "65"
                         },
                         new
                         {
-                            Id = 100,
+                            Id = 110,
                             AttributeId = 110,
                             Value = "Silicone"
                         },
                         new
                         {
-                            Id = 101,
+                            Id = 111,
                             AttributeId = 110,
                             Value = "Leather"
                         },
                         new
                         {
-                            Id = 102,
+                            Id = 112,
                             AttributeId = 110,
                             Value = "Plastic"
+                        },
+                        new
+                        {
+                            Id = 113,
+                            AttributeId = 111,
+                            Value = "IPhone 17"
+                        },
+                        new
+                        {
+                            Id = 114,
+                            AttributeId = 111,
+                            Value = "Samsung Galaxy S24"
+                        },
+                        new
+                        {
+                            Id = 115,
+                            AttributeId = 112,
+                            Value = "Yes"
                         });
                 });
 
@@ -848,6 +1229,9 @@ namespace Tekno.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("Specs")
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -883,6 +1267,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Dell XPS 13",
                             Overview = "Premium ultrabook with compact design.",
                             Slug = "dell-xps-13",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"13.4-inch FHD+ InfinityEdge\"]},\r\n    {\"Name\":\"CPU\",\"Value\":[\"Intel i5\",\"Intel i7\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"512GB\",\"1TB SSD\"]},\r\n    {\"Name\":\"Weight\",\"Value\":[\"1.2kg\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"52Wh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Windows 11\"]},\r\n    {\"Name\":\"Warranty\",\"Value\":[\"12 months\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -897,6 +1282,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "MacBook Air",
                             Overview = "Ultra-thin and lightweight laptop by Apple.",
                             Slug = "macbook-air",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"13.6-inch Liquid Retina\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Apple M2\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"256GB\",\"512GB\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"52.6Wh up to 18h\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"macOS\"]},\r\n    {\"Name\":\"Weight\",\"Value\":[\"1.24kg\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -911,6 +1297,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Asus ZenBook",
                             Overview = "Portable productivity ultrabook.",
                             Slug = "asus-zenbook",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"14-inch OLED 2.8K\"]},\r\n    {\"Name\":\"CPU\",\"Value\":[\"Intel i5\",\"Intel i7\",\"Ryzen 7\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"512GB\",\"1TB SSD\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Windows 11\"]},\r\n    {\"Name\":\"Weight\",\"Value\":[\"1.3kg\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -925,6 +1312,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "HP Spectre x360",
                             Overview = "Convertible premium laptop.",
                             Slug = "hp-spectre-x360",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"13.5-inch 2-in-1 Touch OLED\"]},\r\n    {\"Name\":\"CPU\",\"Value\":[\"Intel i5\",\"Intel i7\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"512GB\",\"1TB\"]},\r\n    {\"Name\":\"Convertible\",\"Value\":[\"true\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Windows 11 Home\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -939,6 +1327,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Lenovo ThinkPad X1 Carbon",
                             Overview = "Business ultrabook with robust build.",
                             Slug = "thinkpad-x1-carbon",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"14-inch IPS 2.8K\"]},\r\n    {\"Name\":\"CPU\",\"Value\":[\"Intel i5\",\"Intel i7\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"512GB\",\"1TB\"]},\r\n    {\"Name\":\"Security\",\"Value\":[\"Fingerprint\",\"TPM 2.0\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Windows 11 Pro\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -953,6 +1342,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "iPhone 15 Pro",
                             Overview = "Apple flagship smartphone.",
                             Slug = "iphone-15-pro",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.1-inch OLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Apple A17 Pro\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"6GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"Camera\",\"Value\":[\"48MP\",\"12MP\",\"12MP\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"3279mAh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"iOS 17\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -967,6 +1357,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Samsung Galaxy S24",
                             Overview = "Next-gen Android flagship.",
                             Slug = "galaxy-s24",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.7-inch Dynamic AMOLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Snapdragon 8 Gen 3\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"Camera\",\"Value\":[\"200MP\",\"12MP\",\"10MP\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"5000mAh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Android 14\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -981,6 +1372,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Google Pixel 9",
                             Overview = "Pure Android experience.",
                             Slug = "pixel-9",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.3-inch AMOLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Google Tensor G4\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"Camera\",\"Value\":[\"50MP\",\"12MP\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"4700mAh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Android 14\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -995,6 +1387,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Xiaomi 14 Pro",
                             Overview = "High-end performance smartphone.",
                             Slug = "xiaomi-14-pro",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.7-inch AMOLED QHD+\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Snapdragon 8 Gen 3\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"12GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"256GB\",\"512GB\"]},\r\n    {\"Name\":\"Camera\",\"Value\":[\"50MP\",\"50MP\",\"50MP (Leica)\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"HyperOS (Android 14)\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1009,6 +1402,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "OnePlus 12",
                             Overview = "Performance-focused smartphone.",
                             Slug = "oneplus-12",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.8-inch AMOLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Snapdragon 8 Gen 3\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"12GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"256GB\",\"512GB\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"5400mAh 100W charging\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"OxygenOS 14\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1023,6 +1417,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "iPad Pro",
                             Overview = "Powerful tablet for creators.",
                             Slug = "ipad-pro",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"12.9-inch Liquid Retina XDR\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Apple M2\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"iPadOS 17\"]},\r\n    {\"Name\":\"PencilSupport\",\"Value\":[\"Apple Pencil 2\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1037,6 +1432,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Samsung Galaxy Tab S9",
                             Overview = "Android flagship tablet.",
                             Slug = "galaxy-tab-s9",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"11-inch AMOLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Snapdragon 8 Gen 2\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"12GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Android 14\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1051,6 +1447,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Lenovo Tab P12",
                             Overview = "Affordable productivity tablet.",
                             Slug = "lenovo-tab-p12",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"12.7-inch LCD 144Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"MediaTek Dimensity 7050\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"10200mAh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Android 13\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1065,6 +1462,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Dell UltraSharp 27",
                             Overview = "Professional 4K monitor.",
                             Slug = "dell-ultrasharp-27",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"27-inch IPS 4K UHD\"]},\r\n    {\"Name\":\"Resolution\",\"Value\":[\"3840x2160\"]},\r\n    {\"Name\":\"RefreshRate\",\"Value\":[\"60Hz\"]},\r\n    {\"Name\":\"Ports\",\"Value\":[\"HDMI\",\"DisplayPort\",\"USB-C\"]},\r\n    {\"Name\":\"ColorGamut\",\"Value\":[\"99% sRGB\"]},\r\n    {\"Name\":\"Warranty\",\"Value\":[\"24 months\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1079,6 +1477,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "LG Ultragear 32",
                             Overview = "Gaming monitor with 165Hz refresh rate.",
                             Slug = "lg-ultragear-32",
+                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"32-inch VA QHD\"]},\r\n    {\"Name\":\"Resolution\",\"Value\":[\"2560x1440\"]},\r\n    {\"Name\":\"RefreshRate\",\"Value\":[\"165Hz\"]},\r\n    {\"Name\":\"Ports\",\"Value\":[\"HDMI\",\"DisplayPort\"]},\r\n    {\"Name\":\"Sync\",\"Value\":[\"G-Sync Compatible\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1093,6 +1492,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Logitech MX Keys",
                             Overview = "Wireless keyboard for professionals.",
                             Slug = "logitech-mx-keys",
+                            Specs = "[\r\n    {\"Name\":\"Type\",\"Value\":[\"Wireless\"]},\r\n    {\"Name\":\"Layout\",\"Value\":[\"Full-size\"]},\r\n    {\"Name\":\"Backlight\",\"Value\":[\"Yes\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"USB-C rechargeable\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1121,6 +1521,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Logitech MX Master 3S",
                             Overview = "Ergonomic productivity mouse.",
                             Slug = "logitech-mx-master-3s",
+                            Specs = "[\r\n    {\"Name\":\"Sensor\",\"Value\":[\"Logitech Darkfield\"]},\r\n    {\"Name\":\"Connection\",\"Value\":[\"Bluetooth\",\"USB\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"70 days\"]},\r\n    {\"Name\":\"Buttons\",\"Value\":[\"7\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1135,6 +1536,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Razer Viper V2 Pro",
                             Overview = "Ultra-light gaming mouse.",
                             Slug = "razer-viper-v2-pro",
+                            Specs = "[\r\n    {\"Name\":\"Sensor\",\"Value\":[\"Focus Pro 30K\"]},\r\n    {\"Name\":\"Weight\",\"Value\":[\"58g\"]},\r\n    {\"Name\":\"Connection\",\"Value\":[\"Wireless\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"80h\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1149,6 +1551,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Sony WH-1000XM5",
                             Overview = "Noise-cancelling wireless headphones.",
                             Slug = "sony-wh-1000xm5",
+                            Specs = "[\r\n    {\"Name\":\"Type\",\"Value\":[\"Over-ear\"]},\r\n    {\"Name\":\"ANC\",\"Value\":[\"Yes\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"30h\"]},\r\n    {\"Name\":\"Charging\",\"Value\":[\"USB-C\"]},\r\n    {\"Name\":\"Microphone\",\"Value\":[\"Yes\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1163,6 +1566,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Apple AirPods Pro 2",
                             Overview = "Wireless earbuds with active noise cancellation.",
                             Slug = "airpods-pro-2",
+                            Specs = "[\r\n    {\"Name\":\"Type\",\"Value\":[\"In-ear\"]},\r\n    {\"Name\":\"ANC\",\"Value\":[\"Yes\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"6h\",\"24h\"]},\r\n    {\"Name\":\"Wireless\",\"Value\":[\"Bluetooth 5.3\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1177,6 +1581,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Anker 65W GaN Charger",
                             Overview = "Fast charger with GaN technology.",
                             Slug = "anker-65w-gan",
+                            Specs = "[\r\n    {\"Name\":\"Power\",\"Value\":[\"65W\"]},\r\n    {\"Name\":\"Ports\",\"Value\":[\"2x USB-C\",\"1x USB-A\"]},\r\n    {\"Name\":\"Material\",\"Value\":[\"GaN\"]},\r\n    {\"Name\":\"Input\",\"Value\":[\"100–240V\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1191,6 +1596,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Baseus USB-C Cable 1.5m",
                             Overview = "Durable braided charging cable.",
                             Slug = "baseus-usb-c-cable",
+                            Specs = "[\r\n    {\"Name\":\"Length\",\"Value\":[\"1.5m\"]},\r\n    {\"Name\":\"Connector\",\"Value\":[\"USB-C to USB-C\"]},\r\n    {\"Name\":\"Material\",\"Value\":[\"Nylon braided\"]},\r\n    {\"Name\":\"MaxPower\",\"Value\":[\"100W\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1205,6 +1611,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Spigen Rugged Armor Case",
                             Overview = "Protective phone case.",
                             Slug = "spigen-rugged-armor",
+                            Specs = "[\r\n    {\"Name\":\"Material\",\"Value\":[\"TPU\"]},\r\n    {\"Name\":\"ShockResistant\",\"Value\":[\"Yes\"]},\r\n    {\"Name\":\"CompatibleDevices\",\"Value\":[\"iPhone 15\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         },
@@ -1219,6 +1626,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "UAG Plasma Laptop Sleeve",
                             Overview = "Durable protective sleeve.",
                             Slug = "uag-laptop-sleeve",
+                            Specs = "[\r\n    {\"Name\":\"Material\",\"Value\":[\"Ballistic Nylon\"]},\r\n    {\"Name\":\"Fits\",\"Value\":[\"13–15 inch laptops\"]},\r\n    {\"Name\":\"WaterResistant\",\"Value\":[\"Yes\"]}\r\n]",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 10, 12, 9, 34, 0, 0, DateTimeKind.Utc)
                         });
@@ -1590,153 +1998,6 @@ namespace Tekno.Infrastructure.Migrations
                             CategoryId = 17,
                             InputType = "select",
                             Name = "Shock Resistant"
-                        });
-                });
-
-            modelBuilder.Entity("Tekno.Domain.Catalog.ProductDetail", b =>
-                {
-                    b.Property<int>("ProductId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("LongDescription")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Specs")
-                        .IsRequired()
-                        .HasColumnType("jsonb");
-
-                    b.Property<string>("WarrantyInfo")
-                        .HasColumnType("text");
-
-                    b.HasKey("ProductId");
-
-                    b.ToTable("product_detail", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            ProductId = 1,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"13.4-inch FHD+ InfinityEdge\"]},\r\n    {\"Name\":\"CPU\",\"Value\":[\"Intel i5\",\"Intel i7\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"512GB\",\"1TB SSD\"]},\r\n    {\"Name\":\"Weight\",\"Value\":[\"1.2kg\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"52Wh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Windows 11\"]},\r\n    {\"Name\":\"Warranty\",\"Value\":[\"12 months\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 2,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"13.6-inch Liquid Retina\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Apple M2\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"256GB\",\"512GB\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"52.6Wh up to 18h\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"macOS\"]},\r\n    {\"Name\":\"Weight\",\"Value\":[\"1.24kg\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 3,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"14-inch OLED 2.8K\"]},\r\n    {\"Name\":\"CPU\",\"Value\":[\"Intel i5\",\"Intel i7\",\"Ryzen 7\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"512GB\",\"1TB SSD\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Windows 11\"]},\r\n    {\"Name\":\"Weight\",\"Value\":[\"1.3kg\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 4,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"13.5-inch 2-in-1 Touch OLED\"]},\r\n    {\"Name\":\"CPU\",\"Value\":[\"Intel i5\",\"Intel i7\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"512GB\",\"1TB\"]},\r\n    {\"Name\":\"Convertible\",\"Value\":[\"true\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Windows 11 Home\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 5,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"14-inch IPS 2.8K\"]},\r\n    {\"Name\":\"CPU\",\"Value\":[\"Intel i5\",\"Intel i7\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"512GB\",\"1TB\"]},\r\n    {\"Name\":\"Security\",\"Value\":[\"Fingerprint\",\"TPM 2.0\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Windows 11 Pro\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 10,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.1-inch OLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Apple A17 Pro\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"6GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"Camera\",\"Value\":[\"48MP\",\"12MP\",\"12MP\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"3279mAh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"iOS 17\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 11,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.7-inch Dynamic AMOLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Snapdragon 8 Gen 3\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"Camera\",\"Value\":[\"200MP\",\"12MP\",\"10MP\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"5000mAh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Android 14\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 12,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.3-inch AMOLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Google Tensor G4\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"Camera\",\"Value\":[\"50MP\",\"12MP\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"4700mAh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Android 14\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 13,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.7-inch AMOLED QHD+\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Snapdragon 8 Gen 3\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"12GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"256GB\",\"512GB\"]},\r\n    {\"Name\":\"Camera\",\"Value\":[\"50MP\",\"50MP\",\"50MP (Leica)\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"HyperOS (Android 14)\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 14,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"6.8-inch AMOLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Snapdragon 8 Gen 3\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"12GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"256GB\",\"512GB\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"5400mAh 100W charging\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"OxygenOS 14\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 20,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"12.9-inch Liquid Retina XDR\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Apple M2\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"16GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"iPadOS 17\"]},\r\n    {\"Name\":\"PencilSupport\",\"Value\":[\"Apple Pencil 2\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 21,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"11-inch AMOLED 120Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"Snapdragon 8 Gen 2\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\",\"12GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\",\"256GB\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Android 14\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 22,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"12.7-inch LCD 144Hz\"]},\r\n    {\"Name\":\"Chip\",\"Value\":[\"MediaTek Dimensity 7050\"]},\r\n    {\"Name\":\"RAM\",\"Value\":[\"8GB\"]},\r\n    {\"Name\":\"Storage\",\"Value\":[\"128GB\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"10200mAh\"]},\r\n    {\"Name\":\"OS\",\"Value\":[\"Android 13\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 30,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"27-inch IPS 4K UHD\"]},\r\n    {\"Name\":\"Resolution\",\"Value\":[\"3840x2160\"]},\r\n    {\"Name\":\"RefreshRate\",\"Value\":[\"60Hz\"]},\r\n    {\"Name\":\"Ports\",\"Value\":[\"HDMI\",\"DisplayPort\",\"USB-C\"]},\r\n    {\"Name\":\"ColorGamut\",\"Value\":[\"99% sRGB\"]},\r\n    {\"Name\":\"Warranty\",\"Value\":[\"24 months\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 31,
-                            Specs = "[\r\n    {\"Name\":\"Display\",\"Value\":[\"32-inch VA QHD\"]},\r\n    {\"Name\":\"Resolution\",\"Value\":[\"2560x1440\"]},\r\n    {\"Name\":\"RefreshRate\",\"Value\":[\"165Hz\"]},\r\n    {\"Name\":\"Ports\",\"Value\":[\"HDMI\",\"DisplayPort\"]},\r\n    {\"Name\":\"Sync\",\"Value\":[\"G-Sync Compatible\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 40,
-                            Specs = "[\r\n    {\"Name\":\"Type\",\"Value\":[\"Wireless\"]},\r\n    {\"Name\":\"Layout\",\"Value\":[\"Full-size\"]},\r\n    {\"Name\":\"Backlight\",\"Value\":[\"Yes\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"USB-C rechargeable\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 41,
-                            Specs = "[\r\n    {\"Name\":\"Type\",\"Value\":[\"Mechanical\"]},\r\n    {\"Name\":\"Switch\",\"Value\":[\"Razer Green\"]},\r\n    {\"Name\":\"Backlight\",\"Value\":[\"RGB\"]},\r\n    {\"Name\":\"Connection\",\"Value\":[\"Wired\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 50,
-                            Specs = "[\r\n    {\"Name\":\"Sensor\",\"Value\":[\"Logitech Darkfield\"]},\r\n    {\"Name\":\"Connection\",\"Value\":[\"Bluetooth\",\"USB\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"70 days\"]},\r\n    {\"Name\":\"Buttons\",\"Value\":[\"7\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 51,
-                            Specs = "[\r\n    {\"Name\":\"Sensor\",\"Value\":[\"Focus Pro 30K\"]},\r\n    {\"Name\":\"Weight\",\"Value\":[\"58g\"]},\r\n    {\"Name\":\"Connection\",\"Value\":[\"Wireless\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"80h\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 60,
-                            Specs = "[\r\n    {\"Name\":\"Type\",\"Value\":[\"Over-ear\"]},\r\n    {\"Name\":\"ANC\",\"Value\":[\"Yes\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"30h\"]},\r\n    {\"Name\":\"Charging\",\"Value\":[\"USB-C\"]},\r\n    {\"Name\":\"Microphone\",\"Value\":[\"Yes\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 61,
-                            Specs = "[\r\n    {\"Name\":\"Type\",\"Value\":[\"In-ear\"]},\r\n    {\"Name\":\"ANC\",\"Value\":[\"Yes\"]},\r\n    {\"Name\":\"Battery\",\"Value\":[\"6h\",\"24h\"]},\r\n    {\"Name\":\"Wireless\",\"Value\":[\"Bluetooth 5.3\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 70,
-                            Specs = "[\r\n    {\"Name\":\"Power\",\"Value\":[\"65W\"]},\r\n    {\"Name\":\"Ports\",\"Value\":[\"2x USB-C\",\"1x USB-A\"]},\r\n    {\"Name\":\"Material\",\"Value\":[\"GaN\"]},\r\n    {\"Name\":\"Input\",\"Value\":[\"100–240V\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 71,
-                            Specs = "[\r\n    {\"Name\":\"Length\",\"Value\":[\"1.5m\"]},\r\n    {\"Name\":\"Connector\",\"Value\":[\"USB-C to USB-C\"]},\r\n    {\"Name\":\"Material\",\"Value\":[\"Nylon braided\"]},\r\n    {\"Name\":\"MaxPower\",\"Value\":[\"100W\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 80,
-                            Specs = "[\r\n    {\"Name\":\"Material\",\"Value\":[\"TPU\"]},\r\n    {\"Name\":\"ShockResistant\",\"Value\":[\"Yes\"]},\r\n    {\"Name\":\"CompatibleDevices\",\"Value\":[\"iPhone 15\"]}\r\n]"
-                        },
-                        new
-                        {
-                            ProductId = 81,
-                            Specs = "[\r\n    {\"Name\":\"Material\",\"Value\":[\"Ballistic Nylon\"]},\r\n    {\"Name\":\"Fits\",\"Value\":[\"13–15 inch laptops\"]},\r\n    {\"Name\":\"WaterResistant\",\"Value\":[\"Yes\"]}\r\n]"
                         });
                 });
 
@@ -2150,17 +2411,12 @@ namespace Tekno.Infrastructure.Migrations
                     b.Property<int>("AttributeId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("AttributeValueId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("ValueId")
                         .HasColumnType("integer");
 
                     b.HasKey("VariantId", "AttributeId");
 
                     b.HasIndex("AttributeId");
-
-                    b.HasIndex("AttributeValueId");
 
                     b.HasIndex("ValueId");
 
@@ -2171,37 +2427,37 @@ namespace Tekno.Infrastructure.Migrations
                         {
                             VariantId = 1,
                             AttributeId = 1,
-                            ValueId = 1
+                            ValueId = 3
                         },
                         new
                         {
                             VariantId = 1,
                             AttributeId = 12,
-                            ValueId = 21
+                            ValueId = 17
                         },
                         new
                         {
                             VariantId = 1,
                             AttributeId = 13,
-                            ValueId = 31
+                            ValueId = 21
                         },
                         new
                         {
                             VariantId = 2,
                             AttributeId = 1,
-                            ValueId = 2
+                            ValueId = 1
                         },
                         new
                         {
                             VariantId = 2,
                             AttributeId = 12,
-                            ValueId = 22
+                            ValueId = 18
                         },
                         new
                         {
                             VariantId = 2,
                             AttributeId = 13,
-                            ValueId = 32
+                            ValueId = 22
                         },
                         new
                         {
@@ -2213,55 +2469,55 @@ namespace Tekno.Infrastructure.Migrations
                         {
                             VariantId = 3,
                             AttributeId = 12,
-                            ValueId = 21
+                            ValueId = 17
                         },
                         new
                         {
                             VariantId = 3,
                             AttributeId = 13,
-                            ValueId = 30
+                            ValueId = 20
                         },
                         new
                         {
                             VariantId = 4,
                             AttributeId = 1,
-                            ValueId = 1
+                            ValueId = 3
                         },
                         new
                         {
                             VariantId = 4,
                             AttributeId = 12,
-                            ValueId = 22
+                            ValueId = 18
                         },
                         new
                         {
                             VariantId = 4,
                             AttributeId = 13,
-                            ValueId = 31
+                            ValueId = 21
                         },
                         new
                         {
                             VariantId = 11,
+                            AttributeId = 1,
+                            ValueId = 3
+                        },
+                        new
+                        {
+                            VariantId = 11,
+                            AttributeId = 24,
+                            ValueId = 43
+                        },
+                        new
+                        {
+                            VariantId = 12,
                             AttributeId = 1,
                             ValueId = 1
                         },
                         new
                         {
-                            VariantId = 11,
-                            AttributeId = 24,
-                            ValueId = 30
-                        },
-                        new
-                        {
-                            VariantId = 12,
-                            AttributeId = 1,
-                            ValueId = 2
-                        },
-                        new
-                        {
                             VariantId = 12,
                             AttributeId = 24,
-                            ValueId = 31
+                            ValueId = 44
                         },
                         new
                         {
@@ -2273,7 +2529,7 @@ namespace Tekno.Infrastructure.Migrations
                         {
                             VariantId = 13,
                             AttributeId = 24,
-                            ValueId = 30
+                            ValueId = 43
                         },
                         new
                         {
@@ -2285,116 +2541,489 @@ namespace Tekno.Infrastructure.Migrations
                         {
                             VariantId = 14,
                             AttributeId = 24,
-                            ValueId = 31
+                            ValueId = 44
                         },
                         new
                         {
                             VariantId = 17,
+                            AttributeId = 1,
+                            ValueId = 3
+                        },
+                        new
+                        {
+                            VariantId = 17,
+                            AttributeId = 33,
+                            ValueId = 43
+                        },
+                        new
+                        {
+                            VariantId = 18,
                             AttributeId = 1,
                             ValueId = 1
                         },
                         new
                         {
-                            VariantId = 17,
-                            AttributeId = 33,
-                            ValueId = 30
-                        },
-                        new
-                        {
-                            VariantId = 18,
-                            AttributeId = 1,
-                            ValueId = 2
-                        },
-                        new
-                        {
                             VariantId = 18,
                             AttributeId = 33,
-                            ValueId = 31
+                            ValueId = 44
                         },
                         new
                         {
                             VariantId = 21,
                             AttributeId = 50,
-                            ValueId = 40
+                            ValueId = 52
                         },
                         new
                         {
                             VariantId = 21,
                             AttributeId = 52,
-                            ValueId = 42
+                            ValueId = 58
                         },
                         new
                         {
                             VariantId = 23,
                             AttributeId = 70,
-                            ValueId = 50
+                            ValueId = 70
                         },
                         new
                         {
                             VariantId = 23,
                             AttributeId = 73,
-                            ValueId = 60
+                            ValueId = 74
                         },
                         new
                         {
                             VariantId = 25,
                             AttributeId = 80,
-                            ValueId = 70
+                            ValueId = 80
                         },
                         new
                         {
                             VariantId = 25,
                             AttributeId = 81,
-                            ValueId = 60
+                            ValueId = 83
                         },
                         new
                         {
                             VariantId = 27,
                             AttributeId = 90,
-                            ValueId = 80
+                            ValueId = 91
                         },
                         new
                         {
                             VariantId = 27,
                             AttributeId = 91,
-                            ValueId = 60
-                        },
-                        new
-                        {
-                            VariantId = 27,
-                            AttributeId = 92,
-                            ValueId = 81
+                            ValueId = 94
                         },
                         new
                         {
                             VariantId = 29,
                             AttributeId = 100,
-                            ValueId = 90
+                            ValueId = 100
                         },
                         new
                         {
                             VariantId = 29,
                             AttributeId = 101,
-                            ValueId = 91
-                        },
-                        new
-                        {
-                            VariantId = 31,
-                            AttributeId = 110,
-                            ValueId = 100
-                        },
-                        new
-                        {
-                            VariantId = 31,
-                            AttributeId = 111,
                             ValueId = 101
                         },
                         new
                         {
                             VariantId = 31,
+                            AttributeId = 110,
+                            ValueId = 110
+                        },
+                        new
+                        {
+                            VariantId = 31,
+                            AttributeId = 111,
+                            ValueId = 113
+                        },
+                        new
+                        {
+                            VariantId = 31,
                             AttributeId = 112,
-                            ValueId = 102
+                            ValueId = 115
                         });
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Order.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Pending");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("orders", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Order.OrderItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VariantId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("order_items", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.Coupon", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<decimal?>("MaxDiscountAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int?>("MaxUsagePerUser")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("MinPurchaseAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Active");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<int>("UsedCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("coupons", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "PHVC000001",
+                            CreatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            EndDate = new DateTime(2022, 2, 23, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Holiday",
+                            Quantity = 10,
+                            StartDate = new DateTime(2023, 8, 23, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Status = "Active",
+                            Type = "FixedAmount",
+                            UpdatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsedCount = 0,
+                            Value = 300000m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "PHVC000002",
+                            CreatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            EndDate = new DateTime(2026, 2, 23, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Summer",
+                            Quantity = 10,
+                            StartDate = new DateTime(2025, 8, 23, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Status = "Active",
+                            Type = "FixedAmount",
+                            UpdatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsedCount = 0,
+                            Value = 300000m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Code = "PHVC000003",
+                            CreatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            EndDate = new DateTime(2026, 2, 23, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Return",
+                            Quantity = 10,
+                            StartDate = new DateTime(2025, 8, 23, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Status = "Active",
+                            Type = "FixedAmount",
+                            UpdatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsedCount = 0,
+                            Value = 300000m
+                        });
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.CouponCategory", b =>
+                {
+                    b.Property<int>("CouponId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CouponId", "CategoryId");
+
+                    b.ToTable("coupon_categories", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.CouponProduct", b =>
+                {
+                    b.Property<int>("CouponId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CouponId", "ProductId");
+
+                    b.ToTable("coupon_products", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.CouponUsage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CouponId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UsedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CouponId", "UserId");
+
+                    b.ToTable("coupon_usages", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Review.ProductReview", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<int?>("ApprovedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<int>("HelpfulCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<bool>("IsVerifiedPurchase")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("NotHelpfulCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Pending");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("VariantId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "ProductId")
+                        .IsUnique();
+
+                    b.ToTable("product_reviews", (string)null);
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Review.ReviewHelpfulness", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsHelpful")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ReviewId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("VotedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("review_helpfulness", (string)null);
                 });
 
             modelBuilder.Entity("Tekno.Domain.Auth.User", b =>
@@ -2406,6 +3035,28 @@ namespace Tekno.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Auth.UserAddress", b =>
+                {
+                    b.HasOne("Tekno.Domain.Auth.User", "User")
+                        .WithMany("Addresses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Cart.CartItem", b =>
+                {
+                    b.HasOne("Tekno.Domain.Cart.UserCart", "Cart")
+                        .WithMany("Items")
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cart");
                 });
 
             modelBuilder.Entity("Tekno.Domain.Catalog.AttributeValue", b =>
@@ -2458,17 +3109,6 @@ namespace Tekno.Infrastructure.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("Tekno.Domain.Catalog.ProductDetail", b =>
-                {
-                    b.HasOne("Tekno.Domain.Catalog.Product", "Product")
-                        .WithOne("Detail")
-                        .HasForeignKey("Tekno.Domain.Catalog.ProductDetail", "ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
             modelBuilder.Entity("Tekno.Domain.Catalog.ProductImage", b =>
                 {
                     b.HasOne("Tekno.Domain.Catalog.Product", "Product")
@@ -2499,10 +3139,6 @@ namespace Tekno.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Tekno.Domain.Catalog.AttributeValue", null)
-                        .WithMany("ProductVariantAttribute")
-                        .HasForeignKey("AttributeValueId");
-
                     b.HasOne("Tekno.Domain.Catalog.AttributeValue", "Value")
                         .WithMany()
                         .HasForeignKey("ValueId")
@@ -2522,9 +3158,69 @@ namespace Tekno.Infrastructure.Migrations
                     b.Navigation("Variant");
                 });
 
-            modelBuilder.Entity("Tekno.Domain.Catalog.AttributeValue", b =>
+            modelBuilder.Entity("Tekno.Domain.Order.OrderItem", b =>
                 {
-                    b.Navigation("ProductVariantAttribute");
+                    b.HasOne("Tekno.Domain.Order.Order", "Order")
+                        .WithMany("Items")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.CouponCategory", b =>
+                {
+                    b.HasOne("Tekno.Domain.Promotion.Coupon", "Coupon")
+                        .WithMany("ApplicableCategories")
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Coupon");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.CouponProduct", b =>
+                {
+                    b.HasOne("Tekno.Domain.Promotion.Coupon", "Coupon")
+                        .WithMany("ApplicableProducts")
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Coupon");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.CouponUsage", b =>
+                {
+                    b.HasOne("Tekno.Domain.Promotion.Coupon", "Coupon")
+                        .WithMany("Usages")
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Coupon");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Review.ReviewHelpfulness", b =>
+                {
+                    b.HasOne("Tekno.Domain.Review.ProductReview", "Review")
+                        .WithMany()
+                        .HasForeignKey("ReviewId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Review");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Auth.User", b =>
+                {
+                    b.Navigation("Addresses");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Cart.UserCart", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Tekno.Domain.Catalog.Brand", b =>
@@ -2543,8 +3239,6 @@ namespace Tekno.Infrastructure.Migrations
 
             modelBuilder.Entity("Tekno.Domain.Catalog.Product", b =>
                 {
-                    b.Navigation("Detail");
-
                     b.Navigation("Images");
 
                     b.Navigation("Variants");
@@ -2558,6 +3252,20 @@ namespace Tekno.Infrastructure.Migrations
             modelBuilder.Entity("Tekno.Domain.Catalog.ProductVariant", b =>
                 {
                     b.Navigation("VariantAttributes");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Order.Order", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Tekno.Domain.Promotion.Coupon", b =>
+                {
+                    b.Navigation("ApplicableCategories");
+
+                    b.Navigation("ApplicableProducts");
+
+                    b.Navigation("Usages");
                 });
 #pragma warning restore 612, 618
         }
