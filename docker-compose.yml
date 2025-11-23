@@ -8,29 +8,61 @@ services:
     ports:
       - "5000:8080"
     depends_on:
-      - db
-      - redis
-      - elasticsearch
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+    env_file:
+      - .env  # Load environment variables from .env file
     environment:
-      - ConnectionStrings__DefaultConnection=Host=db;Database=tekno;Username=postgres;Password=postgres
-      - Redis__ConnectionString=redis:6379
-      - Redis__InstanceName=Tekno_
-      - ElasticSearch__Uri=http://elasticsearch:9200
-      - DOTNET_ENVIRONMENT=Development
+      # Database (can override .env values here)
+      - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING:-Host=db;Database=tekno;Username=postgres;Password=postgres}
+      
+      # Redis
+      - Redis__ConnectionString=${REDIS_CONNECTION_STRING:-redis:6379}
+      - Redis__InstanceName=${REDIS_INSTANCE_NAME:-Tekno_}
+      
+      # Elasticsearch
+      - ElasticSearch__Uri=${ELASTICSEARCH_URI:-http://elasticsearch:9200}
+      - ElasticSearch__IndexName=${ELASTICSEARCH_INDEX_NAME:-products}
+      
+      # Cloudinary (loads from .env file)
+      - Cloudinary__Url=${CLOUDINARY_URL}
+      
+      # JWT
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY:-ThisIsAVeryMysteriousKeyProtectItPlease}
+      - JwtSettings__ExpiryMinutes=${JWT_EXPIRY_MINUTES:-60}
+      
+      # Environment
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+      - DOTNET_ENVIRONMENT=${DOTNET_ENVIRONMENT:-Development}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   db:
     image: postgres:16
     container_name: tekno-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: tekno
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-tekno}
     ports:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
@@ -40,6 +72,11 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.14.2
@@ -56,16 +93,13 @@ services:
     volumes:
       - esdata:/usr/share/elasticsearch/data
     restart: unless-stopped
-  # kibana:
-  #   image: docker.elastic.co/kibana/kibana:8.14.2
-  #   container_name: tekno-kibana
-  #   environment:
-  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-  #     - xpack.security.enabled=false
-  #   ports:
-  #     - "5601:5601"
-  #   depends_on:
-  #     - elasticsearch
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
 volumes:
   db_data:
   esdata:

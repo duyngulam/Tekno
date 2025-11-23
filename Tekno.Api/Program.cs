@@ -171,20 +171,64 @@ namespace Tekno.Api
                 
                 try
                 {
-                    // Create Elasticsearch indices if not exist
+                    // Wait for Elasticsearch to be ready
                     var client = scope.ServiceProvider.GetRequiredService<IElasticClient>();
+                    
+                    // Retry ping to ensure ES is ready
+                    var retries = 10;
+                    var esReady = false;
+                    
+                    for (int i = 0; i < retries; i++)
+                    {
+                        try
+                        {
+                            var pingResponse = await client.PingAsync();
+                            if (pingResponse.IsValid)
+                            {
+                                logger.LogInformation("Elasticsearch is ready");
+                                esReady = true;
+                                break;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning("Elasticsearch not ready (attempt {Attempt}/{Max}): {Error}", 
+                                i + 1, retries, ex.Message);
+                        }
+                        
+                        await Task.Delay(2000);
+                    }
+                    
+                    if (!esReady)
+                    {
+                        logger.LogWarning("Elasticsearch failed to become ready after {Retries} attempts - continuing without search", retries);
+                        return;
+                    }
+                    
+                    // Create Elasticsearch indices if not exist
                     ElasticMappings.CreateProductIndex(client);
                     ElasticMappings.CreateProductDetailIndex(client);
 
-                    // Run bulk indexing
-                    var bulkIndexer = scope.ServiceProvider.GetRequiredService<ElasticBulkIndexer>();
-                    await bulkIndexer.RunAsync();
+                    // Run bulk indexing only if products exist
+                    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var hasProducts = await db.Products.AnyAsync();
+                    
+                    if (hasProducts)
+                    {
+                        var bulkIndexer = scope.ServiceProvider.GetRequiredService<ElasticBulkIndexer>();
+                        await bulkIndexer.RunAsync();
+                        logger.LogInformation("Elasticsearch bulk indexing completed successfully");
+                    }
+                    else
+                    {
+                        logger.LogInformation("No products to index, skipping bulk indexing");
+                    }
                     
                     logger.LogInformation("Elasticsearch initialization completed successfully");
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Elasticsearch initialization failed");
+                    logger.LogError(ex, "Elasticsearch initialization failed - app will continue without search functionality");
                     // Don't throw - app can still run without Elasticsearch
                 }
             }

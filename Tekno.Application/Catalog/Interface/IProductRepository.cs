@@ -12,7 +12,7 @@ namespace Tekno.Application.Catalog.Interface
 {
     public interface IProductRepository
     {
-        Task<PagedResult<Product?>> GetPagedProductAsync(string? categorySlug,
+        Task<PagedResult<Product>> GetPagedProductAsync(string? categorySlug,
             string? brandSlug,
             string? search,
             string? sort,
@@ -20,8 +20,8 @@ namespace Tekno.Application.Catalog.Interface
             string? maxPrice,
             PagingParams paging);
 
-        Task<Product?> GetProductBySlugAsync(string slug);
-        Task<Product?> GetProductByIdAsync(int id);
+        Task<Product> GetProductBySlugAsync(string slug);
+        Task<Product> GetProductByIdAsync(int id);
         Task<bool> IsProductExistBySlugAsync(string slug);
         Task<bool> IsProductExistByIdAsync(int id);
         Task<IEnumerable<Product>> GetAllProductsWithDetailAsync();
