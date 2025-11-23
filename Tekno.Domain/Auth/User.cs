@@ -23,15 +23,24 @@ namespace Tekno.Domain.Auth
 
         public User(string email, string passwordHash, int roleId = 2)
         {
-            Email = email ?? string.Empty;
-            PasswordHash = passwordHash ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(email))
+                throw new ArgumentException("Email is required", nameof(email));
+            
+            if (string.IsNullOrWhiteSpace(passwordHash))
+                throw new ArgumentException("Password is required", nameof(passwordHash));
+
+            Email = email.Trim().ToLowerInvariant();
+            PasswordHash = passwordHash;
             RoleId = roleId; // default to Customer
             CreatedAt = DateTime.UtcNow;
         }
 
         public void UpdateProfile(string fullname, string? phoneNumber)
         {
-            Fullname = fullname?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(fullname))
+                throw new ArgumentException("Full name is required", nameof(fullname));
+
+            Fullname = fullname.Trim();
             PhoneNumber = phoneNumber?.Trim();
             UpdatedAt = DateTime.UtcNow;
         }
