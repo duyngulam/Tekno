@@ -9,9 +9,9 @@ namespace Tekno.Domain.Auth
     {
         public int Id { get; private set; }
         public string Fullname { get; private set; } = string.Empty;
-        public string Email { get; private set; }
+        public string Email { get; private set; } = string.Empty;
         public string? PhoneNumber { get; private set; }
-        public string PasswordHash { get; private set; }
+        public string PasswordHash { get; private set; } = string.Empty;
         public int RoleId { get; private set; }
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; private set; }
@@ -23,8 +23,8 @@ namespace Tekno.Domain.Auth
 
         public User(string email, string passwordHash, int roleId = 2)
         {
-            Email = email;
-            PasswordHash = passwordHash;
+            Email = email ?? string.Empty;
+            PasswordHash = passwordHash ?? string.Empty;
             RoleId = roleId; // default to Customer
             CreatedAt = DateTime.UtcNow;
         }
