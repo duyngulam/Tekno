@@ -55,8 +55,8 @@ namespace Tekno.Application.Catalog.DTOs
 
             // ===== ProductVariantAttribute → VariantAttributeDto =====
             CreateMap<ProductVariantAttribute, VariantAttributeDto>()
-                .ForMember(dest => dest.AttributeName, opt => opt.MapFrom(src => src.Attribute != null ? src.Attribute.Name : string.Empty))
-                .ForMember(dest => dest.AttributeValue, opt => opt.MapFrom(src => src.Value != null ? src.Value.Value : string.Empty));
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Attribute != null ? src.Attribute.Name : string.Empty))
+                .ForMember(dest => dest.Value, opt => opt.MapFrom(src => src.Value != null ? src.Value.Value : string.Empty));
 
             // ===== ProductVariantAttribute → ProductAttributeDto =====
             // Map the selected value (the variant's actual value), not all possible attribute values.

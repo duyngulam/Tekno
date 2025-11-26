@@ -25,7 +25,7 @@ namespace Tekno.Application.Catalog.DTOs.Products
 
     public class VariantAttributeDto
     {
-        public string AttributeName { get; set; } = string.Empty;
-        public string AttributeValue { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
     }
 }
