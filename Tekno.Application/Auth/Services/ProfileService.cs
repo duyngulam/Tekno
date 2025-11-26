@@ -61,7 +61,7 @@ namespace Tekno.Application.Auth.Services
         }
 
         /// <summary>
-        /// Update user email (requires password verification)
+        /// Update email with password verification
         /// </summary>
         public async Task<UserProfileDto> UpdateEmailAsync(int userId, UpdateEmailDto dto)
         {
@@ -74,7 +74,11 @@ namespace Tekno.Application.Auth.Services
             // Verify current password
             if (!_passwordHasher.Verify(dto.CurrentPassword, user.PasswordHash))
             {
-                throw new InvalidOperationException("Current password is incorrect");
+                throw new Application.Common.Exceptions.ValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        { "CurrentPassword", new[] { "Current password is incorrect" } }
+                    });
             }
 
             // Check if new email already exists
@@ -105,7 +109,11 @@ namespace Tekno.Application.Auth.Services
             // Verify current password
             if (!_passwordHasher.Verify(dto.CurrentPassword, user.PasswordHash))
             {
-                throw new InvalidOperationException("Current password is incorrect");
+                throw new Application.Common.Exceptions.ValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        { "CurrentPassword", new[] { "Current password is incorrect" } }
+                    });
             }
 
             // Hash new password

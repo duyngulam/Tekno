@@ -46,6 +46,17 @@ namespace Tekno.Api
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Tekno API", Version = "v1" });
 
+                // Add schema filter for examples
+                c.SchemaFilter<Tekno.Api.Filters.SwaggerSchemaExampleFilter>();
+
+                // Enable XML comments if available
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                if (File.Exists(xmlPath))
+                {
+                    c.IncludeXmlComments(xmlPath);
+                }
+
                 // JWT configuration in Swagger
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
