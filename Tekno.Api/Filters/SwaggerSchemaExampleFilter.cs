@@ -190,6 +190,51 @@ namespace Tekno.Api.Filters
                     schema.Properties["isDefault"].Example = new OpenApiBoolean(true);
                 }
             }
+
+            // Add examples for Advertisement DTOs
+            if (context.Type.Name == "CreateAdvertisementDto" || context.Type.Name == "UpdateAdvertisementDto" || 
+                context.Type.Name == "AdvertisementQueryDto")
+            {
+                if (schema.Properties.ContainsKey("position"))
+                {
+                    schema.Properties["position"].Example = new OpenApiString("HomeTop");
+                    schema.Properties["position"].Description = "Advertisement position: HomeTop, HomeMiddle, HomeBottom, CategoryTop, or ProductSidebar";
+                    schema.Properties["position"].Enum = new List<IOpenApiAny>
+                    {
+                        new OpenApiString("HomeTop"),
+                        new OpenApiString("HomeMiddle"),
+                        new OpenApiString("HomeBottom"),
+                        new OpenApiString("CategoryTop"),
+                        new OpenApiString("ProductSidebar")
+                    };
+                }
+
+                if (schema.Properties.ContainsKey("priority"))
+                {
+                    schema.Properties["priority"].Example = new OpenApiInteger(10);
+                    schema.Properties["priority"].Description = "Display priority (0-100). Higher number = shown first";
+                }
+
+                if (schema.Properties.ContainsKey("productId"))
+                {
+                    schema.Properties["productId"].Example = new OpenApiInteger(1);
+                }
+
+                if (schema.Properties.ContainsKey("isActive"))
+                {
+                    schema.Properties["isActive"].Example = new OpenApiBoolean(true);
+                }
+
+                if (schema.Properties.ContainsKey("startDate"))
+                {
+                    schema.Properties["startDate"].Example = new OpenApiString(DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"));
+                }
+
+                if (schema.Properties.ContainsKey("endDate"))
+                {
+                    schema.Properties["endDate"].Example = new OpenApiString(DateTime.UtcNow.AddMonths(3).ToString("yyyy-MM-ddTHH:mm:ssZ"));
+                }
+            }
         }
     }
 }

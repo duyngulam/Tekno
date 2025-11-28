@@ -61,6 +61,72 @@ namespace Tekno.Application.Auth.Services
         }
 
         /// <summary>
+        /// Update all profile information at once (fullname, phone, email, password)
+        /// </summary>
+        public async Task<UserProfileDto> UpdateAllProfileAsync(int userId, UpdateAllProfileDto dto)
+        {
+            var user = await _userRepository.GetByIdWithAddressesAsync(userId);
+            if (user == null)
+            {
+                throw new NotFoundException("User", userId);
+            }
+
+            // Verify current password (required for all changes)
+            if (!_passwordHasher.Verify(dto.CurrentPassword, user.PasswordHash))
+            {
+                throw new Application.Common.Exceptions.ValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        { "CurrentPassword", new[] { "Current password is incorrect" } }
+                    });
+            }
+
+            var updatedFields = new List<string>();
+
+            // Update fullname and phone
+            user.UpdateProfile(dto.Fullname, dto.PhoneNumber);
+            updatedFields.Add("profile");
+
+            // Update email if provided
+            if (!string.IsNullOrWhiteSpace(dto.NewEmail) && dto.NewEmail != user.Email)
+            {
+                // Check if new email already exists
+                if (await _userRepository.EmailExistsAsync(dto.NewEmail, userId))
+                {
+                    throw new ConflictException($"Email '{dto.NewEmail}' is already in use", "EMAIL_EXISTS");
+                }
+
+                user.UpdateEmail(dto.NewEmail);
+                updatedFields.Add("email");
+            }
+
+            // Update password if provided
+            if (!string.IsNullOrWhiteSpace(dto.NewPassword))
+            {
+                // Validate password confirmation
+                if (dto.NewPassword != dto.ConfirmPassword)
+                {
+                    throw new Application.Common.Exceptions.ValidationException(
+                        new Dictionary<string, string[]>
+                        {
+                            { "ConfirmPassword", new[] { "Passwords do not match" } }
+                        });
+                }
+
+                var newPasswordHash = _passwordHasher.Hash(dto.NewPassword);
+                user.UpdatePassword(newPasswordHash);
+                updatedFields.Add("password");
+            }
+
+            await _userRepository.UpdateAsync(user);
+
+            _logger.LogInformation("User {UserId} updated all profile information: {UpdatedFields}", 
+                userId, string.Join(", ", updatedFields));
+
+            return _mapper.Map<UserProfileDto>(user);
+        }
+
+        /// <summary>
         /// Update email with password verification
         /// </summary>
         public async Task<UserProfileDto> UpdateEmailAsync(int userId, UpdateEmailDto dto)

@@ -1,12 +1,15 @@
 ﻿using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System;
 using Tekno.Domain.Auth;
 
 namespace Tekno.Infrastructure.Persistence.Configurations
 {
     public class UserConfiguration : IEntityTypeConfiguration<User>
     {
+        private static readonly DateTime SeedTime = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        
         public void Configure(EntityTypeBuilder<User> builder)
         {
             builder.ToTable("user");
@@ -44,25 +47,30 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Seed data
+            // ========== SEED USER DATA ==========
             builder.HasData(
+                // Admin user
                 new
                 {
                     Id = 1,
                     Fullname = "Admin User",
                     Email = "admin@tekno.com",
-                    PasswordHash = "$2a$11$W/ZYaZwxFhbSWpJNtPMAfetjQIsqJ1rYdiP2GQoF1.Hr7aqFmtaya",
+                    PhoneNumber = "0901234567",
+                    PasswordHash = "$2a$11$W/ZYaZwxFhbSWpJNtPMAfetjQIsqJ1rYdiP2GQoF1.Hr7aqFmtaya", // password: "password"
                     RoleId = 1,
-                    CreatedAt = new System.DateTime(2025, 1, 1, 0, 0, 0, System.DateTimeKind.Utc)
+                    CreatedAt = SeedTime
                 },
+                
+                // Customer user
                 new
                 {
                     Id = 2,
                     Fullname = "Customer User",
                     Email = "customer@tekno.com",
-                    PasswordHash = "$2a$11$ZKxnFd0g1qcrtOgFJrbYiOOnKrtsA6flk4msMC0Uf/qcmqYzoUlSq",
+                    PhoneNumber = "0912345678",
+                    PasswordHash = "$2a$11$ZKxnFd0g1qcrtOgFJrbYiOOnKrtsA6flk4msMC0Uf/qcmqYzoUlSq", // password: "password"
                     RoleId = 2,
-                    CreatedAt = new System.DateTime(2025, 1, 1, 0, 0, 0, System.DateTimeKind.Utc)
+                    CreatedAt = SeedTime
                 }
             );
         }
@@ -70,6 +78,8 @@ namespace Tekno.Infrastructure.Persistence.Configurations
 
     public class UserAddressConfiguration : IEntityTypeConfiguration<UserAddress>
     {
+        private static readonly DateTime SeedTime = new DateTime(2025, 1, 10, 10, 0, 0, DateTimeKind.Utc);
+        
         public void Configure(EntityTypeBuilder<UserAddress> builder)
         {
             builder.ToTable("user_addresses");
@@ -126,6 +136,43 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 .HasForeignKey(a => a.UserId);
 
             builder.HasIndex(a => a.UserId);
+
+            // ========== SEED ADDRESS DATA (Customer User Only) ==========
+            builder.HasData(
+                // Primary address for customer user (default)
+                new
+                {
+                    Id = 1,
+                    UserId = 2, // Customer user
+                    RecipientName = "Customer User",
+                    PhoneNumber = "0912345678",
+                    AddressLine1 = "123 Nguyen Hue Street",
+                    AddressLine2 = "Ben Nghe Ward",
+                    City = "District 1",
+                    State = "Ho Chi Minh City",
+                    PostalCode = "700000",
+                    Country = "Vietnam",
+                    IsDefault = true,
+                    CreatedAt = SeedTime
+                },
+                
+                // Secondary address for customer user
+                new
+                {
+                    Id = 2,
+                    UserId = 2, // Customer user
+                    RecipientName = "Customer User",
+                    PhoneNumber = "0912345678",
+                    AddressLine1 = "456 Le Loi Boulevard",
+                    AddressLine2 = "Ben Thanh Ward",
+                    City = "District 1",
+                    State = "Ho Chi Minh City",
+                    PostalCode = "700000",
+                    Country = "Vietnam",
+                    IsDefault = false,
+                    CreatedAt = SeedTime
+                }
+            );
         }
     }
 }

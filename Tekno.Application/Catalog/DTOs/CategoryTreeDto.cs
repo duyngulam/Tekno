@@ -12,8 +12,8 @@ namespace Tekno.Application.Catalog.DTOs
         public string Name { get; set; } = default!;
         public string Slug { get; set; } = default!;
         public string? IconPath { get; set; }
+        public string? ImageUrl { get; set; } // NEW: Main category image
 
         public List<CategoryTreeDto> SubCategories { get; set; } = new();
     }
-
 }

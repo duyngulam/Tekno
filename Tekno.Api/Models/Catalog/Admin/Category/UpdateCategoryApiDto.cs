@@ -15,6 +15,10 @@ namespace Tekno.Api.Models.Catalog.Admin
 
         public int? ParentId { get; set; }
 
+        public string? Description { get; set; }
+
         public IFormFile? IconFile { get; set; }
+
+        public IFormFile? ImageFile { get; set; } // NEW: Main category image
     }
 }

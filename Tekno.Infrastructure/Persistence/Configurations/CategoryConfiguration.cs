@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Tekno.Domain.Catalog;
+using static System.Net.WebRequestMethods;
 
 namespace Tekno.Infrastructure.Persistence.Configurations
 {
@@ -22,6 +23,11 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 .HasMaxLength(120);
             builder.Property(c => c.IconPath)
                 .HasMaxLength(255).HasDefaultValue("https://res.cloudinary.com/dwa3wh9yb/image/upload/v1760540871/tekno/category/icon/f0p9oqwzazwy19qvhclr.png");
+            
+            builder.Property(c => c.ImageUrl)
+                .HasMaxLength(500)
+                .IsRequired(false); // Allow null
+
             builder.HasIndex(c => c.Slug).IsUnique();
 
             builder.Property(c => c.Description)
@@ -48,7 +54,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "All kinds of laptops",
                     ParentId = (int?)null,
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath = "https://www.svgrepo.com/show/525970/laptop.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337713/laptop_jchkjn.webp"
                 },
                 new
                 {
@@ -58,7 +66,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "All kinds of smartphones",
                     ParentId = (int?)null,
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764336079/mobile_qk5kuf.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337713/iphone_air-3_2_hfq1wl.webp"
                 },
                 new
                 {
@@ -68,7 +78,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "All kinds of tablets",
                     ParentId = (int?)null,
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764336079/tablet_mhhzhn.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337716/xiaomi-pad-mini-4_adg1r9.webp"
                 },
                 new
                 {
@@ -78,7 +90,8 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "External product that enhances main product experience",
                     ParentId = (int?)null,
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337712/adapter-20w-apple-5_1_1_odasww.webp"
                 },
                 new
                 {
@@ -88,7 +101,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "All kinds of cameras",
                     ParentId = (int?)null,
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath= "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764336079/camera_xmozh9.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337713/may-anh-canon-eos-r100_8__havbm2.webp"
                 },
                 new
                 {
@@ -98,7 +113,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "PC and office related products",
                     ParentId = (int?)null,
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764336081/devices_kty5xc.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337714/pc_eoswm6.jpg"
                 },
                 new
                 {
@@ -108,7 +125,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "Gaming products and accessories",
                     ParentId = (int?)null,
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764336081/game_opdnni.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337714/ps5_lfmig6.webp"
                 },
 
                 // ===== Subcategories of Computer & Office =====
@@ -120,7 +139,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "All types of computer monitors",
                     ParentId = 6,
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764336079/monitor_gfheqk.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337714/monitor_i9d6or.webp"
                 },
                 new
                 {
@@ -130,7 +151,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "Processors and chips for computers",
                     ParentId = 6,
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764336079/cpu_b8usqu.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337712/CPU_kfg2fy.webp"
                 },
                 new
                 {
@@ -140,7 +163,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "Graphics cards for PCs and laptops",
                     ParentId = 6,
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764336079/cpu_b8usqu.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337712/GPU_ltzw4j.webp"
                 },
                 new
                 {
@@ -150,7 +175,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "Memory modules for PCs and laptops",
                     ParentId = 6,
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764336081/ram_luys0f.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337714/ram_kssmbv.webp"
                 },
                 new
                 {
@@ -160,7 +187,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "Storage devices: SSD, HDD, memory cards",
                     ParentId = 6,
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764336081/ram_luys0f.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337715/rom_sreazq.webp"
                 },
 
                 // ===== Accessories (Global, dùng chung nhiều loại thiết bị) =====
@@ -172,7 +201,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "Keyboards for PC, Laptop, and Tablet",
                     ParentId = 4, // thuộc nhóm Accessory
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764336081/keyboard_k2vqvu.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337713/banphim_iai2rn.jpg"
                 },
                 new
                 {
@@ -182,7 +213,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "Computer and laptop mice (wired, wireless, gaming)",
                     ParentId = 4, // thuộc nhóm Accessory
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764336081/keyboard_k2vqvu.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337714/mouse_enodsx.png"
                 },
                 new
                 {
@@ -192,7 +225,9 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "Audio accessories compatible with PC, Laptop, and Smartphone",
                     ParentId = 4, // thuộc nhóm Accessory
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    IconPath = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764336342/headphone_pz0fkb.svg",
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337713/headphone_qn6mqd.jpg"
                 },
                 new
                 {
@@ -202,7 +237,8 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                     Description = "Chargers, adapters, and data cables for all devices",
                     ParentId = 4,
                     CreatedAt = SeedTime,
-                    UpdatedAt = SeedTime
+                    UpdatedAt = SeedTime,
+                    ImageUrl = "https://res.cloudinary.com/dwa3wh9yb/image/upload/v1764337712/adapter-20w-apple-5_1_1_odasww.webp"
                 },
                 new
                 {

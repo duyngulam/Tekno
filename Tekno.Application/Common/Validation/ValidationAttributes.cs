@@ -34,6 +34,37 @@ namespace Tekno.Application.Common.Validation
     }
 
     /// <summary>
+    /// Validates advertisement position
+    /// </summary>
+    public class AdvertisementPositionValidationAttribute : ValidationAttribute
+    {
+        private static readonly string[] ValidPositions = { "HomeTop", "HomeMiddle", "HomeBottom", "CategoryTop", "ProductSidebar" };
+
+        public AdvertisementPositionValidationAttribute()
+        {
+            ErrorMessage = "Invalid position. Allowed values are: HomeTop, HomeMiddle, HomeBottom, CategoryTop, ProductSidebar";
+        }
+
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+        {
+            if (value == null || string.IsNullOrWhiteSpace(value.ToString()))
+            {
+                return ValidationResult.Success; // Position is optional, defaults to HomeTop
+            }
+
+            var positionValue = value.ToString()!;
+            
+            if (!ValidPositions.Contains(positionValue, StringComparer.OrdinalIgnoreCase))
+            {
+                return new ValidationResult(
+                    $"Invalid position '{positionValue}'. Allowed values are: {string.Join(", ", ValidPositions)}");
+            }
+
+            return ValidationResult.Success;
+        }
+    }
+
+    /// <summary>
     /// Validates password strength
     /// </summary>
     public class StrongPasswordAttribute : ValidationAttribute

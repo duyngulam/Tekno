@@ -12,6 +12,7 @@ namespace Tekno.Domain.Catalog
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string IconPath { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; } // NEW: Main category image (nullable)
         public int? ParentId { get; set; }
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -31,6 +32,29 @@ namespace Tekno.Domain.Catalog
             Slug = slug;
             Description = description;
             ParentId = parentId;
+        }
+
+        /// <summary>
+        /// Update category image URL
+        /// </summary>
+        public void UpdateImage(string? imageUrl)
+        {
+            ImageUrl = imageUrl;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Update category properties
+        /// </summary>
+        public void Update(string name, string slug, string? iconPath, string? imageUrl, int? parentId, string? description)
+        {
+            Name = name;
+            Slug = slug;
+            IconPath = iconPath ?? IconPath;
+            ImageUrl = imageUrl;
+            ParentId = parentId;
+            Description = description;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

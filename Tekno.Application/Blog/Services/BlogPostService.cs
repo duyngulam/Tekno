@@ -55,19 +55,8 @@ namespace Tekno.Application.Blog.Services
                 query.Keyword,
                 paging);
 
-            var dtos = result.Data.Select(b => new BlogPostSummaryDto
-            {
-                Id = b.Id,
-                Title = b.Title,
-                Slug = b.Slug,
-                Summary = b.Summary,
-                FeaturedImageUrl = b.FeaturedImageUrl,
-                Status = b.Status.ToString(),
-                ViewCount = b.ViewCount,
-                PublishedAt = b.PublishedAt,
-                CreatedAt = b.CreatedAt,
-                Tags = b.Tags.Select(t => t.Tag).ToList()
-            }).ToList();
+            // Use AutoMapper for mapping
+            var dtos = _mapper.Map<List<BlogPostSummaryDto>>(result.Data);
 
             return new PagedResult<BlogPostSummaryDto>(dtos, result.TotalRecords, result.Page, result.PageSize);
         }
@@ -95,38 +84,16 @@ namespace Tekno.Application.Blog.Services
         {
             var blogPosts = await _blogPostRepository.GetRecentPublishedAsync(count);
 
-            return blogPosts.Select(b => new BlogPostSummaryDto
-            {
-                Id = b.Id,
-                Title = b.Title,
-                Slug = b.Slug,
-                Summary = b.Summary,
-                FeaturedImageUrl = b.FeaturedImageUrl,
-                Status = b.Status.ToString(),
-                ViewCount = b.ViewCount,
-                PublishedAt = b.PublishedAt,
-                CreatedAt = b.CreatedAt,
-                Tags = b.Tags.Select(t => t.Tag).ToList()
-            }).ToList();
+            // Use AutoMapper for mapping
+            return _mapper.Map<List<BlogPostSummaryDto>>(blogPosts);
         }
 
         public async Task<List<BlogPostSummaryDto>> GetRelatedPostsAsync(int blogPostId, int count = 3)
         {
             var blogPosts = await _blogPostRepository.GetRelatedPostsAsync(blogPostId, count);
 
-            return blogPosts.Select(b => new BlogPostSummaryDto
-            {
-                Id = b.Id,
-                Title = b.Title,
-                Slug = b.Slug,
-                Summary = b.Summary,
-                FeaturedImageUrl = b.FeaturedImageUrl,
-                Status = b.Status.ToString(),
-                ViewCount = b.ViewCount,
-                PublishedAt = b.PublishedAt,
-                CreatedAt = b.CreatedAt,
-                Tags = b.Tags.Select(t => t.Tag).ToList()
-            }).ToList();
+            // Use AutoMapper for mapping
+            return _mapper.Map<List<BlogPostSummaryDto>>(blogPosts);
         }
 
         public async Task<BlogPostDetailDto> CreateAsync(CreateBlogPostDto dto, int authorId)
@@ -288,26 +255,16 @@ namespace Tekno.Application.Blog.Services
             return true;
         }
 
+        /// <summary>
+        /// Maps BlogPost to BlogPostDetailDto with related products loaded
+        /// Uses AutoMapper for base mapping, manually loads related products
+        /// </summary>
         private async Task<BlogPostDetailDto> MapToDetailDtoAsync(BlogPost blogPost)
         {
-            var dto = new BlogPostDetailDto
-            {
-                Id = blogPost.Id,
-                Title = blogPost.Title,
-                Slug = blogPost.Slug,
-                Summary = blogPost.Summary,
-                Content = blogPost.Content,
-                FeaturedImageUrl = blogPost.FeaturedImageUrl,
-                Status = blogPost.Status.ToString(),
-                ViewCount = blogPost.ViewCount,
-                PublishedAt = blogPost.PublishedAt,
-                CreatedAt = blogPost.CreatedAt,
-                UpdatedAt = blogPost.UpdatedAt,
-                Tags = blogPost.Tags.Select(t => t.Tag).ToList(),
-                RelatedProducts = new List<RelatedProductDto>()
-            };
+            // Use AutoMapper for base mapping
+            var dto = _mapper.Map<BlogPostDetailDto>(blogPost);
 
-            // Load related products
+            // Load related products (requires async operation)
             foreach (var relatedProduct in blogPost.RelatedProducts)
             {
                 var product = await _productRepository.GetProductByIdAsync(relatedProduct.ProductId);

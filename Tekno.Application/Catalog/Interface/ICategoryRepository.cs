@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Tekno.Domain.Catalog;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Tekno.Application.Catalog.Interface
 {
@@ -18,5 +19,8 @@ namespace Tekno.Application.Catalog.Interface
 
        // NEW: get attributes applicable for a category (category-specific)
        Task<List<ProductAttribute>> GetAttributesForCategoryAsync(int categoryId);
+
+       // NEW: Transaction support
+       Task<IDbContextTransaction> BeginTransactionAsync();
     }
 }
