@@ -1,4 +1,5 @@
-﻿namespace Tekno.Application.Catalog.DTOs.Products
+﻿
+namespace Tekno.Application.Catalog.DTOs.Products
 {
     //dùng để hiện trang xem chi tiết
     public class ProductDetailDto
@@ -19,6 +20,7 @@
         public string? Overview { get; set; }
         public string? Description { get; set; }
         public string? WarrantyInfo { get; set; }
+        public int TotalSold { get; set; }
 
         public List<ProductAttributeDto> Specs { get; set; } = new();
 

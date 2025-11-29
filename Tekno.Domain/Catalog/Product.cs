@@ -19,6 +19,7 @@ namespace Tekno.Domain.Catalog
         public string? Description { get; set; }
         public string? Overview { get; set; }
         public string? Specs { get; set; } = "{}"; // JSONB
+        public int TotalSold { get; set; } = 0; // Track total units sold
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
@@ -26,9 +27,16 @@ namespace Tekno.Domain.Catalog
         public Brand Brand { get; set; } = null!;
         public ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
         public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
+        
         public void AddImage(string url, bool isPrimary = false, int sortOrder = 0)
         {
             Images.Add(new ProductImage(Id,url, isPrimary, sortOrder));
+        }
+
+        public void IncrementSoldCount(int quantity)
+        {
+            TotalSold += quantity;
+            UpdatedAt = DateTime.UtcNow;
         }
 
         public Product() { }
@@ -40,6 +48,7 @@ namespace Tekno.Domain.Catalog
             CategoryId = categoryId;
             BrandId = brandId;
             BasePrice = basePrice;
+            TotalSold = 0;
         }
     }
 }

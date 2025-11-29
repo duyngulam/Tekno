@@ -23,6 +23,7 @@ namespace Tekno.Infrastructure.Persistence.Configurations
             builder.Property(p => p.Description).HasColumnType("text");
             builder.Property(p => p.Overview).HasColumnType("text");
             builder.Property(p => p.Specs).HasColumnType("jsonb");
+            builder.Property(p => p.TotalSold).HasDefaultValue(0);
 
             builder.HasOne(p => p.Category)
                 .WithMany(c => c.Products)

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tekno.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Tekno.Infrastructure.Persistence;
 namespace Tekno.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251129174317_rating")]
+    partial class rating
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2143,7 +2146,7 @@ namespace Tekno.Infrastructure.Migrations
                             Name = "Razer Viper V2 Pro",
                             Overview = "Chuột gaming không dây siêu nhẹ 58g, sensor Focus Pro 30K.",
                             Slug = "razer-viper-v2-pro",
-                            Specs = "[\r\n    {\"Name\":\"Sensor\",\"Value\":[\"Focus Pro 30K DPI\"]},\r\n    {\"Name\":\"Trọng lượng\",\"Value\":[\"58g\"]},\r\n    {\"Name\":\"Kết nối\",\"Value\":[\"HyperSpeed Wireless 2.4GHz\"]},\r\n    {\"Name\":\"Pin\",\"Value\":[\"80 giờ\"]},\r\n    {\"Name\":\"Switch\",\"Value\":[\"Optical Gen 3\"]}\r\n]",
+                            Specs = "[\r\n    {\"Name\":\"Sensor\",\"Value\":[\"Focus Pro 30K DPI\"]},\r\n    {\"Name\":\"Trọng lượng\",\"Value\":[\"58g\"]},\r\n    {\"Name\":\"Kết nối\",\"Value\":[\"HyperSpeed Wireless 2.4GHz\"]},\r\n    {\"Name\":\"Pin\",\"Value\":[\"80 giờ\"]},\r\n    {\"Name\":\"Switch\",\"Value\":[\"Optical Gen 3\"]}",
                             Status = "available",
                             UpdatedAt = new DateTime(2025, 1, 15, 10, 0, 0, 0, DateTimeKind.Utc)
                         },

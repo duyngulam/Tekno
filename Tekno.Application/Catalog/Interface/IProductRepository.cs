@@ -35,6 +35,13 @@ namespace Tekno.Application.Catalog.Interface
         // New products by category
         Task<List<Product>> GetTopNewProductsByCategoryAsync(string categorySlug, int count);
         
+        // Sold count tracking
+        Task IncrementProductSoldCountAsync(int productId, int quantity);
+        Task<Dictionary<int, int>> GetProductsSoldCountAsync(List<int> productIds);
+        
+        // Rating statistics
+        Task<Dictionary<int, (double AverageRating, int TotalReviews)>> GetProductsRatingStatsAsync(List<int> productIds);
+        
         // Transaction support
         IDbContextTransaction BeginTransaction();
         Task<IDbContextTransaction> BeginTransactionAsync();
