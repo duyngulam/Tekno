@@ -41,7 +41,7 @@ namespace Tekno.Infrastructure
             // 1️⃣ DATABASE (PostgreSQL)
             // ===================================================
             services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(config.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql(Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")));
 
             // ===================================================
             // 2️⃣ REDIS CACHE

@@ -15,6 +15,8 @@ namespace Tekno.Infrastructure.Persistence
     {
         public DbSet<User> Users => Set<User>();
         public DbSet<Role> Roles => Set<Role>();
+        public DbSet<UserAddress> UserAddresses => Set<UserAddress>();
+        
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Brand> Brands => Set<Brand>();
         public DbSet<Product> Products => Set<Product>();
@@ -45,6 +47,9 @@ namespace Tekno.Infrastructure.Persistence
         // Order entities (simplified for purchase verification)
         public DbSet<Tekno.Domain.Order.Order> Orders => Set<Tekno.Domain.Order.Order>();
         public DbSet<Tekno.Domain.Order.OrderItem> OrderItems => Set<Tekno.Domain.Order.OrderItem>();
+        
+        // Payment entities
+        public DbSet<Tekno.Domain.Payment.Payment> Payments => Set<Tekno.Domain.Payment.Payment>();
         
         // Blog entities
         public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
@@ -96,6 +101,9 @@ namespace Tekno.Infrastructure.Persistence
             // Order configurations
             modelBuilder.ApplyConfiguration(new OrderConfiguration());
             modelBuilder.ApplyConfiguration(new OrderItemConfiguration());
+            
+            // Payment configuration
+            modelBuilder.ApplyConfiguration(new PaymentConfiguration());
             
             // Blog configurations
             modelBuilder.ApplyConfiguration(new BlogPostConfiguration());
