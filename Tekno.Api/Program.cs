@@ -10,6 +10,8 @@ using Tekno.Application.Auth.DTOs;
 using Tekno.Infrastructure;
 using Tekno.Infrastructure.Persistence;
 using Tekno.Infrastructure.Search;
+using System.IO;
+using System.Linq;
 
 namespace Tekno.Api
 {
@@ -17,12 +19,49 @@ namespace Tekno.Api
     {
         public static async Task Main(string[] args)
         {
+            // Load .env file into environment variables (if present)
+            LoadDotEnv();
+
             var builder = WebApplication.CreateBuilder(args);
 
             // =======================================================
             // 1. CONFIGURATION
             // =======================================================
             var configuration = builder.Configuration;
+
+            // If DB connection string is provided via environment (e.g. .env or docker), prefer it and override configuration
+            var envConn = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+            if (!string.IsNullOrWhiteSpace(envConn))
+            {
+                // Override the configuration value so later services read it from Configuration
+                builder.Configuration["ConnectionStrings:DefaultConnection"] = envConn;
+            }
+
+            // Override JWT settings from environment variables if present
+            var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? Environment.GetEnvironmentVariable("JWT_SECRET");
+            if (!string.IsNullOrWhiteSpace(jwtSecret))
+            {
+                builder.Configuration["JwtSettings:SecretKey"] = jwtSecret;
+            }
+
+            var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+            if (!string.IsNullOrWhiteSpace(jwtIssuer))
+            {
+                builder.Configuration["JwtSettings:Issuer"] = jwtIssuer;
+            }
+
+            var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+            if (!string.IsNullOrWhiteSpace(jwtAudience))
+            {
+                builder.Configuration["JwtSettings:Audience"] = jwtAudience;
+            }
+
+            var jwtExpiry = Environment.GetEnvironmentVariable("JWT_EXPIRY_MINUTES") ?? Environment.GetEnvironmentVariable("JWT_EXPIRY");
+            if (!string.IsNullOrWhiteSpace(jwtExpiry))
+            {
+                builder.Configuration["JwtSettings:ExpiryMinutes"] = jwtExpiry;
+            }
+
             var jwtSettings = configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"] ?? throw new Exception("JWT Secret missing");
 
@@ -146,32 +185,32 @@ namespace Tekno.Api
             // =======================================================
             // 6. APPLY MIGRATIONS ON STARTUP
             // =======================================================
-            using (var scope = app.Services.CreateScope())
-            {
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            //using (var scope = app.Services.CreateScope())
+            //{
+            //    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            //    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                var retries = 5;
-                for (var i = 0; i < retries; i++)
-                {
-                    try
-                    {
-                        db.Database.Migrate();
-                        logger.LogInformation("Database migration completed successfully");
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogWarning(ex, "Migration attempt {Attempt} failed, retrying...", i + 1);
-                        if (i == retries - 1)
-                        {
-                            logger.LogError(ex, "Database migration failed after {Retries} attempts", retries);
-                            throw;
-                        }
-                        Thread.Sleep(2000);
-                    }
-                }
-            }
+            //    var retries = 5;
+            //    for (var i = 0; i < retries; i++)
+            //    {
+            //        try
+            //        {
+            //            db.Database.Migrate();
+            //            logger.LogInformation("Database migration completed successfully");
+            //            break;
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            logger.LogWarning(ex, "Migration attempt {Attempt} failed, retrying...", i + 1);
+            //            if (i == retries - 1)
+            //            {
+            //                logger.LogError(ex, "Database migration failed after {Retries} attempts", retries);
+            //                throw;
+            //            }
+            //            Thread.Sleep(2000);
+            //        }
+            //    }
+            //}
 
             // =======================================================
             // 7. INITIALIZE ELASTICSEARCH
@@ -279,6 +318,56 @@ namespace Tekno.Api
             // 9. RUN APP
             // =======================================================
             app.Run();
+        }
+
+        private static void LoadDotEnv()
+        {
+            try
+            {
+                var basePath = Directory.GetCurrentDirectory();
+                var envPath = Path.Combine(basePath, ".env");
+                if (!File.Exists(envPath))
+                {
+                    // If .env not found, walk up parent directories
+                    var parentDir = Directory.GetParent(basePath);
+                    while (parentDir != null)
+                    {
+                        envPath = Path.Combine(parentDir.FullName, ".env");
+                        if (File.Exists(envPath))
+                            break;
+
+                        parentDir = parentDir.Parent;
+                    }
+                }
+
+                if (!File.Exists(envPath))
+                    return;
+
+                foreach (var rawLine in File.ReadAllLines(envPath))
+                {
+                    var line = rawLine.Trim();
+                    if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
+                        continue;
+
+                    var idx = line.IndexOf('=');
+                    if (idx <= 0) continue;
+
+                    var key = line.Substring(0, idx).Trim();
+                    var val = line.Substring(idx + 1).Trim();
+
+                    // Remove surrounding quotes if present
+                    if ((val.StartsWith("\"") && val.EndsWith("\"")) || (val.StartsWith("'") && val.EndsWith("'")))
+                    {
+                        val = val.Substring(1, val.Length - 2);
+                    }
+
+                    Environment.SetEnvironmentVariable(key, val);
+                }
+            }
+            catch
+            {
+                // Ignore - loading .env is best-effort
+            }
         }
     }
 }
