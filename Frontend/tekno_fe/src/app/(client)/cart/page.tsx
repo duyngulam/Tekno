@@ -1,17 +1,28 @@
 import ProductInCart from "@/components/cart-payment-checkout/ProductInCart";
 import { Container } from "@/components/MainLayout/Container";
 import Stepper from "@/components/share/Stepper";
+import { getProductsInCart } from "@/services/products";
+import { Product } from "@/type/product";
+import { get } from "http";
 import Link from "next/link";
 import React from "react";
 
-export default function CartPage() {
+export default async function CartPage() {
+  const data = await getProductsInCart();
+  const products: Product[] = data || [];
   return (
     <Container className="flex flex-col space-y-5 my-10">
       <Stepper isActive={1} />
       <div className="flex justify-between">
         <div className="w-7/12 bg-amber-300">
-          <ProductInCart />
-          <ProductInCart />
+          {products.length === 0 && (
+            <p className="text-center text-lg font-medium py-10">
+              Your cart is empty.
+            </p>
+          )}
+          {products.map((product) => (
+            <ProductInCart product={product} />
+          ))}
         </div>
         <div className="flex flex-col py-5 px-3 w-4/12 border border-gray-300 rounded-md gap-4">
           <p className="text-black font-bold text-2xl ">Payment details</p>

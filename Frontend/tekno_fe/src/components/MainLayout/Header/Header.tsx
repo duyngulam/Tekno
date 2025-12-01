@@ -38,7 +38,7 @@ const Header = () => {
           <SearchBar />
           <CartIcon />
 
-          {!user ? <SignIn /> : <UserRound />}
+          {!user ? <SignIn /> : <button onClick={logout}>Logout</button>}
         </div>
       </Container>
     </header>

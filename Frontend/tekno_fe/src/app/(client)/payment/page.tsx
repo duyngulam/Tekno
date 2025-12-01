@@ -5,7 +5,7 @@ import React from "react";
 export default function PaymentPage() {
   return (
     <Container className="flex flex-col space-y-5 my-10">
-      <Stepper isActive={1} />
+      <Stepper isActive={3} />
     </Container>
   );
 }
