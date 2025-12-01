@@ -12,9 +12,9 @@ namespace Tekno.Application.Catalog.DTOs.Admin
     public class CreateProductDto
     {
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         [Required]
-        public string Slug { get; set; }
+        public string Slug { get; set; } = string.Empty;
         [Required]
         public int CategoryId { get; set; }
         [Required]
@@ -24,10 +24,10 @@ namespace Tekno.Application.Catalog.DTOs.Admin
         public decimal BasePrice { get;  set; }
         public string? Description { get; set; }
         public string? LongDescription { get; set; }
-        public string? WarrantyInfo { get; private set; }
+        public string? WarrantyInfo { get; set; }
         public string? Overview { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public List<IFormFile> Images { get; set; } = new List<IFormFile>();
-        public decimal? DiscountPercent { get; internal set; }
+        public decimal? DiscountPercent { get; set; }
     }
 }

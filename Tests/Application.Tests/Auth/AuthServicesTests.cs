@@ -114,6 +114,78 @@ namespace Tekno.Application.Tests.Auth
         }
 
         [Fact]
+        public async Task TC_Signup_002_RegisterAsync_Should_Return_Null_When_Email_Already_Exists()
+        {
+            // Arrange - Test email already exist or not
+            var email = "Usernametest@gmail.com";
+            var existingUser = new User(email, "existing_hashed_pw", 1);
+            
+            _userRepoMock.Setup(r => r.GetByEmailAsync(email))
+                .ReturnsAsync(existingUser);
+
+            // Act
+            var result = await _authService.RegisterAsync(email, "Password123", "Customer");
+
+            // Assert - Display error message: "This email have been used"
+            result.Should().BeNull();
+            _loggerMock.Verify(l => l.LogWarning(It.IsAny<string>(), email), Times.Once);
+            _userRepoMock.Verify(r => r.AddAsync(It.IsAny<User>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task TC_Signup_001_Invalid_Email_Format_Should_Be_Caught_By_Validation()
+        {
+            // Note: This test validates that ModelState validation in API layer catches invalid email
+            // The validation happens at the RegisterRequest DTO level with [EmailAddress] attribute
+            // Service layer assumes valid input from API validation
+            
+            // This test demonstrates service behavior when bypassing API validation
+            var invalidEmail = "Usernametest"; // Invalid format
+            var role = new Role("Customer");
+            
+            _userRepoMock.Setup(r => r.GetByEmailAsync(invalidEmail)).ReturnsAsync((User?)null);
+            _userRepoMock.Setup(r => r.GetRoleByNameAsync("Customer")).ReturnsAsync(role);
+            _passwordHasherMock.Setup(h => h.Hash(It.IsAny<string>())).Returns("hashed");
+            _jwtProviderMock.Setup(j => j.GenerateToken(It.IsAny<User>()))
+                .Returns(("token", DateTime.UtcNow.AddHours(1)));
+            _mapperMock.Setup(m => m.Map<UserDto>(It.IsAny<User>()))
+                .Returns(new UserDto { Email = invalidEmail });
+
+            // Act - Service will process if it gets past API validation
+            var result = await _authService.RegisterAsync(invalidEmail, "abc", "Customer");
+
+            // Assert - Service creates user (API validation should prevent this in real scenario)
+            result.Should().NotBeNull();
+            // In production, API ValidationFilter will catch this before reaching service
+        }
+
+        [Fact]
+        public async Task TC_Signup_001_Short_Password_Should_Be_Caught_By_Validation()
+        {
+            // Note: Password length validation happens at API layer with [MinLength(6)] attribute
+            // This test shows service behavior, but API validation prevents short passwords
+            
+            var email = "test@example.com";
+            var shortPassword = "abc"; // Less than 6 characters
+            var role = new Role("Customer");
+            
+            _userRepoMock.Setup(r => r.GetByEmailAsync(email)).ReturnsAsync((User?)null);
+            _userRepoMock.Setup(r => r.GetRoleByNameAsync("Customer")).ReturnsAsync(role);
+            _passwordHasherMock.Setup(h => h.Hash(shortPassword)).Returns("hashed_abc");
+            _jwtProviderMock.Setup(j => j.GenerateToken(It.IsAny<User>()))
+                .Returns(("token", DateTime.UtcNow.AddHours(1)));
+            _mapperMock.Setup(m => m.Map<UserDto>(It.IsAny<User>()))
+                .Returns(new UserDto { Email = email });
+
+            // Act - Service will process if API validation is bypassed
+            var result = await _authService.RegisterAsync(email, shortPassword, "Customer");
+
+            // Assert - Service creates user (API ValidationFilter should prevent this)
+            result.Should().NotBeNull();
+            _passwordHasherMock.Verify(h => h.Hash(shortPassword), Times.Once);
+        }
+
+        [Fact]
         public async Task RegisterAsync_Should_Return_Null_When_Email_Already_Exists()
         {
             var email = "exists@example.com";

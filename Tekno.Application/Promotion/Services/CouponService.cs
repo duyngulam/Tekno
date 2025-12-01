@@ -74,13 +74,21 @@ namespace Tekno.Application.Promotion.Services
             // Validate dates
             if (dto.EndDate <= dto.StartDate)
             {
-                throw new InvalidOperationException("End date must be after start date");
+                throw new Application.Common.Exceptions.ValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        { "EndDate", new[] { $"End date must be after start date ({dto.StartDate:yyyy-MM-dd})" } }
+                    });
             }
 
             // Parse coupon type
             if (!Enum.TryParse<CouponType>(dto.Type, true, out var couponType))
             {
-                throw new InvalidOperationException($"Invalid coupon type: {dto.Type}");
+                throw new Application.Common.Exceptions.ValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        { "Type", new[] { $"Invalid coupon type '{dto.Type}'. Allowed values are: FixedAmount, Percentage, FreeShipping" } }
+                    });
             }
 
             // Create coupon entity
@@ -129,7 +137,11 @@ namespace Tekno.Application.Promotion.Services
             // Validate dates
             if (dto.EndDate <= dto.StartDate)
             {
-                throw new InvalidOperationException("End date must be after start date");
+                throw new Application.Common.Exceptions.ValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        { "EndDate", new[] { $"End date must be after start date ({dto.StartDate:yyyy-MM-dd})" } }
+                    });
             }
 
             // Update coupon

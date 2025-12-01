@@ -1,7 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Net;
+using System.Text.Json;
 using Tekno.Application.Common.Exceptions;
-namespace Tekno.Api.Middlewares { 
+
+namespace Tekno.Api.Middlewares 
+{ 
     public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
@@ -36,6 +39,7 @@ namespace Tekno.Api.Middlewares {
 
             switch (ex)
             {
+                // Handle custom application exceptions
                 case AppException appEx:
                     statusCode = appEx.StatusCode;
                     message = appEx.Message;
@@ -44,16 +48,63 @@ namespace Tekno.Api.Middlewares {
                         details = valEx.Errors;
                     break;
 
-                case DbUpdateException dbEx when dbEx.InnerException?.Message.Contains("duplicate") == true:
-                    statusCode = 409;
-                    message = "Duplicate record detected.";
-                    errorCode = "DB_DUPLICATE";
+                // Handle invalid operation exceptions from services
+                case InvalidOperationException invalidOpEx:
+                    statusCode = (int)HttpStatusCode.BadRequest;
+                    message = invalidOpEx.Message;
+                    errorCode = "INVALID_OPERATION";
                     break;
 
+                // Handle argument exceptions
+                case ArgumentException argEx:
+                    statusCode = (int)HttpStatusCode.BadRequest;
+                    message = argEx.Message;
+                    errorCode = "INVALID_ARGUMENT";
+                    break;
+
+                // Handle database duplicate key exceptions
+                case DbUpdateException dbEx when dbEx.InnerException?.Message.Contains("duplicate") == true:
+                    statusCode = (int)HttpStatusCode.Conflict;
+                    message = "A record with the same unique identifier already exists.";
+                    errorCode = "DB_DUPLICATE";
+                    details = new { innerMessage = dbEx.InnerException?.Message };
+                    break;
+
+                // Handle database foreign key exceptions
                 case DbUpdateException dbEx when dbEx.InnerException?.Message.Contains("foreign key") == true:
-                    statusCode = 400;
-                    message = "Foreign key constraint violation.";
+                    statusCode = (int)HttpStatusCode.BadRequest;
+                    message = "Referenced record does not exist or cannot be deleted due to dependencies.";
                     errorCode = "DB_FOREIGN_KEY";
+                    details = new { innerMessage = dbEx.InnerException?.Message };
+                    break;
+
+                // Handle other database exceptions
+                case DbUpdateException dbEx:
+                    statusCode = (int)HttpStatusCode.BadRequest;
+                    message = "Database operation failed. " + dbEx.Message;
+                    errorCode = "DB_UPDATE_ERROR";
+                    details = new { innerMessage = dbEx.InnerException?.Message };
+                    break;
+
+                // Handle JSON deserialization exceptions
+                case JsonException jsonEx:
+                    statusCode = (int)HttpStatusCode.BadRequest;
+                    message = "Invalid JSON format in request body.";
+                    errorCode = "INVALID_JSON";
+                    details = new { error = jsonEx.Message };
+                    break;
+
+                // Handle unauthorized access
+                case UnauthorizedAccessException:
+                    statusCode = (int)HttpStatusCode.Forbidden;
+                    message = "You do not have permission to perform this action.";
+                    errorCode = "FORBIDDEN";
+                    break;
+
+                // Default internal server error
+                default:
+                    // For other exceptions, log the full stack trace but don't expose it to client
+                    details = new { type = ex.GetType().Name };
                     break;
             }
 
@@ -66,7 +117,8 @@ namespace Tekno.Api.Middlewares {
                 statusCode,
                 errorCode,
                 message,
-                details
+                details,
+                timestamp = DateTime.UtcNow
             };
 
             await context.Response.WriteAsJsonAsync(response);

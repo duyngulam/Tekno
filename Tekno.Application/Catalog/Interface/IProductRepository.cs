@@ -12,7 +12,7 @@ namespace Tekno.Application.Catalog.Interface
 {
     public interface IProductRepository
     {
-        Task<PagedResult<Product?>> GetPagedProductAsync(string? categorySlug,
+        Task<PagedResult<Product>> GetPagedProductAsync(string? categorySlug,
             string? brandSlug,
             string? search,
             string? sort,
@@ -20,8 +20,8 @@ namespace Tekno.Application.Catalog.Interface
             string? maxPrice,
             PagingParams paging);
 
-        Task<Product?> GetProductBySlugAsync(string slug);
-        Task<Product?> GetProductByIdAsync(int id);
+        Task<Product> GetProductBySlugAsync(string slug);
+        Task<Product> GetProductByIdAsync(int id);
         Task<bool> IsProductExistBySlugAsync(string slug);
         Task<bool> IsProductExistByIdAsync(int id);
         Task<IEnumerable<Product>> GetAllProductsWithDetailAsync();
@@ -34,6 +34,13 @@ namespace Tekno.Application.Catalog.Interface
         
         // New products by category
         Task<List<Product>> GetTopNewProductsByCategoryAsync(string categorySlug, int count);
+        
+        // Sold count tracking
+        Task IncrementProductSoldCountAsync(int productId, int quantity);
+        Task<Dictionary<int, int>> GetProductsSoldCountAsync(List<int> productIds);
+        
+        // Rating statistics
+        Task<Dictionary<int, (double AverageRating, int TotalReviews)>> GetProductsRatingStatsAsync(List<int> productIds);
         
         // Transaction support
         IDbContextTransaction BeginTransaction();

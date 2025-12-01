@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Tekno.Application.Common.Validation;
 
 namespace Tekno.Application.Promotion.DTOs
 {
@@ -30,41 +31,43 @@ namespace Tekno.Application.Promotion.DTOs
 
     public class CreateCouponDto
     {
-        [Required]
-        [StringLength(50, MinimumLength = 3)]
+        [Required(ErrorMessage = "Coupon code is required")]
+        [StringLength(50, MinimumLength = 3, ErrorMessage = "Coupon code must be between 3 and 50 characters")]
         public string Code { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(200)]
+        [Required(ErrorMessage = "Coupon name is required")]
+        [StringLength(200, ErrorMessage = "Coupon name must not exceed 200 characters")]
         public string Name { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "Coupon type is required")]
+        [CouponTypeValidation]
         public string Type { get; set; } = "FixedAmount"; // FixedAmount, Percentage, FreeShipping
 
-        [Required]
-        [Range(0.01, double.MaxValue)]
+        [Required(ErrorMessage = "Coupon value is required")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Coupon value must be greater than 0")]
         public decimal Value { get; set; }
 
-        [Required]
-        [Range(1, int.MaxValue)]
+        [Required(ErrorMessage = "Quantity is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
         public int Quantity { get; set; }
 
-        [Range(1, int.MaxValue)]
+        [Range(1, int.MaxValue, ErrorMessage = "Max usage per user must be at least 1")]
         public int? MaxUsagePerUser { get; set; }
 
-        [Range(0, double.MaxValue)]
+        [Range(0, double.MaxValue, ErrorMessage = "Minimum purchase amount must be 0 or greater")]
         public decimal? MinPurchaseAmount { get; set; }
 
-        [Range(0, double.MaxValue)]
+        [Range(0, double.MaxValue, ErrorMessage = "Maximum discount amount must be 0 or greater")]
         public decimal? MaxDiscountAmount { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Start date is required")]
         public DateTime StartDate { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "End date is required")]
+        [DateRangeValidation(StartDateProperty = "StartDate")]
         public DateTime EndDate { get; set; }
 
-        [StringLength(500)]
+        [StringLength(500, ErrorMessage = "Note must not exceed 500 characters")]
         public string? Note { get; set; }
 
         public List<int> ApplicableCategoryIds { get; set; } = new();
@@ -73,34 +76,35 @@ namespace Tekno.Application.Promotion.DTOs
 
     public class UpdateCouponDto
     {
-        [Required]
-        [StringLength(200)]
+        [Required(ErrorMessage = "Coupon name is required")]
+        [StringLength(200, ErrorMessage = "Coupon name must not exceed 200 characters")]
         public string Name { get; set; } = string.Empty;
 
-        [Required]
-        [Range(0.01, double.MaxValue)]
+        [Required(ErrorMessage = "Coupon value is required")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Coupon value must be greater than 0")]
         public decimal Value { get; set; }
 
-        [Required]
-        [Range(1, int.MaxValue)]
+        [Required(ErrorMessage = "Quantity is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
         public int Quantity { get; set; }
 
-        [Range(1, int.MaxValue)]
+        [Range(1, int.MaxValue, ErrorMessage = "Max usage per user must be at least 1")]
         public int? MaxUsagePerUser { get; set; }
 
-        [Range(0, double.MaxValue)]
+        [Range(0, double.MaxValue, ErrorMessage = "Minimum purchase amount must be 0 or greater")]
         public decimal? MinPurchaseAmount { get; set; }
 
-        [Range(0, double.MaxValue)]
+        [Range(0, double.MaxValue, ErrorMessage = "Maximum discount amount must be 0 or greater")]
         public decimal? MaxDiscountAmount { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Start date is required")]
         public DateTime StartDate { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "End date is required")]
+        [DateRangeValidation(StartDateProperty = "StartDate")]
         public DateTime EndDate { get; set; }
 
-        [StringLength(500)]
+        [StringLength(500, ErrorMessage = "Note must not exceed 500 characters")]
         public string? Note { get; set; }
 
         public List<int> ApplicableCategoryIds { get; set; } = new();
@@ -109,11 +113,11 @@ namespace Tekno.Application.Promotion.DTOs
 
     public class ValidateCouponDto
     {
-        [Required]
+        [Required(ErrorMessage = "Coupon code is required")]
         public string Code { get; set; } = string.Empty;
 
-        [Required]
-        [Range(0.01, double.MaxValue)]
+        [Required(ErrorMessage = "Order amount is required")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Order amount must be greater than 0")]
         public decimal OrderAmount { get; set; }
 
         public int? UserId { get; set; }

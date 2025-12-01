@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
+using Tekno.Application.Common.Validation;
 
 namespace Tekno.Application.Catalog.DTOs.Advertisement
 {
@@ -38,16 +39,18 @@ namespace Tekno.Application.Catalog.DTOs.Advertisement
         /// <summary>
         /// Display position: HomeTop, HomeMiddle, HomeBottom, CategoryTop, ProductSidebar
         /// </summary>
+        [AdvertisementPositionValidation]
         public string Position { get; set; } = "HomeTop";
 
         /// <summary>
         /// Display priority (0-100). Higher number = shown first
         /// </summary>
-        [Range(0, 100)]
+        [Range(0, 100, ErrorMessage = "Priority must be between 0 and 100")]
         public int Priority { get; set; } = 0;
 
         public DateTime? StartDate { get; set; }
 
+        [DateRangeValidation(StartDateProperty = "StartDate")]
         public DateTime? EndDate { get; set; }
 
         public bool IsActive { get; set; } = true;
@@ -63,17 +66,19 @@ namespace Tekno.Application.Catalog.DTOs.Advertisement
         /// </summary>
         public IFormFile? Image { get; set; }
 
-        [Required]
-        [Range(1, int.MaxValue)]
+        [Required(ErrorMessage = "Product ID is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Product ID must be greater than 0")]
         public int ProductId { get; set; }
 
+        [AdvertisementPositionValidation]
         public string Position { get; set; } = "HomeTop";
 
-        [Range(0, 100)]
+        [Range(0, 100, ErrorMessage = "Priority must be between 0 and 100")]
         public int Priority { get; set; } = 0;
 
         public DateTime? StartDate { get; set; }
 
+        [DateRangeValidation(StartDateProperty = "StartDate")]
         public DateTime? EndDate { get; set; }
 
         public bool IsActive { get; set; } = true;
@@ -84,10 +89,16 @@ namespace Tekno.Application.Catalog.DTOs.Advertisement
     /// </summary>
     public class AdvertisementQueryDto
     {
+        [AdvertisementPositionValidation]
         public string? Position { get; set; }
+        
         public bool? IsActive { get; set; }
         public bool OnlyCurrentlyActive { get; set; } = false;
+        
+        [Range(1, int.MaxValue, ErrorMessage = "Page must be greater than 0")]
         public int Page { get; set; } = 1;
+        
+        [Range(1, 100, ErrorMessage = "Page size must be between 1 and 100")]
         public int PageSize { get; set; } = 20;
     }
 }

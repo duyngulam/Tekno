@@ -20,7 +20,7 @@ export default function TechnicalDetails({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="font-bold text-xl">Similar Products</div>
+      <div className="font-bold text-xl">Technical Details</div>
       <Table>
         {/* Chỉ hiện nút Show more nếu có hơn 5 dòng */}
         {specs.length > 5 && (

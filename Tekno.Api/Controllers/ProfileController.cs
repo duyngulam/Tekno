@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Tekno.Api.Common.Responses;
@@ -60,6 +61,42 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
+        /// Update all profile information at once (fullname, phone, email, password)
+        /// </summary>
+        /// <remarks>
+        /// Sample request (update everything):
+        /// 
+        ///     PUT /api/profile/all
+        ///     {
+        ///       "fullname": "John Doe",
+        ///       "phoneNumber": "+84987654321",
+        ///       "newEmail": "newemail@example.com",
+        ///       "newPassword": "NewPassword456",
+        ///       "confirmPassword": "NewPassword456",
+        ///       "currentPassword": "CurrentPassword123"
+        ///     }
+        /// 
+        /// Sample request (update only profile info and email):
+        /// 
+        ///     PUT /api/profile/all
+        ///     {
+        ///       "fullname": "John Doe",
+        ///       "phoneNumber": "+84987654321",
+        ///       "newEmail": "newemail@example.com",
+        ///       "currentPassword": "CurrentPassword123"
+        ///     }
+        /// 
+        /// Note: Current password is always required. Email and password changes are optional.
+        /// </remarks>
+        [HttpPut("all")]
+        public async Task<IActionResult> UpdateAllProfile([FromBody] UpdateAllProfileDto dto)
+        {
+            var userId = GetCurrentUserId();
+            var profile = await _profileService.UpdateAllProfileAsync(userId, dto);
+            return Ok(ApiResponse<UserProfileDto>.Ok(profile, "Profile updated successfully"));
+        }
+
+        /// <summary>
         /// Update email (requires password verification)
         /// </summary>
         /// <remarks>
@@ -110,7 +147,7 @@ namespace Tekno.Api.Controllers
         {
             var userId = GetCurrentUserId();
             var addresses = await _profileService.GetAddressesAsync(userId);
-            return Ok(ApiResponse<System.Collections.Generic.List<UserAddressDto>>.Ok(addresses));
+            return Ok(ApiResponse<List<UserAddressDto>>.Ok(addresses));
         }
 
         /// <summary>

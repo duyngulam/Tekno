@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,10 +18,12 @@ namespace Tekno.Infrastructure.Catalog
         {
             _context = context;
         }
+        
         public async Task<List<Category>> GetAllCategoriesAsync()
         {
             return await _context.Categories.AsNoTracking().ToListAsync();
         }
+        
         public async Task<Category?> GetCategoryBySlugAsync(string slug)
         {
             return await _context.Categories
@@ -52,7 +55,10 @@ namespace Tekno.Infrastructure.Catalog
             existing.Name = category.Name;
             existing.Slug = category.Slug;
             existing.IconPath = category.IconPath;
+            existing.ImageUrl = category.ImageUrl; // NEW
             existing.ParentId = category.ParentId;
+            existing.Description = category.Description; // NEW
+            existing.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return true;
@@ -68,7 +74,7 @@ namespace Tekno.Infrastructure.Catalog
             return true;
         }
 
-        // NEW: return attributes that are  specific to given category (include values)
+        // NEW: return attributes that are specific to given category (include values)
         public async Task<List<ProductAttribute>> GetAttributesForCategoryAsync(int categoryId)
         {
             return await _context.Set<ProductAttribute>()
@@ -76,6 +82,12 @@ namespace Tekno.Infrastructure.Catalog
                 .Where(a => !a.IsGlobal || a.CategoryId == categoryId)
                 .AsNoTracking()
                 .ToListAsync();
+        }
+
+        // NEW: Transaction support
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _context.Database.BeginTransactionAsync();
         }
     }
 }

@@ -177,9 +177,56 @@ namespace Tekno.Infrastructure.Catalog
             return await _context.Database.BeginTransactionAsync();
         }
 
+        /// <summary>
+        /// Increment the sold count for a product when an order is completed
+        /// </summary>
+        public async Task IncrementProductSoldCountAsync(int productId, int quantity)
+        {
+            var product = await _context.Products.FindAsync(productId);
+            if (product != null)
+            {
+                product.IncrementSoldCount(quantity);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        /// <summary>
+        /// Get sold counts for multiple products
+        /// </summary>
+        public async Task<Dictionary<int, int>> GetProductsSoldCountAsync(List<int> productIds)
+        {
+            return await _context.Products
+                .Where(p => productIds.Contains(p.Id))
+                .Select(p => new { p.Id, p.TotalSold })
+                .ToDictionaryAsync(p => p.Id, p => p.TotalSold);
+        }
+
+        /// <summary>
+        /// Get rating statistics (average rating and review count) for multiple products
+        /// </summary>
+        public async Task<Dictionary<int, (double AverageRating, int TotalReviews)>> GetProductsRatingStatsAsync(List<int> productIds)
+        {
+            var stats = await _context.Set<Domain.Review.ProductReview>()
+                .Where(r => productIds.Contains(r.ProductId) && r.Status == Domain.Review.ReviewStatus.Approved)
+                .GroupBy(r => r.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    AverageRating = g.Average(r => r.Rating),
+                    TotalReviews = g.Count()
+                })
+                .ToDictionaryAsync(
+                    x => x.ProductId,
+                    x => (Math.Round(x.AverageRating, 1), x.TotalReviews)
+                );
+
+            return stats;
+        }
+
         public async Task<ProductVariant?> GetProductVariantByIdAsync(int variantId)
         {
-            return await _context.Set<ProductVariant>()
+            return await _context.ProductVariants
+                .AsNoTracking()
                 .Include(v => v.Product)
                     .ThenInclude(p => p.Brand)
                 .Include(v => v.Product)
@@ -188,32 +235,20 @@ namespace Tekno.Infrastructure.Catalog
                     .ThenInclude(va => va.Attribute)
                 .Include(v => v.VariantAttributes)
                     .ThenInclude(va => va.Value)
-                .AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Id == variantId);
         }
 
         public async Task<List<Product>> GetTopNewProductsByCategoryAsync(string categorySlug, int count)
         {
-            var query = _context.Products
+            return await _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Images)
                 .AsNoTracking()
-                .Where(p => p.Status == "available");
-
-            // Filter by category slug
-            if (!string.IsNullOrWhiteSpace(categorySlug))
-            {
-                query = query.Where(p => p.Category.Slug == categorySlug);
-            }
-
-            // Get top N newest products
-            var products = await query
+                .Where(p => p.Category.Slug == categorySlug && p.Status == "available")
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(count)
                 .ToListAsync();
-
-            return products;
         }
     }
 }

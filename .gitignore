@@ -361,3 +361,45 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# ============================================
+# SECRETS & SENSITIVE DATA (NEVER COMMIT!)
+# ============================================
+
+# Environment variables with secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# User Secrets (already stored in User Secrets Manager)
+secrets.json
+
+# Cloudinary configuration files
+cloudinary.json
+
+# AWS credentials
+.aws/
+
+# Azure credentials
+.azure/
+
+# ============================================
+# Docker Override Files
+# ============================================
+docker-compose.override.yml
+
+# ============================================
+# Database Files
+# ============================================
+*.db
+*.db-shm
+*.db-wal
+
+# ============================================
+# OS Generated Files
+# ============================================
+.DS_Store
+Thumbs.db
+*.swp
+*~

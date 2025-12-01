@@ -21,6 +21,18 @@ namespace Tekno.Application.Catalog.DTOs.Products
        ? Math.Round(BasePrice * (1 - DiscountPercent.Value / 100), 2)
        : BasePrice;
         public string? Overview { get; set; }
+        public int TotalSold { get; set; }
+        
+        /// <summary>
+        /// Average rating from all approved reviews (0 if no reviews)
+        /// </summary>
+        public double AverageRating { get; set; } = 0;
+        
+        /// <summary>
+        /// Total number of approved reviews
+        /// </summary>
+        public int TotalReviews { get; set; } = 0;
+        
         public DateTime CreatedAt { get; set; }
         public string? PrimaryImagePath { get; set; } = "https://i.pinimg.com/736x/bd/e2/b8/bde2b888e9f57b2eee6f5ce3c90ce400.jpg";
     }

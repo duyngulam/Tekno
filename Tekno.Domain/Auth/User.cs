@@ -9,9 +9,9 @@ namespace Tekno.Domain.Auth
     {
         public int Id { get; private set; }
         public string Fullname { get; private set; } = string.Empty;
-        public string Email { get; private set; }
+        public string Email { get; private set; } = string.Empty;
         public string? PhoneNumber { get; private set; }
-        public string PasswordHash { get; private set; }
+        public string PasswordHash { get; private set; } = string.Empty;
         public int RoleId { get; private set; }
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; private set; }
@@ -23,7 +23,13 @@ namespace Tekno.Domain.Auth
 
         public User(string email, string passwordHash, int roleId = 2)
         {
-            Email = email;
+            if (string.IsNullOrWhiteSpace(email))
+                throw new ArgumentException("Email is required", nameof(email));
+            
+            if (string.IsNullOrWhiteSpace(passwordHash))
+                throw new ArgumentException("Password is required", nameof(passwordHash));
+
+            Email = email.Trim().ToLowerInvariant();
             PasswordHash = passwordHash;
             RoleId = roleId; // default to Customer
             CreatedAt = DateTime.UtcNow;
@@ -31,7 +37,10 @@ namespace Tekno.Domain.Auth
 
         public void UpdateProfile(string fullname, string? phoneNumber)
         {
-            Fullname = fullname?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(fullname))
+                throw new ArgumentException("Full name is required", nameof(fullname));
+
+            Fullname = fullname.Trim();
             PhoneNumber = phoneNumber?.Trim();
             UpdatedAt = DateTime.UtcNow;
         }

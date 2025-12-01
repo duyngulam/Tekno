@@ -82,6 +82,9 @@ namespace Tekno.Application.Catalog.Services
                     paging.Page,
                     paging.PageSize);
 
+                // Enrich with rating data
+                await EnrichWithRatingDataAsync(searchResults.Data.ToList());
+
                 // Cache the search results
                 await _cacheService.SetAsync(cacheKey, searchResults, CachePolicies.SearchTtl);
                 
@@ -102,6 +105,10 @@ namespace Tekno.Application.Catalog.Services
                 paging);
 
             var mapped = _mapper.Map<List<ProductSummaryDto>>(pagedResult.Data);
+            
+            // Enrich with rating data
+            await EnrichWithRatingDataAsync(mapped);
+
             return new PagedResult<ProductSummaryDto>(mapped, pagedResult.TotalRecords, paging.Page, paging.PageSize);
         }
 
@@ -392,6 +399,9 @@ namespace Tekno.Application.Catalog.Services
             var products = await _productRepository.GetTopNewProductsByCategoryAsync(categorySlug, count);
             var productDtos = _mapper.Map<List<ProductSummaryDto>>(products);
             
+            // Enrich with rating data
+            await EnrichWithRatingDataAsync(productDtos);
+            
             // Cache the results
             await _cacheService.SetAsync(cacheKey, productDtos, CachePolicies.NewProductsTtl);
             
@@ -399,6 +409,32 @@ namespace Tekno.Application.Catalog.Services
                 productDtos.Count, categorySlug);
 
             return productDtos;
+        }
+
+        /// <summary>
+        /// Enrich product summary DTOs with rating statistics
+        /// </summary>
+        private async Task EnrichWithRatingDataAsync(List<ProductSummaryDto> products)
+        {
+            if (products == null || !products.Any())
+                return;
+
+            var productIds = products.Select(p => p.Id).ToList();
+            var ratingStats = await _productRepository.GetProductsRatingStatsAsync(productIds);
+
+            foreach (var product in products)
+            {
+                if (ratingStats.TryGetValue(product.Id, out var stats))
+                {
+                    product.AverageRating = stats.AverageRating;
+                    product.TotalReviews = stats.TotalReviews;
+                }
+                else
+                {
+                    product.AverageRating = 0;
+                    product.TotalReviews = 0;
+                }
+            }
         }
 
         /// <summary>
