@@ -1,24 +1,25 @@
 import BlogCard from "@/components/blog/BlogCard";
+import NewBlogs from "@/components/blog/NewBlogs";
+import RecentReports from "@/components/blog/RecentReports";
 import { Container } from "@/components/MainLayout/Container";
 import { Breadcrumb } from "@/components/share/breadcumbCustom";
+import { getBlogsList, getBlogsRecent } from "@/services/blogs";
 import React from "react";
 
-export default function page() {
+export default async function page() {
   return (
-    <Container>
-      <div className="col-span-12">
-        <Breadcrumb />
+    <Container className="flex flex-col space-y-5 my-10">
+      <Breadcrumb />
+
+      <div className="w-full flex space-x-5">
+        <div className="w-3/4 gap-10 flex flex-col">
+          <NewBlogs />
+          <RecentReports />
+        </div>
+        <div className="w-1/3">Videos</div>
       </div>
 
-      <div className="col-span-8">
-        <div>Blog posts</div>
-        <div>
-          Recent port
-          <BlogCard />
-        </div>
-      </div>
-      <div className="col-span-4">Videos</div>
-      <div className="col-span-12 mx-auto">panigation</div>
+      <div className=" mx-auto">panigation</div>
     </Container>
   );
 }

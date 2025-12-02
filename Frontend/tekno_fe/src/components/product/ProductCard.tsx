@@ -12,16 +12,16 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link href={`/products/${product?.slug}`}>
-      <div className=" relative text-sm bg-white border-[1px] border-secondary/20 rounded-md group shadow">
+      <div className="relative text-sm bg-white border-[1px] border-secondary/20 rounded-md group shadow">
         {/* --- Ảnh sản phẩm --- */}
-        <div className="relative group overflow-hidden bg-gray-50 m-1 pb-1 border-b border-secondary/50 hover:border-secondary hoverEffect">
+        <div className="w-fix h-80 flex items-center group overflow-hidden bg-gray-50 m-2 pb-1 border-b border-secondary/50 hover:border-secondary hoverEffect">
           {product?.primaryImagePath && (
             <Image
               src={product.primaryImagePath}
               alt={product.name}
               loading="lazy"
-              width={400}
-              height={400}
+              width={700}
+              height={700}
               className="object-center"
             />
           )}
