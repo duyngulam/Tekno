@@ -66,8 +66,7 @@ namespace Tekno.Application.Blog.Services
             var blogPost = await _blogPostRepository.GetBySlugAsync(slug);
             if (blogPost == null) return null;
 
-            // Increment view count (fire and forget)
-            _ = _blogPostRepository.IncrementViewCountAsync(blogPost.Id);
+            await _blogPostRepository.IncrementViewCountAsync(blogPost.Id);
 
             return await MapToDetailDtoAsync(blogPost);
         }
