@@ -7,6 +7,7 @@ using Tekno.Api.Models.Catalog.Admin;
 using Tekno.Application.Catalog.DTOs;
 using Tekno.Application.Catalog.Services;
 using Tekno.Application.Common.Media.Services;
+using Tekno.Application.Common.Paging;
 
 namespace Tekno.Api.Controllers.admin
 {
@@ -30,6 +31,18 @@ namespace Tekno.Api.Controllers.admin
             _mapper = mapper;
         }
 
+        // GET /api/admin/categories - Paginated list
+        [HttpGet]
+        public async Task<IActionResult> GetCategoriesPaged(
+            [FromQuery] string? search,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            var result = await _categoryService.GetPagedAsync(search, page, pageSize);
+            return Ok(ApiResponse<PagedResult<CategoryDto>>.Ok(result, "Categories loaded successfully"));
+        }
+
+        // GET /api/admin/categories/list - All categories (kept for backward compatibility)
         [HttpGet("list")]
         public async Task<IActionResult> GetAllCategories()
         {

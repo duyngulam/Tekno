@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Tekno.Api.Common.Responses;
 using Tekno.Application.Catalog.DTOs.Advertisement;
 using Tekno.Application.Catalog.Services;
+using Tekno.Application.Common.Paging;
 
 namespace Tekno.Api.Controllers
 {
@@ -21,7 +22,31 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
-        /// Get all currently active advertisement banners
+        /// Get paginated advertisement banners with filtering
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetPaged(
+            [FromQuery] string? position,
+            [FromQuery] bool? isActive,
+            [FromQuery] bool? onlyCurrentlyActive,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            var query = new AdvertisementQueryDto
+            {
+                Position = position,
+                IsActive = isActive,
+                OnlyCurrentlyActive = onlyCurrentlyActive ?? false,
+                Page = page,
+                PageSize = pageSize
+            };
+
+            var result = await _advertisementService.GetPagedAsync(query);
+            return Ok(ApiResponse<PagedResult<ProductAdvertisementDto>>.Ok(result));
+        }
+
+        /// <summary>
+        /// Get all currently active advertisement banners (kept for backward compatibility)
         /// </summary>
         [HttpGet("active")]
         public async Task<IActionResult> GetActive()

@@ -5,12 +5,15 @@ using System.Text;
 using System.Threading.Tasks;
 using Tekno.Domain.Catalog;
 using Microsoft.EntityFrameworkCore.Storage;
+using Tekno.Application.Common;
+using Tekno.Application.Common.Paging;
 
 namespace Tekno.Application.Catalog.Interface
 {
     public interface ICategoryRepository
     {
        Task<List<Category>> GetAllCategoriesAsync();
+       Task<PagedResult<Category>> GetPagedAsync(string? search, PagingParams paging);
        Task<Category?> GetCategoryBySlugAsync(string slug);
        Task<Category?> GetCategoryByIdAsync(int id);
        Task<Category> CreateAsync(Category category);
