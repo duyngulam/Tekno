@@ -22,10 +22,10 @@ export default function ImageView({ images = [], isStock }: Props) {
           className="w-full max-h-[550] min-h-[500] border border-secondary/10 rounded-md group overflow-hidden"
         >
           <Image
-            src={logo}
+            src={active}
             alt="productImage"
-            width={700}
-            height={700}
+            width={400}
+            height={400}
             priority
             className={`w-full h-96 max-h-[550px] min-h-[500] object-contain group-hover:scale-110 hoverEffect rounded-md ${
               isStock === false ? "opacity-50" : ""
@@ -33,13 +33,13 @@ export default function ImageView({ images = [], isStock }: Props) {
           />
         </motion.div>
       </AnimatePresence>
-      <div className="gric grid-cols-6 gap-2 h-20 md:h-24">
+      <div className="grid grid-cols-6 gap-4 h-20 md:h-24">
         {images.map((image) => (
           <button
             key={image}
             onClick={() => setActive(image)}
-            className={`border rounded-md overflow-hidden ${
-              active === image ? "border-gray-900 opacity-100" : "opacity-80"
+            className={`h-full items-center border rounded-md overflow-hidden ${
+              active === image ? "border-gray-600 opacity-100" : "opacity-80"
             }`}
           >
             <Image
@@ -47,7 +47,7 @@ export default function ImageView({ images = [], isStock }: Props) {
               alt="image"
               width={100}
               height={100}
-              className="w-full h-auto object-contain"
+              className="w-fix h-auto object-contain"
             />
           </button>
         ))}

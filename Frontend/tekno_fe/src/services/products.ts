@@ -41,12 +41,7 @@ export async function getProductsList(params?: {
   }
 }
 
-
-
-
 import { Product } from "@/type/product"; 
-
-
 
 // Trả về dữ liệu chi tiết sản phẩm đúng kiểu ProductDetail
 export async function getProductDetail(slug: string): Promise<Product> {
@@ -63,7 +58,6 @@ export async function getProductDetail(slug: string): Promise<Product> {
 
     const result = await res.json();
 
-    // Giả sử API luôn trả về cấu trúc { success, message, data, errors, timestamp }
     if (!result.success || !result.data) {
       throw new Error(result.message || "Invalid API response");
     }
@@ -73,5 +67,30 @@ export async function getProductDetail(slug: string): Promise<Product> {
     console.error("Error in getProductDetail:", error);
     throw error;
   }
+}
+
+export async function getProductsInCart() {
+// try {
+//     const res = await fetch(`${API_BASE_URL}/cart`, {
+//       method: "GET",
+//       headers: { "Content-Type": "application/json" },
+//       cache: "no-store",
+//     });
+
+//     if (!res.ok) {
+//       throw new Error(`Failed to fetch product in cart: ${res.status}`);
+//     }
+
+//     const result = await res.json();
+
+//     if (!result.success || !result.data) {
+//       throw new Error(result.message || "Invalid API response");
+//     }
+
+//     return result.data as Product[];
+//   } catch (error) {
+//     console.error("Error in getProductCart:", error);
+//     throw error;
+//   }
 }
 
