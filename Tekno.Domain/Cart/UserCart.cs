@@ -79,8 +79,9 @@ namespace Tekno.Domain.Cart
         public decimal Price { get; private set; } // Price at time of adding to cart
         public DateTime AddedAt { get; private set; } = DateTime.UtcNow;
 
+        // Navigation properties
         public UserCart Cart { get; private set; } = null!;
-        // Navigation to ProductVariant (can be loaded separately)
+        public Tekno.Domain.Catalog.ProductVariant? Variant { get; private set; }
 
         public decimal TotalPrice => Price * Quantity;
 

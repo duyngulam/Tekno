@@ -8,6 +8,7 @@ using Tekno.Application.Catalog.DTOs;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Common.Cache;
 using Tekno.Application.Common.Exceptions;
+using Tekno.Application.Common.Paging;
 using Tekno.Domain.Catalog;
 
 namespace Tekno.Application.Catalog.Services
@@ -58,6 +59,15 @@ namespace Tekno.Application.Catalog.Services
         {
             var brand = _mapper.Map<Brand>(brandDto);
             return await _brandRepository.DeleteAsync(brand.Id);
+        }
+
+        public async Task<PagedResult<BrandDto>> GetPagedAsync(string? search = null, int page = 1, int pageSize = 20)
+        {
+            var paging = new PagingParams(page, pageSize);
+            var result = await _brandRepository.GetPagedAsync(search, paging);
+            
+            var dtos = _mapper.Map<List<BrandDto>>(result.Data);
+            return new PagedResult<BrandDto>(dtos, result.TotalRecords, result.Page, result.PageSize);
         }
     }
 }

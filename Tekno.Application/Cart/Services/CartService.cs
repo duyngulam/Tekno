@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -16,15 +17,18 @@ namespace Tekno.Application.Cart.Services
     {
         private readonly ICartRepository _cartRepository;
         private readonly IProductRepository _productRepository;
+        private readonly IMapper _mapper;
         private readonly IAppLogger<CartService> _logger;
 
         public CartService(
             ICartRepository cartRepository,
             IProductRepository productRepository,
+            IMapper mapper,
             IAppLogger<CartService> logger)
         {
             _cartRepository = cartRepository;
             _productRepository = productRepository;
+            _mapper = mapper;
             _logger = logger;
         }
 
@@ -39,7 +43,7 @@ namespace Tekno.Application.Cart.Services
                 cart = await _cartRepository.CreateAsync(cart);
             }
 
-            return await MapToCartDtoAsync(cart);
+            return _mapper.Map<CartDto>(cart);
         }
 
         public async Task<CartDto> AddToCartAsync(int userId, AddToCartDto dto)
@@ -72,7 +76,9 @@ namespace Tekno.Application.Cart.Services
                 "User {UserId} added {Quantity}x variant {VariantId} to cart",
                 userId, dto.Quantity, dto.VariantId);
 
-            return await MapToCartDtoAsync(cart);
+            // Reload cart with all navigation properties
+            cart = await _cartRepository.GetByUserIdAsync(userId);
+            return _mapper.Map<CartDto>(cart!);
         }
 
         public async Task<CartDto> UpdateCartItemAsync(int userId, int variantId, UpdateCartItemDto dto)
@@ -102,7 +108,9 @@ namespace Tekno.Application.Cart.Services
                 "User {UserId} updated variant {VariantId} quantity to {Quantity}",
                 userId, variantId, dto.Quantity);
 
-            return await MapToCartDtoAsync(cart);
+            // Reload cart with all navigation properties
+            cart = await _cartRepository.GetByUserIdAsync(userId);
+            return _mapper.Map<CartDto>(cart!);
         }
 
         public async Task<CartDto> RemoveFromCartAsync(int userId, int variantId)
@@ -120,7 +128,9 @@ namespace Tekno.Application.Cart.Services
                 "User {UserId} removed variant {VariantId} from cart",
                 userId, variantId);
 
-            return await MapToCartDtoAsync(cart);
+            // Reload cart with all navigation properties
+            cart = await _cartRepository.GetByUserIdAsync(userId);
+            return _mapper.Map<CartDto>(cart!);
         }
 
         public async Task<bool> ClearCartAsync(int userId)
@@ -133,54 +143,6 @@ namespace Tekno.Application.Cart.Services
 
             _logger.LogInformation("User {UserId} cleared their cart", userId);
             return true;
-        }
-
-        private async Task<CartDto> MapToCartDtoAsync(UserCart cart)
-        {
-            var dto = new CartDto
-            {
-                Id = cart.Id,
-                UserId = cart.UserId,
-                Subtotal = cart.Subtotal,
-                TotalItems = cart.TotalItems,
-                CreatedAt = cart.CreatedAt,
-                UpdatedAt = cart.UpdatedAt,
-                Items = new List<CartItemDto>()
-            };
-
-            // Load variant details for each cart item
-            foreach (var item in cart.Items)
-            {
-                var variant = await _productRepository.GetProductVariantByIdAsync(item.VariantId);
-                if (variant == null) continue; // Skip if variant deleted
-
-                var cartItemDto = new CartItemDto
-                {
-                    Id = item.Id,
-                    CartId = item.CartId,
-                    VariantId = item.VariantId,
-                    Quantity = item.Quantity,
-                    Price = item.Price,
-                    TotalPrice = item.TotalPrice,
-                    AddedAt = item.AddedAt,
-                    ProductName = variant.Product.Name,
-                    ProductSlug = variant.Product.Slug,
-                    Sku = variant.Sku,
-                    BrandName = variant.Product.Brand?.Name ?? string.Empty,
-                    CategoryName = variant.Product.Category?.Name ?? string.Empty,
-                    PrimaryImage = variant.Product.Images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
-                    AvailableStock = variant.Stock,
-                    Attributes = variant.VariantAttributes.Select(va => new VariantAttributeInfo
-                    {
-                        AttributeName = va.Attribute?.Name ?? string.Empty,
-                        AttributeValue = va.Value?.Value ?? string.Empty
-                    }).ToList()
-                };
-
-                dto.Items.Add(cartItemDto);
-            }
-
-            return dto;
         }
     }
 }
