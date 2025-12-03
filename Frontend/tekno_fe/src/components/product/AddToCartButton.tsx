@@ -1,35 +1,59 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { Product } from "@/type/product";
-import { useStore } from "../../../store";
+import { useCart } from "@/hook/useCart";
 
 export default function AddToCartButton({
   product,
+  selectedVariant, // prop variant đã chọn
   className,
 }: {
   product: Product;
+  selectedVariant?: Product["variants"][number] | null;
   className?: string;
 }) {
-  const { addItem } = useStore();
-  const isOutOfStock = false;
-  const handleAddToCart = () => {
-    console.log(product);
-    if (!isOutOfStock) {
-      addItem(product);
-      alert(`${product.name} added succesfull`);
+  const { addToCart } = useCart();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isOutOfStock = !selectedVariant || selectedVariant.stock <= 0;
+
+  const handleAddToCart = async () => {
+    console.log("Selected Variant:", selectedVariant);
+
+    if (!selectedVariant) {
+      alert("Vui lòng chọn đủ thuộc tính để mua");
+      return;
+    }
+
+    if (isOutOfStock) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await addToCart(selectedVariant.id, 1); // thêm 1 sp
+      alert(`${product.name} đã thêm vào giỏ hàng`);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Thêm vào giỏ hàng thất bại");
+    } finally {
+      setLoading(false);
     }
   };
+
   return (
     <div className="w-full h-12 flex items-center">
       <Button
         variant="outline"
         onClick={handleAddToCart}
-        disabled={isOutOfStock}
+        disabled={isOutOfStock || loading}
         className="w-full"
       >
-        Add to cart
+        {loading ? "Đang thêm..." : "Add to cart"}
       </Button>
+      {error && <div className="text-red-500 mt-1">{error}</div>}
     </div>
   );
 }

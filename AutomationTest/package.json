@@ -1,0 +1,22 @@
+{
+  "name": "tekno-automation",
+  "version": "1.0.0",
+  "description": "UI automation tests for Tekno (Mocha + Selenium WebDriver + TypeScript)",
+  "scripts": {
+    "test": "mocha -r ts-node/register \"src/tests/**/*.spec.ts\" --timeout 120000 --reporter spec",
+    "test:report": "mocha -r ts-node/register \"src/tests/**/*.spec.ts\" --timeout 120000 --reporter mochawesome",
+    "lint": "echo \"No linter configured\""
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^10.0.1",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "mochawesome": "^7.1.3",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "selenium-webdriver": "^4.11.0"
+  }
+}
