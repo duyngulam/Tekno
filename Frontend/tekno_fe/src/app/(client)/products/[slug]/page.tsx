@@ -114,7 +114,9 @@ export default async function SingleProductPage({
                 <TableCell className="text-gray-500 before:content-['•'] before:mr-2">
                   Screen Size
                 </TableCell>
-                <TableCell>{product.variants[0].attributes[0].value}</TableCell>
+                <TableCell>
+                  {product.variants[0]?.attributes[0]?.value}
+                </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="text-gray-500 before:content-['•'] before:mr-2">

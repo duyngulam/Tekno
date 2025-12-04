@@ -2,7 +2,7 @@ import { Product } from "@/type/product";
 import { Trash2 } from "lucide-react";
 import React from "react";
 
-export default function ProductInCart({ product }: { product?: Product }) {
+export default function ProductInCart({ product }: { product?: any }) {
   return (
     <div className="flex gap-1 w-full">
       <div>Image</div>
