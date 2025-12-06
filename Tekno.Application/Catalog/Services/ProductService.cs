@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -373,47 +373,354 @@ namespace Tekno.Application.Catalog.Services
              return _mapper.Map<ProductVariantDetailDto>(variant);
         }
 
-        /// <summary>
-        /// Get top N newest products by category (with caching)
-        /// </summary>
-        public async Task<List<ProductSummaryDto>> GetTopNewProductsByCategoryAsync(string categorySlug, int count = 10)
+        public async Task<PagedResult<AdminProductListDto>> GetAdminProductsPagedAsync(AdminProductSearchDto request)
         {
-            if (count <= 0 || count > 100)
-            {
-                count = 10; // Default to 10, max 100
-            }
+            var paging = new PagingParams(request.Page, request.PageSize);
 
-            // Generate cache key
-            var cacheKey = CachePolicies.NewProductsKey(categorySlug, count);
+            var result = await _productRepository.GetAdminProductsPagedAsync(
+                request.Search,
+                request.Category,
+                request.Brand,
+                request.Status,
+                paging);
 
-            // Try to get from cache
-            var cachedProducts = await _cacheService.GetAsync<List<ProductSummaryDto>>(cacheKey);
-            if (cachedProducts != null)
-            {
-                _logger.LogInformation("Retrieved {Count} newest products for category {CategorySlug} from cache", 
-                    cachedProducts.Count, categorySlug);
-                return cachedProducts;
-            }
+            var dtos = _mapper.Map<List<AdminProductListDto>>(result.Data);
 
-            // Not in cache, get from database
-            var products = await _productRepository.GetTopNewProductsByCategoryAsync(categorySlug, count);
-            var productDtos = _mapper.Map<List<ProductSummaryDto>>(products);
-            
-            // Enrich with rating data
-            await EnrichWithRatingDataAsync(productDtos);
-            
-            // Cache the results
-            await _cacheService.SetAsync(cacheKey, productDtos, CachePolicies.NewProductsTtl);
-            
-            _logger.LogInformation("Retrieved {Count} newest products for category {CategorySlug} from database and cached", 
-                productDtos.Count, categorySlug);
-
-            return productDtos;
+             return new PagedResult<AdminProductListDto>(dtos, result.TotalRecords, paging.Page, paging.PageSize);
         }
 
-        /// <summary>
-        /// Enrich product summary DTOs with rating statistics
-        /// </summary>
+        public async Task<ProductImageDto> AddProductImageAsync(AddProductImageDto dto)
+        {
+            var product = await _productRepository.GetProductByIdAsync(dto.ProductId);
+            if (product == null)
+                throw new NotFoundException("Product", dto.ProductId);
+
+            string? uploadedImageUrl = null;
+            await using var transaction = await _productRepository.BeginTransactionAsync();
+
+            try
+            {
+                uploadedImageUrl = await _mediaService.UploadImageAsync(dto.ImageFile, $"tekno/product/{product.Slug}");
+
+                var images = await _productRepository.GetProductImagesAsync(dto.ProductId);
+                var nextSortOrder = images.Any() ? images.Max(i => i.SortOrder) + 1 : 0;
+
+                if (dto.IsPrimary && images.Any(i => i.IsPrimary))
+                {
+                    var currentPrimary = images.First(i => i.IsPrimary);
+                    currentPrimary.SetPrimary(false);
+                    await _productRepository.UpdateProductImageAsync(currentPrimary);
+                }
+
+                var productImage = new ProductImage(dto.ProductId, uploadedImageUrl, dto.IsPrimary, nextSortOrder);
+
+                var created = await _productRepository.AddProductImageAsync(productImage);
+
+                var updatedProduct = await _productRepository.GetProductByIdAsync(dto.ProductId);
+                var summary = _mapper.Map<ProductSummaryDto>(updatedProduct);
+                await _elasticService.IndexProductAsync(summary);
+
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Added image to product {ProductId}: {ImageUrl}", dto.ProductId, uploadedImageUrl);
+
+                return new ProductImageDto
+                {
+                    Id = created.Id,
+                    ProductId = created.ProductId,
+                    ImageUrl = created.ImageUrl,
+                    IsPrimary = created.IsPrimary,
+                    SortOrder = created.SortOrder
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to add image to product {ProductId}", dto.ProductId);
+                await transaction.RollbackAsync();
+
+                if (uploadedImageUrl != null)
+                {
+                    try { await _mediaService.DeleteImageAsync(uploadedImageUrl); }
+                    catch (Exception cleanupEx) { _logger.LogWarning(cleanupEx, "Failed to delete image during rollback"); }
+                }
+
+                throw;
+            }
+        }
+        public async Task<bool> DeleteProductImageAsync(int imageId)
+        {
+            var image = await _productRepository.GetProductImageByIdAsync(imageId);
+            if (image == null)
+            {
+                _logger.LogWarning("Delete failed: Image {ImageId} not found", imageId);
+                return false;
+            }
+
+            var productId = image.ProductId;
+            var imageUrl = image.ImageUrl;
+
+            await using var transaction = await _productRepository.BeginTransactionAsync();
+
+            try
+            {
+                var deleted = await _productRepository.DeleteProductImageAsync(imageId);
+                if (!deleted)
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                var product = await _productRepository.GetProductByIdAsync(productId);
+                var summary = _mapper.Map<ProductSummaryDto>(product);
+                await _elasticService.IndexProductAsync(summary);
+
+                await transaction.CommitAsync();
+
+                try { await _mediaService.DeleteImageAsync(imageUrl); }
+                catch (Exception ex) { _logger.LogWarning(ex, "Failed to delete image from cloud"); }
+
+                _logger.LogInformation("Deleted image {ImageId} from product {ProductId}", imageId, productId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to delete image {ImageId}", imageId);
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateProductImageAsync(UpdateProductImageDto dto)
+        {
+            var image = await _productRepository.GetProductImageByIdAsync(dto.ImageId);
+            if (image == null)
+            {
+                _logger.LogWarning("Update failed: Image {ImageId} not found", dto.ImageId);
+                return false;
+            }
+
+            await using var transaction = await _productRepository.BeginTransactionAsync();
+
+            try
+            {
+                if (dto.IsPrimary.HasValue && dto.IsPrimary.Value)
+                {
+                    var images = await _productRepository.GetProductImagesAsync(image.ProductId);
+                    var currentPrimary = images.FirstOrDefault(i => i.IsPrimary && i.Id != dto.ImageId);
+                    if (currentPrimary != null)
+                    {
+                        currentPrimary.SetPrimary(false);
+                        await _productRepository.UpdateProductImageAsync(currentPrimary);
+                    }
+                    image.SetPrimary(true);
+                }
+
+                if (dto.SortOrder.HasValue)
+                {
+                    image.SetSortOrder(dto.SortOrder.Value);
+                }
+
+                await _productRepository.UpdateProductImageAsync(image);
+
+                var product = await _productRepository.GetProductByIdAsync(image.ProductId);
+                var summary = _mapper.Map<ProductSummaryDto>(product);
+                await _elasticService.IndexProductAsync(summary);
+
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Updated image {ImageId}", dto.ImageId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update image {ImageId}", dto.ImageId);
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+        public async Task<List<ProductImageDto>> ReorderProductImagesAsync(ReorderImagesDto dto)
+        {
+            var images = await _productRepository.GetProductImagesAsync(dto.ProductId);
+
+            if (images.Count != dto.ImageIds.Count || !images.All(i => dto.ImageIds.Contains(i.Id)))
+            {
+                throw new InvalidOperationException("Invalid image IDs provided");
+            }
+
+            await using var transaction = await _productRepository.BeginTransactionAsync();
+
+            try
+            {
+                for (int i = 0; i < dto.ImageIds.Count; i++)
+                {
+                    var image = images.First(img => img.Id == dto.ImageIds[i]);
+                    image.SetSortOrder(i);
+                    await _productRepository.UpdateProductImageAsync(image);
+                }
+
+                var product = await _productRepository.GetProductByIdAsync(dto.ProductId);
+                var summary = _mapper.Map<ProductSummaryDto>(product);
+                await _elasticService.IndexProductAsync(summary);
+
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Reordered images for product {ProductId}", dto.ProductId);
+
+                var updatedImages = await _productRepository.GetProductImagesAsync(dto.ProductId);
+                return updatedImages.Select(i => new ProductImageDto
+                {
+                    Id = i.Id,
+                    ProductId = i.ProductId,
+                    ImageUrl = i.ImageUrl,
+                    IsPrimary = i.IsPrimary,
+                    SortOrder = i.SortOrder
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to reorder images for product {ProductId}", dto.ProductId);
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+        public async Task<ProductVariantDetailDto> AddProductVariantAsync(AddProductVariantDto dto)
+        {
+            var product = await _productRepository.GetProductByIdAsync(dto.ProductId);
+            if (product == null)
+                throw new NotFoundException("Product", dto.ProductId);
+
+            if (await _productRepository.IsSkuExistsAsync(dto.Sku))
+                throw new ConflictException($"SKU '{dto.Sku}' already exists", "SKU_EXISTS");
+
+            // Validate and get/create attribute values
+            var attributeValueIds = new Dictionary<int, int>();
+            
+            foreach (var kvp in dto.AttributeValues)
+            {
+                var attributeId = kvp.Key;
+                var valueString = kvp.Value;
+
+                if (string.IsNullOrWhiteSpace(valueString))
+                    throw new InvalidOperationException($"Attribute value cannot be empty for AttributeId={attributeId}");
+
+                // Get or create the attribute value
+                var attributeValue = await _productRepository.GetOrCreateAttributeValueAsync(
+                    attributeId, 
+                    valueString, 
+                    product.CategoryId);
+
+                if (attributeValue == null)
+                    throw new InvalidOperationException($"Failed to get or create attribute value: AttributeId={attributeId}, Value={valueString}");
+
+                attributeValueIds.Add(attributeId, attributeValue.Id);
+            }
+
+            await using var transaction = await _productRepository.BeginTransactionAsync();
+
+            try
+            {
+                var variant = new ProductVariant(dto.ProductId, dto.Sku, dto.Price, dto.Stock, dto.Status);
+
+                // Add attributes using the resolved value IDs
+                foreach (var kvp in attributeValueIds)
+                {
+                    variant.AddAttribute(kvp.Key, kvp.Value);
+                }
+
+                var created = await _productRepository.AddProductVariantAsync(variant);
+
+                await UpdateProductSpecsFromVariantsAsync(dto.ProductId);
+
+                var updatedProduct = await _productRepository.GetProductByIdAsync(dto.ProductId);
+                var summary = _mapper.Map<ProductSummaryDto>(updatedProduct);
+                await _elasticService.IndexProductAsync(summary);
+
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Added variant {Sku} to product {ProductId}", dto.Sku, dto.ProductId);
+                var variantWithDetails = await _productRepository.GetProductVariantByIdAsync(created.Id);
+                return _mapper.Map<ProductVariantDetailDto>(variantWithDetails);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to add variant to product {ProductId}", dto.ProductId);
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+        private async Task UpdateProductSpecsFromVariantsAsync(int productId)
+        {
+            var product = await _productRepository.GetProductByIdAsync(productId);
+            if (product == null) return;
+
+            var specs = new Dictionary<string, HashSet<string>>();
+
+            foreach (var variant in product.Variants)
+            {
+                foreach (var variantAttr in variant.VariantAttributes)
+                {
+                    var attrName = variantAttr.Attribute?.Name;
+                    var attrValue = variantAttr.Value?.Value;
+
+                    if (string.IsNullOrEmpty(attrName) || string.IsNullOrEmpty(attrValue)) continue;
+
+                    if (!specs.ContainsKey(attrName))
+                        specs[attrName] = new HashSet<string>();
+
+                    specs[attrName].Add(attrValue);
+                }
+            }
+
+            var specsList = specs.Select(kvp => new ProductAttributeDto
+            {
+                Name = kvp.Key,
+                Value = kvp.Value.OrderBy(v => v).ToList()
+            }).ToList();
+
+            var specsJson = System.Text.Json.JsonSerializer.Serialize(specsList);
+            product.UpdateSpecs(specsJson);
+
+            await _productRepository.UpdateProductAsync(product);
+        }
+
+        public async Task<bool> DeleteProductVariantAsync(int variantId)
+        {
+            var variant = await _productRepository.GetProductVariantByIdAsync(variantId);
+            if (variant == null)
+            {
+                _logger.LogWarning("Delete failed: Variant {VariantId} not found", variantId);
+                return false;
+            }
+
+            var productId = variant.ProductId;
+
+            await using var transaction = await _productRepository.BeginTransactionAsync();
+
+            try
+            {
+                var deleted = await _productRepository.DeleteProductVariantAsync(variantId);
+                if (!deleted)
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+                await UpdateProductSpecsFromVariantsAsync(productId);
+                var product = await _productRepository.GetProductByIdAsync(productId);
+                var summary = _mapper.Map<ProductSummaryDto>(product);
+                await _elasticService.IndexProductAsync(summary);
+
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Deleted variant {VariantId}", variantId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to delete variant {VariantId}", variantId);
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
         private async Task EnrichWithRatingDataAsync(List<ProductSummaryDto> products)
         {
             if (products == null || !products.Any())
@@ -436,18 +743,14 @@ namespace Tekno.Application.Catalog.Services
                 }
             }
         }
-
-        /// <summary>
-        /// Invalidate new products cache for a category
-        /// </summary>
         private async Task InvalidateNewProductsCacheAsync(int categoryId)
         {
-            // Get category to find its slug
-            var category = await _productRepository.GetProductByIdAsync(categoryId);
-            if (category?.Category != null)
+            // Get product to find its category slug
+            var product = await _productRepository.GetProductByIdAsync(categoryId);
+            if (product?.Category != null)
             {
-                var categorySlug = category.Category.Slug;
-                
+                var categorySlug = product.Category.Slug;
+
                 // Invalidate cache for common count values (5, 10, 20, 50, 100)
                 var commonCounts = new[] { 5, 10, 20, 50, 100 };
                 foreach (var count in commonCounts)
@@ -455,28 +758,45 @@ namespace Tekno.Application.Catalog.Services
                     var cacheKey = CachePolicies.NewProductsKey(categorySlug, count);
                     await _cacheService.RemoveAsync(cacheKey);
                 }
-                
+
                 _logger.LogInformation("Invalidated new products cache for category {CategorySlug}", categorySlug);
             }
         }
-
-        /// <summary>
-        /// Invalidate search cache (pattern-based removal)
-        /// Since Redis doesn't support wildcard deletion easily with IDistributedCache,
-        /// we'll need to clear specific common search patterns or implement a cache tag system
-        /// For now, we log the invalidation need
-        /// </summary>
         private void InvalidateSearchCache()
         {
-            // Note: With IDistributedCache, we can't easily delete by pattern
-            // Options:
-            // 1. Accept that search cache will expire naturally (5 minutes)
-            // 2. Implement a tag-based cache system
-            // 3. Use Redis directly for pattern-based deletion
-            // 4. Keep track of search cache keys in a separate set
-            
-            _logger.LogInformation("Product changed - search cache will expire naturally in {Minutes} minutes", 
-                CachePolicies.SearchTtl.TotalMinutes);
+            _logger.LogInformation("Product changed - search cache will expire naturally in {Minutes} minutes", CachePolicies.SearchTtl.TotalMinutes);
         }
+        public async Task<List<ProductSummaryDto>> GetTopNewProductsByCategoryAsync(string categorySlug, int count = 10)
+        {
+            if (count <= 0 || count > 100)
+            {
+                count = 10;
+            }
+
+            var cacheKey = CachePolicies.NewProductsKey(categorySlug, count);
+            var cached = await _cacheService.GetAsync<List<ProductSummaryDto>>(cacheKey);
+            if (cached != null)
+            {
+                _logger.LogInformation("Retrieved {Count} newest products for category {CategorySlug} from cache", cached.Count, categorySlug);
+                return cached;
+            }
+
+            var products = await _productRepository.GetTopNewProductsByCategoryAsync(categorySlug, count);
+            var dtos = _mapper.Map<List<ProductSummaryDto>>(products);
+
+            await EnrichWithRatingDataAsync(dtos);
+
+            await _cacheService.SetAsync(cacheKey, dtos, CachePolicies.NewProductsTtl);
+
+            _logger.LogInformation("Retrieved {Count} newest products for category {CategorySlug} from database and cached", dtos.Count, categorySlug);
+
+            return dtos;
+        }
+
     }
 }
+
+
+
+
+

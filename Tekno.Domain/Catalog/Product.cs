@@ -39,6 +39,15 @@ namespace Tekno.Domain.Catalog
             UpdatedAt = DateTime.UtcNow;
         }
 
+        /// <summary>
+        /// Update product specifications JSON
+        /// </summary>
+        public void UpdateSpecs(string specsJson)
+        {
+            Specs = specsJson;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
         public Product() { }
 
         public Product(string name, string slug, int categoryId, int brandId, decimal basePrice)

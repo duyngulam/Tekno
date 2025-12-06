@@ -54,7 +54,7 @@ namespace Tekno.Application.Catalog.DTOs
                 .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src => src.VariantAttributes));
 
             // ===== ProductVariantAttribute → VariantAttributeDto =====
-            CreateMap<ProductVariantAttribute, VariantAttributeDto>()
+            CreateMap<ProductVariantAttribute, Products.VariantAttributeDto>()
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Attribute != null ? src.Attribute.Name : string.Empty))
                 .ForMember(dest => dest.Value, opt => opt.MapFrom(src => src.Value != null ? src.Value.Value : string.Empty));
 
@@ -99,13 +99,37 @@ namespace Tekno.Application.Catalog.DTOs
             // Map from DTO to domain. Images (IFormFile) must be uploaded and converted to ProductImage separately.
             CreateMap<CreateProductDto, Product>()
                 .ForMember(dest => dest.Images, opt => opt.Ignore())
-                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
+
+            // ===== Category Attributes =====
+            CreateMap<ProductAttribute, CategoryAttributeDto>()
+                .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => 
+                    src.Category != null ? src.Category.Name : null))
+                .ForMember(dest => dest.Values, opt => opt.MapFrom(src => src.Values));
+
+            CreateMap<AttributeValue, AttributeValueDto>();
 
             // ===== ProductAttribute -> ProductAttributeDto =====
             CreateMap<ProductAttribute, ProductAttributeDto>()
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.Value, opt => opt.MapFrom(src => src.Values.Select(v => v.Value).ToList()));
+
+            // ===== Product -> AdminProductListDto =====
+            CreateMap<Product, AdminProductListDto>()
+                .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category != null ? src.Category.Name : string.Empty))
+                .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.Brand != null ? src.Brand.Name : string.Empty))
+                .ForMember(dest => dest.DiscountPercent, opt => opt.MapFrom(src => src.DiscountPercent.HasValue ? (int?)Math.Round(src.DiscountPercent.Value) : null))
+                .ForMember(dest => dest.FinalPrice, opt => opt.MapFrom(src => src.DiscountPercent.HasValue ? Math.Round(src.BasePrice * (1 - src.DiscountPercent.Value / 100), 2) : src.BasePrice))
+                .ForMember(dest => dest.Variants, opt => opt.MapFrom(src => src.Variants))
+                .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.Images.OrderBy(i => i.SortOrder)));
+
+            // ===== ProductVariant -> AdminProductVariantDto =====
+            CreateMap<ProductVariant, AdminProductVariantDto>()
+                .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src => src.VariantAttributes));
+
+            // ===== ProductImage -> ProductImageDto =====
+            CreateMap<ProductImage, ProductImageDto>();
         }
 
         private static List<ProductAttributeDto> BuildSpecsFromVariants(Product src)

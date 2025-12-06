@@ -108,7 +108,7 @@ namespace Tekno.Infrastructure.Catalog
         {
             return await _context.Set<ProductAttribute>()
                 .Include(a => a.Values)
-                .Where(a => !a.IsGlobal || a.CategoryId == categoryId)
+                .Where(a => !a.IsGlobal && a.CategoryId == categoryId)
                 .AsNoTracking()
                 .ToListAsync();
         }

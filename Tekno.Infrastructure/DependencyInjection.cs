@@ -113,6 +113,7 @@ namespace Tekno.Infrastructure
             services.AddScoped<BrandService>();
             services.AddScoped<ProductService>();
             services.AddScoped<AdvertisementService>();
+            services.AddScoped<CategoryAttributeService>();
             
             // Media
             services.AddScoped<MediaService>();
