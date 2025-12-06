@@ -11,6 +11,7 @@ import {
   Users,
   Bell,
   Mail,
+  Star,
 } from "lucide-react";
 
 const menuItems = [
@@ -19,8 +20,9 @@ const menuItems = [
   { href: "/dashboard/catalog", label: "Product Catalog", icon: <ClipboardList size={22} /> },
   { href: "/dashboard/orders", label: "Orders", icon: <ShoppingBag size={22} /> },
   { href: "/dashboard/customers", label: "Customer", icon: <Users size={22} /> },
-  { href: "/dashboard/notifications", label: "Notification", icon: <Bell size={22} /> },
-  { href: "/dashboard/contact", label: "Contact us", icon: <Mail size={22} /> },
+  { href: "/dashboard/brand", label: "Brand", icon: <Bell size={22} /> },
+  { href: "/dashboard/category", label: "Category", icon: <Star size={22} /> },
+  { href: "/dashboard/advertisement", label: "Advertisement", icon: <Mail size={22} /> },
 ];
 
 const AdminSidebar = () => {

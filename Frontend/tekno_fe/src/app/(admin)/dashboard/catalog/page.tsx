@@ -8,7 +8,6 @@ export default function CatalogPage() {
 const [settings, setSettings] = useState<Record<CatalogKey, boolean>>({
   discount: true,
   voucher: true,
-  coupon: true,
 });
 
 // Load trạng thái từ localStorage lúc mở trang catalog
@@ -27,7 +26,7 @@ const handleToggle = (key: CatalogKey) => {
   });
 };
 
-type CatalogKey = "discount" | "voucher" | "coupon";
+type CatalogKey = "discount" | "voucher";
 
 const options: { key: CatalogKey; title: string; description: string; link: string } [] = [
   {
@@ -43,13 +42,6 @@ const options: { key: CatalogKey; title: string; description: string; link: stri
     description:
       "Allows managing, issuing, and applying shopping vouchers.",
     link: "/dashboard/catalog/voucher",
-  },
-  {
-    key: "coupon",
-    title: "Coupon",
-    description:
-      "Allows managing, issuing, and applying discount codes.",
-    link: "/dashboard/catalog/coupon",
   },
 ];
 
