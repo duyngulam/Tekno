@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Tekno.Domain.Catalog;
 using Tekno.Application.Common.Paging;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Tekno.Application.Catalog.Interface
 {
@@ -17,5 +18,8 @@ namespace Tekno.Application.Catalog.Interface
         Task<Brand> CreateAsync(Brand brand);
         Task<bool> UpdateAsync(Brand brand);
         Task<bool> DeleteAsync(int id);
+        
+        // Transaction support
+        Task<IDbContextTransaction> BeginTransactionAsync();
     }
 }

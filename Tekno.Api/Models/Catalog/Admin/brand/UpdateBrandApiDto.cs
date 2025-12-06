@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace Tekno.Api.Models.Catalog.Admin.brand
 {
@@ -15,5 +16,8 @@ namespace Tekno.Api.Models.Catalog.Admin.brand
 
         public string? Country { get; set; }
         public string? LogoPath { get; set; }
+
+        // Logo file for upload (optional - only provide if changing logo)
+        public IFormFile? LogoFile { get; set; }
     }
 }
