@@ -8,7 +8,6 @@ namespace Tekno.Api.Models.Catalog.Admin.brand
         [Range(1, int.MaxValue, ErrorMessage = "ID must be greater than 0.")]
         public int Id { get; set; }
 
-        [Required]
         public string Name { get; set; } = string.Empty;
 
         [Required, RegularExpression(@"^[a-z0-9-]+$", ErrorMessage = "Slug không hợp lệ")]
