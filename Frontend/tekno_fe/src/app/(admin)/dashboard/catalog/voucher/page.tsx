@@ -1,272 +1,244 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import Link from "next/link";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { voucherApi } from "@/services/voucherApi";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
 
 export default function VoucherPage() {
-  const [vouchers, setVouchers] = useState([
-    {
-      code: "PHVC000003",
-      name: "Return",
-      start: "2025-08-23",
-      end: "2026-02-23",
-      quantity: 10,
-      value: 300000,
+  const [vouchers, setVouchers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [openCreate, setOpenCreate] = useState(false);
 
-    },
-    {
-      code: "PHVC000002",
-      name: "Summer",
-      start: "2026-04-23",
-      end: "2026-08-23",
-      quantity: 10,
-      value: 300000,
-
-    },
-    {
-      code: "PHVC000001",
-      name: "Holiday",
-      start: "2021-08-23",
-      end: "2022-02-23",
-      quantity: 10,
-      value: 300000,
-
-    },
-  ]);
-
-  const [selected, setSelected] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState("Information");
-  const [open, setOpen] = useState(false);
+  // ⭐ NEW: Search + Filter
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("Active");
+  const [statusFilter, setStatusFilter] = useState("All");
 
-const filteredVouchers = useMemo(() => {
-  const now = new Date();
+  const [form, setForm] = useState({
+    code: "",
+    name: "",
+    value: 0,
+    quantity: 0,
+    startDate: "",
+    endDate: "",
+    note: "",
+  });
 
-  return vouchers
-    .map((v) => {
-      const start = new Date(v.start);
-      const end = new Date(v.end);
+  // Fetch vouchers
+  useEffect(() => {
+    const fetchVouchers = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/admin/coupons", {
+          method: "GET",
+          cache: "no-store",
+          headers: { "Content-Type": "application/json" },
+        });
 
-      let status = "Active";
-      if (start > now) status = "Unactive";
-      else if (end < now) status = "Expired";
+        const json = await res.json();
+        const list = Array.isArray(json?.data?.data) ? json.data.data : [];
+        setVouchers(list);
+      } catch (err) {
+        console.error("Fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      return { ...v, status };
-    })
-    .filter((v) => {
-      const matchesSearch =
-        v.name.toLowerCase().includes(search.toLowerCase()) ||
-        v.code.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus =
-        statusFilter === "All" || v.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-}, [vouchers, search, statusFilter]);
+    fetchVouchers();
+  }, []);
 
-  const handleDelete = () => {
-    if (window.confirm(`Delete ${selected.name}?`)) {
-      setVouchers((prev) => prev.filter((i) => i.code !== selected.code));
-      setOpen(false);
+  // Handle Create
+  const handleCreate = async () => {
+    try {
+      const payload = {
+        code: form.code,
+        name: form.name,
+        type: "FixedAmount",
+        value: Number(form.value),
+        quantity: Number(form.quantity),
+        note: form.note,
+        startDate: new Date(form.startDate).toISOString(),
+        endDate: new Date(form.endDate).toISOString(),
+        applicableCategoryIds: [],
+        applicableProductIds: [],
+      };
+
+      const res = await voucherApi.create(payload);
+
+      setVouchers((prev) => [...prev, res.data]);
+      setOpenCreate(false);
+      setForm({
+        code: "",
+        name: "",
+        value: 0,
+        quantity: 0,
+        startDate: "",
+        endDate: "",
+        note: "",
+      });
+    } catch (e) {
+      console.error("Create error", e);
     }
   };
 
+  // ⭐ NEW: Filter + Search Logic
+  const filteredVouchers = useMemo(() => {
+    const today = new Date();
+
+    return vouchers
+      .map((v) => {
+        const start = new Date(v.startDate);
+        const end = new Date(v.endDate);
+
+        let status = v.status;
+        if (start > today) status = "Unactive";
+        else if (end < today) status = "Expired";
+
+        return { ...v, status };
+      })
+      .filter((v) => {
+        const matchSearch =
+          v.code.toLowerCase().includes(search.toLowerCase()) ||
+          v.name.toLowerCase().includes(search.toLowerCase());
+
+        const matchStatus =
+          statusFilter === "All" || v.status === statusFilter;
+
+        return matchSearch && matchStatus;
+      });
+  }, [vouchers, search, statusFilter]);
+
   return (
-    <div className="bg-white rounded-lg shadow border border-gray-100 p-6">
-      {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Link
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-5">
+        <Link
             href="/dashboard/catalog"
             className="text-secondary font-medium hover:underline"
           >
             ← Back
           </Link>
-          <h2 className="text-xl font-semibold text-secondary ml-4">
-            Voucher
-          </h2>
+        <h2 className="text-xl font-semibold">Voucher</h2>
         </div>
-        <button
-          className="bg-[#FFD500] text-black px-4 py-2 rounded-md font-medium hover:opacity-90 transition"
-          >
-          New release
-        </button>
-        </div>
-
-      <div className="flex gap-4">
-        {/* Sidebar */}
-        <div className="w-1/4 bg-white rounded-lg p-4 shadow">
-          <h4 className="font-medium text-gray-700 mb-2">Status</h4>
-            <div className="flex flex-col gap-3 text-sm text-gray-600">
-              {["All", "Active", "Unactive", "Expired"].map((s) => (
-                <label key={s} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="status"
-                    value={s}
-                    checked={statusFilter === s}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                  />
-                  {s}
-                </label>
-              ))}
-            </div>
-        </div>
-
-        {/* Table */}
-        <div className="flex-1 bg-gray-50 rounded-lg p-4">
-          <div className="flex justify-between items-center mb-4">
-            <input
-              type="text"
-              placeholder="Search by code, release name"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-2/3 border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#FFD500]"
-            />
-          </div>
-
-          <table className="w-full text-sm text-gray-700">
-            <thead>
-              <tr className="bg-[#FFD500] text-gray-800 font-medium">
-                <th className="py-2 px-3 text-left">Release code</th>
-                <th className="py-2 px-3 text-left">Release name</th>
-                <th className="py-2 px-3 text-left">Start date</th>
-                <th className="py-2 px-3 text-left">End date</th>
-                <th className="py-2 px-3 text-left">Quantity</th>
-                <th className="py-2 px-3 text-left">Value</th>
-                <th className="py-2 px-3 text-left">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredVouchers.map((v, i) => (
-                <tr
-                  key={i}
-                  onClick={() => {
-                    setSelected(v);
-                    setOpen(true);
-                    setActiveTab("Information");
-                  }}
-                  className="border-b border-gray-200 hover:bg-gray-100 cursor-pointer transition"
-                >
-                <td className="py-2 px-3">{v.code}</td>
-                <td className="py-2 px-3">{v.name}</td>
-                <td className="py-2 px-3">
-                    {new Date(v.start).toLocaleDateString("vi-VN")}
-                </td>
-                <td className="py-2 px-3">
-                    {new Date(v.end).toLocaleDateString("vi-VN")}
-                </td>
-                <td className="py-2 px-3">{v.quantity}</td>
-                <td className="py-2 px-3">{v.value.toLocaleString()}</td>
-                <td
-                    className={
-                        v.status === "Active"
-                            ? "py-2 px-3 text-green-700"
-                            : v.status === "Unactive"
-                            ? "py-2 px-3 text-gray-500"
-                            : "py-2 px-3 text-red-600"
-                        }
-                    >
-                    {v.status}
-                </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Button onClick={() => setOpenCreate(true)}>+ Create Voucher</Button>
       </div>
 
-      {/* Detail Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl rounded-2xl">
+      {/* ⭐ NEW: Search + Filter UI */}
+      <div className="flex items-center gap-4 mb-4">
+        <input
+          type="text"
+          placeholder="Search by code or name..."
+          className="border p-2 rounded w-64"
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        <select
+          className="border p-2 rounded"
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="All">All Status</option>
+          <option value="Active">Active</option>
+          <option value="Unactive">Unactive</option>
+          <option value="Expired">Expired</option>
+        </select>
+      </div>
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <table className="w-full text-sm bg-white shadow rounded">
+          <thead>
+            <tr className="bg-gray-200 text-left">
+              <th className="p-2">Code</th>
+              <th>Name</th>
+              <th>Value</th>
+              <th>Quantity</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredVouchers.map((v) => (
+              <tr className="border-b" key={v.id}>
+                <td className="p-2">{v.code}</td>
+                <td>{v.name}</td>
+                <td>{v.value.toLocaleString()}</td>
+                <td>{v.quantity}</td>
+                <td>{new Date(v.startDate).toLocaleDateString()}</td>
+                <td>{new Date(v.endDate).toLocaleDateString()}</td>
+                <td>{v.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* Create Voucher Modal */}
+      <Dialog open={openCreate} onOpenChange={setOpenCreate}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-secondary">Voucher detail</DialogTitle>
+            <DialogTitle>Create Voucher</DialogTitle>
           </DialogHeader>
 
-          {selected && (
-            <div className="mt-4 text-sm">
-              {/* Tabs */}
-              <div className="border-b border-gray-200 mb-4 flex gap-6 text-gray-700">
-                {["Information", "Voucher list", "Usage history"].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setActiveTab(t)}
-                    className={`pb-1 ${
-                      activeTab === t
-                        ? "border-b-2 border-[#FFD500] text-[#FFD500] font-medium"
-                        : "hover:text-[#FFD500]"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+          <div className="grid gap-3 mt-2">
+            <Input
+              placeholder="Code"
+              value={form.code}
+              onChange={(e) => setForm({ ...form, code: e.target.value })}
+            />
+            <Input
+              placeholder="Name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+            <label>Value</label>
+            <Input
+              placeholder="Value"
+              type="number"
+              value={form.value}
+              onChange={(e) => setForm({ ...form, value: Number(e.target.value) })}
+            />
+            <label>Quantity</label>
+            <Input
+              placeholder="Quantity"
+              type="number"
+              value={form.quantity}
+              onChange={(e) =>
+                setForm({ ...form, quantity: Number(e.target.value) })
+              }
+            />
+            <label>Start Date</label>
+            <Input
+              type="datetime-local"
+              value={form.startDate}
+              onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+            />
 
-              {/* Tab content */}
-              {activeTab === "Information" && (
-                <div className="grid grid-cols-2 gap-4">
-                  <p>
-                    <strong>Release Code:</strong> {selected.code}
-                  </p>
-                  <p>
-                    <strong>Release Name:</strong> {selected.name}
-                  </p>
-                  <p>
-                    <strong>Period:</strong>{" "}
-                    {new Date(selected.start).toLocaleDateString("vi-VN")} -{" "}
-                    {new Date(selected.end).toLocaleDateString("vi-VN")}
-                  </p>
-                  <p>
-                    <strong>Value:</strong>{" "}
-                    {selected.value.toLocaleString("vi-VN")}
-                  </p>
-                  <p>
-                    <strong>Applicable Product/Category:</strong> All categories
-                  </p>
-                  <p>
-                    <strong>Minimum Purchase Amount:</strong> 0
-                  </p>
-                  <p>
-                    <strong>Status:</strong>{" "}
-                    <span className="text-green-700">{selected.status}</span>
-                  </p>
-                  <p>
-                    <strong>Note:</strong>
-                  </p>
-                </div>
-              )}
+            <label>End Date</label>
+            <Input
+              type="datetime-local"
+              value={form.endDate}
+              onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+            />
 
-              {activeTab === "Voucher list" && (
-                <p className="text-gray-600 italic">
-                  Voucher list details will be displayed here.
-                </p>
-              )}
+            <Input
+              placeholder="Note"
+              value={form.note}
+              onChange={(e) => setForm({ ...form, note: e.target.value })}
+            />
 
-              {activeTab === "Usage history" && (
-                <p className="text-gray-600 italic">
-                  Usage history will be displayed here.
-                </p>
-              )}
-
-              <div className="flex justify-end gap-3 mt-6">
-                <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">
-                  Update
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          )}
+            <Button onClick={handleCreate} className="mt-3">
+              Create
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
