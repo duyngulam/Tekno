@@ -1,39 +1,44 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Product } from "@/type/product";
+import { useCallback, useEffect, useState } from "react";
 import { favorApi } from "@/services/favor";
+import { Product } from "@/type/product";
 
-export function useFavor() {
-  const [favor, setFavor] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function useFavor(enabled = true) {
+  const [items, setItems] = useState<Product[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  const fetchFavor = async () => {
-    setLoading(true);
+  const fetchFavor = useCallback(async () => {
     setError(null);
+    setLoading(true);
     try {
-      const data = await favorApi.getFavor();
-      setFavor(data);
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (!token) throw new Error("No auth token");
+      const res = await favorApi.getFavor(token);
+      // favorApi.getFavor may return data array or { data: [...] }, handle both
+      if (Array.isArray(res)) setItems(res);
+      else if (res && Array.isArray((res as any).data))
+        setItems((res as any).data);
+      else setItems([]);
     } catch (err: any) {
-      setError(err.message);
+      setError(err);
+      setItems([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const addFavor = async (productId: number) => {
-    await favorApi.addFavor(productId);
-    await fetchFavor();
-  };
-
-  const removeFavor = async (productId: number) => {
-    await favorApi.removeFavor(productId);
-    await fetchFavor();
-  };
-
-  useEffect(() => {
-    fetchFavor();
   }, []);
 
-  return { favor, loading, error, fetchFavor, addFavor, removeFavor };
+  useEffect(() => {
+    if (!enabled) return;
+    fetchFavor();
+  }, [enabled, fetchFavor]);
+
+  return {
+    items,
+    setItems,
+    loading,
+    error,
+    refetch: fetchFavor,
+  } as const;
 }
