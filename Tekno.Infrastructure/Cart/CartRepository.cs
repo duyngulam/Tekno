@@ -53,9 +53,52 @@ namespace Tekno.Infrastructure.Cart
 
         public async Task<UserCart> UpdateAsync(UserCart cart)
         {
-            _context.Set<UserCart>().Update(cart);
+            // Load the existing cart entity (will be tracked)
+            var existing = await _context.Set<UserCart>()
+                .Include(c => c.Items)
+                .FirstOrDefaultAsync(c => c.Id == cart.Id);
+
+            if (existing == null)
+            {
+                throw new InvalidOperationException($"Cart with ID {cart.Id} not found");
+            }
+
+            // Sync cart items (update quantities, add new, remove deleted)
+            // Remove items that are no longer in the cart
+            var itemsToRemove = existing.Items
+                .Where(ei => !cart.Items.Any(ci => ci.VariantId == ei.VariantId))
+                .ToList();
+            
+            foreach (var item in itemsToRemove)
+            {
+                existing.Items.Remove(item);
+            }
+
+            // Update existing items or add new ones
+            foreach (var cartItem in cart.Items)
+            {
+                var existingItem = existing.Items
+                    .FirstOrDefault(i => i.VariantId == cartItem.VariantId);
+
+                if (existingItem != null)
+                {
+                    // Update existing item's quantity and price
+                    existingItem.UpdateQuantity(cartItem.Quantity);
+                    existingItem.UpdatePrice(cartItem.Price);
+                }
+                else
+                {
+                    // Add new item
+                    var newItem = new CartItem(existing.Id, cartItem.VariantId, cartItem.Quantity, cartItem.Price);
+                    existing.Items.Add(newItem);
+                }
+            }
+
+            // Mark cart as updated
+            existing.MarkAsUpdated();
+
             await _context.SaveChangesAsync();
-            return cart;
+            return existing;
         }
 
         public async Task<bool> DeleteAsync(int cartId)
