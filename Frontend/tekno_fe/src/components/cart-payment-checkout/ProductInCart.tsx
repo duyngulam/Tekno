@@ -5,11 +5,12 @@ import QuantityButton from "../product/productDetail/QuantityButton";
 import { CartItem } from "@/hook/useCart";
 import Link from "next/link";
 import Image from "next/image";
+import FormattedPriced from "../share/FormattedPriced";
 
 export default function ProductInCart({ product }: { product: CartItem }) {
   return (
     <div className="flex border p-2.5 items-center justify-between gap-5">
-      <div className="flex flex-1 items-start gap-2 h-26 md:h-44">
+      <div className="flex flex-1 items-start gap-2 h-26 md:h-44 max-w-60">
         {product?.primaryImage && (
           <Link
             href={`/products/${product?.productSlug}`}
@@ -47,6 +48,30 @@ export default function ProductInCart({ product }: { product: CartItem }) {
             <QuantityButton item={product} />
           </div>
         </div> */}
+
+        <div className="mt-3 flex items-center justify-between">
+          <div className="flex items-baseline gap-3">
+            {product.price ? (
+              <div className="text-sm text-gray-400 line-through">
+                <FormattedPriced price={product.price} />
+                {/* {product.price.toLocaleString()} đ */}
+              </div>
+            ) : null}
+            <div className="text-xl font-bold text-primary">
+              {product.totalPrice.toLocaleString()} đ
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              aria-label="remove"
+              className="text-red-500 p-1 rounded hover:bg-red-50"
+            >
+              <Trash2 />
+            </button>
+            <QuantityButton item={product} />
+          </div>
+        </div>
       </div>
     </div>
   );

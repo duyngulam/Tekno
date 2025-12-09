@@ -19,7 +19,7 @@ interface CartItem {
   quantity: number;
 }
 export default function CartPage() {
-  const { items, cleanCart } = useCart();
+  const { items, cleanCart, getSubTotalPrice, getTotalPrice } = useCart();
   const { user, isAuthenticated } = useAuth();
 
   const ProductsInCart = items ?? [];

@@ -13,7 +13,8 @@ export default function AddToCartButton({
   selectedVariant?: Product["variants"][number] | null;
   className?: string;
 }) {
-  const { addToCart } = useCart();
+  const { addToCart, getItemCount } = useCart();
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
