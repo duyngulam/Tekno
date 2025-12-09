@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Tekno.Domain.Catalog;
+using Tekno.Application.Common.Paging;
 
 namespace Tekno.Application.Catalog.Interface
 {
     public interface IBrandRepository
     {
         Task<List<Brand?>> GetAllBrandsAsync();
+        Task<PagedResult<Brand>> GetPagedAsync(string? search, PagingParams paging);
         Task<Brand?> GetBrandBySlugAsync(string slug);
         Task<Brand?> GetBrandByIdAsync(int id);
         Task<Brand> CreateAsync(Brand brand);

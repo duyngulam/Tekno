@@ -4,6 +4,7 @@ using Tekno.Api.Common.Responses;
 using Tekno.Api.Models.Catalog;
 using Tekno.Application.Catalog.DTOs;
 using Tekno.Application.Catalog.Services;
+using Tekno.Application.Common.Paging;
 using Tekno.Infrastructure.Catalog;
 
 namespace Tekno.Api.Controllers
@@ -19,7 +20,19 @@ namespace Tekno.Api.Controllers
             _brandService = brandService;
             _mapper = mapper;
         }
-        // GET /api/brands/list
+
+        // GET /api/brands - Paginated list
+        [HttpGet]
+        public async Task<IActionResult> GetBrandsPaged(
+            [FromQuery] string? search,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            var result = await _brandService.GetPagedAsync(search, page, pageSize);
+            return Ok(ApiResponse<PagedResult<BrandDto>>.Ok(result, "Brands loaded successfully"));
+        }
+
+        // GET /api/brands/list - All brands (kept for backward compatibility)
         [HttpGet("list")]
         public async Task<IActionResult> GetBrands()
         {

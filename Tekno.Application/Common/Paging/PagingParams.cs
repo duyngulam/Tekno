@@ -1,4 +1,4 @@
-﻿namespace Tekno.Application.Common
+﻿namespace Tekno.Application.Common.Paging
 {
     public class PagingParams
     {

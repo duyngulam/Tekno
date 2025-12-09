@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Tekno.Application.Catalog.Interface;
+using Tekno.Application.Common.Paging;
 using Tekno.Domain.Catalog;
 using Tekno.Infrastructure.Persistence;
 
@@ -22,6 +23,34 @@ namespace Tekno.Infrastructure.Catalog
         public async Task<List<Category>> GetAllCategoriesAsync()
         {
             return await _context.Categories.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<PagedResult<Category>> GetPagedAsync(string? search, PagingParams paging)
+        {
+            var query = _context.Categories.AsNoTracking();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(c => 
+                    c.Name.Contains(search) || 
+                    c.Slug.Contains(search) ||
+                    (c.Description != null && c.Description.Contains(search)));
+            }
+
+            // Order by name
+            query = query.OrderBy(c => c.Name);
+
+            // Get total count
+            var totalRecords = await query.CountAsync();
+
+            // Apply pagination
+            var data = await query
+                .Skip((paging.Page - 1) * paging.PageSize)
+                .Take(paging.PageSize)
+                .ToListAsync();
+
+            return new PagedResult<Category>(data, totalRecords, paging.Page, paging.PageSize);
         }
         
         public async Task<Category?> GetCategoryBySlugAsync(string slug)

@@ -10,6 +10,7 @@ using Tekno.Application.Common.Cache;
 using Tekno.Application.Common.Exceptions;
 using Tekno.Application.Common.Interfaces;
 using Tekno.Application.Common.Media.Services;
+using Tekno.Application.Common.Paging;
 using Tekno.Domain.Catalog;
 using Tekno.Application.Catalog.DTOs.Products;
 
@@ -44,6 +45,15 @@ namespace Tekno.Application.Catalog.Services
                 async () => _mapper.Map<List<CategoryDto>>(await _categoryRepository.GetAllCategoriesAsync()),
                 CachePolicies.CategoryTtl
             );
+        }
+
+        public async Task<PagedResult<CategoryDto>> GetPagedAsync(string? search = null, int page = 1, int pageSize = 20)
+        {
+            var paging = new PagingParams(page, pageSize);
+            var result = await _categoryRepository.GetPagedAsync(search, paging);
+            
+            var dtos = _mapper.Map<List<CategoryDto>>(result.Data);
+            return new PagedResult<CategoryDto>(dtos, result.TotalRecords, result.Page, result.PageSize);
         }
 
         public async Task<List<CategoryTreeDto>> GetCategoryTreeAsync()
