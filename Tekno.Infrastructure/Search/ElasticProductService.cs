@@ -237,13 +237,54 @@ namespace Tekno.Infrastructure.Search
             var mustQueries = new List<QueryContainer>();
             var filterQueries = new List<QueryContainer>();
 
+            // Enhanced keyword search with partial matching support
             if (!string.IsNullOrWhiteSpace(keyword))
             {
-                mustQueries.Add(new MultiMatchQuery
+                var trimmedKeyword = keyword.Trim();
+                
+                // Multi-field search with different strategies for better matching
+                mustQueries.Add(new BoolQuery
                 {
-                    Fields = Infer.Fields<ProductSearchDocument>(p => p.Name),
-                    Query = keyword,
-                    Fuzziness = Fuzziness.Auto,
+                    Should = new List<QueryContainer>
+                    {
+                        // 1. Exact phrase match (highest priority)
+                        new MatchPhraseQuery
+                        {
+                            Field = Infer.Field<ProductSearchDocument>(p => p.Name),
+                            Query = trimmedKeyword,
+                            Boost = 5.0
+                        },
+                        // 2. Standard match with fuzziness (handles typos)
+                        new MatchQuery
+                        {
+                            Field = Infer.Field<ProductSearchDocument>(p => p.Name),
+                            Query = trimmedKeyword,
+                            Fuzziness = Fuzziness.Auto,
+                            Boost = 3.0
+                        },
+                        // 3. N-gram match for partial matching (e.g., "mac" matches "macbook")
+                        new MatchQuery
+                        {
+                            Field = "name.ngram",
+                            Query = trimmedKeyword,
+                            Boost = 2.0
+                        },
+                        // 4. Edge n-gram for prefix matching (autocomplete-style)
+                        new MatchQuery
+                        {
+                            Field = "name.edge",
+                            Query = trimmedKeyword,
+                            Boost = 1.5
+                        },
+                        // 5. Wildcard search as fallback
+                        new WildcardQuery
+                        {
+                            Field = Infer.Field<ProductSearchDocument>(p => p.Name),
+                            Value = $"*{trimmedKeyword.ToLowerInvariant()}*",
+                            Boost = 1.0
+                        }
+                    },
+                    MinimumShouldMatch = 1
                 });
             }
 
@@ -263,27 +304,68 @@ namespace Tekno.Infrastructure.Search
                 });
             }
 
-            // Nested spec filters
+            // Enhanced nested spec filters with multi-value support (UNION/OR logic)
+            // Example: filters[ram]=8gb,16gb will match products with RAM 8GB OR 16GB
             if (filters != null && filters.Any())
             {
                 foreach (var kv in filters)
                 {
                     var specName = (kv.Key ?? string.Empty).Trim().ToLowerInvariant();
-                    var specValue = (kv.Value ?? string.Empty).Trim().ToLowerInvariant();
+                    var specValueRaw = (kv.Value ?? string.Empty).Trim();
 
-                    var nestedSpec = new NestedQuery
+                    if (string.IsNullOrEmpty(specName) || string.IsNullOrEmpty(specValueRaw))
+                        continue;
+
+                    // Split by comma to support multiple values: "8gb,16gb"
+                    var specValues = specValueRaw.Split(new[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                                                  .Select(v => v.Trim().ToLowerInvariant())
+                                                  .Where(v => !string.IsNullOrEmpty(v))
+                                                  .Distinct()
+                                                  .ToList();
+
+                    if (!specValues.Any())
+                        continue;
+
+                    if (specValues.Count == 1)
                     {
-                        Path = "specs",
-                        Query = new BoolQuery
+                        // Single value: use simple term query
+                        var nestedSpec = new NestedQuery
                         {
-                            Must = new QueryContainer[]
+                            Path = "specs",
+                            Query = new BoolQuery
                             {
-                                new TermQuery { Field = "specs.name", Value = specName },
-                                new TermQuery { Field = "specs.value", Value = specValue }
+                                Must = new QueryContainer[]
+                                {
+                                    new TermQuery { Field = "specs.name", Value = specName },
+                                    new TermQuery { Field = "specs.value", Value = specValues[0] }
+                                }
                             }
-                        }
-                    };
-                    filterQueries.Add(nestedSpec);
+                        };
+                        filterQueries.Add(nestedSpec);
+                    }
+                    else
+                    {
+                        // Multiple values: use OR logic (UNION)
+                        // Product must have this spec name AND at least one of the specified values
+                        var valueQueries = specValues.Select(specValue => 
+                            (QueryContainer)new TermQuery { Field = "specs.value", Value = specValue }
+                        ).ToList();
+
+                        var nestedSpec = new NestedQuery
+                        {
+                            Path = "specs",
+                            Query = new BoolQuery
+                            {
+                                Must = new QueryContainer[]
+                                {
+                                    new TermQuery { Field = "specs.name", Value = specName }
+                                },
+                                Should = valueQueries,
+                                MinimumShouldMatch = 1
+                            }
+                        };
+                        filterQueries.Add(nestedSpec);
+                    }
                 }
             }
 

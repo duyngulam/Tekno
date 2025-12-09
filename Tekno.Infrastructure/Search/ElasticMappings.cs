@@ -13,13 +13,44 @@ namespace Tekno.Infrastructure.Search
                         .Normalizers(n => n
                             .Custom("lowercase_normalizer", cn => cn.Filters("lowercase"))
                         )
+                        .Analyzers(an => an
+                            // N-gram analyzer for partial matching (e.g., "mac" → "macbook")
+                            .Custom("ngram_analyzer", ca => ca
+                                .Tokenizer("standard")
+                                .Filters("lowercase", "ngram_filter")
+                            )
+                            // Edge n-gram analyzer for autocomplete-style searches
+                            .Custom("edge_ngram_analyzer", ca => ca
+                                .Tokenizer("standard")
+                                .Filters("lowercase", "edge_ngram_filter")
+                            )
+                        )
+                        .TokenFilters(tf => tf
+                            // N-gram filter for substring matching
+                            .NGram("ngram_filter", ng => ng
+                                .MinGram(3)
+                                .MaxGram(10)
+                            )
+                            // Edge n-gram filter for prefix matching
+                            .EdgeNGram("edge_ngram_filter", eng => eng
+                                .MinGram(2)
+                                .MaxGram(15)
+                            )
+                        )
                     )
                 )
                 .Map<ProductSearchDocument>(m => m
                     .AutoMap()
                     .Properties(p => p
-                        // full-text
-                        .Text(t => t.Name(n => n.Name).Analyzer("standard"))
+                        // Multi-field for name: standard + n-gram for better partial matching
+                        .Text(t => t
+                            .Name(n => n.Name)
+                            .Analyzer("standard")
+                            .Fields(f => f
+                                .Text(tt => tt.Name("ngram").Analyzer("ngram_analyzer"))
+                                .Text(tt => tt.Name("edge").Analyzer("edge_ngram_analyzer"))
+                            )
+                        )
                         // exact match / aggregations — use normalizer so keyword comparisons are case-insensitive
                         .Keyword(k => k.Name(n => n.Slug).Normalizer("lowercase_normalizer"))
                         .Keyword(k => k.Name(n => n.Brand).Normalizer("lowercase_normalizer"))
