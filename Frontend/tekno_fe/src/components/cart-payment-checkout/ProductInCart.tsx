@@ -1,0 +1,78 @@
+import { Product } from "@/type/product";
+import { Trash2 } from "lucide-react";
+import React from "react";
+import QuantityButton from "../product/productDetail/QuantityButton";
+import { CartItem } from "@/hook/useCart";
+import Link from "next/link";
+import Image from "next/image";
+import FormattedPriced from "../share/FormattedPriced";
+
+export default function ProductInCart({ product }: { product: CartItem }) {
+  return (
+    <div className="flex border p-2.5 items-center justify-between gap-5">
+      <div className="flex flex-1 items-start gap-2 h-26 md:h-44 max-w-60">
+        {product?.primaryImage && (
+          <Link
+            href={`/products/${product?.productSlug}`}
+            className="border p-0.5 md:p-1 mr-2 rounded-md overflow-hidden group"
+          >
+            <Image
+              src={product.primaryImage}
+              alt="product image"
+              width={500}
+              height={500}
+              loading="lazy"
+              className="w-32 md:w-40 h-32 md:h-40 object-cover"
+            />
+          </Link>
+        )}
+      </div>
+      <div className="h-full flex flex-1 flex-col justify-between py-1">
+        <div className="flex flex-col gap-0.5 md:gap-1.5">
+          <h2 className="text-base font-semibold line-clamp-2">
+            {product?.productName}
+          </h2>
+          <p className="text-sm capitalize">
+            Color: <span className="font-semibold">Black</span>
+          </p>
+        </div>
+        {/* <p>{product?.productName}</p>
+        <p>variant</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <p>{product?.price} </p>
+            <p>{product?.totalPrice}</p>
+          </div>
+          <div>
+            <Trash2 />
+            <QuantityButton item={product} />
+          </div>
+        </div> */}
+
+        <div className="mt-3 flex items-center justify-between">
+          <div className="flex items-baseline gap-3">
+            {product.price ? (
+              <div className="text-sm text-gray-400 line-through">
+                <FormattedPriced price={product.price} />
+                {/* {product.price.toLocaleString()} đ */}
+              </div>
+            ) : null}
+            <div className="text-xl font-bold text-primary">
+              {product.totalPrice.toLocaleString()} đ
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              aria-label="remove"
+              className="text-red-500 p-1 rounded hover:bg-red-50"
+            >
+              <Trash2 />
+            </button>
+            <QuantityButton item={product} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

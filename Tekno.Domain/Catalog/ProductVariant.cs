@@ -22,12 +22,56 @@ namespace Tekno.Domain.Catalog
 
         public ProductVariant() { }
 
-        public ProductVariant(int productId, string sku, decimal price, int stock)
+        public ProductVariant(int productId, string sku, decimal price, int stock, string status = "available")
         {
             ProductId = productId;
             Sku = sku;
             Price = price;
             Stock = stock;
+            Status = status;
+            CreatedAt = DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Add attribute to variant
+        /// </summary>
+        public void AddAttribute(int attributeId, int valueId)
+        {
+            var attribute = new ProductVariantAttribute(Id, attributeId, valueId);
+            VariantAttributes.Add(attribute);
+        }
+
+        /// <summary>
+        /// Update variant stock
+        /// </summary>
+        public void UpdateStock(int newStock)
+        {
+            if (newStock < 0)
+                throw new ArgumentException("Stock cannot be negative", nameof(newStock));
+            
+            Stock = newStock;
+        }
+
+        /// <summary>
+        /// Update variant price
+        /// </summary>
+        public void UpdatePrice(decimal newPrice)
+        {
+            if (newPrice < 0)
+                throw new ArgumentException("Price cannot be negative", nameof(newPrice));
+            
+            Price = newPrice;
+        }
+
+        /// <summary>
+        /// Update variant status
+        /// </summary>
+        public void UpdateStatus(string status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+                throw new ArgumentException("Status cannot be empty", nameof(status));
+            
+            Status = status;
         }
     }
 }

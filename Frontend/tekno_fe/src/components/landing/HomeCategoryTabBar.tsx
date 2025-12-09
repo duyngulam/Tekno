@@ -12,17 +12,17 @@ export default async function HomeCategoryTabBar() {
   }
 
   return (
-    <div className="border border-primary gap-5 flex overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory ">
+    <div className="gap-5 flex overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory ">
       {categoriesList.map((category) => (
         <div
           key={category.id}
           className="bg-white rounded-xl flex flex-col items-center gap-3 p-2"
         >
-          {category?.iconPath && (
-            <div className="overflow-hidden border border-secondary/50 hover:border-secondary hoverEffect w-30 h-30 p-2">
+          {category?.imageUrl && (
+            <div className="overflow-hidden hoverEffect w-30 h-30 p-2">
               <Link href={`/products?category=${category.slug}`}>
                 <Image
-                  src={category.iconPath}
+                  src={category.imageUrl}
                   alt="categoryimage"
                   width={50}
                   height={50}

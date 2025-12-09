@@ -11,13 +11,9 @@ namespace Tekno.Application.Catalog.DTOs.Admin
 {
     public class CreateProductDto
     {
-        [Required]
         public string Name { get; set; } = string.Empty;
-        [Required]
         public string Slug { get; set; } = string.Empty;
-        [Required]
         public int CategoryId { get; set; }
-        [Required]
         public int BrandId { get; set; }
 
         public string? Status { get;  set; } = "available";

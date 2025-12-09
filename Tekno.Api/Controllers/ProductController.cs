@@ -52,13 +52,7 @@ namespace Tekno.Api.Controllers
         /// </summary>
         /// <param name="categorySlug">Category slug (e.g., "laptops")</param>
         /// <param name="count">Number of products to return (default: 10, max: 100)</param>
-        /// <remarks>
         /// Returns the newest products in a category, sorted by creation date (newest first)
-        /// 
-        /// Examples:
-        /// - GET /api/products/new/laptops?count=5 - Get 5 newest laptops
-        /// - GET /api/products/new/smartphones?count=10 - Get 10 newest smartphones
-        /// </remarks>
         [HttpGet("new/{categorySlug}")]
         public async Task<IActionResult> GetTopNewByCategory(
             string categorySlug,

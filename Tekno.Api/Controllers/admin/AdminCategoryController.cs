@@ -5,8 +5,11 @@ using Tekno.Api.Common.Responses;
 using Tekno.Api.Models.Catalog;
 using Tekno.Api.Models.Catalog.Admin;
 using Tekno.Application.Catalog.DTOs;
+using Tekno.Application.Catalog.DTOs.Products;
 using Tekno.Application.Catalog.Services;
 using Tekno.Application.Common.Media.Services;
+using Tekno.Application.Common.Paging;
+using Tekno.Application.Catalog.DTOs.Admin;
 
 namespace Tekno.Api.Controllers.admin
 {
@@ -19,17 +22,32 @@ namespace Tekno.Api.Controllers.admin
         private readonly CategoryService _categoryService;
         private readonly ILogger<AdminCategoryController> _logger;
         private readonly IMapper _mapper;
+        private readonly CategoryAttributeService _attributeService;
 
         public AdminCategoryController(
-            CategoryService categoryService, 
-            ILogger<AdminCategoryController> logger, 
-            IMapper mapper)
+            CategoryService categoryService,
+            ILogger<AdminCategoryController> logger,
+            IMapper mapper,
+            CategoryAttributeService attributeService)
         {
             _categoryService = categoryService;
             _logger = logger;
             _mapper = mapper;
+            _attributeService = attributeService;
         }
 
+        // GET /api/admin/categories - Paginated list
+        [HttpGet]
+        public async Task<IActionResult> GetCategoriesPaged(
+            [FromQuery] string? search,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            var result = await _categoryService.GetPagedAsync(search, page, pageSize);
+            return Ok(ApiResponse<PagedResult<CategoryDto>>.Ok(result, "Categories loaded successfully"));
+        }
+
+        // GET /api/admin/categories/list - All categories (kept for backward compatibility)
         [HttpGet("list")]
         public async Task<IActionResult> GetAllCategories()
         {
@@ -56,6 +74,31 @@ namespace Tekno.Api.Controllers.admin
             
             var result = _mapper.Map<CategoryTreeDto>(category);
             return Ok(ApiResponse<CategoryTreeDto>.Ok(result, "Category loaded successfully"));
+        }
+
+        /// <summary>
+        /// Get available attributes for a category (for variant creation)
+        /// </summary>
+        /// <remarks>
+        /// Returns all attributes available for a specific category, including:
+        /// - Category-specific attributes
+        /// - Global attributes (shared across all categories)
+        /// Each attribute includes its possible values.
+        /// Used when creating product variants to know which attributes can be selected.
+        /// </remarks>
+        [HttpGet("{categoryId:int}/attributes")]
+        public async Task<IActionResult> GetCategoryAttributes(int categoryId)
+        {
+            try
+            {
+                var attributes = await _categoryService.GetAttributesByCategoryIdAsync(categoryId);
+                return Ok(ApiResponse<List<ProductAttributeDto>>.Ok(attributes, "Attributes loaded successfully"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get attributes for category {CategoryId}", categoryId);
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to get attributes: {ex.Message}"));
+            }
         }
 
         /// <summary>
@@ -152,6 +195,166 @@ namespace Tekno.Api.Controllers.admin
             {
                 _logger.LogError(ex, "Failed to delete category ID {Id}", apiDto.Id);
                 return StatusCode(500, ApiResponse<string>.Fail($"Failed to delete category: {ex.Message}"));
+            }
+        }
+
+        // ===== Attribute management endpoints merged in =====
+
+        /// <summary>
+        /// Get a specific attribute by ID
+        /// </summary>
+        [HttpGet("attributes/{attributeId}")]
+        public async Task<IActionResult> GetAttribute(int attributeId)
+        {
+            try
+            {
+                var attribute = await _attributeService.GetAttributeByIdAsync(attributeId);
+                if (attribute == null)
+                    return NotFound(ApiResponse<CategoryAttributeDto>.Fail("Attribute not found"));
+
+                return Ok(ApiResponse<CategoryAttributeDto>.Ok(attribute));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get attribute {AttributeId}", attributeId);
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to get attribute: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Create a new attribute
+        /// </summary>
+        [HttpPost("attributes")]
+        public async Task<IActionResult> CreateAttribute([FromBody] CreateAttributeDto dto)
+        {
+            try
+            {
+                var attribute = await _attributeService.CreateAttributeAsync(dto);
+                return Ok(ApiResponse<CategoryAttributeDto>.Ok(attribute, "Attribute created successfully"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create attribute {Name}", dto.Name);
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to create attribute: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Update an existing attribute
+        /// </summary>
+        [HttpPut("attributes/{attributeId}")]
+        public async Task<IActionResult> UpdateAttribute(int attributeId, [FromBody] UpdateAttributeDto dto)
+        {
+            try
+            {
+                var attribute = await _attributeService.UpdateAttributeAsync(attributeId, dto);
+                if (attribute == null)
+                    return NotFound(ApiResponse<CategoryAttributeDto>.Fail("Attribute not found"));
+
+                return Ok(ApiResponse<CategoryAttributeDto>.Ok(attribute, "Attribute updated successfully"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update attribute {AttributeId}", attributeId);
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to update attribute: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Delete an attribute (only if not in use)
+        /// </summary>
+        [HttpDelete("attributes/{attributeId}")]
+        public async Task<IActionResult> DeleteAttribute(int attributeId)
+        {
+            try
+            {
+                var deleted = await _attributeService.DeleteAttributeAsync(attributeId);
+                if (!deleted)
+                    return NotFound(ApiResponse<bool>.Fail("Attribute not found"));
+
+                return Ok(ApiResponse<bool>.Ok(true, "Attribute deleted successfully"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.Fail(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to delete attribute {AttributeId}", attributeId);
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to delete attribute: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Add a new value to an attribute
+        /// </summary>
+        [HttpPost("attributes/values")]
+        public async Task<IActionResult> AddAttributeValue([FromBody] AddAttributeValueDto dto)
+        {
+            try
+            {
+                var value = await _attributeService.AddAttributeValueAsync(dto);
+                return Ok(ApiResponse<AttributeValueDto>.Ok(value, "Value added successfully"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.Fail(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to add value to attribute {AttributeId}", dto.AttributeId);
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to add value: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Update an attribute value
+        /// </summary>
+        [HttpPut("attributes/values/{valueId}")]
+        public async Task<IActionResult> UpdateAttributeValue(int valueId, [FromBody] UpdateAttributeValueDto dto)
+        {
+            try
+            {
+                dto.ValueId = valueId;
+                var value = await _attributeService.UpdateAttributeValueAsync(dto);
+                if (value == null)
+                    return NotFound(ApiResponse<AttributeValueDto>.Fail("Value not found"));
+
+                return Ok(ApiResponse<AttributeValueDto>.Ok(value, "Value updated successfully"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.Fail(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update value {ValueId}", valueId);
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to update value: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Delete an attribute value (only if not in use)
+        /// </summary>
+        [HttpDelete("attributes/values/{valueId}")]
+        public async Task<IActionResult> DeleteAttributeValue(int valueId)
+        {
+            try
+            {
+                var deleted = await _attributeService.DeleteAttributeValueAsync(valueId);
+                if (!deleted)
+                    return NotFound(ApiResponse<bool>.Fail("Value not found"));
+
+                return Ok(ApiResponse<bool>.Ok(true, "Value deleted successfully"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.Fail(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to delete value {ValueId}", valueId);
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to delete value: {ex.Message}"));
             }
         }
     }

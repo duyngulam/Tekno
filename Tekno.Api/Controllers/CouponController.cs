@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Tekno.Api.Common.Responses;
+using Tekno.Application.Common.Paging;
 using Tekno.Application.Promotion.DTOs;
 using Tekno.Application.Promotion.Services;
 
@@ -24,7 +25,41 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
-        /// Get all active and valid coupons (public)
+        /// Get paginated list of active coupons (public)
+        /// </summary>
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPaged(
+            [FromQuery] string? search,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            // Force status to Active for public API
+            var result = await _couponService.GetPagedCouponsAsync(
+                search, 
+                "Active", 
+                null, 
+                null, 
+                page, 
+                pageSize);
+
+            // Filter to only show currently valid coupons
+            var now = System.DateTime.UtcNow;
+            var validCoupons = result.Data
+                .Where(c => c.StartDate <= now && c.EndDate >= now && c.RemainingQuantity > 0)
+                .ToList();
+
+            var filteredResult = new PagedResult<CouponDto>(
+                validCoupons, 
+                validCoupons.Count, 
+                page, 
+                pageSize);
+
+            return Ok(ApiResponse<PagedResult<CouponDto>>.Ok(filteredResult, "Coupons loaded successfully"));
+        }
+
+        /// <summary>
+        /// Get all active and valid coupons (public) - kept for backward compatibility
         /// </summary>
         /// <remarks>
         /// Returns only coupons that are:

@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -16,53 +17,25 @@ namespace Tekno.Application.Cart.Services
     {
         private readonly IWishlistRepository _wishlistRepository;
         private readonly IProductRepository _productRepository;
+        private readonly IMapper _mapper;
         private readonly IAppLogger<WishlistService> _logger;
 
         public WishlistService(
             IWishlistRepository wishlistRepository,
             IProductRepository productRepository,
+            IMapper mapper,
             IAppLogger<WishlistService> logger)
         {
             _wishlistRepository = wishlistRepository;
             _productRepository = productRepository;
+            _mapper = mapper;
             _logger = logger;
         }
 
         public async Task<List<WishlistDto>> GetWishlistAsync(int userId)
         {
             var wishlistItems = await _wishlistRepository.GetByUserIdAsync(userId);
-            var dtos = new List<WishlistDto>();
-
-            foreach (var item in wishlistItems)
-            {
-                var variant = await _productRepository.GetProductVariantByIdAsync(item.VariantId);
-                if (variant == null) continue; // Skip if variant deleted
-
-                var dto = new WishlistDto
-                {
-                    Id = item.Id,
-                    UserId = item.UserId,
-                    VariantId = item.VariantId,
-                    AddedAt = item.AddedAt,
-                    ProductName = variant.Product.Name,
-                    ProductSlug = variant.Product.Slug,
-                    Sku = variant.Sku,
-                    BrandName = variant.Product.Brand?.Name ?? string.Empty,
-                    CategoryName = variant.Product.Category?.Name ?? string.Empty,
-                    Price = variant.Price,
-                    Stock = variant.Stock,
-                    PrimaryImage = variant.Product.Images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
-                    Attributes = variant.VariantAttributes.Select(va => new VariantAttributeInfo
-                    {
-                        AttributeName = va.Attribute?.Name ?? string.Empty,
-                        AttributeValue = va.Value?.Value ?? string.Empty
-                    }).ToList()
-                };
-
-                dtos.Add(dto);
-            }
-
-            return dtos;
+            return _mapper.Map<List<WishlistDto>>(wishlistItems);
         }
 
         public async Task<WishlistDto> AddToWishlistAsync(int userId, AddToWishlistDto dto)
@@ -89,26 +62,13 @@ namespace Tekno.Application.Cart.Services
                 "User {UserId} added variant {VariantId} to wishlist",
                 userId, dto.VariantId);
 
-            return new WishlistDto
-            {
-                Id = wishlist.Id,
-                UserId = wishlist.UserId,
-                VariantId = wishlist.VariantId,
-                AddedAt = wishlist.AddedAt,
-                ProductName = variant.Product.Name,
-                ProductSlug = variant.Product.Slug,
-                Sku = variant.Sku,
-                BrandName = variant.Product.Brand?.Name ?? string.Empty,
-                CategoryName = variant.Product.Category?.Name ?? string.Empty,
-                Price = variant.Price,
-                Stock = variant.Stock,
-                PrimaryImage = variant.Product.Images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
-                Attributes = variant.VariantAttributes.Select(va => new VariantAttributeInfo
-                {
-                    AttributeName = va.Attribute?.Name ?? string.Empty,
-                    AttributeValue = va.Value?.Value ?? string.Empty
-                }).ToList()
-            };
+            // Reload wishlist with all navigation properties
+            var reloaded = await _wishlistRepository.GetByUserAndVariantAsync(userId, dto.VariantId);
+            // Since GetByUserAndVariantAsync doesn't include navigation properties, get from full list
+            var allWishlist = await _wishlistRepository.GetByUserIdAsync(userId);
+            var wishlistWithNav = allWishlist.FirstOrDefault(w => w.Id == wishlist.Id);
+            
+            return _mapper.Map<WishlistDto>(wishlistWithNav);
         }
 
         public async Task<bool> RemoveFromWishlistAsync(int userId, int variantId)

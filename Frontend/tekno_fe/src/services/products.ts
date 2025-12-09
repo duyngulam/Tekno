@@ -6,23 +6,37 @@ export async function getProductsList(params?: {
   pageSize?: number;
   category?: string;
   sortBy?: string;
+  keyword?: string;
+  brand?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  filters?: Record<string, string[]>;
+  suggest?: boolean;
 }) {
   try {
     const query = new URLSearchParams();
 
+    // API expects PascalCase parameter names according to Swagger UI
+    if (params?.keyword) query.append("Keyword", params.keyword);
+    if (params?.category) query.append("Category", params.category);
+    if (params?.brand) query.append("Brand", params.brand);
+    if (params?.sortBy) query.append("Sort", params.sortBy);
+    if (typeof params?.minPrice !== "undefined") query.append("MinPrice", String(params.minPrice));
+    if (typeof params?.maxPrice !== "undefined") query.append("MaxPrice", String(params.maxPrice));
+    if (params?.filters) query.append("Filters", JSON.stringify(params.filters));
+    if (typeof params?.suggest !== "undefined") query.append("Suggest", String(Boolean(params.suggest)));
     if (params?.page) query.append("Page", String(params.page));
     if (params?.pageSize) query.append("PageSize", String(params.pageSize));
-    if (params?.category) query.append("Category", params.category);
-    if (params?.sortBy) query.append("SortBy", params.sortBy);
+    console.log("filter query",params?.filters);
+    
 
-    const res = await fetch(
-      `http://localhost:5000/api/products?${query.toString()}`,
-      {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        cache: "no-store",
-      }
-    );
+    const url = `${API_BASE_URL}/products${query.toString() ? `?${query.toString()}` : ""}`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    });
 
     if (!res.ok) {
       throw new Error(`Failed to fetch product list: ${res.status}`);
@@ -41,12 +55,7 @@ export async function getProductsList(params?: {
   }
 }
 
-
-
-
 import { Product } from "@/type/product"; 
-
-
 
 // Trả về dữ liệu chi tiết sản phẩm đúng kiểu ProductDetail
 export async function getProductDetail(slug: string): Promise<Product> {
@@ -63,7 +72,6 @@ export async function getProductDetail(slug: string): Promise<Product> {
 
     const result = await res.json();
 
-    // Giả sử API luôn trả về cấu trúc { success, message, data, errors, timestamp }
     if (!result.success || !result.data) {
       throw new Error(result.message || "Invalid API response");
     }
@@ -73,5 +81,30 @@ export async function getProductDetail(slug: string): Promise<Product> {
     console.error("Error in getProductDetail:", error);
     throw error;
   }
+}
+
+export async function getProductsInCart() {
+// try {
+//     const res = await fetch(`${API_BASE_URL}/cart`, {
+//       method: "GET",
+//       headers: { "Content-Type": "application/json" },
+//       cache: "no-store",
+//     });
+
+//     if (!res.ok) {
+//       throw new Error(`Failed to fetch product in cart: ${res.status}`);
+//     }
+
+//     const result = await res.json();
+
+//     if (!result.success || !result.data) {
+//       throw new Error(result.message || "Invalid API response");
+//     }
+
+//     return result.data as Product[];
+//   } catch (error) {
+//     console.error("Error in getProductCart:", error);
+//     throw error;
+//   }
 }
 

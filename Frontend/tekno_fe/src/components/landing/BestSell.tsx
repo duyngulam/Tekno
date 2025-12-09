@@ -12,7 +12,7 @@ export default function BestSell() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await getProductsList(1, 10, "laptop");
+        const res = await getProductsList();
         console.log(res);
         setProducts(res.data);
       } catch (error) {
@@ -32,11 +32,13 @@ export default function BestSell() {
           View all <ChevronRight className="w-5 h-5" />
         </button>
       </div>
-      <div className="grid grid-col-2 md:grid-cols-4">
+      <div className="grid grid-col-2 md:grid-cols-4 gap-4">
         {products &&
-          products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          products
+            ?.slice(1, 4)
+            .map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
       </div>
     </div>
   );

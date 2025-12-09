@@ -176,10 +176,6 @@ namespace Tekno.Infrastructure.Catalog
         {
             return await _context.Database.BeginTransactionAsync();
         }
-
-        /// <summary>
-        /// Increment the sold count for a product when an order is completed
-        /// </summary>
         public async Task IncrementProductSoldCountAsync(int productId, int quantity)
         {
             var product = await _context.Products.FindAsync(productId);
@@ -189,10 +185,6 @@ namespace Tekno.Infrastructure.Catalog
                 await _context.SaveChangesAsync();
             }
         }
-
-        /// <summary>
-        /// Get sold counts for multiple products
-        /// </summary>
         public async Task<Dictionary<int, int>> GetProductsSoldCountAsync(List<int> productIds)
         {
             return await _context.Products
@@ -200,10 +192,6 @@ namespace Tekno.Infrastructure.Catalog
                 .Select(p => new { p.Id, p.TotalSold })
                 .ToDictionaryAsync(p => p.Id, p => p.TotalSold);
         }
-
-        /// <summary>
-        /// Get rating statistics (average rating and review count) for multiple products
-        /// </summary>
         public async Task<Dictionary<int, (double AverageRating, int TotalReviews)>> GetProductsRatingStatsAsync(List<int> productIds)
         {
             var stats = await _context.Set<Domain.Review.ProductReview>()
@@ -221,6 +209,301 @@ namespace Tekno.Infrastructure.Catalog
                 );
 
             return stats;
+        }
+        public async Task<PagedResult<Product>> GetAdminProductsPagedAsync(
+    string? search,
+    string? categorySlug,
+    string? brandSlug,
+    string? status,
+    PagingParams paging)
+        {
+            var query = _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.Images.OrderBy(i => i.SortOrder))
+                .Include(p => p.Variants)
+                .AsQueryable();
+
+            // Search filter
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(p =>
+                    p.Name.Contains(search) ||
+                    p.Slug.Contains(search) ||
+                    (p.Description != null && p.Description.Contains(search)));
+            }
+
+            // Category filter
+            if (!string.IsNullOrWhiteSpace(categorySlug))
+            {
+                query = query.Where(p => p.Category.Slug == categorySlug);
+            }
+
+            // Brand filter
+            if (!string.IsNullOrWhiteSpace(brandSlug))
+            {
+                query = query.Where(p => p.Brand.Slug == brandSlug);
+            }
+
+            // Status filter
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(p => p.Status == status);
+            }
+
+            // Order by newest first
+            query = query.OrderByDescending(p => p.CreatedAt);
+
+            var totalRecords = await query.CountAsync();
+
+            var data = await query
+                .Skip((paging.Page - 1) * paging.PageSize)
+                .Take(paging.PageSize)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return new PagedResult<Product>(data, totalRecords, paging.Page, paging.PageSize);
+        }
+
+        public async Task<ProductImage?> GetProductImageByIdAsync(int imageId)
+        {
+            return await _context.ProductImages
+                .FirstOrDefaultAsync(i => i.Id == imageId);
+        }
+
+        public async Task<ProductImage> AddProductImageAsync(ProductImage image)
+        {
+            _context.ProductImages.Add(image);
+            await _context.SaveChangesAsync();
+            return image;
+        }
+
+        public async Task<bool> UpdateProductImageAsync(ProductImage image)
+        {
+            _context.ProductImages.Update(image);
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> DeleteProductImageAsync(int imageId)
+        {
+            var image = await GetProductImageByIdAsync(imageId);
+            if (image == null) return false;
+
+            _context.ProductImages.Remove(image);
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<List<ProductImage>> GetProductImagesAsync(int productId)
+        {
+            return await _context.ProductImages
+                .Where(i => i.ProductId == productId)
+                .OrderBy(i => i.SortOrder)
+                .ToListAsync();
+        }
+
+        public async Task<ProductVariant> AddProductVariantAsync(ProductVariant variant)
+        {
+            _context.ProductVariants.Add(variant);
+            await _context.SaveChangesAsync();
+            return variant;
+        }
+
+        public async Task<bool> DeleteProductVariantAsync(int variantId)
+        {
+            var variant = await GetProductVariantByIdAsync(variantId);
+            if (variant == null) return false;
+
+            _context.ProductVariants.Remove(variant);
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> IsSkuExistsAsync(string sku)
+        {
+            return await _context.ProductVariants
+                .AnyAsync(v => v.Sku == sku);
+        }
+
+        public async Task<bool> IsAttributeValueValidAsync(int attributeId, int valueId)
+        {
+            return await _context.AttributeValues
+                .AnyAsync(v => v.Id == valueId && v.AttributeId == attributeId);
+        }
+
+        public async Task<AttributeValue?> GetOrCreateAttributeValueAsync(int attributeId, string value, int categoryId)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentException("Value cannot be empty", nameof(value));
+
+            // Trim and normalize the value
+            value = value.Trim();
+
+            // First, check if the value already exists for this attribute
+            var existingValue = await _context.AttributeValues
+                .FirstOrDefaultAsync(v => v.AttributeId == attributeId && v.Value == value);
+
+            if (existingValue != null)
+                return existingValue;
+
+            // Validate that the attribute exists and belongs to the category
+            var attribute = await _context.Attributes
+                .Include(a => a.Category)
+                .FirstOrDefaultAsync(a => a.Id == attributeId);
+
+            if (attribute == null)
+                throw new InvalidOperationException($"Attribute with ID {attributeId} not found");
+
+            // Check if attribute belongs to category or is global
+            if (!attribute.IsGlobal && attribute.CategoryId != categoryId)
+                throw new InvalidOperationException($"Attribute {attribute.Name} does not belong to this product's category");
+
+            // Create new attribute value
+            var newValue = new AttributeValue(attributeId, value);
+            _context.AttributeValues.Add(newValue);
+            await _context.SaveChangesAsync();
+
+            return newValue;
+        }
+
+        public async Task<List<ProductAttribute>> GetAttributesByCategoryIdAsync(int categoryId)
+        {
+            return await _context.Attributes
+                .Include(a => a.Values)
+                .Where(a => a.CategoryId == categoryId || a.IsGlobal)
+                .OrderBy(a => a.Name)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<ProductAttribute?> GetAttributeByIdAsync(int attributeId)
+        {
+            return await _context.Attributes
+                .Include(a => a.Values)
+                .Include(a => a.Category)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(a => a.Id == attributeId);
+        }
+
+        public async Task<AttributeValue?> GetAttributeValueAsync(int attributeId, string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            value = value.Trim();
+
+            return await _context.AttributeValues
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v => v.AttributeId == attributeId && v.Value == value);
+        }
+
+        public async Task<ProductAttribute> CreateAttributeAsync(ProductAttribute attribute)
+        {
+            if (attribute == null)
+                throw new ArgumentNullException(nameof(attribute));
+
+            _context.Attributes.Add(attribute);
+            await _context.SaveChangesAsync();
+            return attribute;
+        }
+
+        public async Task<ProductAttribute?> UpdateAttributeAsync(ProductAttribute attribute)
+        {
+            if (attribute == null)
+                throw new ArgumentNullException(nameof(attribute));
+
+            var existing = await _context.Attributes.FindAsync(attribute.Id);
+            if (existing == null)
+                return null;
+
+            _context.Entry(existing).CurrentValues.SetValues(attribute);
+            await _context.SaveChangesAsync();
+            return existing;
+        }
+
+        public async Task<bool> DeleteAttributeAsync(int attributeId)
+        {
+            var attribute = await _context.Attributes
+                .Include(a => a.Values)
+                .FirstOrDefaultAsync(a => a.Id == attributeId);
+
+            if (attribute == null)
+                return false;
+
+            // Check if any variants are using this attribute
+            var isUsed = await _context.Set<ProductVariantAttribute>()
+                .AnyAsync(va => va.AttributeId == attributeId);
+
+            if (isUsed)
+                throw new InvalidOperationException("Cannot delete attribute that is in use by product variants");
+
+            _context.Attributes.Remove(attribute);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<AttributeValue> AddAttributeValueAsync(AttributeValue value)
+        {
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+
+            // Check for duplicate
+            var exists = await _context.AttributeValues
+                .AnyAsync(v => v.AttributeId == value.AttributeId && v.Value == value.Value);
+
+            if (exists)
+                throw new InvalidOperationException($"Value '{value.Value}' already exists for this attribute");
+
+            _context.AttributeValues.Add(value);
+            await _context.SaveChangesAsync();
+            return value;
+        }
+
+        public async Task<AttributeValue?> UpdateAttributeValueAsync(AttributeValue value)
+        {
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+
+            var existing = await _context.AttributeValues.FindAsync(value.Id);
+            if (existing == null)
+                return null;
+
+            // Check for duplicate
+            var duplicate = await _context.AttributeValues
+                .AnyAsync(v => v.Id != value.Id && 
+                              v.AttributeId == value.AttributeId && 
+                              v.Value == value.Value);
+
+            if (duplicate)
+                throw new InvalidOperationException($"Value '{value.Value}' already exists for this attribute");
+
+            _context.Entry(existing).CurrentValues.SetValues(value);
+            await _context.SaveChangesAsync();
+            return existing;
+        }
+
+        public async Task<bool> DeleteAttributeValueAsync(int valueId)
+        {
+            var value = await _context.AttributeValues.FindAsync(valueId);
+            if (value == null)
+                return false;
+
+            // Check if any variants are using this value
+            var isUsed = await _context.Set<ProductVariantAttribute>()
+                .AnyAsync(va => va.ValueId == valueId);
+
+            if (isUsed)
+                throw new InvalidOperationException("Cannot delete attribute value that is in use by product variants");
+
+            _context.AttributeValues.Remove(value);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<AttributeValue?> GetAttributeValueByIdAsync(int valueId)
+        {
+            return await _context.AttributeValues
+                .Include(v => v.Attribute)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v => v.Id == valueId);
         }
 
         public async Task<ProductVariant?> GetProductVariantByIdAsync(int variantId)

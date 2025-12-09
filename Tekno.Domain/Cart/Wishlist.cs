@@ -9,7 +9,8 @@ namespace Tekno.Domain.Cart
         public int VariantId { get; private set; }
         public DateTime AddedAt { get; private set; } = DateTime.UtcNow;
 
-        // Navigation to ProductVariant (can be loaded separately)
+        // Navigation property
+        public Tekno.Domain.Catalog.ProductVariant? Variant { get; private set; }
 
         public Wishlist() { }
 

@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Grid3x3, List, ChevronDown, Loader2 } from "lucide-react";
-import { FilterChips } from "@/components/product/FilterChips";
 import Filter from "@/components/product/Filter";
 import ProductCard from "@/components/product/ProductCard";
 import { Product } from "@/type/product";
@@ -33,6 +32,7 @@ import NoProductAvailable from "@/components/product/NoProductAvailable";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { CategoryTabs } from "@/components/product/CategoryTabs";
+import FilterChips from "@/components/product/FilterChips";
 
 export default function ProductPage() {
   const [loading, setLoading] = useState(false);
@@ -121,10 +121,14 @@ export default function ProductPage() {
     });
   };
 
-  // const handleCategoryChange = (category: Category) => {
-  //   setSelectedCategory(category.slug);
-  //   router.push(`/products?category=${category.slug}`, { scroll: false });
-  // };
+  const HandleRemoveFilter = (f: string) => {
+    setFilters((prev) => prev.filter((item) => item !== f));
+  };
+
+  const handleCategoryChange = (category: Category) => {
+    setSelectedCategory(category.slug);
+    router.push(`/products?category=${category.slug}`, { scroll: false });
+  };
 
   return (
     <>

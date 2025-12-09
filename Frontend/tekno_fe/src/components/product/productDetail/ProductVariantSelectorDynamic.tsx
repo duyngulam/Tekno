@@ -1,0 +1,118 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Product } from "@/type/product";
+import AddToCartButton from "../AddToCartButton";
+
+export default function ProductVariantSelectorDynamic({
+  product,
+}: {
+  product: Product;
+}) {
+  const variants = product?.variants ?? [];
+
+  // 1️⃣ Map thuộc tính động
+  const attributesMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+
+    variants.forEach((variant) => {
+      variant.attributes.forEach((attr) => {
+        if (!map[attr.name]) map[attr.name] = [];
+        attr.value.forEach((v) => {
+          if (!map[attr.name].includes(v)) map[attr.name].push(v);
+        });
+      });
+    });
+
+    return map;
+  }, [variants]);
+
+  // 2️⃣ State chọn thuộc tính
+  const [selectedAttrs, setSelectedAttrs] = useState<
+    Record<string, string | null>
+  >({});
+
+  const handleSelectAttr = (attrName: string, value: string) => {
+    setSelectedAttrs((prev) => ({
+      ...prev,
+      [attrName]: prev[attrName] === value ? null : value,
+    }));
+  };
+
+  // 3️⃣ Tìm variant phù hợp
+  const matchedVariant = useMemo(() => {
+    return variants.find((variant) =>
+      variant.attributes.every((attr) => {
+        const sel = selectedAttrs[attr.name];
+        if (!sel) return false;
+        return attr.value.includes(sel); // vì value là mảng
+      })
+    );
+  }, [variants, selectedAttrs]);
+
+  return (
+    <div className="space-y-6">
+      <h3 className="font-semibold text-lg">Chọn phiên bản</h3>
+
+      {/* DYNAMIC ATTRIBUTE BUTTONS */}
+      {Object.keys(attributesMap).map((attrName) => (
+        <div key={attrName} className="space-y-2">
+          <div className="font-medium">{attrName}</div>
+          <div className="flex flex-wrap gap-2">
+            {attributesMap[attrName]?.map((value) => (
+              <Button
+                key={value}
+                variant="outline"
+                onClick={() => handleSelectAttr(attrName, value)}
+                className={cn(
+                  "px-4 py-2 rounded-md",
+                  selectedAttrs[attrName] === value
+                    ? "border-primary text-primary"
+                    : "border-gray-300"
+                )}
+              >
+                {value}
+              </Button>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* Variant info */}
+      <div className="p-4 border rounded-lg bg-gray-50">
+        {matchedVariant ? (
+          <>
+            <div>
+              <span className="font-medium">SKU:</span> {matchedVariant.sku}
+            </div>
+            <div>
+              <span className="font-medium">Giá:</span>{" "}
+              <span className="font-bold text-primary">
+                {matchedVariant.price.toLocaleString()} đ
+              </span>
+            </div>
+            <div>
+              <span className="font-medium">Kho:</span>{" "}
+              {matchedVariant.stock > 0 ? (
+                <span className="text-green-600">
+                  Còn {matchedVariant.stock} sp
+                </span>
+              ) : (
+                <span className="text-red-500">Hết hàng</span>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="text-gray-500">
+            Vui lòng chọn đủ thuộc tính để xác định phiên bản.
+          </div>
+        )}
+      </div>
+
+      {/* Add to cart */}
+      <AddToCartButton product={product} selectedVariant={matchedVariant} />
+    </div>
+  );
+}
