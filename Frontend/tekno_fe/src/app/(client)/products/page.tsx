@@ -37,15 +37,14 @@ import { CategoryTabs } from "@/components/product/CategoryTabs";
 export default function ProductPage() {
   const [loading, setLoading] = useState(false);
   const [productsList, setproductsList] = useState<Product[]>([]);
+  // filter
   const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [filters, setFilters] = useState<string[]>([
-    "Silver",
-    "Intel Core i9",
-    "Apple",
-    "12 GB",
-  ]);
-  const [sortBy, setSortBy] = useState("newest");
+  const [selectedBrands, setSelectedBrands] = useState<string>();
+  const [sortBy, setSortBy] = useState("created_desc");
+  const [minPrice, setMinPrice] = useState<number>(0);
+  const [maxPrice, setMaxPrice] = useState<number>();
+  const [filters, setFilters] = useState<Record<string, string[]>>({});
+
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const [totalRecords, setTotalRecords] = useState<number>(1);
@@ -55,6 +54,11 @@ export default function ProductPage() {
   const searchParams = useSearchParams();
   const queryCategory = searchParams.get("category") || "";
   console.log(queryCategory);
+
+  const handleAttributesChange = (attrs: Record<string, string[]>) => {
+    setFilters(attrs);
+    setPage(1); // reset page khi filter thay đổi
+  };
 
   useEffect(() => {
     if (queryCategory) {
@@ -69,9 +73,15 @@ export default function ProductPage() {
           category: selectedCategory,
           page: page,
           pageSize: pageSize,
+          sortBy: sortBy,
+          brand: selectedBrands,
+          maxPrice: maxPrice,
+          minPrice: minPrice,
+          filters: filters,
         });
-        console.log("respon:", res);
+        //console.log("respon:", res);
         setproductsList(res.data);
+        setTotalRecords(res.totalRecords);
       } catch (error) {
         console.error("Product fetch error", error);
       } finally {
@@ -79,23 +89,42 @@ export default function ProductPage() {
       }
     };
     fecthProductList();
-  }, [selectedCategory, page, pageSize, sortBy]);
+  }, [
+    selectedCategory,
+    page,
+    pageSize,
+    sortBy,
+    selectedBrands,
+    minPrice,
+    maxPrice,
+    filters,
+  ]);
 
-  const HandleAddFilter = (f: string) => {
+  // chuyển object -> mảng chips để hiển thị
+  const chips = Object.entries(filters).flatMap(([name, vals]) =>
+    vals.map((v) => ({
+      key: `${name}|${v}`,
+      label: `${name}: ${v}`,
+      attrName: name,
+      value: v,
+    }))
+  );
+
+  // remove chip handler
+  const HandleRemoveFilter = (chipKey: string) => {
+    const [name, val] = chipKey.split("|");
     setFilters((prev) => {
-      if (prev.includes(f)) return prev;
-      return [...prev, f];
+      const next = { ...prev };
+      next[name] = (next[name] || []).filter((x) => x !== val);
+      if (!next[name].length) delete next[name];
+      return next;
     });
   };
 
-  const HandleRemoveFilter = (f: string) => {
-    setFilters((prev) => prev.filter((item) => item !== f));
-  };
-
-  const handleCategoryChange = (category: Category) => {
-    setSelectedCategory(category.slug);
-    router.push(`/products?category=${category.slug}`, { scroll: false });
-  };
+  // const handleCategoryChange = (category: Category) => {
+  //   setSelectedCategory(category.slug);
+  //   router.push(`/products?category=${category.slug}`, { scroll: false });
+  // };
 
   return (
     <>
@@ -114,7 +143,20 @@ export default function ProductPage() {
         {/* tutu tinh */}
         <div className="flex">
           <div className="hidden lg:block w-3/12">
-            <Filter />
+            <Filter
+              categoryId={7}
+              selectedBrand={selectedBrands}
+              minPrice={minPrice}
+              maxPrice={maxPrice}
+              onBrandChange={setSelectedBrands}
+              onMinPriceChange={(value) => {
+                setMinPrice(value);
+              }}
+              onMaxPriceChange={(value) => {
+                setMaxPrice(value);
+              }}
+              onAttributesChange={handleAttributesChange}
+            />
           </div>
 
           {/* Content chính */}
@@ -137,10 +179,14 @@ export default function ProductPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="newest">Newest First</SelectItem>
-                    <SelectItem value="asc">Price: Low to High</SelectItem>
-                    <SelectItem value="dasc">Price: High to Low</SelectItem>
-                    <SelectItem value="best">Best Rating</SelectItem>
+                    <SelectItem value="created_desc">Newest First</SelectItem>
+                    <SelectItem value="price_asc">
+                      Price: Low to High
+                    </SelectItem>
+                    <SelectItem value="price_desc">
+                      Price: High to Low
+                    </SelectItem>
+                    <SelectItem value="rating_desc">Best Rating</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
