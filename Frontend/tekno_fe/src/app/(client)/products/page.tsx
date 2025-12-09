@@ -121,12 +121,10 @@ export default function ProductPage() {
     });
   };
 
-  // const handleCategoryChange = (category: Category) => {
-  //   setSelectedCategory(category.slug);
-  //   router.push(`/products?category=${category.slug}`, { scroll: false });
-  // };
-
-  console.log(filters);
+  const handleCategoryChange = (category: Category) => {
+    setSelectedCategory(category.slug);
+    router.push(`/products?category=${category.slug}`, { scroll: false });
+  };
 
   return (
     <>
