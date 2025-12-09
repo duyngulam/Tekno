@@ -7,6 +7,7 @@ using Tekno.Domain.Catalog;
 using Microsoft.EntityFrameworkCore.Storage;
 using Tekno.Application.Common;
 using Tekno.Application.Common.Paging;
+using Tekno.Application.Catalog.DTOs.Products;
 
 namespace Tekno.Application.Catalog.Interface
 {
@@ -20,10 +21,10 @@ namespace Tekno.Application.Catalog.Interface
        Task<bool> UpdateAsync(Category category);
        Task<bool> DeleteAsync(int id);
 
-       // NEW: get attributes applicable for a category (category-specific)
        Task<List<ProductAttribute>> GetAttributesForCategoryAsync(int categoryId);
+       Task<List<ProductAttribute>> GetAttributesForCategoryBySlugAsync(string slug);
 
-       // NEW: Transaction support
-       Task<IDbContextTransaction> BeginTransactionAsync();
+        // NEW: Transaction support
+        Task<IDbContextTransaction> BeginTransactionAsync();
     }
 }

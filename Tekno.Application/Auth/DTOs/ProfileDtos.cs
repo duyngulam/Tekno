@@ -7,7 +7,7 @@ namespace Tekno.Application.Auth.DTOs
     public class UserProfileDto
     {
         public int Id { get; set; }
-        public string Fullname { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }
         public string Role { get; set; } = string.Empty;
@@ -20,7 +20,7 @@ namespace Tekno.Application.Auth.DTOs
     {
         [Required]
         [StringLength(100, MinimumLength = 2, ErrorMessage = "Full name must be between 2 and 100 characters")]
-        public string Fullname { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
 
         [Phone(ErrorMessage = "Invalid phone number format")]
         [StringLength(20)]
@@ -60,7 +60,7 @@ namespace Tekno.Application.Auth.DTOs
     {
         [Required]
         [StringLength(100, MinimumLength = 2, ErrorMessage = "Full name must be between 2 and 100 characters")]
-        public string Fullname { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
 
         [Phone(ErrorMessage = "Invalid phone number format")]
         [StringLength(20)]

@@ -112,6 +112,14 @@ namespace Tekno.Infrastructure.Catalog
                 .AsNoTracking()
                 .ToListAsync();
         }
+        public async Task<List<ProductAttribute>> GetAttributesForCategoryBySlugAsync(string slug)
+        {
+            return await _context.Set<ProductAttribute>()
+                .Include(a => a.Values)
+                .Where(a => !a.IsGlobal && a.Category != null && a.Category.Slug == slug)
+                .AsNoTracking()
+                .ToListAsync();
+        }
 
         // NEW: Transaction support
         public async Task<IDbContextTransaction> BeginTransactionAsync()
