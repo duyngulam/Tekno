@@ -1,0 +1,95 @@
+import { CartResponse } from "@/hook/useCart";
+import { Product } from "@/type/product";
+
+const BASE_URL = "http://localhost:5000/api";
+
+export const cartApi = {
+  getCart: async (token: string): Promise<CartResponse> => {
+    const res = await fetch(`${BASE_URL}/cart`, {
+      credentials: "include",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch cart");
+    return res.json();
+  },
+
+  addToCart: async (
+    token: string,
+    { variantId, quantity }: { variantId: number; quantity: number }
+  ) => {
+    const res = await fetch(`${BASE_URL}/cart/items`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({ variantId, quantity }),
+    });
+
+    if (!res.ok) throw new Error("Failed to add to cart");
+    return res.json();
+  },
+
+  removeFromCart: async (token: string, variantId: number) => {
+    const res = await fetch(`${BASE_URL}/cart/items/${variantId}`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({ variantId }),
+    });
+
+    if (!res.ok) throw new Error("Failed to remove from cart");
+    return res.json();
+  },
+
+cleanCart: async (token: string): Promise<CartResponse> => {
+  const res = await fetch(`${BASE_URL}/cart`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text(); // log chi tiết lỗi backend
+    throw new Error(`Failed to delete cart: ${errorText}`);
+  }
+
+  // Một số API DELETE không trả JSON → check trước khi parse
+
+    return await res.json();
+  
+  },
+updateQuantity: async (
+    variantId: number,
+    quantity: number,
+    token: string
+  ): Promise<CartResponse> => {
+    const res = await fetch(`${BASE_URL}/cart/items/${variantId}`, {
+      method: "PUT",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({ quantity }),
+    });
+
+    if (!res.ok) {
+      const error = await res.text();
+      throw new Error("Failed to update quantity: " + error);
+    }
+
+    return res.json();
+  },
+
+};

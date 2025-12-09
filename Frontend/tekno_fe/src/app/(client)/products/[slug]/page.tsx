@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import AddToFavorButton from "@/components/product/AddToFavorButton";
 import AddToCartButton from "@/components/product/AddToCartButton";
 import NotFoundPage from "../../not-found";
+import ProductVariantSelectorDynamic from "@/components/product/productDetail/ProductVariantSelectorDynamic";
 
 export default async function SingleProductPage({
   params,
@@ -36,7 +37,7 @@ export default async function SingleProductPage({
 }) {
   const { slug } = await params;
   const product = await getProductDetail(slug);
-  const isStock = product?.variants[0].stock;
+  const isStock = product?.variants[0].stock > 0;
 
   if (!product) return NotFoundPage;
 
@@ -113,7 +114,9 @@ export default async function SingleProductPage({
                 <TableCell className="text-gray-500 before:content-['•'] before:mr-2">
                   Screen Size
                 </TableCell>
-                <TableCell>{product.variants[0].attributes[0].value}</TableCell>
+                <TableCell>
+                  {product.variants[0]?.attributes[0]?.value}
+                </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="text-gray-500 before:content-['•'] before:mr-2">
@@ -129,6 +132,8 @@ export default async function SingleProductPage({
               </TableRow>
             </TableBody>
           </Table>
+
+          <ProductVariantSelectorDynamic product={product} />
 
           {/* button add to cart and favor */}
           <div className="flex items-center justify-center gap-5">

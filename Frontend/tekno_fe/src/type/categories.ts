@@ -8,3 +8,7 @@ export interface Category {
   description: string
 }
 
+export type CategoryAttribute = {
+  name: string;
+  value: string[];
+};

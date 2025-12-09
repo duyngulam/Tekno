@@ -13,7 +13,7 @@
 
 
 
-export interface Product  {
+export interface Product {
   id: number;
   name: string;
   slug: string;
@@ -25,21 +25,22 @@ export interface Product  {
   overview: string;
   description: string;
   warrantyInfo: string | null;
+  totalSold: number;
   specs: {
     name: string;
     value: string[];
   }[];
-  primaryImagePath: string;
   images: string[];
   variants: {
     id: number;
     sku: string;
     price: number;
-    stock: boolean;
+    stock: number; // số lượng
     attributes: {
-      name?: string;
-      value?: string;
+      name: string;
+      value: string[]; // mảng string
     }[];
   }[];
-};
+}
+
 
