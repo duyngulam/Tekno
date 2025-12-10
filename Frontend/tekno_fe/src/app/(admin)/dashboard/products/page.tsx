@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { get } from "@/lib/api";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import Actions from "@/components/admin/Actions"; // adjust path if different
+import Actions from "@/components/admin/Actions";
+import Image from "next/image";
+import { uploadImage, updateImageMeta, deleteImage, reorderImages, deleteVariant } from "@/lib/productsImageApi";
 
 type Product = {
   id: number;
@@ -51,6 +53,10 @@ export default function ProductPage() {
   const [openDetail, setOpenDetail] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
+  const [editImages, setEditImages] = useState<any[]>([]);
+  const [newImages, setNewImages] = useState<File[]>([]);
+
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
   const [createData, setCreateData] = useState({
     name: "",
@@ -86,20 +92,11 @@ const loadBrands = async () => {
   try {
     const res = await get("http://localhost:5000/api/admin/brands");
 
-    let list: any[] = [];
-
-    if (Array.isArray(res)) {
-      list = res;
-    }
-    else if (Array.isArray(res?.data)) {
-      list = res.data;
-    }
-    else if (Array.isArray(res?.data?.data)) {
-      list = res.data.data;   // ⭐ TRƯỜNG HỢP CỦA BẠN
-    }
-    else {
-      console.error("Unrecognized brand API format:", res);
-    }
+    const list =
+      res?.data?.data ||
+      res?.data ||
+      (Array.isArray(res) ? res : []) ||
+      [];
 
     setBrands(list);
   } catch (err) {
@@ -108,11 +105,10 @@ const loadBrands = async () => {
   }
 };
 
-
 const loadCategories = async () => {
   try {
-    const cRes = await get("http://localhost:5000/api/admin/categories/tree");
-    let list = cRes?.data?.data || cRes?.data || cRes || [];
+    const res = await get("http://localhost:5000/api/admin/categories/tree");
+    let list = res?.data?.data || res?.data || res || [];
     list = assignParentIds(list);
     setTreeCategories(list);
   } catch (err) {
@@ -123,8 +119,8 @@ const loadCategories = async () => {
 
 const loadProducts = async () => {
   try {
-    const pRes = await get("http://localhost:5000/api/admin/products");
-    const list = pRes?.data?.data || pRes?.data || [];
+    const res = await get("http://localhost:5000/api/admin/products");
+    const list = res?.data?.data || res?.data || [];
     setProducts(list);
   } catch (err) {
     console.error("Product load failed", err);
@@ -224,83 +220,246 @@ const loadProductDetail = async (prod: any) => {
   };
 
   // Open edit modal
-const openEditModal = (prod: any) => {
-  // Map brand name → brandId
+async function fetchProductDetail(prod: any) {
+  try {
+    const slug = prod.slug;
+    if (!slug) return null;
+
+    const res = await fetch(`http://localhost:5000/api/admin/products/${slug}`);
+    if (!res.ok) return null;
+
+    const json = await res.json();
+    return json.data;        // backend trả data trong data
+  } catch (err) {
+    console.error("fetchProductDetail error", err);
+    return null;
+  }
+}
+
+const openEditModal = async (p: any) => {
+  const detail = await fetchProductDetail(p);
+
+  if (!detail) {
+    alert("Không load được dữ liệu sản phẩm!");
+    return;
+  }
+
+  // map brand
   const matchedBrand = brands.find(
-    (b: any) =>
-      b.name?.toLowerCase() === prod.brandName?.toLowerCase() ||
-      b.brandName?.toLowerCase() === prod.brandName?.toLowerCase()
+    (b: any) => b.name.toLowerCase() === detail.brandName?.toLowerCase()
   );
 
-  // Map category name → categoryId
+  // map category
   const matchedCategory = flatCategories.find(
-    (c: any) =>
-      c.name.replace(/—/g, "").trim().toLowerCase() ===
-      prod.categoryName?.toLowerCase()
+    (c: any) => c.name.replace(/—/g, "").trim().toLowerCase() === detail.categoryName?.toLowerCase()
   );
 
   setEditData({
-    id: prod.id,
-    name: prod.name,
-    slug: prod.slug,
-
-    brandId: matchedBrand?.id ?? "",
-    categoryId: matchedCategory?.id ?? "",
-
-    basePrice: prod.basePrice,
-    discountPercent: prod.discountPercent,
-    overview: prod.overview ?? "",
-
-    primaryImagePath: prod.primaryImagePath ?? null,
-    images: [],
+    id: detail.id,
+    name: detail.name,
+    slug: detail.slug,
+    basePrice: detail.basePrice,
+    discountPercent: detail.discountPercent ?? 0,
+    description: detail.description ?? "",
+    longDescription: detail.longDescription ?? "",
+    warrantyInfo: detail.warrantyInfo ?? "",
+    overview: detail.overview ?? "",
+    brandId: matchedBrand?.id ?? null,
+    categoryId: matchedCategory?.id ?? null,
   });
 
+  // set existing images for reorder
+setEditImages(
+  detail.images.map((img: any) => ({
+    id: img.id,
+    imageUrl: img.imageUrl,
+    isPrimary: img.isPrimary,
+    sortOrder: img.sortOrder
+  }))
+);
+
+
+  setNewImages([]);
   setOpenEdit(true);
 };
 
 
-  const handleEditSave = async () => {
-    try {
-      if (!editData || !editData.id) return;
+  const handleDragStart = (e: any, index: number) => {
+  e.dataTransfer.setData("drag-index", index);
+};
 
-      if (!editData.name || !editData.slug || !editData.categoryId || !editData.brandId) {
-        alert("Please fill required fields: Name, Slug, Category, Brand");
-        return;
-      }
+const handleDrop = (e: any, dropIndex: number) => {
+  const dragIndex = Number(e.dataTransfer.getData("drag-index"));
+  if (dragIndex === dropIndex) return;
 
-      const fd = new FormData();
-      fd.append("Name", editData.name);
-      fd.append("Slug", editData.slug);
-      fd.append("CategoryId", String(editData.categoryId));
-      fd.append("BrandId", String(editData.brandId));
-      if (editData.basePrice !== undefined) fd.append("BasePrice", String(editData.basePrice));
-      if (editData.discountPercent !== undefined) fd.append("DiscountPercent", String(editData.discountPercent));
-      if (editData.overview) fd.append("Overview", editData.overview);
+  const updated = [...editImages];
+  const [moved] = updated.splice(dragIndex, 1);
+  updated.splice(dropIndex, 0, moved);
 
-      // append new images
-      for (const f of (editData.images || []) as File[]) {
-        fd.append("Images", f);
-      }
+  // cập nhật sortOrder mới
+  const reordered = updated.map((img, i) => ({
+    ...img,
+    sortOrder: i,
+  }));
 
-      const res = await fetch(`http://localhost:5000/api/admin/products/${editData.id}`, {
-        method: "PUT",
-        body: fd,
-      });
+  setEditImages(reordered);
+};
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Update failed: ${text}`);
-      }
+  const setPrimary = (imgId: number) => {
+  const updated = editImages.map((img) => ({
+    ...img,
+    isPrimary: img.id === imgId,
+  }));
 
-      await loadAll();
-      setOpenEdit(false);
-      setEditData(null);
-      alert("Product updated");
-    } catch (err) {
-      console.error(err);
-      alert("Update failed");
+  setEditImages(updated);
+};
+
+const deleteExistingImage = async (id: number) => {
+  if (!confirm("Delete this image?")) return;
+
+  try {
+    await deleteImage(id);
+    setEditImages((prev) => prev.filter((img) => img.id !== id));
+  } catch (err) {
+    console.error("Failed to delete image:", err);
+    alert("Failed to delete image");
+  }
+};
+  const handleAddNewImages = (e: any) => {
+  setNewImages([...newImages, ...Array.from(e.target.files as FileList)]);
+};
+
+const reorderEditImages = (dropIndex: number) => {
+  if (draggingIndex === null) return;
+
+  const updated = [...editImages];
+  const moved = updated.splice(draggingIndex, 1)[0];
+  updated.splice(dropIndex, 0, moved);
+
+  // update sortOrder
+  const reordered = updated.map((img, i) => ({
+    ...img,
+    sortOrder: i
+  }));
+
+  setEditImages(reordered);
+  setDraggingIndex(null);
+};
+
+const makePrimary = (index: number) => {
+  const updated = editImages.map((img, i) => ({
+    ...img,
+    isPrimary: i === index
+  }));
+  setEditImages(updated);
+};
+
+
+const handleEditSave = async () => {
+  try {
+    // Validate required fields
+    if (!editData.name || !editData.slug || !editData.brandId || !editData.categoryId) {
+      alert("Please fill required fields: Name, Slug, Brand, Category");
+      return;
     }
-  };
+
+    // ========================================
+    // STEP 1: Update basic product info
+    // ========================================
+    const productForm = new FormData();
+    // Note: Don't send Id in body, it's in URL path
+    productForm.append("Name", editData.name);
+    productForm.append("Slug", editData.slug);
+    productForm.append("CategoryId", String(editData.categoryId));
+    productForm.append("BrandId", String(editData.brandId));
+    productForm.append("Status", editData.status || "");
+    productForm.append("BasePrice", String(editData.basePrice || 0));
+    productForm.append("Description", editData.description || "");
+    productForm.append("LongDescription", editData.longDescription || "");
+    productForm.append("WarrantyInfo", editData.warrantyInfo || "");
+    productForm.append("Overview", editData.overview || "");
+    productForm.append("DiscountPercent", String(editData.discountPercent || 0));
+
+    const productRes = await fetch(`http://localhost:5000/api/admin/products/${editData.id}`, {
+      method: "PUT",
+      body: productForm,
+    });
+
+    if (!productRes.ok) {
+      const errorText = await productRes.text();
+      console.error("Update product error:", errorText);
+      throw new Error(`Failed to update product: ${errorText}`);
+    }
+
+    console.log("✅ Step 1: Product info updated");
+
+// ========================================
+// STEP 2: Update existing images metadata
+// ========================================
+for (const img of editImages) {
+  try {
+    const updatePayload = {
+      imageId: img.id,
+      isPrimary: !!img.isPrimary,
+      sortOrder: img.sortOrder ?? 0,
+    };
+
+    const resp = await updateImageMeta(img.id, updatePayload);
+    console.log(`✅ Updated image ${img.id}`, resp);
+  } catch (e) {
+    console.error(`Failed to update image ${img.id}:`, e);
+  }
+}
+// ========================================
+// STEP 3: Upload new images
+// ========================================
+const uploadedImageIds: number[] = [];
+
+if (newImages.length > 0) {
+  for (let i = 0; i < newImages.length; i++) {
+    const file = newImages[i];
+    const isPrimaryForThis = editImages.length === 0 && i === 0;
+
+    try {
+      const result = await uploadImage(file, editData.id, isPrimaryForThis);
+      const newId = result?.id ?? result?.data?.id;
+      if (newId) uploadedImageIds.push(newId);
+      console.log(`✅ Uploaded image ${i + 1}:`, result);
+    } catch (e) {
+      console.error(`Failed to upload image ${i + 1}:`, e);
+    }
+  }
+
+  console.log("✅ Step 3: New images uploaded");
+}
+// ========================================
+// STEP 4: Reorder all images
+// ========================================
+const allImageIds = [...editImages.map((img) => img.id), ...uploadedImageIds];
+
+if (allImageIds.length > 0) {
+  try {
+    const reorderResult = await reorderImages(editData.id, allImageIds);
+    console.log("✅ Step 4: Images reordered", reorderResult);
+  } catch (e) {
+    console.error("Failed to reorder images:", e);
+  }
+}
+
+    // ========================================
+    // SUCCESS
+    // ========================================
+    alert("Product updated successfully!");
+    await loadProducts();
+    setOpenEdit(false);
+    setEditImages([]);
+    setNewImages([]);
+
+  } catch (err) {
+    console.error("Update failed:", err);
+    alert(`Update failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
+};
 
   const deleteProduct = async (id: number) => {
     if (!confirm("Delete product?")) return;
@@ -317,6 +476,7 @@ const openEditModal = (prod: any) => {
       alert("Delete failed");
     }
   };
+
 
   return (
     <div className="p-6">
@@ -348,7 +508,7 @@ const openEditModal = (prod: any) => {
             </thead>
 
             <tbody>
-              {products.map((p) => (
+              {products.map((p) => (                
                 <tr
                   key={p.id}
                   className="cursor-pointer hover:bg-gray-100"
@@ -365,12 +525,40 @@ const openEditModal = (prod: any) => {
                   <td className="p-2">{p.averageRating ?? 0}</td>
                   <td className="p-2">{p.totalReviews ?? 0}</td>
                   <td className="p-2">
-                    {p.primaryImagePath ? (
-                      <img src={p.primaryImagePath} alt={p.name} className="w-20 h-12 object-cover rounded" />
-                    ) : (
-                      <div className="w-20 h-12 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">No image</div>
-                    )}
-                  </td>
+  {(() => {
+    const imgs = p.images || [];
+    const primary = imgs.find((i: any) => i.isPrimary);
+    const count = imgs.length;
+
+    if (!primary)
+      return (
+        <div className="w-20 h-12 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">
+          No image
+        </div>
+      );
+
+    return (
+      <div className="relative w-20 h-12">
+        <Image
+  src={primary.imageUrl}
+  alt={p.name}
+  fill
+  className="object-cover rounded"
+  sizes="80px"
+/>
+
+
+        {/* badge số lượng ảnh */}
+        {count > 1 && (
+          <span className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1 py-[1px] rounded">
+            {count}
+          </span>
+        )}
+      </div>
+    );
+  })()}
+</td>
+
                   <td className="p-2">
                     <div className="flex gap-2">
                       <Actions 
@@ -386,150 +574,250 @@ const openEditModal = (prod: any) => {
         </div>
       )}
 
-      {/* CREATE MODAL */}
-      <Dialog open={openCreate} onOpenChange={setOpenCreate}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Create Product</DialogTitle>
-          </DialogHeader>
+{/* === EDIT PRODUCT MODAL === */}
+{openEdit && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="bg-white w-full max-w-4xl rounded-lg shadow-lg p-6 overflow-y-auto max-h-[90vh]">
 
-          <div className="grid gap-3 mt-2">
-            <div>
-              <label className="block text-sm font-medium">Name *</label>
-              <Input value={createData.name} onChange={(e) => setCreateData({ ...createData, name: e.target.value })} />
-            </div>
+      <h2 className="text-xl font-semibold mb-4">Edit Product</h2>
 
-            <div>
-              <label className="block text-sm font-medium">Slug *</label>
-              <Input value={createData.slug} onChange={(e) => setCreateData({ ...createData, slug: e.target.value })} />
-            </div>
+      {/* NAME + SLUG */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="block font-medium mb-1">Name *</label>
+          <input
+            className="border rounded p-2 w-full"
+            value={editData.name || ""}
+            onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+          />
+        </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium">Brand *</label>
-                <select className="border p-2 rounded w-full" value={String(createData.brandId)} onChange={(e) => setCreateData({ ...createData, brandId: e.target.value })}>
-                  <option value="">-- Select Brand --</option>
-                  {brands.map((b: any) => <option key={b.id} value={b.id}>{b.name ?? b.brandName ?? b.title}</option>)}
-                </select>
+        <div>
+          <label className="block font-medium mb-1">Slug *</label>
+          <input
+            className="border rounded p-2 w-full"
+            value={editData.slug || ""}
+            onChange={(e) => setEditData({ ...editData, slug: e.target.value })}
+          />
+        </div>
+      </div>
+
+      {/* CATEGORY + BRAND */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="block font-medium mb-1">Category *</label>
+          <select
+            className="border rounded p-2 w-full"
+            value={editData.categoryId || ""}
+            onChange={(e) => setEditData({ ...editData, categoryId: Number(e.target.value) })}
+          >
+            <option value="">-- Select --</option>
+            {flatCategories.map((c: any) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Brand *</label>
+          <select
+            className="border rounded p-2 w-full"
+            value={editData.brandId || ""}
+            onChange={(e) => setEditData({ ...editData, brandId: Number(e.target.value) })}
+          >
+            <option value="">-- Select --</option>
+            {brands.map((b: any) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* PRICE + DISCOUNT */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="block font-medium mb-1">Base Price</label>
+          <input
+            type="number"
+            className="border rounded p-2 w-full"
+            value={editData.basePrice || 0}
+            onChange={(e) => setEditData({ ...editData, basePrice: Number(e.target.value) })}
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Discount (%)</label>
+          <input
+            type="number"
+            className="border rounded p-2 w-full"
+            value={editData.discountPercent || 0}
+            onChange={(e) =>
+              setEditData({ ...editData, discountPercent: Number(e.target.value) })
+            }
+          />
+        </div>
+      </div>
+
+      {/* DESCRIPTION */}
+      <div className="mb-4">
+        <label className="block font-medium mb-1">Description</label>
+        <textarea
+          className="border rounded p-2 w-full"
+          rows={3}
+          value={editData.description || ""}
+          onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+        />
+      </div>
+
+      {/* LONG DESCRIPTION */}
+      <div className="mb-4">
+        <label className="block font-medium mb-1">Long Description</label>
+        <textarea
+          className="border rounded p-2 w-full"
+          rows={4}
+          value={editData.longDescription || ""}
+          onChange={(e) => setEditData({ ...editData, longDescription: e.target.value })}
+        />
+      </div>
+
+      {/* OVERVIEW */}
+      <div className="mb-4">
+        <label className="block font-medium mb-1">Overview</label>
+        <textarea
+          className="border rounded p-2 w-full"
+          rows={3}
+          value={editData.overview || ""}
+          onChange={(e) => setEditData({ ...editData, overview: e.target.value })}
+        />
+      </div>
+
+      {/* WARRANTY */}
+      <div className="mb-4">
+        <label className="block font-medium mb-1">Warranty Info</label>
+        <input
+          className="border rounded p-2 w-full"
+          value={editData.warrantyInfo || ""}
+          onChange={(e) => setEditData({ ...editData, warrantyInfo: e.target.value })}
+        />
+      </div>
+
+      {/* ================= EXISTING IMAGES ================= */}
+      <div className="mb-6">
+        <h3 className="font-semibold mb-2">Existing Images (Reorder + Primary)</h3>
+
+        {editImages.length === 0 && (
+          <p className="text-gray-400 text-sm">No existing images</p>
+        )}
+
+        <div className="grid grid-cols-4 gap-2 mt-2">
+
+  {editImages.map((img, index) => (
+    <div
+      key={`${img.id || "temp"}-${index}`}
+      className="relative border rounded overflow-hidden cursor-move p-2"
+      draggable
+      onDragStart={(e) => handleDragStart(e, index)}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => handleDrop(e, index)}
+    >
+      {/* Image */}
+<div className="relative w-full h-24">
+  <Image
+    src={img.imageUrl}
+    alt="Product image"
+    fill
+    sizes="200px"
+    className="object-cover rounded"
+  />
+</div>
+
+
+      {/* Primary radio */}
+      <label className="flex items-center gap-1 text-sm mt-1">
+        <input
+          type="radio"
+          name="primaryImg"
+          checked={!!img.isPrimary}   // 🔥 FIX
+          onChange={() => makePrimary(index)}
+        />
+        Primary
+      </label>
+
+      {/* Sort order */}
+      <div className="text-xs text-gray-600">Order: {img.sortOrder}</div>
+    </div>
+  ))}
+</div>
+
+      </div>
+
+      {/* ================= NEW IMAGES ================= */}
+      <div className="mb-6">
+        <h3 className="font-semibold mb-2">Add New Images</h3>
+
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={(e) => {
+            const files = Array.from(e.target.files || []);
+            setNewImages([...newImages, ...files]);
+          }}
+        />
+
+        {/* Preview new images */}
+        {newImages.length > 0 && (
+          <div className="flex flex-wrap gap-4 mt-3">
+            {newImages.map((file, idx) => (
+              <div key={idx} className="border rounded p-2 bg-gray-50 w-32 text-center">
+<div className="relative w-28 h-20 mb-2">
+  <Image
+    src={URL.createObjectURL(file)}
+    alt="new img"
+    fill
+    className="object-cover rounded"
+    sizes="120px"
+/>
+</div>
+                <button
+                  className="text-red-500 text-xs"
+                  onClick={() =>
+                    setNewImages(newImages.filter((_, i) => i !== idx))
+                  }
+                >
+                  Remove
+                </button>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium">Category *</label>
-                <select className="border p-2 rounded w-full" value={String(createData.categoryId)} onChange={(e) => setCreateData({ ...createData, categoryId: e.target.value })}>
-                  <option value="">-- Select Category --</option>
-                  {flatCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium">Base Price</label>
-                <Input type="number" value={String(createData.basePrice)} onChange={(e) => setCreateData({ ...createData, basePrice: Number(e.target.value) })} />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium">Discount Percent</label>
-                <Input type="number" value={String(createData.discountPercent)} onChange={(e) => setCreateData({ ...createData, discountPercent: Number(e.target.value) })} />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium">Overview</label>
-              <textarea value={createData.overview} onChange={(e) => setCreateData({ ...createData, overview: e.target.value })} className="w-full border p-2 rounded" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium">Images (you can select multiple)</label>
-              <input type="file" accept="image/*" multiple onChange={(e) => setCreateData({ ...createData, images: Array.from(e.target.files || []) })} />
-            </div>
-
-            <div>
-              <div>Final price (preview): <strong>{calcFinalPrice(createData.basePrice, createData.discountPercent)}</strong></div>
-            </div>
-
-              <Button onClick={handleCreate}>Create Product</Button>
+            ))}
           </div>
-        </DialogContent>
-      </Dialog>
+        )}
+      </div>
 
-      {/* EDIT MODAL */}
-      <Dialog open={openEdit} onOpenChange={setOpenEdit}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
-          </DialogHeader>
+      {/* BUTTONS */}
+      <div className="flex justify-end gap-3 mt-4">
+        <button
+          className="px-4 py-2 bg-gray-300 rounded"
+          onClick={() => setOpenEdit(false)}
+        >
+          Cancel
+        </button>
 
-          {editData && (
-            <div className="grid gap-3 mt-2">
-              <div>
-                <label className="block text-sm font-medium">Name *</label>
-                <Input value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} />
-              </div>
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+          onClick={handleEditSave}
+        >
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
-              <div>
-                <label className="block text-sm font-medium">Slug *</label>
-                <Input value={editData.slug} onChange={(e) => setEditData({ ...editData, slug: e.target.value })} />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium">Brand *</label>
-                  <select className="border p-2 rounded w-full" value={String(editData.brandId || "")} onChange={(e) => setEditData({ ...editData, brandId: e.target.value })}>
-                    <option value="">-- Select Brand --</option>
-                    {brands.map((b: any) => <option key={b.id} value={b.id}>{b.name ?? b.brandName ?? b.title}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium">Category *</label>
-                  <select className="border p-2 rounded w-full" value={String(editData.categoryId || "")} onChange={(e) => setEditData({ ...editData, categoryId: e.target.value })}>
-                    <option value="">-- Select Category --</option>
-                    {flatCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium">Base Price</label>
-                  <Input type="number" value={String(editData.basePrice || 0)} onChange={(e) => setEditData({ ...editData, basePrice: Number(e.target.value) })} />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium">Discount Percent</label>
-                  <Input type="number" value={String(editData.discountPercent || 0)} onChange={(e) => setEditData({ ...editData, discountPercent: Number(e.target.value) })} />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium">Overview</label>
-                <textarea value={editData.overview || ""} onChange={(e) => setEditData({ ...editData, overview: e.target.value })} className="w-full border p-2 rounded" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium">Images (add new images to upload)</label>
-                <input type="file" accept="image/*" multiple onChange={(e) => setEditData({ ...editData, images: Array.from(e.target.files || []) })} />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium">Existing primary image</label>
-                {editData.primaryImagePath ? (
-                  <img src={editData.primaryImagePath} className="w-28 h-20 object-cover rounded border" />
-                ) : (
-                  <div className="w-28 h-20 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">No image</div>
-                )}
-              </div>
-
-              <div>
-                <div>Final price (preview): <strong>{calcFinalPrice(editData.basePrice, editData.discountPercent)}</strong></div>
-              </div>
-
-                <Button onClick={handleEditSave}>Save</Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+  {/* === PRODUCT DETAIL MODAL === */}
     
     {openDetail && selectedProduct && (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
