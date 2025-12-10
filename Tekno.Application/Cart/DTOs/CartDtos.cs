@@ -61,6 +61,20 @@ namespace Tekno.Application.Cart.DTOs
         public int Quantity { get; set; }
     }
 
+    /// <summary>
+    /// Selected cart item for checkout
+    /// </summary>
+    public class SelectedCartItemDto
+    {
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Variant ID must be greater than 0")]
+        public int VariantId { get; set; }
+
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
+        public int Quantity { get; set; }
+    }
+
     public class WishlistDto
     {
         public int Id { get; set; }
@@ -82,7 +96,7 @@ namespace Tekno.Application.Cart.DTOs
     public class AddToWishlistDto
     {
         [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "product ID must be greater than 0")]
+        [Range(1, int.MaxValue, ErrorMessage = "Product ID must be greater than 0")]
         public int ProductId { get; set; }
     }
 }

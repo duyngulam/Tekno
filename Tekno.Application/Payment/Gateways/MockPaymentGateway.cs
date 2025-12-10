@@ -28,7 +28,8 @@ namespace Tekno.Application.Payment.Gateways
                 request.OrderNumber, request.Amount, request.Currency);
 
             // Simulate transaction ID
-            var transactionId = $"MOCK-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N[..8].ToUpper()}";
+            var guidPart = Guid.NewGuid().ToString("N")[..8].ToUpper();
+            var transactionId = $"MOCK-{DateTime.UtcNow:yyyyMMddHHmmss}-{guidPart}";
 
             // Mock payment URL with Vietnamese parameters
             var paymentUrl = $"{request.ReturnUrl}?transactionId={transactionId}&status=success&amount={request.Amount}&currency={request.Currency}";
@@ -75,10 +76,13 @@ namespace Tekno.Application.Payment.Gateways
             _logger.LogInformation("Mock refund for transaction {TransactionId}, amount {Amount:N0} VND, reason: {Reason}",
                 transactionId, amount, reason);
 
+            var guidPart = Guid.NewGuid().ToString("N")[..8].ToUpper();
+            var refundId = $"REFUND-{DateTime.UtcNow:yyyyMMddHHmmss}-{guidPart}";
+
             return Task.FromResult(new RefundResult
             {
                 Success = true,
-                RefundId = $"REFUND-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N[..8].ToUpper()}",
+                RefundId = refundId,
                 RefundedAmount = amount,
                 GatewayResponse = new
                 {

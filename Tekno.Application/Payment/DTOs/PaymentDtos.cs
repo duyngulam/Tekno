@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Tekno.Application.Cart.DTOs;
 using Tekno.Domain.Payment;
 
 namespace Tekno.Application.Payment.DTOs
@@ -25,6 +27,12 @@ namespace Tekno.Application.Payment.DTOs
         [Required(ErrorMessage = "Return URL is required")]
         [Url(ErrorMessage = "Invalid return URL format")]
         public string ReturnUrl { get; set; } = string.Empty; // Frontend URL to redirect after payment
+
+        /// <summary>
+        /// Selected cart items for checkout
+        /// If null or empty, checkout entire cart
+        /// </summary>
+        public List<SelectedCartItemDto>? SelectedItems { get; set; }
     }
 
     /// <summary>
@@ -41,6 +49,7 @@ namespace Tekno.Application.Payment.DTOs
         public string? QrCodeUrl { get; set; }
         public PaymentStatus Status { get; set; }
         public decimal TotalAmount { get; set; }
+        public int ItemsCount { get; set; }
     }
 
     /// <summary>
@@ -68,8 +77,11 @@ namespace Tekno.Application.Payment.DTOs
         public string OrderNumber { get; set; } = string.Empty;
         public string TransactionId { get; set; } = string.Empty;
         public PaymentGateway Gateway { get; set; }
+        public string GatewayName { get; set; } = string.Empty;
         public PaymentMethod Method { get; set; }
+        public string MethodName { get; set; } = string.Empty;
         public PaymentStatus Status { get; set; }
+        public string StatusName { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public string Currency { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }

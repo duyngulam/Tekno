@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Tekno.Api.Common.Responses;
+using Tekno.Application.Common.Paging;
 using Tekno.Application.Payment.DTOs;
 using Tekno.Application.Payment.Services;
 
@@ -30,22 +31,25 @@ namespace Tekno.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Returns all payments made by the authenticated user, ordered by most recent first.
+        /// Supports pagination for better performance with large payment histories.
         /// 
         /// Example:
-        ///     GET /api/checkout/my-payments
+        ///     GET /api/checkout/my-payments?page=1&amp;pageSize=20
         /// 
-        /// Returns list of payments with order details and status
+        /// Returns paginated list of payments with order details, gateway names, and status
         /// </remarks>
         [HttpGet("my-payments")]
         [Authorize]
-        public async Task<IActionResult> GetMyPayments()
+        public async Task<IActionResult> GetMyPayments(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
         {
             try
             {
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var payments = await _checkoutService.GetUserPaymentsAsync(userId);
+                var payments = await _checkoutService.GetUserPaymentsAsync(userId, page, pageSize);
 
-                return Ok(ApiResponse<List<PaymentStatusDto>>.Ok(payments, "Payment history retrieved successfully"));
+                return Ok(ApiResponse<PagedResult<PaymentStatusDto>>.Ok(payments, "Payment history retrieved successfully"));
             }
             catch (Exception ex)
             {
@@ -60,24 +64,56 @@ namespace Tekno.Api.Controllers
         /// <remarks>
         /// Workflow:
         /// 1. Validates user's cart
-        /// 2. Creates order from cart items
+        /// 2. Creates order from selected cart items (or all items if not specified)
         /// 3. Initiates payment with selected gateway
         /// 4. Returns payment URL to redirect customer
-        /// 5. Clears cart after successful order creation
+        /// 5. Removes checked out items from cart (partial or full)
         /// 
-        /// Example request:
+        /// Example request (Full cart checkout):
         /// 
         ///     POST /api/checkout
         ///     {
         ///       "shippingAddressId": 1,
-        ///       "gateway": 0,  // 0=Mock, 1=Stripe, 2=PayPal, 3=VNPay, 4=MoMo, 5=ZaloPay
-        ///       "method": 1,   // 1=CreditCard, 2=DebitCard, 3=BankTransfer, 4=EWallet, 5=Cash
-        ///       "couponCode": "SAVE10",
+        ///       "gateway": 0,
+        ///       "method": 1,
         ///       "note": "Please deliver after 5pm",
-        ///       "returnUrl": "https://yoursite.com/payment/result"
+        ///       "returnUrl": "http://localhost:3000/payment/result"
         ///     }
         /// 
-        /// Response includes paymentUrl - redirect customer there to complete payment
+        /// Example request (Partial cart checkout with selected items):
+        /// 
+        ///     POST /api/checkout
+        ///     {
+        ///       "shippingAddressId": 1,
+        ///       "gateway": 0,
+        ///       "method": 1,
+        ///       "note": "Buy 2 iPhone 15 Pro Max",
+        ///       "returnUrl": "http://localhost:3000/payment/result",
+        ///       "selectedItems": [
+        ///         {
+        ///           "variantId": 11,
+        ///           "quantity": 2
+        ///         }
+        ///       ]
+        ///     }
+        /// 
+        /// Payment Gateways:
+        /// - 0 = Mock (for testing)
+        /// - 1 = Stripe (credit/debit cards)
+        /// - 2 = PayPal
+        /// - 3 = VNPay (Vietnam)
+        /// - 4 = MoMo (Vietnam e-wallet)
+        /// - 5 = ZaloPay (Vietnam e-wallet)
+        /// 
+        /// Payment Methods:
+        /// - 1 = CreditCard
+        /// - 2 = DebitCard
+        /// - 3 = BankTransfer
+        /// - 4 = EWallet
+        /// - 5 = Cash (COD)
+        /// 
+        /// Response includes paymentUrl - redirect customer to complete payment.
+        /// For Mock gateway, payment auto-succeeds for testing.
         /// </remarks>
         [HttpPost]
         [Authorize]
