@@ -33,13 +33,14 @@ namespace Tekno.Application.Cart.DTOs
         public string CategoryName { get; set; } = string.Empty;
         public string? PrimaryImage { get; set; }
         public int AvailableStock { get; set; }
+        public decimal? DiscountPercent { get; set; }
         public List<VariantAttributeInfo> Attributes { get; set; } = new();
     }
 
     public class VariantAttributeInfo
     {
-        public string AttributeName { get; set; } = string.Empty;
-        public string AttributeValue { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
     }
 
     public class AddToCartDto
@@ -64,25 +65,24 @@ namespace Tekno.Application.Cart.DTOs
     {
         public int Id { get; set; }
         public int UserId { get; set; }
-        public int VariantId { get; set; }
+        public int ProductId { get; set; }
         public DateTime AddedAt { get; set; }
 
-        // Variant details (populated from ProductVariant)
+        // Product details
         public string ProductName { get; set; } = string.Empty;
         public string ProductSlug { get; set; } = string.Empty;
-        public string Sku { get; set; } = string.Empty;
         public string BrandName { get; set; } = string.Empty;
         public string CategoryName { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public int Stock { get; set; }
+        public decimal BasePrice { get; set; }
         public string? PrimaryImage { get; set; }
-        public List<VariantAttributeInfo> Attributes { get; set; } = new();
+        public int TotalVariants { get; set; }
+        public bool IsInStock { get; set; }
     }
 
     public class AddToWishlistDto
     {
         [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "Variant ID must be greater than 0")]
-        public int VariantId { get; set; }
+        [Range(1, int.MaxValue, ErrorMessage = "product ID must be greater than 0")]
+        public int ProductId { get; set; }
     }
 }

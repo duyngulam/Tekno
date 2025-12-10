@@ -100,6 +100,9 @@ namespace Tekno.Infrastructure
             
             // Blog
             services.AddScoped<IBlogPostRepository, BlogPostRepository>();
+            
+            // Payment
+            services.AddScoped<Application.Payment.Interfaces.IPaymentRepository, Infrastructure.Payment.PaymentRepository>();
 
             // ===================================================
             // 6️⃣ APPLICATION SERVICES
@@ -130,6 +133,11 @@ namespace Tekno.Infrastructure
             
             // Blog
             services.AddScoped<BlogPostService>();
+            
+            // Payment
+            services.AddScoped<Application.Payment.Services.CheckoutService>();
+            services.AddScoped<Application.Payment.Services.AdminPaymentService>();
+            services.AddScoped<Application.Payment.Services.PaymentGatewayFactory>();
 
             // ===================================================
             // 7️⃣ ELASTICSEARCH SERVICES

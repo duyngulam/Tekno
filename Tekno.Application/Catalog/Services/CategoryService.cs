@@ -72,7 +72,7 @@ namespace Tekno.Application.Catalog.Services
                         Name = c.Name,
                         Slug = c.Slug,
                         IconPath = c.IconPath,
-                        ImageUrl = c.ImageUrl, // NEW
+                        ImageUrl = c.ImageUrl,
                         SubCategories = BuildTree(c.Id)
                     }).ToList();
             }

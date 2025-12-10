@@ -36,40 +36,36 @@ namespace Tekno.Application.Cart.DTOs
                 .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src => 
                     src.Variant != null ? src.Variant.VariantAttributes.Select(va => new VariantAttributeInfo
                     {
-                        AttributeName = va.Attribute != null ? va.Attribute.Name : string.Empty,
-                        AttributeValue = va.Value != null ? va.Value.Value : string.Empty
+                        Name = va.Attribute != null ? va.Attribute.Name : string.Empty,
+                        Value = va.Value != null ? va.Value.Value : string.Empty
                     }).ToList() : new System.Collections.Generic.List<VariantAttributeInfo>()));
 
             // Wishlist -> WishlistDto
             CreateMap<Wishlist, WishlistDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => 
-                    src.Variant != null ? src.Variant.Product.Name : string.Empty))
+                    src.Product != null ? src.Product.Name : string.Empty))
                 .ForMember(dest => dest.ProductSlug, opt => opt.MapFrom(src => 
-                    src.Variant != null ? src.Variant.Product.Slug : string.Empty))
-                .ForMember(dest => dest.Sku, opt => opt.MapFrom(src => 
-                    src.Variant != null ? src.Variant.Sku : string.Empty))
+                    src.Product != null ? src.Product.Slug : string.Empty))
                 .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => 
-                    src.Variant != null && src.Variant.Product.Brand != null ? src.Variant.Product.Brand.Name : string.Empty))
+                    src.Product != null && src.Product.Brand != null ? src.Product.Brand.Name : string.Empty))
                 .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => 
-                    src.Variant != null && src.Variant.Product.Category != null ? src.Variant.Product.Category.Name : string.Empty))
-                .ForMember(dest => dest.Price, opt => opt.MapFrom(src => 
-                    src.Variant != null ? src.Variant.Price : 0))
-                .ForMember(dest => dest.Stock, opt => opt.MapFrom(src => 
-                    src.Variant != null ? src.Variant.Stock : 0))
+                    src.Product != null && src.Product.Category != null ? src.Product.Category.Name : string.Empty))
+                .ForMember(dest => dest.BasePrice, opt => opt.MapFrom(src => 
+                    src.Product != null ? src.Product.BasePrice : 0))
                 .ForMember(dest => dest.PrimaryImage, opt => opt.MapFrom(src => 
-                    src.Variant != null && src.Variant.Product.Images != null 
-                        ? src.Variant.Product.Images.FirstOrDefault(i => i.IsPrimary) != null
-                            ? src.Variant.Product.Images.First(i => i.IsPrimary).ImageUrl
-                            : src.Variant.Product.Images.FirstOrDefault() != null
-                                ? src.Variant.Product.Images.First().ImageUrl
+                    src.Product != null && src.Product.Images != null 
+                        ? src.Product.Images.FirstOrDefault(i => i.IsPrimary) != null
+                            ? src.Product.Images.First(i => i.IsPrimary).ImageUrl
+                            : src.Product.Images.FirstOrDefault() != null
+                                ? src.Product.Images.First().ImageUrl
                                 : null
                         : null))
-                .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src => 
-                    src.Variant != null ? src.Variant.VariantAttributes.Select(va => new VariantAttributeInfo
-                    {
-                        AttributeName = va.Attribute != null ? va.Attribute.Name : string.Empty,
-                        AttributeValue = va.Value != null ? va.Value.Value : string.Empty
-                    }).ToList() : new System.Collections.Generic.List<VariantAttributeInfo>()));
+                .ForMember(dest => dest.TotalVariants, opt => opt.MapFrom(src => 
+                    src.Product != null && src.Product.Variants != null ? src.Product.Variants.Count : 0))
+                .ForMember(dest => dest.IsInStock, opt => opt.MapFrom(src => 
+                    src.Product != null && src.Product.Variants != null 
+                        ? src.Product.Variants.Any(v => v.Stock > 0) 
+                        : false));
         }
     }
 }

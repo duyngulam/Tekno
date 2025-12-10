@@ -122,15 +122,21 @@ namespace Tekno.Infrastructure.Persistence.Configurations
             builder.Property(w => w.UserId)
                 .IsRequired();
 
-            builder.Property(w => w.VariantId)
+            builder.Property(w => w.ProductId)
                 .IsRequired();
 
             builder.Property(w => w.AddedAt)
                 .HasColumnType("timestamptz")
                 .HasDefaultValueSql("NOW()");
 
-            // Unique constraint: one variant per user wishlist
-            builder.HasIndex(w => new { w.UserId, w.VariantId }).IsUnique();
+            // Unique constraint: one product per user wishlist
+            builder.HasIndex(w => new { w.UserId, w.ProductId }).IsUnique();
+
+            // Relationship with Product
+            builder.HasOne(w => w.Product)
+                .WithMany()
+                .HasForeignKey(w => w.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // ========== SEED WISHLIST DATA (Customer User Only) ==========
             builder.HasData(
@@ -139,21 +145,21 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 {
                     Id = 1,
                     UserId = 2, // Customer user
-                    VariantId = 2, // Dell XPS 13 i7/16GB/1TB
+                    ProductId = 2, // MacBook Air M2
                     AddedAt = new DateTime(2025, 1, 10, 9, 0, 0, DateTimeKind.Utc)
                 },
                 new
                 {
                     Id = 2,
                     UserId = 2, // Customer user
-                    VariantId = 27, // Galaxy Tab S9
+                    ProductId = 21, // Samsung Galaxy Tab S9
                     AddedAt = new DateTime(2025, 1, 11, 14, 30, 0, DateTimeKind.Utc)
                 },
                 new
                 {
                     Id = 3,
                     UserId = 2, // Customer user
-                    VariantId = 31, // Dell UltraSharp Monitor
+                    ProductId = 30, // Dell UltraSharp Monitor
                     AddedAt = new DateTime(2025, 1, 12, 16, 45, 0, DateTimeKind.Utc)
                 }
             );

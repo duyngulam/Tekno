@@ -198,7 +198,7 @@ namespace Tekno.Api.Controllers.admin
             }
         }
 
-        // ===== Attribute management endpoints merged in =====
+        // ===== Attribute management endpoints=====
 
         /// <summary>
         /// Get a specific attribute by ID

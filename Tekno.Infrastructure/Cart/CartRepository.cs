@@ -143,32 +143,25 @@ namespace Tekno.Infrastructure.Cart
         public async Task<List<Wishlist>> GetByUserIdAsync(int userId)
         {
             return await _context.Set<Wishlist>()
-                .Include(w => w.Variant)
-                    .ThenInclude(v => v.Product)
-                        .ThenInclude(p => p.Images)
-                .Include(w => w.Variant)
-                    .ThenInclude(v => v.Product)
-                        .ThenInclude(p => p.Brand)
-                .Include(w => w.Variant)
-                    .ThenInclude(v => v.Product)
-                        .ThenInclude(p => p.Category)
-                .Include(w => w.Variant)
-                    .ThenInclude(v => v.VariantAttributes)
-                        .ThenInclude(va => va.Attribute)
-                .Include(w => w.Variant)
-                    .ThenInclude(v => v.VariantAttributes)
-                        .ThenInclude(va => va.Value)
+                .Include(w => w.Product)
+                    .ThenInclude(p => p.Images)
+                .Include(w => w.Product)
+                    .ThenInclude(p => p.Brand)
+                .Include(w => w.Product)
+                    .ThenInclude(p => p.Category)
+                .Include(w => w.Product)
+                    .ThenInclude(p => p.Variants)
                 .AsNoTracking()
                 .Where(w => w.UserId == userId)
                 .OrderByDescending(w => w.AddedAt)
                 .ToListAsync();
         }
 
-        public async Task<Wishlist?> GetByUserAndVariantAsync(int userId, int variantId)
+        public async Task<Wishlist?> GetByUserAndProductAsync(int userId, int productId)
         {
             return await _context.Set<Wishlist>()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(w => w.UserId == userId && w.VariantId == variantId);
+                .FirstOrDefaultAsync(w => w.UserId == userId && w.ProductId == productId);
         }
 
         public async Task<Wishlist> AddAsync(Wishlist wishlist)
@@ -178,10 +171,10 @@ namespace Tekno.Infrastructure.Cart
             return wishlist;
         }
 
-        public async Task<bool> RemoveAsync(int userId, int variantId)
+        public async Task<bool> RemoveAsync(int userId, int productId)
         {
             var wishlist = await _context.Set<Wishlist>()
-                .FirstOrDefaultAsync(w => w.UserId == userId && w.VariantId == variantId);
+                .FirstOrDefaultAsync(w => w.UserId == userId && w.ProductId == productId);
             
             if (wishlist == null) return false;
 
@@ -190,11 +183,11 @@ namespace Tekno.Infrastructure.Cart
             return true;
         }
 
-        public async Task<bool> IsInWishlistAsync(int userId, int variantId)
+        public async Task<bool> IsInWishlistAsync(int userId, int productId)
         {
             return await _context.Set<Wishlist>()
                 .AsNoTracking()
-                .AnyAsync(w => w.UserId == userId && w.VariantId == variantId);
+                .AnyAsync(w => w.UserId == userId && w.ProductId == productId);
         }
     }
 }

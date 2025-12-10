@@ -26,6 +26,35 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
+        /// Get current user's payment history
+        /// </summary>
+        /// <remarks>
+        /// Returns all payments made by the authenticated user, ordered by most recent first.
+        /// 
+        /// Example:
+        ///     GET /api/checkout/my-payments
+        /// 
+        /// Returns list of payments with order details and status
+        /// </remarks>
+        [HttpGet("my-payments")]
+        [Authorize]
+        public async Task<IActionResult> GetMyPayments()
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var payments = await _checkoutService.GetUserPaymentsAsync(userId);
+
+                return Ok(ApiResponse<List<PaymentStatusDto>>.Ok(payments, "Payment history retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get payment history for user");
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to get payment history: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
         /// Process checkout - Create order and initiate payment
         /// </summary>
         /// <remarks>

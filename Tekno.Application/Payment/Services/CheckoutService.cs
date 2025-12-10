@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AutoMapper;
 using Tekno.Application.Cart.Interface;
 using Tekno.Application.Common.Exceptions;
 using Tekno.Application.Common.Interfaces;
@@ -23,6 +24,7 @@ namespace Tekno.Application.Payment.Services
         private readonly IOrderRepository _orderRepository;
         private readonly IPaymentRepository _paymentRepository;
         private readonly PaymentGatewayFactory _gatewayFactory;
+        private readonly IMapper _mapper;
         private readonly IAppLogger<CheckoutService> _logger;
 
         public CheckoutService(
@@ -30,12 +32,14 @@ namespace Tekno.Application.Payment.Services
             IOrderRepository orderRepository,
             IPaymentRepository paymentRepository,
             PaymentGatewayFactory gatewayFactory,
+            IMapper mapper,
             IAppLogger<CheckoutService> logger)
         {
             _cartRepository = cartRepository;
             _orderRepository = orderRepository;
             _paymentRepository = paymentRepository;
             _gatewayFactory = gatewayFactory;
+            _mapper = mapper;
             _logger = logger;
         }
 
@@ -48,8 +52,8 @@ namespace Tekno.Application.Payment.Services
             var cart = await _cartRepository.GetByUserIdAsync(userId);
             if (cart == null || !cart.Items.Any())
             {
-                throw new Common.Exceptions.ValidationException(
-                    new System.Collections.Generic.Dictionary<string, string[]>
+                throw new ValidationException(
+                    new Dictionary<string, string[]>
                     {
                         { "Cart", new[] { "Cart is empty" } }
                     });
@@ -194,7 +198,7 @@ namespace Tekno.Application.Payment.Services
 
                 await transaction.CommitAsync();
 
-                return MapToDto(payment);
+                return _mapper.Map<PaymentStatusDto>(payment);
             }
             catch (Exception ex)
             {
@@ -210,31 +214,21 @@ namespace Tekno.Application.Payment.Services
         public async Task<PaymentStatusDto?> GetPaymentStatusAsync(string transactionId)
         {
             var payment = await _paymentRepository.GetByTransactionIdAsync(transactionId);
-            return payment == null ? null : MapToDto(payment);
+            return payment == null ? null : _mapper.Map<PaymentStatusDto>(payment);
+        }
+
+        /// <summary>
+        /// Get user's payment history
+        /// </summary>
+        public async Task<List<PaymentStatusDto>> GetUserPaymentsAsync(int userId)
+        {
+            var payments = await _paymentRepository.GetByUserIdAsync(userId);
+            return _mapper.Map<List<PaymentStatusDto>>(payments);
         }
 
         private static string GenerateOrderNumber()
         {
-            return $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N[..8].ToUpper()}";
-        }
-
-        private static PaymentStatusDto MapToDto(Domain.Payment.Payment payment)
-        {
-            return new PaymentStatusDto
-            {
-                PaymentId = payment.Id,
-                OrderId = payment.OrderId,
-                OrderNumber = payment.Order?.OrderNumber ?? string.Empty,
-                TransactionId = payment.TransactionId,
-                Gateway = payment.Gateway,
-                Method = payment.Method,
-                Status = payment.Status,
-                Amount = payment.Amount,
-                Currency = payment.Currency,
-                CreatedAt = payment.CreatedAt,
-                CompletedAt = payment.CompletedAt,
-                ErrorMessage = payment.ErrorMessage
-            };
+            return $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
         }
     }
 }

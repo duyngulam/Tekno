@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Tekno.Application.Common.Paging;
 using Tekno.Application.Payment.Interfaces;
 using Tekno.Infrastructure.Persistence;
 
@@ -49,6 +50,57 @@ namespace Tekno.Infrastructure.Payment
                 .OrderByDescending(p => p.CreatedAt)
                 .AsNoTracking()
                 .ToListAsync();
+        }
+
+        public async Task<PagedResult<Domain.Payment.Payment>> GetPagedAsync(
+            int? userId = null,
+            Domain.Payment.PaymentStatus? status = null,
+            Domain.Payment.PaymentGateway? gateway = null,
+            string? search = null,
+            PagingParams paging = null)
+        {
+            paging ??= new PagingParams(1, 20);
+
+            var query = _context.Set<Domain.Payment.Payment>()
+                .Include(p => p.Order)
+                .AsNoTracking();
+
+            // Apply filters
+            if (userId.HasValue)
+            {
+                query = query.Where(p => p.UserId == userId.Value);
+            }
+
+            if (status.HasValue)
+            {
+                query = query.Where(p => p.Status == status.Value);
+            }
+
+            if (gateway.HasValue)
+            {
+                query = query.Where(p => p.Gateway == gateway.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(p =>
+                    p.TransactionId.Contains(search) ||
+                    p.Order.OrderNumber.Contains(search));
+            }
+
+            // Order by created date descending (newest first)
+            query = query.OrderByDescending(p => p.CreatedAt);
+
+            // Get total count
+            var totalRecords = await query.CountAsync();
+
+            // Apply pagination
+            var data = await query
+                .Skip((paging.Page - 1) * paging.PageSize)
+                .Take(paging.PageSize)
+                .ToListAsync();
+
+            return new PagedResult<Domain.Payment.Payment>(data, totalRecords, paging.Page, paging.PageSize);
         }
 
         public async Task<Domain.Payment.Payment> CreateAsync(Domain.Payment.Payment payment)

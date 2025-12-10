@@ -40,54 +40,52 @@ namespace Tekno.Application.Cart.Services
 
         public async Task<WishlistDto> AddToWishlistAsync(int userId, AddToWishlistDto dto)
         {
-            // Check if variant exists
-            var variant = await _productRepository.GetProductVariantByIdAsync(dto.VariantId);
-            if (variant == null)
+            // Check if product exists
+            var product = await _productRepository.GetProductByIdAsync(dto.ProductId);
+            if (product == null)
             {
-                throw new NotFoundException("ProductVariant", dto.VariantId);
+                throw new NotFoundException("Product", dto.ProductId);
             }
 
             // Check if already in wishlist
-            var existing = await _wishlistRepository.GetByUserAndVariantAsync(userId, dto.VariantId);
+            var existing = await _wishlistRepository.GetByUserAndProductAsync(userId, dto.ProductId);
             if (existing != null)
             {
-                throw new ConflictException("This item is already in your wishlist", "WISHLIST_DUPLICATE");
+                throw new ConflictException("This product is already in your wishlist", "WISHLIST_DUPLICATE");
             }
 
             // Add to wishlist
-            var wishlist = new Wishlist(userId, dto.VariantId);
+            var wishlist = new Wishlist(userId, dto.ProductId);
             wishlist = await _wishlistRepository.AddAsync(wishlist);
 
             _logger.LogInformation(
-                "User {UserId} added variant {VariantId} to wishlist",
-                userId, dto.VariantId);
+                "User {UserId} added product {ProductId} to wishlist",
+                userId, dto.ProductId);
 
             // Reload wishlist with all navigation properties
-            var reloaded = await _wishlistRepository.GetByUserAndVariantAsync(userId, dto.VariantId);
-            // Since GetByUserAndVariantAsync doesn't include navigation properties, get from full list
             var allWishlist = await _wishlistRepository.GetByUserIdAsync(userId);
             var wishlistWithNav = allWishlist.FirstOrDefault(w => w.Id == wishlist.Id);
             
             return _mapper.Map<WishlistDto>(wishlistWithNav);
         }
 
-        public async Task<bool> RemoveFromWishlistAsync(int userId, int variantId)
+        public async Task<bool> RemoveFromWishlistAsync(int userId, int productId)
         {
-            var success = await _wishlistRepository.RemoveAsync(userId, variantId);
+            var success = await _wishlistRepository.RemoveAsync(userId, productId);
             
             if (success)
             {
                 _logger.LogInformation(
-                    "User {UserId} removed variant {VariantId} from wishlist",
-                    userId, variantId);
+                    "User {UserId} removed product {ProductId} from wishlist",
+                    userId, productId);
             }
 
             return success;
         }
 
-        public async Task<bool> IsInWishlistAsync(int userId, int variantId)
+        public async Task<bool> IsInWishlistAsync(int userId, int productId)
         {
-            return await _wishlistRepository.IsInWishlistAsync(userId, variantId);
+            return await _wishlistRepository.IsInWishlistAsync(userId, productId);
         }
     }
 }
