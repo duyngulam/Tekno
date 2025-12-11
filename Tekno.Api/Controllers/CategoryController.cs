@@ -75,5 +75,11 @@ namespace Tekno.Api.Controllers
             var attributes = await _categoryService.GetAttributesByCategoryIdAsync(id);
             return Ok(ApiResponse<List<ProductAttributeDto>>.Ok(attributes, "Attributes loaded"));
         }
+        [HttpGet("{slug}/attributes")]
+        public async Task<IActionResult> GetAttributesBySlugAsync(string slug)
+        {
+            var attributes = await _categoryService.GetAttributesByCategorySlugAsync(slug);
+            return Ok(ApiResponse<List<ProductAttributeDto>>.Ok(attributes,"Attributes loaded succesfully"));
+        }
     }
 }

@@ -52,7 +52,7 @@ namespace Tekno.Application.Auth.Services
                 throw new NotFoundException("User", userId);
             }
 
-            user.UpdateProfile(dto.Fullname, dto.PhoneNumber);
+            user.UpdateProfile(dto.FullName, dto.PhoneNumber);
             await _userRepository.UpdateAsync(user);
 
             _logger.LogInformation("User {UserId} updated profile", userId);
@@ -84,7 +84,7 @@ namespace Tekno.Application.Auth.Services
             var updatedFields = new List<string>();
 
             // Update fullname and phone
-            user.UpdateProfile(dto.Fullname, dto.PhoneNumber);
+            user.UpdateProfile(dto.FullName, dto.PhoneNumber);
             updatedFields.Add("profile");
 
             // Update email if provided

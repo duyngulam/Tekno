@@ -72,7 +72,7 @@ namespace Tekno.Application.Catalog.Services
                         Name = c.Name,
                         Slug = c.Slug,
                         IconPath = c.IconPath,
-                        ImageUrl = c.ImageUrl, // NEW
+                        ImageUrl = c.ImageUrl,
                         SubCategories = BuildTree(c.Id)
                     }).ToList();
             }
@@ -314,11 +314,16 @@ namespace Tekno.Application.Catalog.Services
             }
         }
 
-        // NEW: expose attributes for a category (includes global attributes)
         public async Task<List<ProductAttributeDto>> GetAttributesByCategoryIdAsync(int categoryId)
         {
             var attrs = await _categoryRepository.GetAttributesForCategoryAsync(categoryId);
             return _mapper.Map<List<ProductAttributeDto>>(attrs);
+        }
+        public async Task<List<ProductAttributeDto>> GetAttributesByCategorySlugAsync(string categorySlug)
+        {
+            var attrs = await _categoryRepository.GetAttributesForCategoryBySlugAsync(categorySlug);
+            return _mapper.Map<List <ProductAttributeDto >> (attrs);
+
         }
     }
 }

@@ -26,6 +26,12 @@ namespace Tekno.Domain.Cart
             UpdatedAt = DateTime.UtcNow;
         }
 
+        // Public method for repository use to update timestamp
+        public void MarkAsUpdated()
+        {
+            UpdatedAt = DateTime.UtcNow;
+        }
+
         public void AddItem(int variantId, int quantity, decimal price)
         {
             var existingItem = Items.FirstOrDefault(i => i.VariantId == variantId);

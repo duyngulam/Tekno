@@ -100,6 +100,9 @@ namespace Tekno.Infrastructure
             
             // Blog
             services.AddScoped<IBlogPostRepository, BlogPostRepository>();
+            
+            // Payment
+            services.AddScoped<Application.Payment.Interfaces.IPaymentRepository, Infrastructure.Payment.PaymentRepository>();
 
             // ===================================================
             // 6️⃣ APPLICATION SERVICES
@@ -130,6 +133,16 @@ namespace Tekno.Infrastructure
             
             // Blog
             services.AddScoped<BlogPostService>();
+            
+            // Payment Services
+            services.AddScoped<Application.Payment.Services.CheckoutService>();
+            services.AddScoped<Application.Payment.Services.AdminPaymentService>();
+            services.AddScoped<Application.Payment.Services.PaymentGatewayFactory>();
+            
+            // Payment Gateways (Strategy Pattern)
+            services.AddScoped<Application.Payment.Interfaces.IPaymentGateway, Application.Payment.Gateways.MockPaymentGateway>();
+            // Add more gateways as needed:
+            // services.AddScoped<Application.Payment.Interfaces.IPaymentGateway, Application.Payment.Gateways.StripePaymentGateway>();
 
             // ===================================================
             // 7️⃣ ELASTICSEARCH SERVICES

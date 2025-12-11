@@ -42,7 +42,7 @@ namespace Tekno.Api.Controllers
         /// 
         ///     POST /api/wishlist/items
         ///     {
-        ///       "variantId": 1
+        ///       "productId": 1
         ///     }
         /// 
         /// </remarks>
@@ -51,32 +51,32 @@ namespace Tekno.Api.Controllers
         {
             var userId = GetCurrentUserId();
             var wishlistItem = await _wishlistService.AddToWishlistAsync(userId, dto);
-            return Ok(ApiResponse<WishlistDto>.Ok(wishlistItem, "Item added to wishlist successfully"));
+            return Ok(ApiResponse<WishlistDto>.Ok(wishlistItem, "Product added to wishlist successfully"));
         }
 
         /// <summary>
         /// Remove item from wishlist
         /// </summary>
-        [HttpDelete("items/{variantId:int}")]
-        public async Task<IActionResult> RemoveFromWishlist(int variantId)
+        [HttpDelete("items/{productId:int}")]
+        public async Task<IActionResult> RemoveFromWishlist(int productId)
         {
             var userId = GetCurrentUserId();
-            var success = await _wishlistService.RemoveFromWishlistAsync(userId, variantId);
+            var success = await _wishlistService.RemoveFromWishlistAsync(userId, productId);
             
             if (!success)
-                return NotFound(ApiResponse<bool>.Fail("Item not found in wishlist"));
+                return NotFound(ApiResponse<bool>.Fail("Product not found in wishlist"));
 
-            return Ok(ApiResponse<bool>.Ok(true, "Item removed from wishlist"));
+            return Ok(ApiResponse<bool>.Ok(true, "Product removed from wishlist"));
         }
 
         /// <summary>
-        /// Check if variant is in wishlist
+        /// Check if product is in wishlist
         /// </summary>
-        [HttpGet("check/{variantId:int}")]
-        public async Task<IActionResult> IsInWishlist(int variantId)
+        [HttpGet("check/{productId:int}")]
+        public async Task<IActionResult> IsInWishlist(int productId)
         {
             var userId = GetCurrentUserId();
-            var isInWishlist = await _wishlistService.IsInWishlistAsync(userId, variantId);
+            var isInWishlist = await _wishlistService.IsInWishlistAsync(userId, productId);
             return Ok(ApiResponse<bool>.Ok(isInWishlist));
         }
 
