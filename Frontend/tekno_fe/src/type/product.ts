@@ -21,6 +21,7 @@ export interface Product {
   categoryName: string;
   basePrice: number;
   discountPercent: number | null;
+  primaryImagePath: string;
   finalPrice: number;
   overview: string;
   description: string;

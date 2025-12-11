@@ -34,6 +34,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
+  // Auto logout khi token hết hạn
+  useEffect(() => {
+    if (!user?.expiresAt) return;
+
+    const expireTime = new Date(user.expiresAt).getTime() - Date.now();
+
+    if (expireTime <= 0) {
+      logout();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      logout();
+    }, expireTime);
+
+    return () => clearTimeout(timer);
+  }, [user]);
+
   const login = async (email: string, password: string) => {
     const res = await loginApi({ email, password });
 

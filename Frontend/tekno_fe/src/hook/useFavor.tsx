@@ -7,13 +7,13 @@ export default function useFavor(enabled = true) {
   const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   const fetchFavor = useCallback(async () => {
     setError(null);
     setLoading(true);
     try {
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
       if (!token) throw new Error("No auth token");
       const res = await favorApi.getFavor(token);
       // favorApi.getFavor may return data array or { data: [...] }, handle both
@@ -34,11 +34,28 @@ export default function useFavor(enabled = true) {
     fetchFavor();
   }, [enabled, fetchFavor]);
 
+  const addToFavor = async (variantId: number) => {
+    if (!token) return alert("Bạn cần đăng nhập!");
+
+    await favorApi.addToFavor(token, variantId);
+    await fetchFavor();
+  };
+
+  // REMOVE ITEM
+  const removeFavor = async (variantId: number) => {
+    if (!token) return;
+
+    await favorApi.removeFavor(token, variantId);
+    await fetchFavor();
+  };
+
   return {
     items,
     setItems,
     loading,
     error,
     refetch: fetchFavor,
+    addToFavor,
+    removeFavor,
   } as const;
 }

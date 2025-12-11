@@ -10,7 +10,6 @@ export const AccountItemsData = [
   { href: "/account/orders", label: "Orders" },
   { href: "/account/wish-list", label: "Wish list" },
   { href: "/account/discount", label: "Discounts" },
-  { href: "/account/notification", label: "Notification" },
   { href: "/contact-us", label: "Contact us" },
 ];
 

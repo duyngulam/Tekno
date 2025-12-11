@@ -138,7 +138,7 @@ const getItemCount = (variantId: number) => {
 
 
   // Tổng tiền (subtotal từ BE)
-  const getSubTotalPrice = () => cart?.data?.subtotal ?? 0;
+  const SubTotalPrice = cart?.data?.subtotal ?? 0;
 
   // Tổng tiền có thể bao gồm thuế/ship nếu có
   const getTotalPrice = () => cart?.data?.subtotal ?? 0;
@@ -181,7 +181,7 @@ const getItemCount = (variantId: number) => {
 
     // Helpers
     getTotalPrice,
-    getSubTotalPrice,
+    SubTotalPrice,
     getTotalItems,
     getItemCount,
     getGroupItems,

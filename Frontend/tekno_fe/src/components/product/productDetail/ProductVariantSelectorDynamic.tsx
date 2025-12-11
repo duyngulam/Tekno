@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Product } from "@/type/product";
 import AddToCartButton from "../AddToCartButton";
+import AddToFavorButton from "../AddToFavorButton";
 
 export default function ProductVariantSelectorDynamic({
   product,
@@ -112,7 +113,10 @@ export default function ProductVariantSelectorDynamic({
       </div>
 
       {/* Add to cart */}
-      <AddToCartButton product={product} selectedVariant={matchedVariant} />
+      <div className="flex items-center justify-center gap-5">
+        <AddToCartButton product={product} selectedVariant={matchedVariant} />
+        <AddToFavorButton product={product} className="relative" />
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Product } from "@/type/product";
 import { Heart } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { useStore } from "../../../store";
+import useFavor from "@/hook/useFavor";
 
 export default function AddToFavorButton({
   product,
@@ -12,18 +12,25 @@ export default function AddToFavorButton({
   product: Product;
   className?: string;
 }) {
-  const { favorProducts, addToFavor, removeFavor } = useStore();
+  const { items, addToFavor, removeFavor } = useFavor();
   const [existingProduct, setExistingProduct] = useState<Product | null>(null);
+
   useEffect(() => {
-    const availableItem = favorProducts.find((item) => item.id === product.id);
+    const availableItem = items.find((item) => item.id === product.id);
     setExistingProduct(availableItem || null);
-  }, [product, favorProducts]);
-  const handleFavor = (e: React.MouseEvent<HTMLSpanElement>) => {
+  }, [product, items]);
+
+  const handleFavor = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    if (product?.id) {
-      addToFavor(product);
+    if (!product?.id) return;
+
+    if (existingProduct) {
+      removeFavor(product.id); // ❌ có rồi thì remove
+    } else {
+      addToFavor(product.id); // ✔️ chưa có thì add
     }
   };
+
   return (
     <div className={cn("", className)}>
       <button
@@ -31,16 +38,9 @@ export default function AddToFavorButton({
         onClick={handleFavor}
       >
         {existingProduct ? (
-          <Heart
-            fill="red"
-            size={20}
-            className="text-primary/80 group-hover:text-white hoverEffect"
-          />
+          <Heart fill="red" size={20} className="hoverEffect" />
         ) : (
-          <Heart
-            size={20}
-            className="text-primary/80 group-hover:text-white hoverEffect"
-          />
+          <Heart size={20} className="text-primary/80 hoverEffect" />
         )}
       </button>
     </div>
