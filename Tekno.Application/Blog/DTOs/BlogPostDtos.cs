@@ -46,11 +46,11 @@ namespace Tekno.Application.Blog.DTOs
 
     public class RelatedProductDto
     {
-        public int ProductId { get; set; }
-        public string ProductName { get; set; } = string.Empty;
-        public string ProductSlug { get; set; } = string.Empty;
-        public string ProductImage { get; set; } = string.Empty;
-        public decimal ProductPrice { get; set; }
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Slug { get; set; } = string.Empty;
+        public string PrimaryImagePath { get; set; } = string.Empty;
+        public decimal BasePrice { get; set; }
     }
 
     /// <summary>
@@ -90,23 +90,20 @@ namespace Tekno.Application.Blog.DTOs
     /// </summary>
     public class UpdateBlogPostDto
     {
-        [Required]
         [StringLength(200, MinimumLength = 10)]
-        public string Title { get; set; } = string.Empty;
+        public string? Title { get; set; } = string.Empty;
 
-        [Required]
         [StringLength(500, MinimumLength = 20)]
-        public string Summary { get; set; } = string.Empty;
+        public string? Summary { get; set; } = string.Empty;
 
-        [Required]
         [MinLength(100)]
-        public string Content { get; set; } = string.Empty;
+        public string? Content { get; set; } = string.Empty;
 
         public IFormFile? FeaturedImage { get; set; } // Optional - only if changing image
+    
+        public List<string>? Tags { get; set; } = new();
 
-        public List<string> Tags { get; set; } = new();
-
-        public List<int> RelatedProductIds { get; set; } = new();
+        public List<int> ProductId { get; set; } = new();
     }
 
     /// <summary>

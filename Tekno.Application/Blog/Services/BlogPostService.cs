@@ -182,7 +182,7 @@ namespace Tekno.Application.Blog.Services
 
                 // Update related products
                 blogPost.ClearRelatedProducts();
-                foreach (var productId in dto.RelatedProductIds)
+                foreach (var productId in dto.ProductId)
                 {
                     if (await _productRepository.IsProductExistByIdAsync(productId))
                     {
@@ -271,11 +271,11 @@ namespace Tekno.Application.Blog.Services
                 {
                     dto.RelatedProducts.Add(new RelatedProductDto
                     {
-                        ProductId = product.Id,
-                        ProductName = product.Name,
-                        ProductSlug = product.Slug,
-                        ProductImage = product.Images?.FirstOrDefault()?.ImageUrl ?? string.Empty,
-                        ProductPrice = product.BasePrice
+                        Id = product.Id,
+                        Name = product.Name,
+                        Slug = product.Slug,
+                        PrimaryImagePath = product.Images?.FirstOrDefault()?.ImageUrl ?? string.Empty,
+                        BasePrice = product.BasePrice
                     });
                 }
             }
