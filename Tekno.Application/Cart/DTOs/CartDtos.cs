@@ -77,7 +77,6 @@ namespace Tekno.Application.Cart.DTOs
 
     public class WishlistDto
     {
-        public int Id { get; set; }
         public int UserId { get; set; }
         public int ProductId { get; set; }
         public DateTime AddedAt { get; set; }
@@ -88,7 +87,7 @@ namespace Tekno.Application.Cart.DTOs
         public string BrandName { get; set; } = string.Empty;
         public string CategoryName { get; set; } = string.Empty;
         public decimal BasePrice { get; set; }
-        public string? PrimaryImage { get; set; }
+        public string? PrimaryImagePath { get; set; }
         public int TotalVariants { get; set; }
         public bool IsInStock { get; set; }
     }

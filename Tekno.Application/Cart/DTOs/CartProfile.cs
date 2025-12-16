@@ -52,7 +52,7 @@ namespace Tekno.Application.Cart.DTOs
                     src.Product != null && src.Product.Category != null ? src.Product.Category.Name : string.Empty))
                 .ForMember(dest => dest.BasePrice, opt => opt.MapFrom(src => 
                     src.Product != null ? src.Product.BasePrice : 0))
-                .ForMember(dest => dest.PrimaryImage, opt => opt.MapFrom(src => 
+                .ForMember(dest => dest.PrimaryImagePath, opt => opt.MapFrom(src => 
                     src.Product != null && src.Product.Images != null 
                         ? src.Product.Images.FirstOrDefault(i => i.IsPrimary) != null
                             ? src.Product.Images.First(i => i.IsPrimary).ImageUrl

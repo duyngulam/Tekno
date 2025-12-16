@@ -1,5 +1,7 @@
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System;
+using System.Linq;
 
 namespace Tekno.Api.Filters
 {
@@ -59,6 +61,27 @@ namespace Tekno.Api.Filters
                     }
                 }
             }
+
+            // If controller name starts with 'Admin', add an additional 'Admin' tag to the operation
+            var controllerName = context.MethodInfo.DeclaringType?.Name;
+            if (!string.IsNullOrEmpty(controllerName) && controllerName.StartsWith("Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                if (operation.Tags == null)
+                    operation.Tags = new System.Collections.Generic.List<OpenApiTag>();
+
+                if (!operation.Tags.Any(t => string.Equals(t.Name, "Admin", StringComparison.OrdinalIgnoreCase)))
+                {
+                    // Insert Admin as first tag so it appears in tag filters easily
+                    operation.Tags.Insert(0, new OpenApiTag { Name = "Admin" });
+                }
+            }
+            else if (operation.Tags != null && operation.Tags.Any(t => t?.Name != null && t.Name.StartsWith("Admin", StringComparison.OrdinalIgnoreCase)))
+            {
+                if (!operation.Tags.Any(t => string.Equals(t.Name, "Admin", StringComparison.OrdinalIgnoreCase)))
+                {
+                    operation.Tags.Insert(0, new OpenApiTag { Name = "Admin" });
+                }
+            }
         }
 
         private static Microsoft.OpenApi.Any.IOpenApiAny? GetExampleForSchema(string schemaName)
@@ -84,14 +107,14 @@ namespace Tekno.Api.Filters
     }
 
     /// <summary>
-    /// Adds descriptions to Swagger tags (controller groups)
+    /// Adds descriptions to Swagger tags (controller groups) and normalizes operation tags
     /// </summary>
     public class SwaggerTagDescriptions : IDocumentFilter
     {
         public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
         {
-            // Provide a curated list of tags. Use a single 'Admin' tag for all admin controllers
-            var tags = new List<OpenApiTag>
+            // Provide a curated list of tags. Keep controller-specific Admin* tags, but also include a general 'Admin' tag
+            var tags = new System.Collections.Generic.List<OpenApiTag>
             {
                 new OpenApiTag
                 {
@@ -115,7 +138,7 @@ namespace Tekno.Api.Filters
                 },
                 new OpenApiTag
                 {
-                    Name = "Category",
+                    Name = "Categories",
                     Description = "**Product Categories** - Browse category tree, get category products"
                 },
                 new OpenApiTag
@@ -160,23 +183,42 @@ namespace Tekno.Api.Filters
                 }
             };
 
-            // Merge with existing tags but avoid duplicate Admin* tags
-            var existing = swaggerDoc.Tags ?? new List<OpenApiTag>();
-            var merged = new List<OpenApiTag>(tags);
+            // Merge with existing tags keeping existing Admin* tags as well
+            var existing = swaggerDoc.Tags ?? new System.Collections.Generic.List<OpenApiTag>();
+            var merged = new System.Collections.Generic.List<OpenApiTag>(tags);
 
             foreach (var ex in existing)
             {
-                // Skip existing tags that start with 'Admin' to avoid duplicates like AdminProduct
-                if (ex.Name.StartsWith("Admin", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
                 if (!merged.Any(t => string.Equals(t.Name, ex.Name, StringComparison.OrdinalIgnoreCase)))
                 {
                     merged.Add(ex);
                 }
             }
 
+            // Sort tags alphabetically by Name
+            merged = merged.OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase).ToList();
+
+            // Assign merged tags to document
             swaggerDoc.Tags = merged;
+
+            // Normalize operation tags across all paths: ensure Admin* operations also contain a general 'Admin' tag
+            foreach (var path in swaggerDoc.Paths)
+            {
+                var pathItem = path.Value;
+
+                foreach (var op in pathItem.Operations.Values)
+                {
+                    var opTags = op.Tags;
+                    if (opTags != null && opTags.Any(t => t?.Name != null && t.Name.StartsWith("Admin", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        if (!opTags.Any(t => string.Equals(t.Name, "Admin", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            // Keep existing AdminProduct etc tags, but also add Admin
+                            op.Tags.Insert(0, new OpenApiTag { Name = "Admin" });
+                        }
+                    }
+                }
+            }
         }
     }
 }

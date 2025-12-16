@@ -35,44 +35,6 @@ namespace Tekno.Api.Controllers
         /// - Attribute/specification filtering (e.g., Color, Size, RAM)
         /// - Multiple sorting options
         /// - Smart search suggestions
-        /// 
-        /// ## Examples
-        /// 
-        /// **Example 1: Basic pagination**
-        /// ```
-        /// GET /api/products?page=1&amp;pageSize=20
-        /// ```
-        /// 
-        /// **Example 2: Search with keyword**
-        /// ```
-        /// GET /api/products?keyword=iPhone&amp;page=1&amp;pageSize=20
-        /// ```
-        /// 
-        /// **Example 3: Filter by category and brand**
-        /// ```
-        /// GET /api/products?category=laptops&amp;brand=dell&amp;page=1&amp;pageSize=20
-        /// ```
-        /// 
-        /// **Example 4: Price range filter**
-        /// ```
-        /// GET /api/products?minPrice=10000000&amp;maxPrice=30000000&amp;page=1&amp;pageSize=20
-        /// ```
-        /// 
-        /// **Example 5: Filter by attributes (Color=Black, RAM=16GB)**
-        /// ```
-        /// GET /api/products?filters[Color]=Black&amp;filters[RAM]=16GB&amp;page=1&amp;pageSize=20
-        /// ```
-        /// 
-        /// **Example 6: Sort by price (ascending)**
-        /// ```
-        /// GET /api/products?sort=price&amp;page=1&amp;pageSize=20
-        /// ```
-        /// 
-        /// **Example 7: Complex search**
-        /// ```
-        /// GET /api/products?keyword=gaming laptop&amp;category=laptops&amp;minPrice=20000000&amp;maxPrice=50000000&amp;filters[RAM]=16GB&amp;filters[GPU]=RTX 3060&amp;sort=price&amp;page=1&amp;pageSize=20
-        /// ```
-        /// 
         /// ## Sorting Options
         /// - `price` - Price ascending (low to high)
         /// - `-price` or `price_desc` - Price descending (high to low)
@@ -91,8 +53,8 @@ namespace Tekno.Api.Controllers
         /// - `filters[Size]=XL` - Products with XL size
         /// - `filters[RAM]=16GB` - Products with 16GB RAM
         /// - `filters[Storage]=512GB` - Products with 512GB storage
-        /// 
-        /// Multiple filters are applied with AND logic (all must match).
+        ///Enhanced nested spec filters with multi-value support (UNION/OR logic)
+        /// Example: filters[ram]=8gb,16gb will match products with RAM 8GB OR 16GB
         /// 
         /// ## Price Format
         /// Prices are in VND (Vietnamese Dong):
@@ -139,30 +101,6 @@ namespace Tekno.Api.Controllers
         /// - Product specifications/attributes
         /// - Category and brand information
         /// - Average rating and review count
-        /// 
-        /// ## What is a Slug?
-        /// A slug is a URL-friendly version of the product name.
-        /// 
-        /// Examples:
-        /// - Product Name: "iPhone 15 Pro Max 256GB"
-        /// - Slug: `iphone-15-pro-max-256gb`
-        /// 
-        /// ## Examples
-        /// 
-        /// **Example 1: Get iPhone details**
-        /// ```
-        /// GET /api/products/iphone-15-pro-max-256gb
-        /// ```
-        /// 
-        /// **Example 2: Get laptop details**
-        /// ```
-        /// GET /api/products/dell-xps-15-9520-i7-16gb-512gb
-        /// ```
-        /// 
-        /// **Example 3: Get accessory details**
-        /// ```
-        /// GET /api/products/airpods-pro-2nd-generation
-        /// ```
         /// 
         /// ## Use Cases
         /// - Product detail page
