@@ -9,9 +9,6 @@ using Tekno.Application.Promotion.Services;
 
 namespace Tekno.Api.Controllers.Admin
 {
-    /// <summary>
-    /// Admin-only coupon management endpoints
-    /// </summary>
     [ApiController]
     [Route("api/admin/coupons")]
     //[Authorize(Roles = "Admin")]

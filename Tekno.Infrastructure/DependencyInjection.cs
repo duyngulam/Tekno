@@ -65,7 +65,12 @@ namespace Tekno.Infrastructure
             });
 
             // ===================================================
-            // 4️⃣ INFRASTRUCTURE SERVICES
+            // 4️⃣ HTTP CLIENT (for payment gateways)
+            // ===================================================
+            services.AddHttpClient();
+
+            // ===================================================
+            // 5️⃣ INFRASTRUCTURE SERVICES
             // ===================================================
             services.AddScoped<IJwtProvider, JwtProvider>();
             services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
@@ -74,7 +79,7 @@ namespace Tekno.Infrastructure
             services.AddScoped<ICacheService, RedisCacheService>();
 
             // ===================================================
-            // 5️⃣ REPOSITORIES
+            // 6️⃣ REPOSITORIES
             // ===================================================
             // Auth
             services.AddScoped<IUserRepository, UserRepository>();
@@ -105,7 +110,7 @@ namespace Tekno.Infrastructure
             services.AddScoped<Application.Payment.Interfaces.IPaymentRepository, Infrastructure.Payment.PaymentRepository>();
 
             // ===================================================
-            // 6️⃣ APPLICATION SERVICES
+            // 7️⃣ APPLICATION SERVICES
             // ===================================================
             // Auth & Profile
             services.AddScoped<AuthService>();
@@ -135,7 +140,7 @@ namespace Tekno.Infrastructure
             services.AddScoped<BlogPostService>();
             
             // Payment Services
-            services.AddScoped<Application.Payment.Services.CheckoutService>();
+            services.AddScoped<Application.Payment.Services.PaymentService>();
             services.AddScoped<Application.Payment.Services.AdminPaymentService>();
             services.AddScoped<Application.Payment.Services.PaymentGatewayFactory>();
             
@@ -145,7 +150,7 @@ namespace Tekno.Infrastructure
             // services.AddScoped<Application.Payment.Interfaces.IPaymentGateway, Application.Payment.Gateways.StripePaymentGateway>();
 
             // ===================================================
-            // 7️⃣ ELASTICSEARCH SERVICES
+            // 8️⃣ ELASTICSEARCH SERVICES
             // ===================================================
             services.AddScoped<IElasticProductService, ElasticProductService>();
             services.AddScoped<ElasticBulkIndexer>();

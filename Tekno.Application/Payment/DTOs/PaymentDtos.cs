@@ -7,9 +7,9 @@ using Tekno.Domain.Payment;
 namespace Tekno.Application.Payment.DTOs
 {
     /// <summary>
-    /// Checkout request - Create order and initiate payment
+    /// Payment request - Create order and initiate payment
     /// </summary>
-    public class CheckoutRequestDto
+    public class PaymentRequestDto
     {
         [Required(ErrorMessage = "Shipping address is required")]
         public int ShippingAddressId { get; set; }
@@ -36,9 +36,9 @@ namespace Tekno.Application.Payment.DTOs
     }
 
     /// <summary>
-    /// Checkout response with payment URL
+    /// Payment response with payment URL
     /// </summary>
-    public class CheckoutResponseDto
+    public class PaymentResponseDto
     {
         public int OrderId { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
@@ -90,7 +90,7 @@ namespace Tekno.Application.Payment.DTOs
     }
 
     /// <summary>
-    /// Order summary for checkout
+    /// Order summary for payment
     /// </summary>
     public class OrderSummaryDto
     {
