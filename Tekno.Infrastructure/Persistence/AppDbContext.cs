@@ -8,6 +8,7 @@ using Tekno.Domain.Cart;
 using Tekno.Domain.Review;
 using Tekno.Domain.Order;
 using Tekno.Infrastructure.Persistence.Configurations;
+using Tekno.Domain.Location;
 
 namespace Tekno.Infrastructure.Persistence
 {
@@ -16,6 +17,9 @@ namespace Tekno.Infrastructure.Persistence
         public DbSet<User> Users => Set<User>();
         public DbSet<Role> Roles => Set<Role>();
         public DbSet<UserAddress> UserAddresses => Set<UserAddress>();
+        public DbSet<Province> Provinces => Set<Province>();
+        public DbSet<District> Districts => Set<District>();
+        public DbSet<Ward> Wards => Set<Ward>();
         
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Brand> Brands => Set<Brand>();
@@ -107,6 +111,11 @@ namespace Tekno.Infrastructure.Persistence
             // Blog configurations
             modelBuilder.ApplyConfiguration(new BlogPostConfiguration());
             modelBuilder.ApplyConfiguration(new BlogPostTagConfiguration());
+
+            // Location entities
+            modelBuilder.ApplyConfiguration(new ProvinceConfiguration());
+            modelBuilder.ApplyConfiguration(new DistrictConfiguration());
+            modelBuilder.ApplyConfiguration(new WardConfiguration());
         }
     }
 }

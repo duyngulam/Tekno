@@ -47,6 +47,7 @@ namespace Tekno.Application.Payment.Gateways
             _logger.LogInformation("Mock payment URL generated: Amount = {Amount} VND", amountFormatted);
 
             // Automatically trigger the payment callback (simulating gateway webhook)
+            // This runs in the background and doesn't block the response
             _ = Task.Run(async () =>
             {
                 try
@@ -58,6 +59,10 @@ namespace Tekno.Application.Payment.Gateways
 
                     // Call the payment callback endpoint
                     var httpClient = _httpClientFactory.CreateClient();
+                    
+                    // Important: Set a reasonable timeout to prevent hanging
+                    httpClient.Timeout = TimeSpan.FromSeconds(10);
+                    
                     var callbackDto = new
                     {
                         TransactionId = transactionId,
@@ -72,6 +77,7 @@ namespace Tekno.Application.Payment.Gateways
                         }
                     };
 
+                    // Try to post callback - use absolute URL from request.CallbackUrl
                     var response = await httpClient.PostAsJsonAsync(request.CallbackUrl, callbackDto);
 
                     if (response.IsSuccessStatusCode)
@@ -84,20 +90,27 @@ namespace Tekno.Application.Payment.Gateways
                             transactionId, response.StatusCode);
                     }
                 }
+                catch (HttpRequestException ex)
+                {
+                    _logger.LogWarning(ex, "Mock gateway: HTTP error triggering callback for transaction {TransactionId}. " +
+                        "This is expected if running in development without the API running. " +
+                        "Callback URL: {CallbackUrl}", 
+                        transactionId, request.CallbackUrl);
+                }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Mock gateway: Error triggering callback for transaction {TransactionId}", transactionId);
                 }
             });
 
-            return new PaymentInitResult
+            return await Task.FromResult(new PaymentInitResult
             {
                 Success = true,
                 TransactionId = transactionId,
                 PaymentUrl = paymentUrl,
                 GatewayResponse = new
                 {
-                    message = "Mock payment - auto success (VND)",
+                    message = "Mock payment - auto callback will be triggered in 2 seconds (VND)",
                     transactionId,
                     amount = request.Amount,
                     currency = request.Currency,
@@ -108,9 +121,10 @@ namespace Tekno.Application.Payment.Gateways
                     description = $"Payment for order {request.OrderNumber} - {amountFormatted} VND",
                     callbackUrl = request.CallbackUrl,
                     signature = signature,
-                    note = "Payment will be automatically processed and callback triggered"
+                    note = "? Automatic callback enabled - payment will be completed automatically in 2 seconds. " +
+                           "If callback fails, you can manually call POST /api/payment/callback"
                 }
-            };
+            });
         }
 
         public Task<PaymentVerificationResult> VerifyPaymentAsync(string transactionId, object callbackData)
@@ -174,8 +188,9 @@ namespace Tekno.Application.Payment.Gateways
                     var json = JsonSerializer.Serialize(callbackData);
                     var data = JsonSerializer.Deserialize<MockCallbackData>(json);
 
-                    if (data != null)
+                    if (data != null && !string.IsNullOrWhiteSpace(data.Status))
                     {
+                        // Only process if Status is actually provided
                         // Simulate signature verification
                         var isValidSignature = VerifyMockSignature(transactionId, data.Status, data.Signature);
 
@@ -218,8 +233,8 @@ namespace Tekno.Application.Payment.Gateways
                     }
                 }
 
-                // Default: auto-success for testing
-                _logger.LogInformation("Mock: No callback data provided, defaulting to success");
+                // Default: auto-success for testing if no valid callback data provided
+                _logger.LogInformation("Mock: No valid callback data provided, defaulting to success");
                 return new PaymentVerificationResult
                 {
                     IsValid = true,

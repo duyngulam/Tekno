@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Tekno.Application.Cart.Interface;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Common.Exceptions;
@@ -30,6 +31,7 @@ namespace Tekno.Application.Payment.Services
         private readonly PaymentGatewayFactory _gatewayFactory;
         private readonly IMapper _mapper;
         private readonly IAppLogger<PaymentService> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public PaymentService(
             ICartRepository cartRepository,
@@ -38,7 +40,8 @@ namespace Tekno.Application.Payment.Services
             IProductRepository productRepository,
             PaymentGatewayFactory gatewayFactory,
             IMapper mapper,
-            IAppLogger<PaymentService> logger)
+            IAppLogger<PaymentService> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _cartRepository = cartRepository;
             _orderRepository = orderRepository;
@@ -47,6 +50,7 @@ namespace Tekno.Application.Payment.Services
             _gatewayFactory = gatewayFactory;
             _mapper = mapper;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         /// <summary>
@@ -351,9 +355,30 @@ namespace Tekno.Application.Payment.Services
 
         private string GetBaseUrl()
         {
-            // This should be configured from appsettings or environment variable
-            // For now, return a default value - this will be overridden by configuration
-            return "https://localhost:7145"; // TODO: Get from configuration
+            // Get the actual base URL from the current HTTP request
+            var request = _httpContextAccessor.HttpContext?.Request;
+            
+            if (request != null)
+            {
+                var scheme = request.Scheme; // http or https
+                var host = request.Host.Value; // localhost:5000 or localhost:7145
+                var baseUrl = $"{scheme}://{host}";
+                
+                _logger.LogInformation("Using base URL from request: {BaseUrl}", baseUrl);
+                return baseUrl;
+            }
+            
+            // Fallback to environment variable or default
+            var envBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL");
+            if (!string.IsNullOrEmpty(envBaseUrl))
+            {
+                _logger.LogInformation("Using base URL from environment: {BaseUrl}", envBaseUrl);
+                return envBaseUrl;
+            }
+            
+            // Last resort fallback
+            _logger.LogWarning("Using fallback base URL: https://localhost:7145");
+            return "https://localhost:7145";
         }
     }
 }

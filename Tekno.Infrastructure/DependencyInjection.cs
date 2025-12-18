@@ -19,6 +19,7 @@ using Tekno.Application.Promotion.Interface;
 using Tekno.Application.Promotion.Services;
 using Tekno.Application.Review.Interface;
 using Tekno.Application.Review.Services;
+using Tekno.Application.Location.Services;
 using Tekno.Infrastructure.Auth;
 using Tekno.Infrastructure.Blog;
 using Tekno.Infrastructure.Cart;
@@ -29,6 +30,8 @@ using Tekno.Infrastructure.Promotion;
 using Tekno.Infrastructure.Review;
 using Tekno.Infrastructure.Search;
 using Tekno.Infrastructure.Services;
+using Tekno.Application.Location.Interface;
+using Tekno.Infrastructure.Location;
 
 namespace Tekno.Infrastructure
 {
@@ -108,6 +111,9 @@ namespace Tekno.Infrastructure
             // Payment
             services.AddScoped<Application.Payment.Interfaces.IPaymentRepository, Infrastructure.Payment.PaymentRepository>();
 
+            // Location
+            services.AddScoped<ILocationRepository, LocationRepository>();
+
             // ===================================================
             // 7️⃣ APPLICATION SERVICES
             // ===================================================
@@ -145,8 +151,9 @@ namespace Tekno.Infrastructure
             
             // Payment Gateways (Strategy Pattern)
             services.AddScoped<Application.Payment.Interfaces.IPaymentGateway, Application.Payment.Gateways.MockPaymentGateway>();
-            // Add more gateways as needed:
-            // services.AddScoped<Application.Payment.Interfaces.IPaymentGateway, Application.Payment.Gateways.StripePaymentGateway>();
+
+            // Location
+            services.AddScoped<LocationService>();
 
             // ===================================================
             // 8️⃣ ELASTICSEARCH SERVICES
