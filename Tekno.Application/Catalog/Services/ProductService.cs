@@ -93,7 +93,28 @@ namespace Tekno.Application.Catalog.Services
                 return searchResults;
             }
 
-            // Fallback to database
+            // Fallback to database - also cache these results
+            var dbCacheKey = CachePolicies.SearchProductsKey(
+                null, // no keyword
+                request.Category,
+                request.Brand,
+                null, // no filters
+                request.MinPrice,
+                request.MaxPrice,
+                request.Sort,
+                paging.Page,
+                paging.PageSize);
+
+            // Try cache first
+            var cachedDbResults = await _cacheService.GetAsync<PagedResult<ProductSummaryDto>>(dbCacheKey);
+            if (cachedDbResults != null)
+            {
+                _logger.LogInformation("Retrieved database results from cache for category: {Category}, brand: {Brand}", 
+                    request.Category, request.Brand);
+                return cachedDbResults;
+            }
+
+            // Cache miss - query database
             var pagedResult = await _productRepository.GetPagedProductAsync(
                 request.Category,
                 request.Brand,
@@ -108,7 +129,15 @@ namespace Tekno.Application.Catalog.Services
             // Enrich with rating data
             await EnrichWithRatingDataAsync(mapped);
 
-            return new PagedResult<ProductSummaryDto>(mapped, pagedResult.TotalRecords, paging.Page, paging.PageSize);
+            var result = new PagedResult<ProductSummaryDto>(mapped, pagedResult.TotalRecords, paging.Page, paging.PageSize);
+
+            // Cache the database results
+            await _cacheService.SetAsync(dbCacheKey, result, CachePolicies.ProductListTtl);
+            
+            _logger.LogInformation("Database results cached for category: {Category}, brand: {Brand}, page: {Page}", 
+                request.Category, request.Brand, paging.Page);
+
+            return result;
         }
 
         public async Task<ProductDetailDto?> GetProductDetailAsync(string slug)
@@ -763,7 +792,15 @@ namespace Tekno.Application.Catalog.Services
         }
         private void InvalidateSearchCache()
         {
-            _logger.LogInformation("Product changed - search cache will expire naturally in {Minutes} minutes", CachePolicies.SearchTtl.TotalMinutes);
+            // For now, we let cache expire naturally to avoid complex invalidation logic
+            // In a production system, you could use Redis SCAN to find and delete matching keys
+            // or use cache tags/groups for bulk invalidation
+            
+            // Example pattern: cache:search:products:*
+            // This would require ICacheService to support pattern-based deletion
+            
+            _logger.LogInformation("Product changed - search cache will expire naturally in {Minutes} minutes", 
+                CachePolicies.SearchTtl.TotalMinutes);
         }
         public async Task<List<ProductSummaryDto>> GetTopNewProductsByCategoryAsync(string categorySlug, int count = 10)
         {
@@ -794,6 +831,18 @@ namespace Tekno.Application.Catalog.Services
 
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
