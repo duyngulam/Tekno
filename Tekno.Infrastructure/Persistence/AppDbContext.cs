@@ -54,7 +54,6 @@ namespace Tekno.Infrastructure.Persistence
         // Blog entities
         public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
         public DbSet<BlogPostTag> BlogPostTags => Set<BlogPostTag>();
-        public DbSet<BlogPostProduct> BlogPostProducts => Set<BlogPostProduct>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
@@ -108,7 +107,6 @@ namespace Tekno.Infrastructure.Persistence
             // Blog configurations
             modelBuilder.ApplyConfiguration(new BlogPostConfiguration());
             modelBuilder.ApplyConfiguration(new BlogPostTagConfiguration());
-            modelBuilder.ApplyConfiguration(new BlogPostProductConfiguration());
         }
     }
 }

@@ -23,7 +23,6 @@ using Tekno.Infrastructure.Auth;
 using Tekno.Infrastructure.Blog;
 using Tekno.Infrastructure.Cart;
 using Tekno.Infrastructure.Catalog;
-using Tekno.Infrastructure.Logging;
 using Tekno.Infrastructure.Order;
 using Tekno.Infrastructure.Persistence;
 using Tekno.Infrastructure.Promotion;

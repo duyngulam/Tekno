@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Tekno.Api.Common.Responses;
+using Tekno.Api.Commons.Responses;
 using Tekno.Api.Models.Catalog;
-using Tekno.Application.Catalog.DTOs;
 using Tekno.Application.Catalog.DTOs.Products;
 using Tekno.Application.Catalog.Services;
 using Tekno.Application.Common;

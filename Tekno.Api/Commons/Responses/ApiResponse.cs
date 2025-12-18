@@ -1,4 +1,4 @@
-﻿namespace Tekno.Api.Common.Responses
+﻿namespace Tekno.Api.Commons.Responses
 {
     public class ApiResponse<T>
     {

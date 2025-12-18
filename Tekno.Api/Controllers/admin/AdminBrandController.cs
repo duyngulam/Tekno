@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Tekno.Api.Common.Responses;
+using Tekno.Api.Commons.Responses;
 using Tekno.Api.Models.Catalog;
 using Tekno.Api.Models.Catalog.Admin.brand;
 using Tekno.Application.Catalog.DTOs;

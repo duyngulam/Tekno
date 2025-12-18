@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
+using Tekno.Application.Catalog.DTOs.Products;
 
 namespace Tekno.Application.Blog.DTOs
 {
@@ -41,16 +42,8 @@ namespace Tekno.Application.Blog.DTOs
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public List<string> Tags { get; set; } = new();
-        public List<RelatedProductDto> RelatedProducts { get; set; } = new();
-    }
-
-    public class RelatedProductDto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Slug { get; set; } = string.Empty;
-        public string PrimaryImagePath { get; set; } = string.Empty;
-        public decimal BasePrice { get; set; }
+        // Products for direct navigation to product detail page via product ID
+        public List<ProductSummaryDto> Products { get; set; } = new();
     }
 
     /// <summary>
@@ -103,7 +96,7 @@ namespace Tekno.Application.Blog.DTOs
     
         public List<string>? Tags { get; set; } = new();
 
-        public List<int> ProductId { get; set; } = new();
+        public List<int> RelatedProductIds { get; set; } = new();
     }
 
     /// <summary>

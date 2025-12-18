@@ -3,7 +3,7 @@ using Tekno.Application.Auth.Services;
 using Tekno.Api.Models.Auth;
 using Tekno.Application.Auth.DTOs;
 using Microsoft.AspNetCore.Authorization;
-using Tekno.Api.Common.Responses;
+using Tekno.Api.Commons.Responses;
 
 namespace Tekno.Api.Controllers
 {

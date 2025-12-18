@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Tekno.Application.Catalog.DTOs;
 using Tekno.Application.Catalog.DTOs.Admin;
 using Tekno.Application.Catalog.DTOs.Products;
 using Tekno.Application.Catalog.Interface;
