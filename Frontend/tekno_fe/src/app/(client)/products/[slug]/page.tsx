@@ -154,10 +154,6 @@ export default async function SingleProductPage({
 
       {/* SFrequently bought together */}
       <FrequentlyBoughtTogether />
-      {/* Reviews */}
-      <div className="col-span-12 bg-amber-100">
-        <div className="font-medium py-2 ">Reviews</div>
-      </div>
     </Container>
   );
 }

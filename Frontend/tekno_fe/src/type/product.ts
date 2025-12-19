@@ -27,6 +27,7 @@ export interface Product {
   description: string;
   warrantyInfo: string | null;
   totalSold: number;
+  averageRating: number;
   specs: {
     name: string;
     value: string[];

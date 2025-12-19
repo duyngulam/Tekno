@@ -5,7 +5,7 @@ import { Product } from "@/type/product";
 
 export default function useFavor(enabled = true) {
   const [items, setItems] = useState<Product[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -16,7 +16,7 @@ export default function useFavor(enabled = true) {
     try {
       if (!token) throw new Error("No auth token");
       const res = await favorApi.getFavor(token);
-      // favorApi.getFavor may return data array or { data: [...] }, handle both
+
       if (Array.isArray(res)) setItems(res);
       else if (res && Array.isArray((res as any).data))
         setItems((res as any).data);
@@ -27,26 +27,30 @@ export default function useFavor(enabled = true) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     if (!enabled) return;
     fetchFavor();
   }, [enabled, fetchFavor]);
 
-  const addToFavor = async (variantId: number) => {
+  const addToFavor = async (productId: number) => {
     if (!token) return alert("Bạn cần đăng nhập!");
-
-    await favorApi.addToFavor(token, variantId);
+    await favorApi.addToFavor(token, productId);
     await fetchFavor();
   };
 
-  // REMOVE ITEM
-  const removeFavor = async (variantId: number) => {
+  const removeFavor = async (productId: number) => {
     if (!token) return;
-
-    await favorApi.removeFavor(token, variantId);
+    await favorApi.removeFavor(token, productId);
     await fetchFavor();
+  };
+
+  const checkFavor = async (productId: number) => {
+    if (!token) return false; // ✔️ không return undefined
+
+    const res = await favorApi.checkFavor(token, productId);
+    return res.data ?? false;
   };
 
   return {
@@ -57,5 +61,6 @@ export default function useFavor(enabled = true) {
     refetch: fetchFavor,
     addToFavor,
     removeFavor,
-  } as const;
+    checkFavor,
+  };
 }

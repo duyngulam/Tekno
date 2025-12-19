@@ -1,4 +1,4 @@
-import { Blog } from "@/type/blog";
+import { Blog, BlogDetail } from "@/type/blog";
 
 
 export async function getBlogsRecent(): Promise<Blog[]> {
@@ -53,7 +53,7 @@ export async function getBlogsList() {
   }
 }
 
-export async function getBlogDetail(slug: string): Promise<Blog> {
+export async function getBlogDetail(slug: string): Promise<BlogDetail> {
   try {
     const res = await fetch(`http://localhost:5000/api/blog/${slug}`, {
       method: "GET",
@@ -71,7 +71,7 @@ export async function getBlogDetail(slug: string): Promise<Blog> {
       throw new Error(result.message || "Invalid API response");
     }
 
-    return result.data as Blog;
+    return result.data as BlogDetail;
   } catch (error) {
     console.error("Error in getProductDetail:", error);
     throw error;

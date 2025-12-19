@@ -115,7 +115,7 @@ export default function ProductVariantSelectorDynamic({
       {/* Add to cart */}
       <div className="flex items-center justify-center gap-5">
         <AddToCartButton product={product} selectedVariant={matchedVariant} />
-        <AddToFavorButton product={product} className="relative" />
+        <AddToFavorButton productId={product.id} className="relative" />
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import RecentReports from "@/components/blog/RecentReports";
 import { Container } from "@/components/MainLayout/Container";
+import ProductCard from "@/components/product/ProductCard";
 import { Breadcrumb } from "@/components/share/breadcumbCustom";
 import { getBlogDetail } from "@/services/blogs";
 import Image from "next/image";
@@ -11,21 +12,21 @@ export default async function BlogDetail({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  //   const blog = await getBlogDetail(slug);
-  const blog = {
-    id: 5,
-    title: "Tablet giá r? ?áng mua 2025: Xiaomi Pad 6 vs iPad Air M2",
-    slug: "tablet-gia-re-dang-mua-2025",
-    summary:
-      "So sánh hai chi?c tablet t?m trung hot nh?t: Xiaomi Pad 6 giá ch? 8,990,000 VND và iPad Air M2 giá 16,990,000 VND. ?âu là l?a ch?n phù h?p v?i b?n?",
-    featuredImageUrl: "https://www.gstatic.com/webp/gallery/5.jpg",
-    authorName: "",
-    status: "Published",
-    viewCount: 520,
-    publishedAt: "2025-01-15T09:00:00Z",
-    createdAt: "2025-01-14T18:30:00Z",
-    tags: ["ipad", "xiaomi", "budget", "tablet", "comparison"],
-  };
+  const blog = await getBlogDetail(slug);
+  // const blog = {
+  //   id: 5,
+  //   title: "Tablet giá r? ?áng mua 2025: Xiaomi Pad 6 vs iPad Air M2",
+  //   slug: "tablet-gia-re-dang-mua-2025",
+  //   summary:
+  //     "So sánh hai chi?c tablet t?m trung hot nh?t: Xiaomi Pad 6 giá ch? 8,990,000 VND và iPad Air M2 giá 16,990,000 VND. ?âu là l?a ch?n phù h?p v?i b?n?",
+  //   featuredImageUrl: "https://www.gstatic.com/webp/gallery/5.jpg",
+  //   authorName: "",
+  //   status: "Published",
+  //   viewCount: 520,
+  //   publishedAt: "2025-01-15T09:00:00Z",
+  //   createdAt: "2025-01-14T18:30:00Z",
+  //   tags: ["ipad", "xiaomi", "budget", "tablet", "comparison"],
+  // };
 
   return (
     <Container className="flex flex-col space-y-5 my-10">
@@ -35,17 +36,18 @@ export default async function BlogDetail({
           <div> {blog.title} </div>
           <div>
             {" "}
-            by {blog.authorName} on {blog.createdAt}{" "}
+            by {blog.authorName} on{" "}
+            {new Date(blog.createdAt).toLocaleString("vi-VN")}{" "}
           </div>
 
           <Image
             src={blog.featuredImageUrl}
             alt={blog.title}
-            width={800}
-            height={400}
+            width={400}
+            height={200}
             className="w-full h-auto rounded-md"
           />
-          <div> {blog.summary} </div>
+          <div dangerouslySetInnerHTML={{ __html: blog.content }} />
         </div>
         <div className="w-1/4 gap-5 flex flex-col">
           <p>cate</p>
@@ -64,6 +66,13 @@ export default async function BlogDetail({
             </div>
           </div>
         </div>
+      </div>
+      <div>Related Product</div>
+
+      <div className="grid grid-cols-3 gap-5">
+        {blog.relatedProducts?.map((p) => (
+          <ProductCard product={p} />
+        ))}
       </div>
     </Container>
   );
