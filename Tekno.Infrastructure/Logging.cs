@@ -2,7 +2,7 @@
 using System;
 using Tekno.Application.Common.Interfaces;
 
-namespace Tekno.Infrastructure.Logging
+namespace Tekno.Infrastructure
 {
     public class LoggerAdapter<T> : IAppLogger<T>
     {

@@ -60,6 +60,8 @@ namespace Tekno.Domain.Payment
             Status = PaymentStatus.Completed;
             CompletedAt = DateTime.UtcNow;
             GatewayResponse = gatewayResponse;
+            ErrorMessage = null;  // ? Clear any previous error message
+            FailedAt = null;      // ? Clear failed timestamp
         }
 
         public void MarkAsFailed(string errorMessage, string? gatewayResponse = null)
@@ -68,6 +70,7 @@ namespace Tekno.Domain.Payment
             FailedAt = DateTime.UtcNow;
             ErrorMessage = errorMessage;
             GatewayResponse = gatewayResponse;
+            CompletedAt = null;   // ? Clear completed timestamp if previously set
         }
 
         public void MarkAsRefunded()

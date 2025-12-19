@@ -1,7 +1,7 @@
 
 using System.ComponentModel.DataAnnotations;
 
-namespace Tekno.Api.Models.Catalog.Admin
+namespace Tekno.Api.Models.Catalog.Admin.Category
 {
     public class DeleteCategoryApiDto
     {

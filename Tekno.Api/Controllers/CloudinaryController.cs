@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using Tekno.Api.Models;
+using Tekno.Api.Models.Cloudinary;
 using Tekno.Application.Common.Media.Services;
 
 namespace Tekno.Api.Controllers

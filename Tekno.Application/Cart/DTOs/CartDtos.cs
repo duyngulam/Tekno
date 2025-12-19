@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Tekno.Application.Catalog.DTOs.Products;
 
 namespace Tekno.Application.Cart.DTOs
 {
@@ -33,13 +34,14 @@ namespace Tekno.Application.Cart.DTOs
         public string CategoryName { get; set; } = string.Empty;
         public string? PrimaryImage { get; set; }
         public int AvailableStock { get; set; }
+        public decimal? DiscountPercent { get; set; }
         public List<VariantAttributeInfo> Attributes { get; set; } = new();
     }
 
     public class VariantAttributeInfo
     {
-        public string AttributeName { get; set; } = string.Empty;
-        public string AttributeValue { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
     }
 
     public class AddToCartDto
@@ -60,29 +62,33 @@ namespace Tekno.Application.Cart.DTOs
         public int Quantity { get; set; }
     }
 
+    /// <summary>
+    /// Selected cart item for checkout
+    /// </summary>
+    public class SelectedCartItemDto
+    {
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Variant ID must be greater than 0")]
+        public int VariantId { get; set; }
+
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
+        public int Quantity { get; set; }
+    }
+
     public class WishlistDto
     {
-        public int Id { get; set; }
         public int UserId { get; set; }
-        public int VariantId { get; set; }
         public DateTime AddedAt { get; set; }
 
-        // Variant details (populated from ProductVariant)
-        public string ProductName { get; set; } = string.Empty;
-        public string ProductSlug { get; set; } = string.Empty;
-        public string Sku { get; set; } = string.Empty;
-        public string BrandName { get; set; } = string.Empty;
-        public string CategoryName { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public int Stock { get; set; }
-        public string? PrimaryImage { get; set; }
-        public List<VariantAttributeInfo> Attributes { get; set; } = new();
+        // Return the product summary for the wishlist entry
+        public ProductSummaryDto Product { get; set; } = new ProductSummaryDto();
     }
 
     public class AddToWishlistDto
     {
         [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "Variant ID must be greater than 0")]
-        public int VariantId { get; set; }
+        [Range(1, int.MaxValue, ErrorMessage = "Product ID must be greater than 0")]
+        public int ProductId { get; set; }
     }
 }

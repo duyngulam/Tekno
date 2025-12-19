@@ -1,13 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Tekno.Application.Cart.DTOs;
 using Tekno.Domain.Payment;
 
 namespace Tekno.Application.Payment.DTOs
 {
     /// <summary>
-    /// Checkout request - Create order and initiate payment
+    /// Payment request - Create order and initiate payment
     /// </summary>
-    public class CheckoutRequestDto
+    public class PaymentRequestDto
     {
         [Required(ErrorMessage = "Shipping address is required")]
         public int ShippingAddressId { get; set; }
@@ -25,12 +27,18 @@ namespace Tekno.Application.Payment.DTOs
         [Required(ErrorMessage = "Return URL is required")]
         [Url(ErrorMessage = "Invalid return URL format")]
         public string ReturnUrl { get; set; } = string.Empty; // Frontend URL to redirect after payment
+
+        /// <summary>
+        /// Selected cart items for checkout
+        /// If null or empty, checkout entire cart
+        /// </summary>
+        public List<SelectedCartItemDto>? SelectedItems { get; set; }
     }
 
     /// <summary>
-    /// Checkout response with payment URL
+    /// Payment response with payment URL
     /// </summary>
-    public class CheckoutResponseDto
+    public class PaymentResponseDto
     {
         public int OrderId { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
@@ -41,6 +49,7 @@ namespace Tekno.Application.Payment.DTOs
         public string? QrCodeUrl { get; set; }
         public PaymentStatus Status { get; set; }
         public decimal TotalAmount { get; set; }
+        public int ItemsCount { get; set; }
     }
 
     /// <summary>
@@ -68,8 +77,11 @@ namespace Tekno.Application.Payment.DTOs
         public string OrderNumber { get; set; } = string.Empty;
         public string TransactionId { get; set; } = string.Empty;
         public PaymentGateway Gateway { get; set; }
+        public string GatewayName { get; set; } = string.Empty;
         public PaymentMethod Method { get; set; }
+        public string MethodName { get; set; } = string.Empty;
         public PaymentStatus Status { get; set; }
+        public string StatusName { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public string Currency { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
@@ -78,7 +90,7 @@ namespace Tekno.Application.Payment.DTOs
     }
 
     /// <summary>
-    /// Order summary for checkout
+    /// Order summary for payment
     /// </summary>
     public class OrderSummaryDto
     {

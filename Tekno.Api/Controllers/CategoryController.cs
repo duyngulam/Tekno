@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Tekno.Api.Common.Responses;
 using Tekno.Application.Catalog.Services;
 using Tekno.Application.Catalog.DTOs;
 using Tekno.Api.Models.Catalog;
@@ -7,6 +6,7 @@ using AutoMapper;
 using Tekno.Application.Catalog.DTOs.Products;
 using Tekno.Application.Common.Paging;
 using System.Linq;
+using Tekno.Api.Commons.Responses;
 
 namespace Tekno.Api.Controllers
 {

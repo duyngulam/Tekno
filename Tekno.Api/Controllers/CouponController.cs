@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Tekno.Api.Common.Responses;
+using Tekno.Api.Commons.Responses;
 using Tekno.Application.Common.Paging;
 using Tekno.Application.Promotion.DTOs;
 using Tekno.Application.Promotion.Services;

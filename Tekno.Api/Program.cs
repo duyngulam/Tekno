@@ -5,6 +5,8 @@ using Microsoft.OpenApi.Models;
 using Nest;
 using System.Reflection;
 using System.Text;
+using System.Text.Json.Serialization;
+using Tekno.Api.Filters;
 using Tekno.Api.Middlewares;
 using Tekno.Application.Auth.DTOs;
 using Tekno.Infrastructure;
@@ -73,33 +75,132 @@ namespace Tekno.Api
                 // Register validation filter globally
                 options.Filters.Add<ValidationFilterAttribute>();
             })
+            // DO NOT add JsonStringEnumConverter - we want numeric enum values for clarity
             .ConfigureApiBehaviorOptions(options =>
             {
                 options.SuppressModelStateInvalidFilter = true; // Allow filter to work
             });
+
+            // Add HttpContextAccessor for accessing current request context
+            builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddEndpointsApiExplorer();
             
             // Swagger configuration with JWT support
             builder.Services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Tekno API", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo 
+                { 
+                    Title = "Tekno API", 
+                    Version = "v1",
+                    Description = @"
+## 🚀 Tekno E-Commerce API
+
+Complete REST API for e-commerce platform with:
+- 🔐 JWT Authentication & Authorization
+- 🛒 Cart & Wishlist Management
+- 💳 Payment Processing (Mock, Stripe, VNPay)
+- 📦 Product Catalog & Search
+- ⭐ Reviews & Ratings
+- 📊 Admin Statistics & Reports
+- 🎯 Promotions & Coupons
+
+### Quick Start
+1. **Register**: POST `/api/auth/register`
+2. **Login**: POST `/api/auth/login` to get JWT token
+3. **Authorize**: Click 🔓 button and enter: `Bearer YOUR_TOKEN`
+4. **Browse Products**: GET `/api/products`
+5. **Add to Cart**: POST `/api/cart/items`
+6. **Checkout**: POST `/api/payment/process`
+
+### Payment Flow
+```
+1. Add items to cart
+2. POST /api/payment/process (creates order & initiates payment)
+3. Redirect to payment gateway
+4. Gateway calls POST /api/payment/callback (webhook)
+5. GET /api/payment/status/{transactionId} (check status)
+```
+
+### Admin Endpoints
+Admin endpoints require `Admin` role. Test accounts:
+- Admin: `admin@tekno.com` / `Admin123!`
+- User: `john.doe@tekno.com` / `User123!`
+
+### Environment
+- Base URL: `https://localhost:7145`
+- Database: PostgreSQL
+- Cache: Redis
+- Search: Elasticsearch
+",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Tekno Support",
+                        Email = "support@tekno.com",
+                        Url = new Uri("https://github.com/duyngulam/Tekno")
+                    }
+                });
+
+                // Configure enums to serialize as integers in Swagger
+                c.UseInlineDefinitionsForEnums(); // This makes Swagger show enum values
 
                 // Add schema filter for examples
                 c.SchemaFilter<Tekno.Api.Filters.SwaggerSchemaExampleFilter>();
 
-                // Enable XML comments if available
-                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                if (File.Exists(xmlPath))
+                // Enable XML comments for all projects
+                var xmlFiles = new[]
                 {
-                    c.IncludeXmlComments(xmlPath);
+                    $"{Assembly.GetExecutingAssembly().GetName().Name}.xml", // Tekno.Api
+                    "Tekno.Application.xml",
+                    "Tekno.Domain.xml"
+                };
+
+                foreach (var xmlFile in xmlFiles)
+                {
+                    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                    if (File.Exists(xmlPath))
+                    {
+                        c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+                    }
                 }
+
+                // Group endpoints by tags
+                c.TagActionsBy(api =>
+                {
+                    // If a GroupName is set (via ApiExplorerSettings), use it but map Admin* groups to the common 'Admin' tag
+                    if (!string.IsNullOrEmpty(api.GroupName))
+                    {
+                        if (api.GroupName.StartsWith("Admin", StringComparison.OrdinalIgnoreCase))
+                            return new[] { "Admin" };
+
+                        return new[] { api.GroupName };
+                    }
+
+                    var controllerName = api.ActionDescriptor.RouteValues["controller"];
+
+                    // If controller name starts with 'Admin' (e.g., AdminProductController),
+                    // group it under the general 'Admin' tag so admin endpoints are grouped together.
+                    if (!string.IsNullOrEmpty(controllerName) && controllerName.StartsWith("Admin", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new[] { "Admin" };
+                    }
+
+                    return new[] { controllerName ?? "Unknown" };
+                });
+
+                // Sort actions alphabetically within each group
+                c.OrderActionsBy(api => api.RelativePath);
 
                 // JWT configuration in Swagger
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    Description = "Enter JWT token (e.g., Bearer eyJhbGciOi...)",
+                    Description = @"JWT Authorization header using the Bearer scheme.
+                    
+Enter your token in the text input below.
+
+Example: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+
+**Don't include 'Bearer' prefix** - it's added automatically.",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.Http,
@@ -121,6 +222,10 @@ namespace Tekno.Api
                         Array.Empty<string>()
                     }
                 });
+
+                // Add operation filters for better documentation
+                c.OperationFilter<SwaggerDefaultValues>();
+                c.DocumentFilter<SwaggerTagDescriptions>();
             });
 
             // CORS configuration
@@ -142,6 +247,12 @@ namespace Tekno.Api
                 cfg.AddMaps(Assembly.GetExecutingAssembly()); // Scan profiles in API project
                 cfg.AddMaps(typeof(AuthProfile).Assembly);     // Scan profiles in Application project
             });
+
+            // HTTP client factory for background services
+            builder.Services.AddHttpClient();
+            
+            // Register background service to fetch provinces and store locally
+            builder.Services.AddHostedService<Tekno.Api.Services.Hosted.ProvinceFetchBackgroundService>();
 
             // =======================================================
             // 3. AUTHENTICATION & AUTHORIZATION
@@ -185,32 +296,32 @@ namespace Tekno.Api
             // =======================================================
             // 6. APPLY MIGRATIONS ON STARTUP
             // =======================================================
-            //using (var scope = app.Services.CreateScope())
-            //{
-            //    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-            //    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            using (var scope = app.Services.CreateScope())
+            {
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            //    var retries = 5;
-            //    for (var i = 0; i < retries; i++)
-            //    {
-            //        try
-            //        {
-            //            db.Database.Migrate();
-            //            logger.LogInformation("Database migration completed successfully");
-            //            break;
-            //        }
-            //        catch (Exception ex)
-            //        {
-            //            logger.LogWarning(ex, "Migration attempt {Attempt} failed, retrying...", i + 1);
-            //            if (i == retries - 1)
-            //            {
-            //                logger.LogError(ex, "Database migration failed after {Retries} attempts", retries);
-            //                throw;
-            //            }
-            //            Thread.Sleep(2000);
-            //        }
-            //    }
-            //}
+                var retries = 5;
+                for (var i = 0; i < retries; i++)
+                {
+                    try
+                    {
+                        db.Database.Migrate();
+                        logger.LogInformation("Database migration completed successfully");
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Migration attempt {Attempt} failed, retrying...", i + 1);
+                        if (i == retries - 1)
+                        {
+                            logger.LogError(ex, "Database migration failed after {Retries} attempts", retries);
+                            throw;
+                        }
+                        Thread.Sleep(2000);
+                    }
+                }
+            }
 
             // =======================================================
             // 7. INITIALIZE ELASTICSEARCH
@@ -294,7 +405,31 @@ namespace Tekno.Api
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Tekno API v1");
+                    c.RoutePrefix = "swagger"; // Access at /swagger
+                    
+                    // Enhanced UI settings
+                    c.DocumentTitle = "Tekno API Documentation";
+                    c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List); // Collapse all by default
+                    c.DefaultModelsExpandDepth(2); // Show model details
+                    c.DisplayRequestDuration(); // Show request duration
+                    c.EnableDeepLinking(); // Enable deep linking to operations
+                    c.EnableFilter(); // Enable search/filter
+                    c.ShowExtensions(); // Show vendor extensions
+                    c.EnableValidator(); // Enable request validator
+                    c.SupportedSubmitMethods(
+                        Swashbuckle.AspNetCore.SwaggerUI.SubmitMethod.Get,
+                        Swashbuckle.AspNetCore.SwaggerUI.SubmitMethod.Post,
+                        Swashbuckle.AspNetCore.SwaggerUI.SubmitMethod.Put,
+                        Swashbuckle.AspNetCore.SwaggerUI.SubmitMethod.Delete,
+                        Swashbuckle.AspNetCore.SwaggerUI.SubmitMethod.Patch
+                    );
+                    
+                    // Inject custom CSS for better styling
+                    c.InjectStylesheet("/swagger-ui/custom.css");
+                });
             }
 
             // 3️⃣ Exception handler - outermost to catch all errors
@@ -305,6 +440,10 @@ namespace Tekno.Api
 
             // 5️⃣ CORS and HTTPS redirect
             app.UseCors("AllowFrontend");
+            
+            // Enable static files for Swagger custom CSS
+            app.UseStaticFiles();
+            
             app.UseHttpsRedirection();
 
             // 6️⃣ Authentication & Authorization

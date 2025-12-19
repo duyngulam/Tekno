@@ -19,17 +19,19 @@ using Tekno.Application.Promotion.Interface;
 using Tekno.Application.Promotion.Services;
 using Tekno.Application.Review.Interface;
 using Tekno.Application.Review.Services;
+using Tekno.Application.Location.Services;
 using Tekno.Infrastructure.Auth;
 using Tekno.Infrastructure.Blog;
 using Tekno.Infrastructure.Cart;
 using Tekno.Infrastructure.Catalog;
-using Tekno.Infrastructure.Logging;
 using Tekno.Infrastructure.Order;
 using Tekno.Infrastructure.Persistence;
 using Tekno.Infrastructure.Promotion;
 using Tekno.Infrastructure.Review;
 using Tekno.Infrastructure.Search;
 using Tekno.Infrastructure.Services;
+using Tekno.Application.Location.Interface;
+using Tekno.Infrastructure.Location;
 
 namespace Tekno.Infrastructure
 {
@@ -65,7 +67,12 @@ namespace Tekno.Infrastructure
             });
 
             // ===================================================
-            // 4️⃣ INFRASTRUCTURE SERVICES
+            // 4️⃣ HTTP CLIENT (for payment gateways)
+            // ===================================================
+            services.AddHttpClient();
+
+            // ===================================================
+            // 5️⃣ INFRASTRUCTURE SERVICES
             // ===================================================
             services.AddScoped<IJwtProvider, JwtProvider>();
             services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
@@ -74,7 +81,7 @@ namespace Tekno.Infrastructure
             services.AddScoped<ICacheService, RedisCacheService>();
 
             // ===================================================
-            // 5️⃣ REPOSITORIES
+            // 6️⃣ REPOSITORIES
             // ===================================================
             // Auth
             services.AddScoped<IUserRepository, UserRepository>();
@@ -100,9 +107,15 @@ namespace Tekno.Infrastructure
             
             // Blog
             services.AddScoped<IBlogPostRepository, BlogPostRepository>();
+            
+            // Payment
+            services.AddScoped<Application.Payment.Interfaces.IPaymentRepository, Infrastructure.Payment.PaymentRepository>();
+
+            // Location
+            services.AddScoped<ILocationRepository, LocationRepository>();
 
             // ===================================================
-            // 6️⃣ APPLICATION SERVICES
+            // 7️⃣ APPLICATION SERVICES
             // ===================================================
             // Auth & Profile
             services.AddScoped<AuthService>();
@@ -130,9 +143,32 @@ namespace Tekno.Infrastructure
             
             // Blog
             services.AddScoped<BlogPostService>();
+            
+            // Payment Services
+            services.AddScoped<Application.Payment.Services.PaymentService>();
+            services.AddScoped<Application.Payment.Services.AdminPaymentService>();
+            services.AddScoped<Application.Payment.Services.PaymentGatewayFactory>();
+            services.AddScoped<Application.Payment.Services.PaymentTimeoutService>();
+            
+            // Payment Gateway Configuration (Infrastructure concern)
+            services.AddSingleton(sp =>
+            {
+                var configuration = sp.GetRequiredService<IConfiguration>();
+                return Infrastructure.Payment.Configuration.VNPaySettingsProvider.LoadSettings(configuration);
+            });
+            
+            // Payment Gateways (Strategy Pattern)
+            services.AddScoped<Application.Payment.Interfaces.IPaymentGateway, Application.Payment.Gateways.MockPaymentGateway>();
+            services.AddScoped<Application.Payment.Interfaces.IPaymentGateway, Application.Payment.Gateways.VNPayPaymentGateway>();
+
+            // Background Services
+            services.AddHostedService<Infrastructure.BackgroundServices.PaymentTimeoutBackgroundService>();
+
+            // Location
+            services.AddScoped<LocationService>();
 
             // ===================================================
-            // 7️⃣ ELASTICSEARCH SERVICES
+            // 8️⃣ ELASTICSEARCH SERVICES
             // ===================================================
             services.AddScoped<IElasticProductService, ElasticProductService>();
             services.AddScoped<ElasticBulkIndexer>();

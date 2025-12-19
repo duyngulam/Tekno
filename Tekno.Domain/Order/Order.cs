@@ -18,7 +18,8 @@ namespace Tekno.Domain.Order
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime? CompletedAt { get; private set; }
 
-        public ICollection<OrderItem> Items { get; private set; } = new List<OrderItem>();
+        private readonly List<OrderItem> _items = new();
+        public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
 
         public Order() { }
 
@@ -29,6 +30,12 @@ namespace Tekno.Domain.Order
             TotalAmount = totalAmount;
             Status = OrderStatus.Pending;
             CreatedAt = DateTime.UtcNow;
+        }
+
+        public void AddItem(int productId, int variantId, int quantity, decimal price)
+        {
+            var item = new OrderItem(Id, productId, variantId, quantity, price);
+            _items.Add(item);
         }
 
         public void Complete()

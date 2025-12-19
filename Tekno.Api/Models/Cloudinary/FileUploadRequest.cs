@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace Tekno.Api.Models
+namespace Tekno.Api.Models.Cloudinary
 {
     public class FileUploadRequest
     {

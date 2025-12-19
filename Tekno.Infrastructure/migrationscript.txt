@@ -1,3 +1,37 @@
-﻿dotnet ef migrations add DB --startup-project ..\Tekno.Api
+﻿# Entity Framework Migrations Script
+# Run these commands from the Tekno.Infrastructure directory
+
+# Create a new migration
+dotnet ef migrations add MigrationName --startup-project ..\Tekno.Api
+
+# Drop database (use with caution - all data will be lost!)
 dotnet ef database drop --startup-project ..\Tekno.Api -f
+
+# Update database to latest migration
 dotnet ef database update --startup-project ..\Tekno.Api
+
+# Update to specific migration
+# dotnet ef database update MigrationName --startup-project ..\Tekno.Api
+
+# Rollback to previous migration
+# dotnet ef database update PreviousMigrationName --startup-project ..\Tekno.Api
+
+# Remove last migration (if not applied to database)
+# dotnet ef migrations remove --startup-project ..\Tekno.Api --force
+
+# List all migrations
+# dotnet ef migrations list --startup-project ..\Tekno.Api
+
+# Generate SQL script for migration
+# dotnet ef migrations script --startup-project ..\Tekno.Api --output migration.sql
+
+# ===== CURRENT MIGRATIONS =====
+# 1. 20251201084206_DB
+# 2. 20251210095428_UpdateWishlistToUseProduct
+# 3. 20251218075024_BlogPostWithProductIdsJson (Latest)
+
+# ===== NOTES =====
+# - The blog_post_products junction table has been removed
+# - Product IDs are now stored as JSON array in blog_posts.ProductIds column
+# - All foreign key constraints removed from blog post -> product relationships
+# - Migration successfully applied on 2025-01-18

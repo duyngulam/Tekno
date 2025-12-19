@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using Tekno.Api.Common.Responses;
+using Tekno.Api.Commons.Responses;
 using Tekno.Application.Blog.DTOs;
 using Tekno.Application.Blog.Services;
 using Tekno.Application.Common.Paging;

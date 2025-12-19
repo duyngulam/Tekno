@@ -2,16 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
-using Tekno.Api.Common.Responses;
+using Tekno.Api.Commons.Responses;
 using Tekno.Application.Common.Paging;
 using Tekno.Application.Promotion.DTOs;
 using Tekno.Application.Promotion.Services;
 
 namespace Tekno.Api.Controllers.Admin
 {
-    /// <summary>
-    /// Admin-only coupon management endpoints
-    /// </summary>
     [ApiController]
     [Route("api/admin/coupons")]
     //[Authorize(Roles = "Admin")]

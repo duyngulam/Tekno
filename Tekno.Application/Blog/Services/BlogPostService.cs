@@ -122,15 +122,16 @@ namespace Tekno.Application.Blog.Services
                     blogPost.AddTag(tag);
                 }
 
-                // Add related products
+                // Validate and set related products
+                var validProductIds = new List<int>();
                 foreach (var productId in dto.RelatedProductIds)
                 {
-                    // Validate product exists
                     if (await _productRepository.IsProductExistByIdAsync(productId))
                     {
-                        blogPost.AddRelatedProduct(productId);
+                        validProductIds.Add(productId);
                     }
                 }
+                blogPost.SetProductIds(validProductIds);
 
                 // Publish immediately if requested
                 if (dto.PublishImmediately)
@@ -142,7 +143,9 @@ namespace Tekno.Application.Blog.Services
 
                 _logger.LogInformation("Created blog post {Title} (ID: {Id})", created.Title, created.Id);
 
-                return await MapToDetailDtoAsync(created);
+                // Reload with navigation properties for mapping
+                var blogPostWithDetails = await _blogPostRepository.GetByIdAsync(created.Id);
+                return await MapToDetailDtoAsync(blogPostWithDetails);
             }
             catch
             {
@@ -181,16 +184,17 @@ namespace Tekno.Application.Blog.Services
                 }
 
                 // Update related products
-                blogPost.ClearRelatedProducts();
+                var validProductIds = new List<int>();
                 foreach (var productId in dto.RelatedProductIds)
                 {
                     if (await _productRepository.IsProductExistByIdAsync(productId))
                     {
-                        blogPost.AddRelatedProduct(productId);
+                        validProductIds.Add(productId);
                     }
                 }
+                blogPost.SetProductIds(validProductIds);
 
-                var updated = await _blogPostRepository.UpdateAsync(blogPost);
+                await _blogPostRepository.UpdateAsync(blogPost);
 
                 // Delete old image if new one was uploaded
                 if (oldImageUrl != null)
@@ -200,6 +204,8 @@ namespace Tekno.Application.Blog.Services
 
                 _logger.LogInformation("Updated blog post {Id}", id);
 
+                // Reload with navigation properties for mapping
+                var updated = await _blogPostRepository.GetByIdAsync(id);
                 return await MapToDetailDtoAsync(updated);
             }
             catch
@@ -255,28 +261,24 @@ namespace Tekno.Application.Blog.Services
         }
 
         /// <summary>
-        /// Maps BlogPost to BlogPostDetailDto with related products loaded
-        /// Uses AutoMapper for base mapping, manually loads related products
+        /// Maps BlogPost to BlogPostDetailDto with products loaded from ProductIds JSON
         /// </summary>
         private async Task<BlogPostDetailDto> MapToDetailDtoAsync(BlogPost blogPost)
         {
             // Use AutoMapper for base mapping
             var dto = _mapper.Map<BlogPostDetailDto>(blogPost);
 
-            // Load related products (requires async operation)
-            foreach (var relatedProduct in blogPost.RelatedProducts)
+            // Load related products from ProductIds JSON
+            var productIds = blogPost.GetProductIds();
+            if (productIds.Any())
             {
-                var product = await _productRepository.GetProductByIdAsync(relatedProduct.ProductId);
-                if (product != null)
+                foreach (var productId in productIds)
                 {
-                    dto.RelatedProducts.Add(new RelatedProductDto
+                    var product = await _productRepository.GetProductByIdAsync(productId);
+                    if (product != null)
                     {
-                        ProductId = product.Id,
-                        ProductName = product.Name,
-                        ProductSlug = product.Slug,
-                        ProductImage = product.Images?.FirstOrDefault()?.ImageUrl ?? string.Empty,
-                        ProductPrice = product.BasePrice
-                    });
+                        dto.Products.Add(_mapper.Map<Tekno.Application.Catalog.DTOs.Products.ProductSummaryDto>(product));
+                    }
                 }
             }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
+using Tekno.Application.Catalog.DTOs.Products;
 
 namespace Tekno.Application.Blog.DTOs
 {
@@ -41,16 +42,8 @@ namespace Tekno.Application.Blog.DTOs
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public List<string> Tags { get; set; } = new();
-        public List<RelatedProductDto> RelatedProducts { get; set; } = new();
-    }
-
-    public class RelatedProductDto
-    {
-        public int ProductId { get; set; }
-        public string ProductName { get; set; } = string.Empty;
-        public string ProductSlug { get; set; } = string.Empty;
-        public string ProductImage { get; set; } = string.Empty;
-        public decimal ProductPrice { get; set; }
+        // Products for direct navigation to product detail page via product ID
+        public List<ProductSummaryDto> Products { get; set; } = new();
     }
 
     /// <summary>
@@ -90,21 +83,18 @@ namespace Tekno.Application.Blog.DTOs
     /// </summary>
     public class UpdateBlogPostDto
     {
-        [Required]
         [StringLength(200, MinimumLength = 10)]
-        public string Title { get; set; } = string.Empty;
+        public string? Title { get; set; } = string.Empty;
 
-        [Required]
         [StringLength(500, MinimumLength = 20)]
-        public string Summary { get; set; } = string.Empty;
+        public string? Summary { get; set; } = string.Empty;
 
-        [Required]
         [MinLength(100)]
-        public string Content { get; set; } = string.Empty;
+        public string? Content { get; set; } = string.Empty;
 
         public IFormFile? FeaturedImage { get; set; } // Optional - only if changing image
-
-        public List<string> Tags { get; set; } = new();
+    
+        public List<string>? Tags { get; set; } = new();
 
         public List<int> RelatedProductIds { get; set; } = new();
     }

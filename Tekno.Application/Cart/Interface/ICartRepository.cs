@@ -17,9 +17,9 @@ namespace Tekno.Application.Cart.Interface
     public interface IWishlistRepository
     {
         Task<List<Wishlist>> GetByUserIdAsync(int userId);
-        Task<Wishlist?> GetByUserAndVariantAsync(int userId, int variantId);
+        Task<Wishlist?> GetByUserAndProductAsync(int userId, int productId);
         Task<Wishlist> AddAsync(Wishlist wishlist);
-        Task<bool> RemoveAsync(int userId, int variantId);
-        Task<bool> IsInWishlistAsync(int userId, int variantId);
+        Task<bool> RemoveAsync(int userId, int productId);
+        Task<bool> IsInWishlistAsync(int userId, int productId);
     }
 }

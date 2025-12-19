@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Tekno.Domain.Blog
 {
@@ -20,10 +21,12 @@ namespace Tekno.Domain.Blog
         public DateTime PublishedAt { get; private set; }
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; private set; }
+        
+        // Store product IDs as JSON array in database
+        public string ProductIds { get; private set; } = "[]";
 
         // Navigation properties
         public ICollection<BlogPostTag> Tags { get; private set; } = new List<BlogPostTag>();
-        public ICollection<BlogPostProduct> RelatedProducts { get; private set; } = new List<BlogPostProduct>();
 
         private BlogPost() { }
 
@@ -52,6 +55,7 @@ namespace Tekno.Domain.Blog
             AuthorId = authorId;
             Status = BlogPostStatus.Draft;
             CreatedAt = DateTime.UtcNow;
+            ProductIds = "[]";
         }
 
         public void Update(string title, string summary, string content, string featuredImageUrl)
@@ -99,13 +103,30 @@ namespace Tekno.Domain.Blog
             }
         }
 
-        public void AddRelatedProduct(int productId)
+        public void SetProductIds(List<int> productIds)
         {
-            if (productId <= 0) return;
-            
-            if (!RelatedProducts.Any(p => p.ProductId == productId))
+            if (productIds == null || !productIds.Any())
             {
-                RelatedProducts.Add(new BlogPostProduct(Id, productId));
+                ProductIds = "[]";
+                return;
+            }
+
+            // Store as JSON array
+            ProductIds = System.Text.Json.JsonSerializer.Serialize(productIds.Distinct().OrderBy(x => x).ToList());
+        }
+
+        public List<int> GetProductIds()
+        {
+            if (string.IsNullOrWhiteSpace(ProductIds) || ProductIds == "[]")
+                return new List<int>();
+
+            try
+            {
+                return System.Text.Json.JsonSerializer.Deserialize<List<int>>(ProductIds) ?? new List<int>();
+            }
+            catch
+            {
+                return new List<int>();
             }
         }
 
@@ -114,9 +135,9 @@ namespace Tekno.Domain.Blog
             Tags.Clear();
         }
 
-        public void ClearRelatedProducts()
+        public void ClearProductIds()
         {
-            RelatedProducts.Clear();
+            ProductIds = "[]";
         }
     }
 
@@ -144,26 +165,6 @@ namespace Tekno.Domain.Blog
         {
             BlogPostId = blogPostId;
             Tag = tag.Trim().ToLowerInvariant();
-        }
-    }
-
-    /// <summary>
-    /// Link blog posts to related products
-    /// </summary>
-    public class BlogPostProduct
-    {
-        public int Id { get; private set; }
-        public int BlogPostId { get; private set; }
-        public int ProductId { get; private set; }
-
-        public BlogPost BlogPost { get; private set; } = null!;
-
-        private BlogPostProduct() { }
-
-        public BlogPostProduct(int blogPostId, int productId)
-        {
-            BlogPostId = blogPostId;
-            ProductId = productId;
         }
     }
 }

@@ -17,5 +17,6 @@ namespace Tekno.Application.Payment.Models
         public string CallbackUrl { get; set; } = string.Empty; // Webhook URL
         public string CustomerEmail { get; set; } = string.Empty;
         public string CustomerPhone { get; set; } = string.Empty;
+        public string? IpAddress { get; set; } // Client IP address (required by VNPay)
     }
 }

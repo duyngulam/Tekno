@@ -24,7 +24,6 @@ namespace Tekno.Infrastructure.Blog
         {
             return await _context.Set<BlogPost>()
                 .Include(b => b.Tags)
-                .Include(b => b.RelatedProducts)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.Id == id);
         }
@@ -35,7 +34,6 @@ namespace Tekno.Infrastructure.Blog
 
             return await _context.Set<BlogPost>()
                 .Include(b => b.Tags)
-                .Include(b => b.RelatedProducts)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.Slug == slug.ToLowerInvariant());
         }
