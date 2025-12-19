@@ -113,7 +113,7 @@ export default function BrandPage() {
                   <td className="p-2">{b.id}</td>
                   <td>
                     {b.logoPath && (
-                      <img src={b.logoPath} alt={b.name || 'Brand'} className="w-42 h-30 object-cover rounded" />
+                      <img src={b.logoPath} alt={b.name || 'Brand'} className="h-12 w-auto object-contain" />
                     )}
                   </td>
                   <td>{b.name}</td>

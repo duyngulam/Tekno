@@ -69,6 +69,9 @@ export default function ProductPage() {
     images: [] as File[], // multiple files
   });
 
+  const [categoryAttributes, setCategoryAttributes] = useState<any[]>([]);
+  const [variants, setVariants] = useState<any[]>([]);
+
   const [editData, setEditData] = useState<any>(null); // will hold product fields + files preview
 
   // load products, categories, brands
@@ -168,8 +171,8 @@ const loadProductDetail = async (prod: any) => {
     return Math.round(b - (b * d) / 100);
   };
 
-  // Create
-  const handleCreate = async () => {
+  // Create Modal
+  const handleCreate = async () => {    
     try {
       if (!createData.name || !createData.slug || !createData.categoryId || !createData.brandId) {
         alert("Please fill required fields: Name, Slug, Category, Brand");
@@ -278,7 +281,6 @@ setEditImages(
   }))
 );
 
-
   setNewImages([]);
   setOpenEdit(true);
 };
@@ -303,30 +305,6 @@ const handleDrop = (e: any, dropIndex: number) => {
   }));
 
   setEditImages(reordered);
-};
-
-  const setPrimary = (imgId: number) => {
-  const updated = editImages.map((img) => ({
-    ...img,
-    isPrimary: img.id === imgId,
-  }));
-
-  setEditImages(updated);
-};
-
-const deleteExistingImage = async (id: number) => {
-  if (!confirm("Delete this image?")) return;
-
-  try {
-    await deleteImage(id);
-    setEditImages((prev) => prev.filter((img) => img.id !== id));
-  } catch (err) {
-    console.error("Failed to delete image:", err);
-    alert("Failed to delete image");
-  }
-};
-  const handleAddNewImages = (e: any) => {
-  setNewImages([...newImages, ...Array.from(e.target.files as FileList)]);
 };
 
 const reorderEditImages = (dropIndex: number) => {
@@ -725,16 +703,36 @@ if (allImageIds.length > 0) {
       onDrop={(e) => handleDrop(e, index)}
     >
       {/* Image */}
-<div className="relative w-full h-24">
-  <Image
-    src={img.imageUrl}
-    alt="Product image"
-    fill
-    sizes="200px"
-    className="object-cover rounded"
-  />
-</div>
+{editImages.map((img, index) => (
+  <div
+    key={`${img.id || "temp"}-${index}`}
+    className="relative border rounded overflow-hidden cursor-move p-2"
+    draggable
+    onDragStart={(e) => handleDragStart(e, index)}
+    onDragOver={(e) => e.preventDefault()}
+    onDrop={(e) => handleDrop(e, index)}
+  >
+    {/* Image */}
+    <div className="relative w-full h-24">
+      {img?.imageUrl ? (
+        <Image
+          src={img.imageUrl}
+          alt="Product image"
+          fill
+          sizes="200px"
+          className="object-cover rounded"
+        />
+      ) : (
+        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+          No image
+        </div>
+      )}
+    </div>
 
+    {/* Metadata controls below (primary, delete, etc.) */}
+    {/* ... */}
+  </div>
+))}
 
       {/* Primary radio */}
       <label className="flex items-center gap-1 text-sm mt-1">
@@ -817,8 +815,7 @@ if (allImageIds.length > 0) {
   </div>
 )}
 
-  {/* === PRODUCT DETAIL MODAL === */}
-    
+  {/* === PRODUCT DETAIL MODAL === */}    
     {openDetail && selectedProduct && (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
     <div className="bg-white p-6 rounded-lg w-[800px] max-h-[90vh] overflow-y-auto shadow-xl">
@@ -921,6 +918,15 @@ if (allImageIds.length > 0) {
   </div>
   )}
     
+    {/* === CREATE PRODUCT MODAL === */}  
+    {openCreate && (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+      <div className="bg-white w-full max-w-2xl rounded-lg shadow-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Create Product</h2>
+        </div>
     </div>
+  )}
+  
+  </div>
   );
 }
