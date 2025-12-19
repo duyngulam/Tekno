@@ -13,11 +13,11 @@ namespace Tekno.Application.Blog.DTOs
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
                 .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags.Select(t => t.Tag).ToList()));
 
-            // BlogPost to BlogPostDetailDto (without RelatedProducts - handled separately due to async)
+            // BlogPost to BlogPostDetailDto
             CreateMap<BlogPost, BlogPostDetailDto>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
                 .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags.Select(t => t.Tag).ToList()))
-                .ForMember(dest => dest.RelatedProducts, opt => opt.Ignore()); // Will be populated manually
+                .ForMember(dest => dest.Products, opt => opt.Ignore()); // Products loaded manually from ProductIds JSON
         }
     }
 }

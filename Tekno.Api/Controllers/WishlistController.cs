@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Tekno.Api.Common.Responses;
+using Tekno.Api.Commons.Responses;
 using Tekno.Application.Cart.DTOs;
 using Tekno.Application.Cart.Services;
 

@@ -403,3 +403,4 @@ docker-compose.override.yml
 Thumbs.db
 *.swp
 *~
+/Tekno.Api/data/vietnam-divisions.json

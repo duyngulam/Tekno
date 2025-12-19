@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Tekno.Application.Catalog.DTOs.Products;
 
 namespace Tekno.Application.Cart.DTOs
 {
@@ -77,20 +78,11 @@ namespace Tekno.Application.Cart.DTOs
 
     public class WishlistDto
     {
-        public int Id { get; set; }
         public int UserId { get; set; }
-        public int ProductId { get; set; }
         public DateTime AddedAt { get; set; }
 
-        // Product details
-        public string ProductName { get; set; } = string.Empty;
-        public string ProductSlug { get; set; } = string.Empty;
-        public string BrandName { get; set; } = string.Empty;
-        public string CategoryName { get; set; } = string.Empty;
-        public decimal BasePrice { get; set; }
-        public string? PrimaryImage { get; set; }
-        public int TotalVariants { get; set; }
-        public bool IsInStock { get; set; }
+        // Return the product summary for the wishlist entry
+        public ProductSummaryDto Product { get; set; } = new ProductSummaryDto();
     }
 
     public class AddToWishlistDto

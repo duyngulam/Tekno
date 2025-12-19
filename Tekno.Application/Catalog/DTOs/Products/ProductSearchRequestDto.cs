@@ -1,4 +1,4 @@
-﻿namespace Tekno.Application.Catalog.DTOs
+﻿namespace Tekno.Application.Catalog.DTOs.Products
 {
     public class ProductSearchRequestDto
     {

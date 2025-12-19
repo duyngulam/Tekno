@@ -10,7 +10,7 @@ using Tekno.Domain.Auth;
 using System.Threading.Tasks;
 using System;
 
-namespace Tekno.Application.Tests.Auth
+namespace Application.Tests.Auth
 {
     public class AuthServiceTests
     {

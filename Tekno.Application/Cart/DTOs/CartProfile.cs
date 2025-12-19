@@ -42,30 +42,9 @@ namespace Tekno.Application.Cart.DTOs
 
             // Wishlist -> WishlistDto
             CreateMap<Wishlist, WishlistDto>()
-                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => 
-                    src.Product != null ? src.Product.Name : string.Empty))
-                .ForMember(dest => dest.ProductSlug, opt => opt.MapFrom(src => 
-                    src.Product != null ? src.Product.Slug : string.Empty))
-                .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => 
-                    src.Product != null && src.Product.Brand != null ? src.Product.Brand.Name : string.Empty))
-                .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => 
-                    src.Product != null && src.Product.Category != null ? src.Product.Category.Name : string.Empty))
-                .ForMember(dest => dest.BasePrice, opt => opt.MapFrom(src => 
-                    src.Product != null ? src.Product.BasePrice : 0))
-                .ForMember(dest => dest.PrimaryImage, opt => opt.MapFrom(src => 
-                    src.Product != null && src.Product.Images != null 
-                        ? src.Product.Images.FirstOrDefault(i => i.IsPrimary) != null
-                            ? src.Product.Images.First(i => i.IsPrimary).ImageUrl
-                            : src.Product.Images.FirstOrDefault() != null
-                                ? src.Product.Images.First().ImageUrl
-                                : null
-                        : null))
-                .ForMember(dest => dest.TotalVariants, opt => opt.MapFrom(src => 
-                    src.Product != null && src.Product.Variants != null ? src.Product.Variants.Count : 0))
-                .ForMember(dest => dest.IsInStock, opt => opt.MapFrom(src => 
-                    src.Product != null && src.Product.Variants != null 
-                        ? src.Product.Variants.Any(v => v.Stock > 0) 
-                        : false));
+                .ForMember(dest => dest.Product, opt => opt.MapFrom(src => src.Product))
+                .ForMember(dest => dest.AddedAt, opt => opt.MapFrom(src => src.AddedAt))
+                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId));
         }
     }
 }

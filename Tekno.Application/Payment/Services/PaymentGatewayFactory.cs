@@ -28,10 +28,21 @@ namespace Tekno.Application.Payment.Services
             
             if (implementation == null)
             {
-                throw new NotSupportedException($"Payment gateway '{gateway}' is not configured");
+                var availableGateways = string.Join(", ", _gateways.Select(g => $"{g.Gateway} ({(int)g.Gateway})"));
+                var message = $"Payment gateway '{gateway}' ({(int)gateway}) is not implemented or configured. " +
+                             $"Available gateways: {availableGateways}";
+                throw new NotSupportedException(message);
             }
 
             return implementation;
+        }
+
+        /// <summary>
+        /// Check if gateway is available
+        /// </summary>
+        public bool IsGatewayAvailable(PaymentGateway gateway)
+        {
+            return _gateways.Any(g => g.Gateway == gateway);
         }
 
         /// <summary>

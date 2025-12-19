@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Tekno.Api.Common.Responses;
+using Tekno.Api.Commons.Responses;
 using Tekno.Application.Common.Paging;
 using Tekno.Application.Payment.DTOs;
 using Tekno.Application.Payment.Services;
@@ -10,19 +10,19 @@ using Tekno.Application.Payment.Services;
 namespace Tekno.Api.Controllers
 {
     /// <summary>
-    /// Checkout and payment endpoints
+    /// Payment processing endpoints
     /// </summary>
     [ApiController]
-    [Route("api/checkout")]
+    [Route("api/payment")]
     [ValidationFilter]
-    public class CheckoutController : ControllerBase
+    public class PaymentController : ControllerBase
     {
-        private readonly CheckoutService _checkoutService;
-        private readonly ILogger<CheckoutController> _logger;
+        private readonly PaymentService _paymentService;
+        private readonly ILogger<PaymentController> _logger;
 
-        public CheckoutController(CheckoutService checkoutService, ILogger<CheckoutController> logger)
+        public PaymentController(PaymentService paymentService, ILogger<PaymentController> logger)
         {
-            _checkoutService = checkoutService;
+            _paymentService = paymentService;
             _logger = logger;
         }
 
@@ -34,7 +34,7 @@ namespace Tekno.Api.Controllers
         /// Supports pagination for better performance with large payment histories.
         /// 
         /// Example:
-        ///     GET /api/checkout/my-payments?page=1&amp;pageSize=20
+        ///     GET /api/payment/my-payments?page=1&amp;pageSize=20
         /// 
         /// Returns paginated list of payments with order details, gateway names, and status
         /// </remarks>
@@ -47,7 +47,7 @@ namespace Tekno.Api.Controllers
             try
             {
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var payments = await _checkoutService.GetUserPaymentsAsync(userId, page, pageSize);
+                var payments = await _paymentService.GetUserPaymentsAsync(userId, page, pageSize);
 
                 return Ok(ApiResponse<PagedResult<PaymentStatusDto>>.Ok(payments, "Payment history retrieved successfully"));
             }
@@ -59,7 +59,7 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
-        /// Process checkout - Create order and initiate payment
+        /// Process payment - Create order and initiate payment
         /// </summary>
         /// <remarks>
         /// Workflow:
@@ -69,9 +69,9 @@ namespace Tekno.Api.Controllers
         /// 4. Returns payment URL to redirect customer
         /// 5. Removes checked out items from cart (partial or full)
         /// 
-        /// Example request (Full cart checkout):
+        /// Example request (Full cart payment):
         /// 
-        ///     POST /api/checkout
+        ///     POST /api/payment/process
         ///     {
         ///       "shippingAddressId": 1,
         ///       "gateway": 0,
@@ -80,9 +80,9 @@ namespace Tekno.Api.Controllers
         ///       "returnUrl": "http://localhost:3000/payment/result"
         ///     }
         /// 
-        /// Example request (Partial cart checkout with selected items):
+        /// Example request (Partial cart payment with selected items):
         /// 
-        ///     POST /api/checkout
+        ///     POST /api/payment/process
         ///     {
         ///       "shippingAddressId": 1,
         ///       "gateway": 0,
@@ -98,12 +98,12 @@ namespace Tekno.Api.Controllers
         ///     }
         /// 
         /// Payment Gateways:
-        /// - 0 = Mock (for testing)
-        /// - 1 = Stripe (credit/debit cards)
-        /// - 2 = PayPal
-        /// - 3 = VNPay (Vietnam)
-        /// - 4 = MoMo (Vietnam e-wallet)
-        /// - 5 = ZaloPay (Vietnam e-wallet)
+        /// - 0 = Mock (for testing) ? Available
+        /// - 1 = Stripe (credit/debit cards) - Not implemented yet
+        /// - 2 = PayPal - Not implemented yet
+        /// - 3 = VNPay (Vietnam) ? Available
+        /// - 4 = MoMo (Vietnam e-wallet) - Not implemented yet
+        /// - 5 = ZaloPay (Vietnam e-wallet) - Not implemented yet
         /// 
         /// Payment Methods:
         /// - 1 = CreditCard
@@ -113,23 +113,29 @@ namespace Tekno.Api.Controllers
         /// - 5 = Cash (COD)
         /// 
         /// Response includes paymentUrl - redirect customer to complete payment.
-        /// For Mock gateway, payment auto-succeeds for testing.
+        /// For Mock gateway, payment auto-succeeds and triggers callback automatically.
         /// </remarks>
-        [HttpPost]
+        [HttpPost("process")]
         [Authorize]
-        public async Task<IActionResult> Checkout([FromBody] CheckoutRequestDto request)
+        public async Task<IActionResult> ProcessPayment([FromBody] PaymentRequestDto request)
         {
             try
             {
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var result = await _checkoutService.CheckoutAsync(userId, request);
+                var result = await _paymentService.ProcessPaymentAsync(userId, request);
 
-                return Ok(ApiResponse<CheckoutResponseDto>.Ok(result, "Checkout successful. Redirect to payment URL."));
+                return Ok(ApiResponse<PaymentResponseDto>.Ok(result, "Payment initiated successfully. Redirect to payment URL."));
+            }
+            catch (NotSupportedException ex)
+            {
+                // Gateway not available - return user-friendly error
+                _logger.LogWarning(ex, "Payment gateway not available: {Gateway}", request.Gateway);
+                return BadRequest(ApiResponse<string>.Fail(ex.Message));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Checkout failed");
-                return StatusCode(500, ApiResponse<string>.Fail($"Checkout failed: {ex.Message}"));
+                _logger.LogError(ex, "Payment processing failed");
+                return StatusCode(500, ApiResponse<string>.Fail($"Payment processing failed: {ex.Message}"));
             }
         }
 
@@ -145,20 +151,20 @@ namespace Tekno.Api.Controllers
         /// 2. Return redirect from payment page (customer returns)
         /// 
         /// Example:
-        ///     POST /api/checkout/payment-callback
+        ///     POST /api/payment/callback
         ///     {
         ///       "transactionId": "MOCK-abc123",
         ///       "status": "success",
         ///       "signature": "xyz789..."
         ///     }
         /// </remarks>
-        [HttpPost("payment-callback")]
+        [HttpPost("callback")]
         [AllowAnonymous] // Webhook needs to be accessible
         public async Task<IActionResult> PaymentCallback([FromBody] PaymentCallbackDto callback)
         {
             try
             {
-                var result = await _checkoutService.HandlePaymentCallbackAsync(callback);
+                var result = await _paymentService.HandlePaymentCallbackAsync(callback);
 
                 return Ok(ApiResponse<PaymentStatusDto>.Ok(result, "Payment callback processed"));
             }
@@ -177,15 +183,15 @@ namespace Tekno.Api.Controllers
         /// Use this to check payment status after customer returns from payment gateway.
         /// 
         /// Example:
-        ///     GET /api/checkout/payment-status/MOCK-abc123
+        ///     GET /api/payment/status/MOCK-abc123
         /// </remarks>
-        [HttpGet("payment-status/{transactionId}")]
+        [HttpGet("status/{transactionId}")]
         [Authorize]
         public async Task<IActionResult> GetPaymentStatus(string transactionId)
         {
             try
             {
-                var result = await _checkoutService.GetPaymentStatusAsync(transactionId);
+                var result = await _paymentService.GetPaymentStatusAsync(transactionId);
 
                 if (result == null)
                 {
@@ -204,11 +210,24 @@ namespace Tekno.Api.Controllers
         /// <summary>
         /// Get list of available payment gateways
         /// </summary>
+        /// <remarks>
+        /// Returns list of payment gateways with their availability status.
+        /// Only gateways marked as "available: true" are configured and can be used.
+        /// 
+        /// Example response:
+        ///     {
+        ///       "success": true,
+        ///       "data": [
+        ///         { "id": 0, "name": "Mock", "description": "Test gateway", "available": true },
+        ///         { "id": 3, "name": "VNPay", "description": "Vietnam payment", "available": true }
+        ///       ]
+        ///     }
+        /// </remarks>
         [HttpGet("gateways")]
         [AllowAnonymous]
-        public IActionResult GetAvailableGateways()
+        public IActionResult GetAvailableGateways([FromServices] PaymentGatewayFactory gatewayFactory)
         {
-            var gateways = new[]
+            var allGateways = new[]
             {
                 new { id = 0, name = "Mock", description = "Test payment gateway" },
                 new { id = 1, name = "Stripe", description = "Credit/Debit card payments" },
@@ -218,7 +237,17 @@ namespace Tekno.Api.Controllers
                 new { id = 5, name = "ZaloPay", description = "ZaloPay e-wallet" }
             };
 
-            return Ok(ApiResponse<object>.Ok(gateways));
+            var availableGatewayIds = gatewayFactory.GetAvailableGateways().Select(g => (int)g).ToHashSet();
+
+            var result = allGateways.Select(g => new
+            {
+                g.id,
+                g.name,
+                g.description,
+                available = availableGatewayIds.Contains(g.id)
+            });
+
+            return Ok(ApiResponse<object>.Ok(result));
         }
     }
 }

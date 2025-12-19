@@ -1,7 +1,7 @@
 ﻿
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Tekno.Api.Common.Responses;
+using Tekno.Api.Commons.Responses;
 
 public class ValidationFilterAttribute : ActionFilterAttribute
 {

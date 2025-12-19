@@ -1,8 +1,8 @@
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System.ComponentModel.DataAnnotations;
-using System.Reflection;
+using System;
+using System.Collections.Generic;
 
 namespace Tekno.Api.Filters
 {
@@ -13,18 +13,57 @@ namespace Tekno.Api.Filters
     {
         public void Apply(OpenApiSchema schema, SchemaFilterContext context)
         {
-            // Handle enum types
+            // Handle enum types - show as integers
             if (context.Type.IsEnum)
             {
                 schema.Enum.Clear();
+                schema.Type = "integer";
+                schema.Format = "int32";
+                
                 var enumValues = Enum.GetValues(context.Type);
+                var enumDescriptions = new List<string>();
+                
                 foreach (var value in enumValues)
                 {
-                    schema.Enum.Add(new OpenApiString(value.ToString()));
+                    var intValue = (int)value;
+                    schema.Enum.Add(new OpenApiInteger(intValue));
+                    enumDescriptions.Add($"{intValue} = {value}");
                 }
                 
-                schema.Type = "string";
-                schema.Example = new OpenApiString(enumValues.GetValue(0)?.ToString() ?? "");
+                // Add description showing all enum values
+                schema.Description = $"{context.Type.Name} values: {string.Join(", ", enumDescriptions)}";
+                
+                // Set first value as example
+                if (enumValues.Length > 0)
+                {
+                    schema.Example = new OpenApiInteger((int)enumValues.GetValue(0)!);
+                }
+            }
+
+            // Add specific examples for Payment DTOs
+            if (context.Type.Name == "PaymentRequestDto")
+            {
+                if (schema.Properties.ContainsKey("gateway"))
+                {
+                    schema.Properties["gateway"].Example = new OpenApiInteger(0);
+                    schema.Properties["gateway"].Description = "Payment Gateway: 0=Mock, 1=Stripe, 2=PayPal, 3=VNPay, 4=MoMo, 5=ZaloPay";
+                }
+
+                if (schema.Properties.ContainsKey("method"))
+                {
+                    schema.Properties["method"].Example = new OpenApiInteger(1);
+                    schema.Properties["method"].Description = "Payment Method: 1=CreditCard, 2=DebitCard, 3=BankTransfer, 4=EWallet, 5=Cash";
+                }
+
+                if (schema.Properties.ContainsKey("returnUrl"))
+                {
+                    schema.Properties["returnUrl"].Example = new OpenApiString("http://localhost:3000/payment/result");
+                }
+
+                if (schema.Properties.ContainsKey("shippingAddressId"))
+                {
+                    schema.Properties["shippingAddressId"].Example = new OpenApiInteger(1);
+                }
             }
 
             // Add examples for specific DTO properties

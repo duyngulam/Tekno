@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using System.Runtime.InteropServices;
 using Tekno.Api.Models.Catalog;
-using Tekno.Api.Models.Catalog.Admin;
 using Tekno.Api.Models.Catalog.Admin.brand;
+using Tekno.Api.Models.Catalog.Admin.Category;
 using Tekno.Application.Catalog.DTOs;
 
 namespace Tekno.Api.Mappings
