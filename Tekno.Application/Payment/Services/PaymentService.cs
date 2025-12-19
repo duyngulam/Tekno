@@ -29,6 +29,7 @@ namespace Tekno.Application.Payment.Services
         private readonly IPaymentRepository _paymentRepository;
         private readonly IProductRepository _productRepository;
         private readonly PaymentGatewayFactory _gatewayFactory;
+        private readonly PaymentTimeoutService _timeoutService;
         private readonly IMapper _mapper;
         private readonly IAppLogger<PaymentService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -39,6 +40,7 @@ namespace Tekno.Application.Payment.Services
             IPaymentRepository paymentRepository,
             IProductRepository productRepository,
             PaymentGatewayFactory gatewayFactory,
+            PaymentTimeoutService timeoutService,
             IMapper mapper,
             IAppLogger<PaymentService> logger,
             IHttpContextAccessor httpContextAccessor)
@@ -48,6 +50,7 @@ namespace Tekno.Application.Payment.Services
             _paymentRepository = paymentRepository;
             _productRepository = productRepository;
             _gatewayFactory = gatewayFactory;
+            _timeoutService = timeoutService;
             _mapper = mapper;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
@@ -263,6 +266,7 @@ namespace Tekno.Application.Payment.Services
 
         /// <summary>
         /// Handle payment callback from gateway
+        /// Restores cart items if payment fails
         /// </summary>
         public async Task<PaymentStatusDto> HandlePaymentCallbackAsync(PaymentCallbackDto callback)
         {
@@ -288,7 +292,7 @@ namespace Tekno.Application.Payment.Services
             {
                 if (verifyResult.IsSuccessful)
                 {
-                    // Mark payment as completed
+                    // ? PAYMENT SUCCESSFUL
                     payment.MarkAsCompleted(JsonSerializer.Serialize(verifyResult.GatewayResponse));
                     await _paymentRepository.UpdateAsync(payment);
 
@@ -305,12 +309,15 @@ namespace Tekno.Application.Payment.Services
                 }
                 else
                 {
-                    // Mark payment as failed
+                    // ? PAYMENT FAILED - Mark as failed and restore cart
                     payment.MarkAsFailed(verifyResult.ErrorMessage ?? "Payment verification failed",
                         JsonSerializer.Serialize(verifyResult.GatewayResponse));
                     await _paymentRepository.UpdateAsync(payment);
 
-                    _logger.LogWarning("Payment failed for transaction {TransactionId}: {Error}",
+                    // Restore cart items (Business logic in Backend, not DB trigger)
+                    await RestoreCartItemsAsync(payment.UserId, payment.OrderId);
+
+                    _logger.LogWarning("Payment failed for transaction {TransactionId}: {Error}. Cart items restored.",
                         callback.TransactionId, verifyResult.ErrorMessage);
                 }
 
@@ -327,12 +334,103 @@ namespace Tekno.Application.Payment.Services
         }
 
         /// <summary>
+        /// Restore cart items from failed payment order
+        /// This implements the business logic in the Backend (Clean Architecture)
+        /// instead of using database triggers
+        /// </summary>
+        private async Task RestoreCartItemsAsync(int userId, int orderId)
+        {
+            _logger.LogInformation("Restoring cart items for user {UserId} from order {OrderId}", userId, orderId);
+
+            try
+            {
+                // 1. Get order items
+                var order = await _orderRepository.GetByIdAsync(orderId);
+                if (order == null || !order.Items.Any())
+                {
+                    _logger.LogWarning("No order items to restore for order {OrderId}", orderId);
+                    return;
+                }
+
+                // 2. Get user's cart (cart should exist as we removed items during checkout)
+                var cart = await _cartRepository.GetByUserIdAsync(userId);
+                if (cart == null)
+                {
+                    // Cart was deleted - log warning but continue
+                    _logger.LogWarning("Cart not found for user {UserId} - cannot restore items", userId);
+                    return;
+                }
+
+                // 3. Add order items back to cart
+                int restoredCount = 0;
+                foreach (var orderItem in order.Items)
+                {
+                    try
+                    {
+                        // Check if item already exists in cart
+                        var existingCartItem = cart.Items.FirstOrDefault(ci => ci.VariantId == orderItem.VariantId);
+                        
+                        if (existingCartItem != null)
+                        {
+                            // Increase quantity
+                            var newQuantity = existingCartItem.Quantity + orderItem.Quantity;
+                            existingCartItem.UpdateQuantity(newQuantity);
+                            _logger.LogInformation("Updated cart item: VariantId={VariantId}, Quantity={OldQty}?{NewQty}", 
+                                orderItem.VariantId, existingCartItem.Quantity, newQuantity);
+                        }
+                        else
+                        {
+                            // Add new cart item
+                            cart.AddItem(orderItem.VariantId, orderItem.Quantity, orderItem.Price);
+                            _logger.LogInformation("Added cart item: VariantId={VariantId}, Quantity={Quantity}, Price={Price}", 
+                                orderItem.VariantId, orderItem.Quantity, orderItem.Price);
+                        }
+                        
+                        restoredCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to restore cart item: VariantId={VariantId}", orderItem.VariantId);
+                        // Continue with other items
+                    }
+                }
+
+                // 4. Save cart
+                await _cartRepository.UpdateAsync(cart);
+
+                _logger.LogInformation("Cart restored for user {UserId}: {RestoredCount}/{TotalCount} items added back", 
+                    userId, restoredCount, order.Items.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to restore cart for user {UserId}, order {OrderId}", userId, orderId);
+                // Don't throw - cart restoration failure shouldn't stop payment callback processing
+            }
+        }
+
+        /// <summary>
         /// Get payment status
         /// </summary>
         public async Task<PaymentStatusDto?> GetPaymentStatusAsync(string transactionId)
         {
-            var payment = await _paymentRepository.GetByTransactionIdAsync(transactionId);
-            return payment == null ? null : _mapper.Map<PaymentStatusDto>(payment);
+            // Use timeout service to get payment and check for timeout
+            var payment = await _timeoutService.GetPaymentWithTimeoutCheckAsync(transactionId);
+            
+            if (payment == null)
+            {
+                return null;
+            }
+
+            // If payment was just marked as timed out, restore cart items
+            if (payment.Status == PaymentStatus.Failed && 
+                payment.ErrorMessage != null && 
+                payment.ErrorMessage.Contains("timed out"))
+            {
+                _logger.LogInformation("Payment {TransactionId} timed out, restoring cart items", transactionId);
+                await RestoreCartItemsAsync(payment.UserId, payment.OrderId);
+            }
+
+            return _mapper.Map<PaymentStatusDto>(payment);
         }
 
         /// <summary>

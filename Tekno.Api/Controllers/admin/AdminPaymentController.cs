@@ -19,13 +19,16 @@ namespace Tekno.Api.Controllers.Admin
     public class AdminPaymentController : ControllerBase
     {
         private readonly AdminPaymentService _adminPaymentService;
+        private readonly PaymentTimeoutService _timeoutService;
         private readonly ILogger<AdminPaymentController> _logger;
 
         public AdminPaymentController(
             AdminPaymentService adminPaymentService,
+            PaymentTimeoutService timeoutService,
             ILogger<AdminPaymentController> logger)
         {
             _adminPaymentService = adminPaymentService;
+            _timeoutService = timeoutService;
             _logger = logger;
         }
 
@@ -132,6 +135,68 @@ namespace Tekno.Api.Controllers.Admin
         }
 
         /// <summary>
+        /// Get payment timeout statistics
+        /// </summary>
+        /// <remarks>
+        /// Get statistics about payment timeouts including:
+        /// - Total payments in Processing status
+        /// - Payments that have timed out
+        /// - Payments at risk of timing out
+        /// - Configured timeout threshold
+        /// 
+        /// Example:
+        ///     GET /api/admin/payments/timeout-statistics
+        /// </remarks>
+        [HttpGet("timeout-statistics")]
+        public async Task<IActionResult> GetTimeoutStatistics()
+        {
+            try
+            {
+                var stats = await _timeoutService.GetTimeoutStatisticsAsync();
+                return Ok(ApiResponse<object>.Ok(stats));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get timeout statistics");
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to get statistics: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Manually trigger payment timeout check
+        /// </summary>
+        /// <remarks>
+        /// Manually check for timed-out payments and mark them as failed.
+        /// This is useful for testing or forcing a check outside the regular schedule.
+        /// 
+        /// Example:
+        ///     POST /api/admin/payments/check-timeouts
+        /// </remarks>
+        [HttpPost("check-timeouts")]
+        public async Task<IActionResult> CheckTimeouts()
+        {
+            try
+            {
+                _logger.LogInformation("Manual payment timeout check triggered by admin");
+                
+                await _timeoutService.CheckTimeoutsAsync();
+                
+                var stats = await _timeoutService.GetTimeoutStatisticsAsync();
+                
+                return Ok(ApiResponse<object>.Ok(new
+                {
+                    message = "Payment timeout check completed",
+                    statistics = stats
+                }));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to check timeouts");
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to check timeouts: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
         /// Get payment statistics summary
         /// </summary>
         /// <remarks>
@@ -151,7 +216,9 @@ namespace Tekno.Api.Controllers.Admin
                 {
                     "GET /api/admin/payments - Get paged transactions",
                     "GET /api/admin/payments/{id} - Get payment by ID",
-                    "GET /api/admin/payments/transaction/{transactionId} - Get by transaction ID"
+                    "GET /api/admin/payments/transaction/{transactionId} - Get by transaction ID",
+                    "GET /api/admin/payments/timeout-statistics - Get timeout statistics",
+                    "POST /api/admin/payments/check-timeouts - Manually trigger timeout check"
                 }
             };
 

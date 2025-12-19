@@ -98,12 +98,12 @@ namespace Tekno.Api.Controllers
         ///     }
         /// 
         /// Payment Gateways:
-        /// - 0 = Mock (for testing)
-        /// - 1 = Stripe (credit/debit cards)
-        /// - 2 = PayPal
-        /// - 3 = VNPay (Vietnam)
-        /// - 4 = MoMo (Vietnam e-wallet)
-        /// - 5 = ZaloPay (Vietnam e-wallet)
+        /// - 0 = Mock (for testing) ? Available
+        /// - 1 = Stripe (credit/debit cards) - Not implemented yet
+        /// - 2 = PayPal - Not implemented yet
+        /// - 3 = VNPay (Vietnam) ? Available
+        /// - 4 = MoMo (Vietnam e-wallet) - Not implemented yet
+        /// - 5 = ZaloPay (Vietnam e-wallet) - Not implemented yet
         /// 
         /// Payment Methods:
         /// - 1 = CreditCard
@@ -125,6 +125,12 @@ namespace Tekno.Api.Controllers
                 var result = await _paymentService.ProcessPaymentAsync(userId, request);
 
                 return Ok(ApiResponse<PaymentResponseDto>.Ok(result, "Payment initiated successfully. Redirect to payment URL."));
+            }
+            catch (NotSupportedException ex)
+            {
+                // Gateway not available - return user-friendly error
+                _logger.LogWarning(ex, "Payment gateway not available: {Gateway}", request.Gateway);
+                return BadRequest(ApiResponse<string>.Fail(ex.Message));
             }
             catch (Exception ex)
             {
@@ -204,11 +210,24 @@ namespace Tekno.Api.Controllers
         /// <summary>
         /// Get list of available payment gateways
         /// </summary>
+        /// <remarks>
+        /// Returns list of payment gateways with their availability status.
+        /// Only gateways marked as "available: true" are configured and can be used.
+        /// 
+        /// Example response:
+        ///     {
+        ///       "success": true,
+        ///       "data": [
+        ///         { "id": 0, "name": "Mock", "description": "Test gateway", "available": true },
+        ///         { "id": 3, "name": "VNPay", "description": "Vietnam payment", "available": true }
+        ///       ]
+        ///     }
+        /// </remarks>
         [HttpGet("gateways")]
         [AllowAnonymous]
-        public IActionResult GetAvailableGateways()
+        public IActionResult GetAvailableGateways([FromServices] PaymentGatewayFactory gatewayFactory)
         {
-            var gateways = new[]
+            var allGateways = new[]
             {
                 new { id = 0, name = "Mock", description = "Test payment gateway" },
                 new { id = 1, name = "Stripe", description = "Credit/Debit card payments" },
@@ -218,7 +237,17 @@ namespace Tekno.Api.Controllers
                 new { id = 5, name = "ZaloPay", description = "ZaloPay e-wallet" }
             };
 
-            return Ok(ApiResponse<object>.Ok(gateways));
+            var availableGatewayIds = gatewayFactory.GetAvailableGateways().Select(g => (int)g).ToHashSet();
+
+            var result = allGateways.Select(g => new
+            {
+                g.id,
+                g.name,
+                g.description,
+                available = availableGatewayIds.Contains(g.id)
+            });
+
+            return Ok(ApiResponse<object>.Ok(result));
         }
     }
 }

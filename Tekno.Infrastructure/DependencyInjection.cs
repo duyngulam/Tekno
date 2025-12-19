@@ -148,9 +148,21 @@ namespace Tekno.Infrastructure
             services.AddScoped<Application.Payment.Services.PaymentService>();
             services.AddScoped<Application.Payment.Services.AdminPaymentService>();
             services.AddScoped<Application.Payment.Services.PaymentGatewayFactory>();
+            services.AddScoped<Application.Payment.Services.PaymentTimeoutService>();
+            
+            // Payment Gateway Configuration (Infrastructure concern)
+            services.AddSingleton(sp =>
+            {
+                var configuration = sp.GetRequiredService<IConfiguration>();
+                return Infrastructure.Payment.Configuration.VNPaySettingsProvider.LoadSettings(configuration);
+            });
             
             // Payment Gateways (Strategy Pattern)
             services.AddScoped<Application.Payment.Interfaces.IPaymentGateway, Application.Payment.Gateways.MockPaymentGateway>();
+            services.AddScoped<Application.Payment.Interfaces.IPaymentGateway, Application.Payment.Gateways.VNPayPaymentGateway>();
+
+            // Background Services
+            services.AddHostedService<Infrastructure.BackgroundServices.PaymentTimeoutBackgroundService>();
 
             // Location
             services.AddScoped<LocationService>();
