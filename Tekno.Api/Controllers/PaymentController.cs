@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Tekno.Api.Commons.Responses;
+using Tekno.Application.Common.Exceptions;
 using Tekno.Application.Common.Paging;
 using Tekno.Application.Payment.DTOs;
 using Tekno.Application.Payment.Services;
@@ -68,6 +69,16 @@ namespace Tekno.Api.Controllers
         /// 3. Initiates payment with selected gateway
         /// 4. Returns payment URL to redirect customer
         /// 5. Removes checked out items from cart (partial or full)
+        /// 
+        /// VNPay Flow Details:
+        /// - Frontend sends returnUrl (e.g., "http://localhost:3000/payment/result")
+        /// - Backend sends vnp_ReturnUrl to VNPay (e.g., "https://api.com/api/v1/payments/vnpay-return?frontendUrl=...")
+        /// - After payment: Customer Browser → VNPay → Backend ReturnUrl → Frontend returnUrl
+        /// - Simultaneously: VNPay Server → Backend IPN (reliable callback)
+        /// 
+        /// Two Callbacks:
+        /// 1. IPN (Server-to-Server): Reliable, updates database, configured in VNPay portal
+        /// 2. ReturnUrl (Browser): Quick UX, shows result to customer, sent in payment request
         /// 
         /// Example request (Full cart payment):
         /// 
@@ -136,6 +147,179 @@ namespace Tekno.Api.Controllers
             {
                 _logger.LogError(ex, "Payment processing failed");
                 return StatusCode(500, ApiResponse<string>.Fail($"Payment processing failed: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// VNPay IPN (Instant Payment Notification) - Server-to-server callback
+        /// 
+        /// IMPORTANT: This is PRIMARY callback for payment status updates
+        /// - Called by VNPay SERVER (not customer browser)
+        /// - Configured in VNPay Merchant Portal (separate from vnp_ReturnUrl)
+        /// - Reliable with retry mechanism (up to 10 times, every 5 minutes)
+        /// - MUST update database here - this is source of truth
+        /// - MUST respond with JSON: {"RspCode":"00","Message":"Confirm Success"}
+        /// 
+        /// Retry Logic:
+        /// - RspCode "00" or "02" → VNPay stops retrying (success)
+        /// - RspCode "01", "04", "97", "99" or timeout → VNPay retries
+        /// 
+        /// vs ReturnUrl: IPN is reliable server callback, ReturnUrl is browser redirect for UX
+        /// </summary>
+        [HttpGet("vnpay/IPN")]
+        [HttpGet("/api/v1/payments/vnpay-ipn")]
+        [AllowAnonymous]
+        public async Task<IActionResult> VNPayIPN()
+        {
+            try
+            {
+                _logger.LogInformation("VNPay IPN received: {QueryString}", Request.QueryString.Value);
+
+                // Read query string parameters into dictionary
+                var queryDict = Request.Query.ToDictionary(k => k.Key, v => v.Value.ToString());
+
+                // Extract transaction id
+                string transactionId = queryDict.TryGetValue("vnp_TxnRef", out var txn) ? txn : string.Empty;
+
+                if (string.IsNullOrEmpty(transactionId))
+                {
+                    _logger.LogWarning("VNPay IPN called without transaction id");
+                    return Ok(new { RspCode = "99", Message = "Missing transaction id" });
+                }
+
+                var callback = new PaymentCallbackDto
+                {
+                    TransactionId = transactionId,
+                    CallbackData = queryDict
+                };
+
+                // Process payment callback (service handles idempotency)
+                var result = await _paymentService.HandlePaymentCallbackAsync(callback);
+
+                _logger.LogInformation("VNPay IPN processed successfully for {TransactionId}. Status: {Status}", 
+                    transactionId, result.Status);
+
+
+                // Respond to VNPay according to their specification
+                return Ok(new { RspCode = "00", Message = "Confirm Success" });
+            }
+            catch (NotFoundException)
+            {
+                _logger.LogWarning("VNPay IPN: Payment not found. Query: {Query}", Request.QueryString.Value);
+                return Ok(new { RspCode = "02", Message = "Order not found" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "VNPay IPN: Invalid signature or operation. Query: {Query}", Request.QueryString.Value);
+                return Ok(new { RspCode = "97", Message = "Invalid signature" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "VNPay IPN processing failed. Query: {Query}", Request.QueryString.Value);
+                
+                // Tell VNPay to retry
+                return Ok(new { RspCode = "99", Message = $"System error" });
+            }
+        }
+
+        /// <summary>
+        /// VNPay Return URL - Browser redirect after payment (Customer-facing)
+        /// 
+        /// IMPORTANT: This is SECONDARY callback for user experience
+        /// - Customer browser is redirected here by VNPay after payment
+        /// - Triggered by vnp_ReturnUrl parameter sent in payment request
+        /// - Not reliable (customer might close browser)
+        /// - Should verify signature but get status from database (IPN already updated it)
+        /// - Redirects customer to frontend with payment result
+        /// 
+        /// Flow:
+        /// 1. Customer completes payment at VNPay
+        /// 2. VNPay redirects browser to this endpoint with payment params
+        /// 3. This endpoint verifies (optional) and gets status from DB
+        /// 4. Redirects customer to frontend URL with result
+        /// 
+        /// vs IPN: ReturnUrl is browser redirect for UX, IPN is reliable server callback
+        /// 
+        /// Query Parameters:
+        /// - frontendUrl: Custom parameter to redirect customer after processing
+        /// - vnp_*: VNPay payment result parameters (same as IPN)
+        /// </summary>
+        [HttpGet("/api/v1/payments/vnpay-return")]
+        [AllowAnonymous]
+        public async Task<IActionResult> VNPayReturn([FromQuery] string? frontendUrl)
+        {
+            try
+            {
+                _logger.LogInformation("VNPay Return received: {QueryString}", Request.QueryString.Value);
+
+                // Read query string parameters into dictionary
+                var queryDict = Request.Query
+                    .Where(q => q.Key != "frontendUrl") // Exclude our custom param
+                    .ToDictionary(k => k.Key, v => v.Value.ToString());
+
+                // Extract transaction id
+                string transactionId = queryDict.TryGetValue("vnp_TxnRef", out var txn) ? txn : string.Empty;
+                string responseCode = queryDict.TryGetValue("vnp_ResponseCode", out var code) ? code : "";
+
+                if (string.IsNullOrEmpty(transactionId))
+                {
+                    _logger.LogWarning("VNPay Return called without transaction id");
+                    
+                    // Redirect to frontend error page
+                    var errorUrl = !string.IsNullOrEmpty(frontendUrl) 
+                        ? $"{frontendUrl}?status=error&message=Missing+transaction+id"
+                        : "/payment/error?message=Missing+transaction+id";
+                    
+                    return Redirect(errorUrl);
+                }
+
+                // Note: IPN should have already processed this payment, but we verify again for safety
+                // The service handles idempotency - if already processed, it returns existing status
+                PaymentStatusDto result;
+                try
+                {
+                    var callback = new PaymentCallbackDto
+                    {
+                        TransactionId = transactionId,
+                        CallbackData = queryDict
+                    };
+
+                    result = await _paymentService.HandlePaymentCallbackAsync(callback);
+                    
+                    _logger.LogInformation("VNPay Return processed for {TransactionId}. Status: {Status}, ResponseCode: {Code}", 
+                        transactionId, result.Status, responseCode);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "VNPay Return: Callback processing failed, fetching status from DB");
+                    
+                    // If callback fails (e.g., signature mismatch on tampered URL), get from DB
+                    var status = await _paymentService.GetPaymentStatusAsync(transactionId);
+                    if (status == null)
+                    {
+                        throw new NotFoundException("Payment", transactionId);
+                    }
+                    result = status;
+                }
+
+                // Redirect to frontend with result
+                var redirectUrl = !string.IsNullOrEmpty(frontendUrl) 
+                    ? BuildFrontendRedirectUrl(frontendUrl, result, responseCode)
+                    : $"/payment/result?transactionId={Uri.EscapeDataString(transactionId)}&status={result.Status}&responseCode={responseCode}";
+
+                _logger.LogInformation("Redirecting to frontend: {Url}", redirectUrl);
+                return Redirect(redirectUrl);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "VNPay Return processing failed. Query: {Query}", Request.QueryString.Value);
+                
+                // Redirect to frontend error page
+                var errorUrl = !string.IsNullOrEmpty(frontendUrl) 
+                    ? $"{frontendUrl}?status=error&message={Uri.EscapeDataString(ex.Message)}"
+                    : $"/payment/error?message={Uri.EscapeDataString(ex.Message)}";
+                
+                return Redirect(errorUrl);
             }
         }
 
@@ -249,5 +433,28 @@ namespace Tekno.Api.Controllers
 
             return Ok(ApiResponse<object>.Ok(result));
         }
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Build frontend redirect URL with payment result
+        /// </summary>
+        private string BuildFrontendRedirectUrl(string baseUrl, PaymentStatusDto result, string responseCode)
+        {
+            var separator = baseUrl.Contains("?") ? "&" : "?";
+            
+            return $"{baseUrl}{separator}" +
+                   $"transactionId={Uri.EscapeDataString(result.TransactionId)}&" +
+                   $"orderId={result.OrderId}&" +
+                   $"orderNumber={Uri.EscapeDataString(result.OrderNumber)}&" +
+                   $"status={result.Status}&" +
+                   $"statusName={Uri.EscapeDataString(result.StatusName ?? "")}&" +
+                   $"amount={result.Amount}&" +
+                   $"currency={result.Currency}&" +
+                   $"responseCode={responseCode}&" +
+                   $"gateway={result.Gateway}";
+        }
+
+        #endregion
     }
 }

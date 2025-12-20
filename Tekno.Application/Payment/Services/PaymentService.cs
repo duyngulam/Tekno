@@ -475,8 +475,8 @@ namespace Tekno.Application.Payment.Services
             }
             
             // Last resort fallback
-            _logger.LogWarning("Using fallback base URL: https://localhost:7145");
-            return "https://localhost:7145";
+            _logger.LogWarning("Using fallback base URL: http://localhost:5000");
+            return "http://localhost:5000";
         }
     }
 }
