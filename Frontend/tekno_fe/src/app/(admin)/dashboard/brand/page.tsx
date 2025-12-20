@@ -96,12 +96,13 @@ const handleUpdate = async () => {
 
   try {
     const fd = new FormData();
+    fd.append("Id", editingBrand.id);
     fd.append("Name", form.name);
     fd.append("Slug", form.slug);
     fd.append("Country", form.country);
     if (form.image) fd.append("image", form.image);
 
-    await updateBrand(editingBrand.id, fd);
+    await updateBrand(fd);
 
     await fetchBrands();
 
@@ -201,29 +202,32 @@ const handleDelete = async (id: string) => {
     </DialogHeader>
 
     <div className="grid gap-3 mt-2">
+      
+      <label className="block text-sm font-medium mb-1">Brand Name*</label>
       <Input
-        placeholder="Brand name*"
         value={form.name}
         onChange={(e) => setForm({ ...form, name: e.target.value })}
       />
 
+      <label className="block text-sm font-medium mb-1">Slug*</label>
       <Input
-        placeholder="Slug*"
         value={form.slug}
         onChange={(e) => setForm({ ...form, slug: e.target.value })}
       />
 
+      <label className="block text-sm font-medium mb-1">Country</label>
       <Input
-        placeholder="Country"
         value={form.country}
         onChange={(e) => setForm({ ...form, country: e.target.value })}
       />
 
+      <label className="block text-sm font-medium mb-1">Logo</label>
       <Input
         type="file"
         accept="image/*"
         onChange={(e) => setForm({ ...form, image: e.target.files?.[0] || null })}
       />
+
 
       <Button onClick={handleUpdate}>Update Brand</Button>
     </div>

@@ -4,11 +4,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { get } from "@/lib/api";
+import { getBrandList } from "@/services/brand";
+import { getCategoriesList } from "@/services/categories";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import Actions from "@/components/admin/Actions";
 import Image from "next/image";
 import { uploadImage, updateImageMeta, deleteImage, reorderImages, deleteVariant } from "@/lib/productsImageApi";
+import { getAdminProducts, getAdminProduct, createAdminProduct, updateAdminProduct, deleteAdminProduct } from "@/services/products";
+import { getCategoryAttributes } from "@/services/categories";
 
 type Product = {
   id: number;
@@ -40,6 +43,9 @@ type Brand = {
   name: string;
 };
 
+type CategoryAttr = { id: number; name: string; options: string[] };
+type Variant = { sku: string; price: number; stock: number; attributes: { attributeId: number; value: string }[] };
+
 export default function ProductPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,10 +75,10 @@ export default function ProductPage() {
     images: [] as File[], // multiple files
   });
 
-  const [categoryAttributes, setCategoryAttributes] = useState<any[]>([]);
-  const [variants, setVariants] = useState<any[]>([]);
-
   const [editData, setEditData] = useState<any>(null); // will hold product fields + files preview
+
+  const [createCategoryAttrs, setCreateCategoryAttrs] = useState<CategoryAttr[]>([]);
+  const [variants, setVariants] = useState<Variant[]>([]);
 
   // load products, categories, brands
 useEffect(() => {
@@ -93,8 +99,7 @@ const loadAll = async () => {
 
 const loadBrands = async () => {
   try {
-    const res = await get("http://localhost:5000/api/admin/brands");
-
+    const res = await getBrandList();
     const list =
       res?.data?.data ||
       res?.data ||
@@ -108,12 +113,36 @@ const loadBrands = async () => {
   }
 };
 
+const buildTreeFromFlat = (items: any[]) => {
+  const map = new Map();
+  items.forEach((it) => map.set(it.id, { ...it, subCategories: [] }));
+  const roots: any[] = [];
+  map.forEach((node) => {
+    const parentId = node.parentId ?? node.parent?.id ?? null;
+    if (parentId) {
+      const parent = map.get(parentId);
+      if (parent) parent.subCategories.push(node);
+      else roots.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+  return roots;
+};
+
 const loadCategories = async () => {
   try {
-    const res = await get("http://localhost:5000/api/admin/categories/tree");
-    let list = res?.data?.data || res?.data || res || [];
-    list = assignParentIds(list);
-    setTreeCategories(list);
+    // getCategoriesList() returns Category[]
+    const res = await getCategoriesList();
+    let list = Array.isArray(res) ? res : (res ?? []);
+
+    // If items don't already have subCategories, try to build tree
+    if (list.length > 0 && !("subCategories" in list[0])) {
+      list = buildTreeFromFlat(list);
+    }
+
+    const tree = assignParentIds(list);
+    setTreeCategories(tree);
   } catch (err) {
     console.error("Category load failed", err);
     setTreeCategories([]);
@@ -122,7 +151,7 @@ const loadCategories = async () => {
 
 const loadProducts = async () => {
   try {
-    const res = await get("http://localhost:5000/api/admin/products");
+    const res = await getAdminProducts();
     const list = res?.data?.data || res?.data || [];
     setProducts(list);
   } catch (err) {
@@ -133,9 +162,11 @@ const loadProducts = async () => {
 
 const loadProductDetail = async (prod: any) => {
   try {
-    const res = await get(`http://localhost:5000/api/admin/products/${prod.slug}`);
-    setSelectedProduct(res?.data);
-    setOpenDetail(true);
+    const detail = await fetchProductDetail(prod);
+    if (detail) {
+      setSelectedProduct(detail);
+      setOpenDetail(true);
+    }
   } catch (err) {
     console.error("Failed to load product detail", err);
   }
@@ -172,67 +203,58 @@ const loadProductDetail = async (prod: any) => {
   };
 
   // Create Modal
-  const handleCreate = async () => {    
-    try {
-      if (!createData.name || !createData.slug || !createData.categoryId || !createData.brandId) {
-        alert("Please fill required fields: Name, Slug, Category, Brand");
-        return;
-      }
-
-      const fd = new FormData();
-      fd.append("Name", createData.name);
-      fd.append("Slug", createData.slug);
-      fd.append("CategoryId", String(createData.categoryId));
-      fd.append("BrandId", String(createData.brandId));
-      if (createData.basePrice) fd.append("BasePrice", String(createData.basePrice));
-      if (createData.discountPercent) fd.append("DiscountPercent", String(createData.discountPercent));
-      if (createData.overview) fd.append("Overview", createData.overview);
-
-      // append images (key: Images) - many backends accept repeated key
-      for (const f of createData.images) {
-        fd.append("Images", f);
-      }
-
-      const res = await fetch("http://localhost:5000/api/admin/products/create", {
-        method: "POST",
-        body: fd,
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Create failed: ${text}`);
-      }
-
-      await loadAll();
-      setOpenCreate(false);
-      setCreateData({
-        name: "",
-        slug: "",
-        categoryId: "",
-        brandId: "",
-        basePrice: 0,
-        discountPercent: 0,
-        overview: "",
-        images: [],
-      });
-      alert("Product created");
-    } catch (err) {
-      console.error(err);
-      alert("Create failed");
+const handleCreate = async () => {
+  try {
+    if (!createData.name || !createData.slug || !createData.categoryId || !createData.brandId) {
+      alert("Please fill required fields: Name, Slug, Category, Brand");
+      return;
     }
-  };
+
+    const fd = new FormData();
+    fd.append("Name", createData.name);
+    fd.append("Slug", createData.slug);
+    fd.append("CategoryId", String(createData.categoryId));
+    fd.append("BrandId", String(createData.brandId));
+    if (createData.basePrice) fd.append("BasePrice", String(createData.basePrice));
+    if (createData.discountPercent) fd.append("DiscountPercent", String(createData.discountPercent));
+    if (createData.overview) fd.append("Overview", createData.overview);
+
+    for (const f of createData.images) fd.append("Images", f);
+
+    if (createCategoryAttrs.length > 0) {
+  fd.append("Attributes", JSON.stringify(createCategoryAttrs.map(a => ({ id: a.id, name: a.name, options: a.options }))));
+}
+if (variants.length > 0) {
+  fd.append("Variants", JSON.stringify(variants));
+}
+    // call service (throws on non-2xx)
+    await createAdminProduct(fd);
+
+    await loadAll();
+    setOpenCreate(false);
+    setCreateData({
+      name: "",
+      slug: "",
+      categoryId: "",
+      brandId: "",
+      basePrice: 0,
+      discountPercent: 0,
+      overview: "",
+      images: [],
+    });
+    alert("Product created");
+  } catch (err) {
+    console.error("Create failed:", err);
+    alert(`Create failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
+};
 
   // Open edit modal
 async function fetchProductDetail(prod: any) {
   try {
-    const slug = prod.slug;
-    if (!slug) return null;
-
-    const res = await fetch(`http://localhost:5000/api/admin/products/${slug}`);
-    if (!res.ok) return null;
-
-    const json = await res.json();
-    return json.data;        // backend trả data trong data
+    if (!prod?.slug) return null;
+    const res = await getAdminProduct(prod.slug);
+    return res?.data ?? res;
   } catch (err) {
     console.error("fetchProductDetail error", err);
     return null;
@@ -358,16 +380,8 @@ const handleEditSave = async () => {
     productForm.append("Overview", editData.overview || "");
     productForm.append("DiscountPercent", String(editData.discountPercent || 0));
 
-    const productRes = await fetch(`http://localhost:5000/api/admin/products/${editData.id}`, {
-      method: "PUT",
-      body: productForm,
-    });
-
-    if (!productRes.ok) {
-      const errorText = await productRes.text();
-      console.error("Update product error:", errorText);
-      throw new Error(`Failed to update product: ${errorText}`);
-    }
+await updateAdminProduct(editData.id, productForm);
+// then continue (no need for manual res.ok checks)
 
     console.log("✅ Step 1: Product info updated");
 
@@ -442,11 +456,7 @@ if (allImageIds.length > 0) {
   const deleteProduct = async (id: number) => {
     if (!confirm("Delete product?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/products/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Delete failed: ${text}`);
-      }
+      await deleteAdminProduct(id);
       await loadAll();
       alert("Deleted");
     } catch (err) {
@@ -455,6 +465,25 @@ if (allImageIds.length > 0) {
     }
   };
 
+  function cartesian(arrs: string[][]) {
+  return arrs.reduce((acc, arr) => acc.flatMap(a => arr.map(b => [...a, b])), [[]] as string[][]);
+}
+
+const generateVariants = () => {
+  const lists = createCategoryAttrs.map(a => a.options.length ? a.options : [""]); // ensure non-empty
+  if (lists.length === 0) {
+    alert("No attribute options to generate variants.");
+    return;
+  }
+  const combos = cartesian(lists);
+  const newVariants: Variant[] = combos.map((combo, idx) => ({
+    sku: `${createData.slug || "product"}-${idx+1}`,
+    price: Number(createData.basePrice) || 0,
+    stock: 0,
+    attributes: combo.map((val, i) => ({ attributeId: createCategoryAttrs[i].id, value: val })),
+  }));
+  setVariants(newVariants);
+};
 
   return (
     <div className="p-6">
@@ -587,7 +616,23 @@ if (allImageIds.length > 0) {
           <select
             className="border rounded p-2 w-full"
             value={editData.categoryId || ""}
-            onChange={(e) => setEditData({ ...editData, categoryId: Number(e.target.value) })}
+            onChange={async (e) => {
+  const catId = Number(e.target.value);
+  setCreateData({ ...createData, categoryId: catId });
+  if (catId) {
+    try {
+      const attrs = await getCategoryAttributes(catId); // returns array
+      // Map to CategoryAttr format
+      setCreateCategoryAttrs(attrs.map((a: any) => ({ id: a.id, name: a.name, options: [] })));
+      setVariants([]); // reset variants when category changes
+    } catch (err) {
+      console.error("load attributes", err);
+      setCreateCategoryAttrs([]);
+    }
+  } else {
+    setCreateCategoryAttrs([]);
+  }
+}}
           >
             <option value="">-- Select --</option>
             {flatCategories.map((c: any) => (
@@ -919,13 +964,268 @@ if (allImageIds.length > 0) {
   )}
     
     {/* === CREATE PRODUCT MODAL === */}  
-    {openCreate && (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white w-full max-w-2xl rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Create Product</h2>
+{openCreate && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="bg-white w-full max-w-2xl rounded-lg shadow-lg p-6 max-h-[90vh] overflow-y-auto">
+      <h2 className="text-xl font-semibold mb-4">Create Product</h2>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block font-medium mb-1">Name *</label>
+          <input
+            className="border rounded p-2 w-full"
+            value={createData.name}
+            onChange={(e) => setCreateData({ ...createData, name: e.target.value })}
+          />
         </div>
+
+        <div>
+          <label className="block font-medium mb-1">Slug *</label>
+          <input
+            className="border rounded p-2 w-full"
+            value={createData.slug}
+            onChange={(e) => setCreateData({ ...createData, slug: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Category *</label>
+<select
+  className="border rounded p-2 w-full"
+  value={String(createData.categoryId)}
+  onChange={async (e) => {
+    const catId = Number(e.target.value);
+
+    setCreateData({ ...createData, categoryId: catId });
+
+    if (!catId) {
+      setCreateCategoryAttrs([]);
+      setVariants([]);
+      return;
+    }
+
+    try {
+      const attrs = await getCategoryAttributes(catId);
+      setCreateCategoryAttrs(
+        attrs.map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          options: [],
+        }))
+      );
+      setVariants([]); // reset variants khi đổi category
+    } catch (err) {
+      console.error("Load category attributes failed", err);
+      setCreateCategoryAttrs([]);
+    }
+  }}
+>
+
+            <option value="">-- Select --</option>
+            {flatCategories.map((c: any) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Brand *</label>
+          <select
+            className="border rounded p-2 w-full"
+            value={String(createData.brandId)}
+            onChange={(e) => setCreateData({ ...createData, brandId: e.target.value })}
+          >
+            <option value="">-- Select --</option>
+            {brands.map((b: any) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Base Price</label>
+          <input
+            type="number"
+            className="border rounded p-2 w-full"
+            value={createData.basePrice}
+            onChange={(e) => setCreateData({ ...createData, basePrice: Number(e.target.value) })}
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Discount (%)</label>
+          <input
+            type="number"
+            className="border rounded p-2 w-full"
+            value={createData.discountPercent}
+            onChange={(e) => setCreateData({ ...createData, discountPercent: Number(e.target.value) })}
+          />
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <label className="block font-medium mb-1">Overview</label>
+        <textarea
+          rows={3}
+          className="border rounded p-2 w-full"
+          value={createData.overview}
+          onChange={(e) => setCreateData({ ...createData, overview: e.target.value })}
+        />
+      </div>
+
+        {/* Attributes (category-based) */}
+{createCategoryAttrs.length > 0 && (
+  <div className="mt-4">
+    <h3 className="font-medium mb-2">Attributes</h3>
+    {createCategoryAttrs.map((attr, ai) => (
+      <div key={attr.id} className="mb-3">
+        <div className="text-sm font-medium">{attr.name}</div>
+        <div className="flex gap-2 mt-1">
+          <input
+            type="text"
+            placeholder="Add option and press Enter"
+            className="border rounded p-2 flex-1"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const v = (e.target as HTMLInputElement).value.trim();
+                if (!v) return;
+                setCreateCategoryAttrs(prev => {
+                  const copy = [...prev];
+                  copy[ai].options = Array.from(new Set([...copy[ai].options, v]));
+                  return copy;
+                });
+                (e.target as HTMLInputElement).value = "";
+              }
+            }}
+          />
+        </div>
+
+        <div className="flex gap-2 flex-wrap mt-2">
+          {attr.options.map((o, oi) => (
+            <span key={oi} className="text-xs bg-gray-100 px-2 py-1 rounded flex items-center gap-2">
+              {o}
+              <button className="text-red-500 text-xs" onClick={() =>
+                setCreateCategoryAttrs(prev => {
+                  const copy = [...prev];
+                  copy[ai].options = copy[ai].options.filter(x => x !== o);
+                  return copy;
+                })
+              }>×</button>
+            </span>
+          ))}
+        </div>
+      </div>
+    ))}
+
+    <div className="mt-3">
+      <button className="px-3 py-1 bg-blue-600 text-white rounded" onClick={() => generateVariants()}>
+        Generate Variants
+      </button>
     </div>
-  )}
+  </div>
+)}
+
+{/* Variants */}
+{variants.length > 0 && (
+  <div className="mt-4">
+    <h3 className="font-medium mb-2">Variants</h3>
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <tbody>
+          {variants.map((v, i) => (
+            <tr key={i}>
+              <td>
+                <input className="border p-1" value={v.sku} onChange={(e)=> {
+                  setVariants(prev=> prev.map((x, ii)=> ii===i ? { ...x, sku: e.target.value } : x));
+                }}/>
+              </td>
+              <td><input type="number" className="border p-1 w-24" value={v.price} onChange={(e)=> {
+                  setVariants(prev=> prev.map((x, ii)=> ii===i ? { ...x, price: Number(e.target.value) } : x));
+              }} /></td>
+              <td><input type="number" className="border p-1 w-20" value={v.stock} onChange={(e)=> {
+                  setVariants(prev=> prev.map((x, ii)=> ii===i ? { ...x, stock: Number(e.target.value) } : x));
+              }} /></td>
+              <td>
+                {v.attributes.map(attr => <div key={attr.attributeId} className="text-xs">{attr.value}</div>)}
+              </td>
+              <td>
+                <button className="text-red-500 text-xs" onClick={() => setVariants(prev=> prev.filter((_, ii)=>ii !== i))}>Remove</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+
+      <div className="mt-4">
+        <label className="block font-medium mb-1">Images</label>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={(e) => {
+            const files = Array.from(e.target.files || []);
+            setCreateData({ ...createData, images: [...createData.images, ...files] });
+          }}
+        />
+
+
+        {/* Previews */}
+        {createData.images.length > 0 && (
+          <div className="flex flex-wrap gap-3 mt-3">
+            {createData.images.map((f, idx) => (
+              <div key={idx} className="w-32 border rounded p-2 bg-gray-50 text-center">
+                <div className="relative w-28 h-20 mb-2">
+                  <img src={URL.createObjectURL(f)} className="w-full h-full object-cover rounded" />
+                </div>
+                <div className="text-xs">{f.name}</div>
+                <button
+                  className="text-red-500 text-xs mt-1"
+                  onClick={() =>
+                    setCreateData({ ...createData, images: createData.images.filter((_, i) => i !== idx) })
+                  }
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-end gap-3 mt-6">
+        <button
+          className="px-4 py-2 bg-gray-300 rounded"
+          onClick={() => {
+            setOpenCreate(false);
+            setCreateData({
+              name: "",
+              slug: "",
+              categoryId: "",
+              brandId: "",
+              basePrice: 0,
+              discountPercent: 0,
+              overview: "",
+              images: [],
+            });
+          }}
+        >
+          Cancel
+        </button>
+
+        <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={handleCreate}>
+          Create Product
+        </button>
+      </div>
+    </div>
+  </div>
+)}
   
   </div>
   );

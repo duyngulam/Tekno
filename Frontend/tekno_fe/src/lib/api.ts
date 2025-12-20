@@ -1,6 +1,6 @@
-// Lightweight fetch helper with JWT bearer support
-// Usage: import { get, post, put, del, postForm, setAuthToken, getAuthToken } from '@/lib/api'
-const API_BASE = "http://localhost:5000/api";
+﻿// Lightweight fetch helper with JWT bearer support
+// Usage: import { get, post, put, del, postForm, setAuthToken, getAuthToken, API_BASE } from '@/lib/api'
+export const API_BASE = "http://localhost:5000/api";
 
 export const AUTH_TOKEN_KEY = 'token';
 
