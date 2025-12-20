@@ -2,7 +2,7 @@
 // Usage: import { get, post, put, del, postForm, setAuthToken, getAuthToken } from '@/lib/api'
 const API_BASE = "http://localhost:5000/api";
 
-export const AUTH_TOKEN_KEY = 'auth_token';
+export const AUTH_TOKEN_KEY = 'token';
 
 export function setAuthToken(token?: string | null) {
   if (!token) {
