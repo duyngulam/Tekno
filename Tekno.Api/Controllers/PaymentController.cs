@@ -28,16 +28,31 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
-        /// Get current user's payment history
+        /// Get current user's payment history (completed payments only)
         /// </summary>
         /// <remarks>
-        /// Returns all payments made by the authenticated user, ordered by most recent first.
-        /// Supports pagination for better performance with large payment histories.
+        /// **For Support/Debugging Purpose** - Shows completed payment transactions
+        /// 
+        /// **Note:** For order tracking and delivery status, use `/api/orders/history` instead.
+        /// 
+        /// This endpoint returns:
+        /// - Only completed payment transactions
+        /// - Payment gateway used (VNPay, Stripe, etc.)
+        /// - Transaction IDs for support
+        /// - Payment timestamps
+        /// 
+        /// **Use this for:**
+        /// - Payment verification
+        /// - Financial records
+        /// - Support inquiries about payments
+        /// 
+        /// **For user-facing order tracking, use:**
+        /// - GET /api/orders/history (recommended)
         /// 
         /// Example:
         ///     GET /api/payment/my-payments?page=1&amp;pageSize=20
         /// 
-        /// Returns paginated list of payments with order details, gateway names, and status
+        /// Returns only successful payment transactions.
         /// </remarks>
         [HttpGet("my-payments")]
         [Authorize]
@@ -48,9 +63,13 @@ namespace Tekno.Api.Controllers
             try
             {
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var payments = await _paymentService.GetUserPaymentsAsync(userId, page, pageSize);
+                
+                // Only show completed payments (for payment verification/support)
+                var payments = await _paymentService.GetUserCompletedPaymentsAsync(userId, page, pageSize);
 
-                return Ok(ApiResponse<PagedResult<PaymentStatusDto>>.Ok(payments, "Payment history retrieved successfully"));
+                return Ok(ApiResponse<PagedResult<PaymentStatusDto>>.Ok(
+                    payments, 
+                    "Payment history retrieved successfully. For order tracking, use /api/orders/history"));
             }
             catch (Exception ex)
             {
@@ -388,6 +407,74 @@ namespace Tekno.Api.Controllers
             {
                 _logger.LogError(ex, "Failed to get payment status for {TransactionId}", transactionId);
                 return StatusCode(500, ApiResponse<string>.Fail($"Failed to get payment status: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
+        /// Get payment details with full order information (products, variants)
+        /// </summary>
+        /// <remarks>
+        /// Returns payment with complete order details including:
+        /// - All order items
+        /// - Product information (name, thumbnail, brand, category)
+        /// - Variant details (SKU, attributes like Color, RAM, Storage)
+        /// 
+        /// Example response structure:
+        /// {
+        ///   "transactionId": "ORD-20241220-ABC123",
+        ///   "status": "Completed",
+        ///   "amount": 67980000,
+        ///   "order": {
+        ///     "orderNumber": "ORD-20241220-ABC123",
+        ///     "items": [
+        ///       {
+        ///         "quantity": 2,
+        ///         "price": 33990000,
+        ///         "product": {
+        ///           "name": "iPhone 15 Pro Max",
+        ///           "thumbnailUrl": "...",
+        ///           "brandName": "Apple",
+        ///           "categoryName": "Smartphones"
+        ///         },
+        ///         "variant": {
+        ///           "sku": "IP15PM-BL-256",
+        ///           "attributes": [
+        ///             { "name": "Color", "value": "Black" },
+        ///             { "name": "Storage", "value": "256GB" }
+        ///           ]
+        ///         }
+        ///       }
+        ///     ]
+        ///   }
+        /// }
+        /// 
+        /// Use this for:
+        /// - Payment confirmation page
+        /// - Order history details
+        /// - Receipt display
+        /// 
+        /// Example:
+        ///     GET /api/payment/details/MOCK-abc123
+        /// </remarks>
+        [HttpGet("details/{transactionId}")]
+        [Authorize]
+        public async Task<IActionResult> GetPaymentDetails(string transactionId)
+        {
+            try
+            {
+                var result = await _paymentService.GetPaymentStatusWithDetailsAsync(transactionId);
+
+                if (result == null)
+                {
+                    return NotFound(ApiResponse<string>.Fail("Payment not found"));
+                }
+
+                return Ok(ApiResponse<PaymentStatusDto>.Ok(result));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get payment details for {TransactionId}", transactionId);
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to get payment details: {ex.Message}"));
             }
         }
 

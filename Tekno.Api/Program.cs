@@ -296,32 +296,32 @@ Example: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
             // =======================================================
             // 6. APPLY MIGRATIONS ON STARTUP
             // =======================================================
-            using (var scope = app.Services.CreateScope())
-            {
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            //using (var scope = app.Services.CreateScope())
+            //{
+            //    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            //    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                var retries = 5;
-                for (var i = 0; i < retries; i++)
-                {
-                    try
-                    {
-                        db.Database.Migrate();
-                        logger.LogInformation("Database migration completed successfully");
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogWarning(ex, "Migration attempt {Attempt} failed, retrying...", i + 1);
-                        if (i == retries - 1)
-                        {
-                            logger.LogError(ex, "Database migration failed after {Retries} attempts", retries);
-                            throw;
-                        }
-                        Thread.Sleep(2000);
-                    }
-                }
-            }
+            //    var retries = 5;
+            //    for (var i = 0; i < retries; i++)
+            //    {
+            //        try
+            //        {
+            //            db.Database.Migrate();
+            //            logger.LogInformation("Database migration completed successfully");
+            //            break;
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            logger.LogWarning(ex, "Migration attempt {Attempt} failed, retrying...", i + 1);
+            //            if (i == retries - 1)
+            //            {
+            //                logger.LogError(ex, "Database migration failed after {Retries} attempts", retries);
+            //                throw;
+            //            }
+            //            Thread.Sleep(2000);
+            //        }
+            //    }
+            //}
 
             // =======================================================
             // 7. INITIALIZE ELASTICSEARCH

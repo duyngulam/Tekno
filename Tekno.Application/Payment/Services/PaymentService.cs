@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Tekno.Application.Cart.Interface;
+using Tekno.Application.Catalog.DTOs.Products;
 using Tekno.Application.Catalog.Interface;
 using Tekno.Application.Common.Exceptions;
 using Tekno.Application.Common.Interfaces;
@@ -409,7 +410,7 @@ namespace Tekno.Application.Payment.Services
         }
 
         /// <summary>
-        /// Get payment status
+        /// Get payment status (without full details)
         /// </summary>
         public async Task<PaymentStatusDto?> GetPaymentStatusAsync(string transactionId)
         {
@@ -434,6 +435,35 @@ namespace Tekno.Application.Payment.Services
         }
 
         /// <summary>
+        /// Get payment status with full order details including products and variants
+        /// </summary>
+        public async Task<PaymentStatusDto?> GetPaymentStatusWithDetailsAsync(string transactionId)
+        {
+            var payment = await _timeoutService.GetPaymentWithTimeoutCheckAsync(transactionId);
+            
+            if (payment == null)
+            {
+                return null;
+            }
+
+            // If payment was just marked as timed out, restore cart items
+            if (payment.Status == PaymentStatus.Failed && 
+                payment.ErrorMessage != null && 
+                payment.ErrorMessage.Contains("timed out"))
+            {
+                _logger.LogInformation("Payment {TransactionId} timed out, restoring cart items", transactionId);
+                await RestoreCartItemsAsync(payment.UserId, payment.OrderId);
+            }
+
+            var dto = _mapper.Map<PaymentStatusDto>(payment);
+            
+            // Enrich with full order details
+            await EnrichPaymentWithOrderDetailsAsync(dto);
+            
+            return dto;
+        }
+
+        /// <summary>
         /// Get user's payment history with pagination
         /// </summary>
         public async Task<PagedResult<PaymentStatusDto>> GetUserPaymentsAsync(int userId, int page = 1, int pageSize = 20)
@@ -442,7 +472,92 @@ namespace Tekno.Application.Payment.Services
             var result = await _paymentRepository.GetPagedAsync(userId: userId, paging: paging);
 
             var dtos = _mapper.Map<List<PaymentStatusDto>>(result.Data);
+            
+            // Enrich with order details (products and variants)
+            foreach (var dto in dtos)
+            {
+                await EnrichPaymentWithOrderDetailsAsync(dto);
+            }
+            
             return new PagedResult<PaymentStatusDto>(dtos, result.TotalRecords, result.Page, result.PageSize);
+        }
+
+        /// <summary>
+        /// Get user's completed payment history (for support/verification)
+        /// </summary>
+        public async Task<PagedResult<PaymentStatusDto>> GetUserCompletedPaymentsAsync(int userId, int page = 1, int pageSize = 20)
+        {
+            var paging = new PagingParams(page, pageSize);
+            
+            // Only get completed payments
+            var result = await _paymentRepository.GetPagedAsync(
+                userId: userId, 
+                status: PaymentStatus.Completed,
+                paging: paging);
+
+            var dtos = _mapper.Map<List<PaymentStatusDto>>(result.Data);
+            
+            // Don't enrich with order details for payment history (use orders API for that)
+            // This keeps payment history lightweight and focused on payment verification
+            
+            return new PagedResult<PaymentStatusDto>(dtos, result.TotalRecords, result.Page, result.PageSize);
+        }
+
+        /// <summary>
+        /// Enrich payment DTO with full order details including products and variants
+        /// </summary>
+        private async Task EnrichPaymentWithOrderDetailsAsync(PaymentStatusDto paymentDto)
+        {
+            try
+            {
+                // Get order with items
+                var order = await _orderRepository.GetByIdAsync(paymentDto.OrderId);
+                if (order == null || !order.Items.Any())
+                {
+                    _logger.LogWarning("Order {OrderId} not found or has no items", paymentDto.OrderId);
+                    return;
+                }
+
+                // Map order to DTO
+                var orderDto = _mapper.Map<OrderDetailsDto>(order);
+
+                // Enrich each order item with product and variant details
+                foreach (var item in order.Items)
+                {
+                    var itemDto = orderDto.Items.FirstOrDefault(i => i.Id == item.Id);
+                    if (itemDto == null) continue;
+
+                    // Get product variant with full details
+                    var variant = await _productRepository.GetProductVariantByIdAsync(item.VariantId);
+                    if (variant == null)
+                    {
+                        _logger.LogWarning("Variant {VariantId} not found for order item {ItemId}", item.VariantId, item.Id);
+                        continue;
+                    }
+
+                    // Get product details
+                    var product = await _productRepository.GetProductByIdAsync(item.ProductId);
+                    if (product == null)
+                    {
+                        _logger.LogWarning("Product {ProductId} not found for order item {ItemId}", item.ProductId, item.Id);
+                        continue;
+                    }
+
+                    // Map product to ProductSummaryDto (reuse existing mapping)
+                    itemDto.Product = _mapper.Map<ProductSummaryDto>(product);
+
+                    // Map variant to ProductVariantDto (reuse existing mapping)
+                    itemDto.Variant = _mapper.Map<ProductVariantDto>(variant);
+                }
+
+                // Attach enriched order to payment DTO
+                paymentDto.Order = orderDto;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to enrich payment {PaymentId} with order details", paymentDto.PaymentId);
+                // Don't throw - just log and continue without order details
+            }
         }
 
         private static string GenerateOrderNumber()

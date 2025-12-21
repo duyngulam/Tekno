@@ -5,8 +5,7 @@ using System.Linq;
 namespace Tekno.Domain.Order
 {
     /// <summary>
-    /// Simplified Order entity for purchase verification
-    /// Full order system can be expanded later
+    /// Order entity with delivery tracking
     /// </summary>
     public class Order
     {
@@ -17,17 +16,27 @@ namespace Tekno.Domain.Order
         public decimal TotalAmount { get; private set; }
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime? CompletedAt { get; private set; }
+        
+        // Delivery tracking
+        public DateTime? ShippedAt { get; private set; }
+        public DateTime? DeliveredAt { get; private set; }
+        public string? TrackingNumber { get; private set; }
+        public string? ShippingCarrier { get; private set; }
+        
+        // Customer note
+        public string? CustomerNote { get; private set; }
 
         private readonly List<OrderItem> _items = new();
         public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
 
         public Order() { }
 
-        public Order(int userId, string orderNumber, decimal totalAmount)
+        public Order(int userId, string orderNumber, decimal totalAmount, string? customerNote = null)
         {
             UserId = userId;
             OrderNumber = orderNumber;
             TotalAmount = totalAmount;
+            CustomerNote = customerNote;
             Status = OrderStatus.Pending;
             CreatedAt = DateTime.UtcNow;
         }
@@ -42,6 +51,41 @@ namespace Tekno.Domain.Order
         {
             Status = OrderStatus.Completed;
             CompletedAt = DateTime.UtcNow;
+        }
+
+        public void MarkAsProcessing()
+        {
+            Status = OrderStatus.Processing;
+        }
+
+        public void Ship(string? trackingNumber = null, string? carrier = null)
+        {
+            Status = OrderStatus.Shipping;
+            ShippedAt = DateTime.UtcNow;
+            TrackingNumber = trackingNumber;
+            ShippingCarrier = carrier;
+        }
+
+        public void Deliver()
+        {
+            Status = OrderStatus.Delivered;
+            DeliveredAt = DateTime.UtcNow;
+        }
+
+        public void Cancel(string? reason = null)
+        {
+            Status = OrderStatus.Cancelled;
+            // You can add CancelReason property if needed
+        }
+
+        public void RequestRefund()
+        {
+            Status = OrderStatus.RefundRequested;
+        }
+
+        public void Refund()
+        {
+            Status = OrderStatus.Refunded;
         }
 
         public bool HasPurchasedProduct(int productId)
@@ -83,9 +127,13 @@ namespace Tekno.Domain.Order
 
     public enum OrderStatus
     {
-        Pending = 1,
-        Processing = 2,
-        Completed = 3,
-        Cancelled = 4
+        Pending = 1,           // Order created, awaiting payment
+        Processing = 2,        // Payment received, preparing order
+        Completed = 3,         // Legacy - use Shipping/Delivered instead
+        Shipping = 4,          // Order shipped, on the way
+        Delivered = 5,         // Order delivered to customer
+        Cancelled = 6,         // Order cancelled
+        RefundRequested = 7,   // Customer requested refund
+        Refunded = 8          // Order refunded
     }
 }

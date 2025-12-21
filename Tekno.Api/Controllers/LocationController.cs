@@ -22,43 +22,28 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
-        /// Get all provinces
+        /// Get provinces or search provinces by keyword
         /// </summary>
         /// <remarks>
-        /// Returns complete list of all provinces in Vietnam.
+        /// If `keyword` query parameter is provided, performs a search against province name and codename.
+        /// Otherwise returns the full list of provinces.
         /// 
-        /// Example response:
-        /// 
-        ///     [
-        ///       {
-        ///         "code": 1,
-        ///         "name": "Thành ph? Hà N?i",
-        ///         "codename": "thanh_pho_ha_noi",
-        ///         "divisionType": "thành ph? trung ??ng",
-        ///         "phoneCode": 24
-        ///       }
-        ///     ]
+        /// Examples:
+        ///     GET /api/locations/provinces
+        ///     GET /api/locations/provinces?keyword=Ha+Noi
         /// 
         /// </remarks>
         [HttpGet("provinces")]
-        public async Task<IActionResult> GetProvinces()
+        public async Task<IActionResult> GetProvinces([FromQuery] string? keyword)
         {
-            var provinces = await _locationService.GetAllProvincesAsync();
-            return Ok(ApiResponse<List<ProvinceDto>>.Ok(provinces));
-        }
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var provinces = await _locationService.SearchProvincesAsync(keyword);
+                return Ok(ApiResponse<List<ProvinceDto>>.Ok(provinces));
+            }
 
-        /// <summary>
-        /// Search provinces by keyword
-        /// </summary>
-        /// <param name="keyword">Search keyword (searches in name and codename)</param>
-        [HttpGet("provinces/search")]
-        public async Task<IActionResult> SearchProvinces([FromQuery] string keyword)
-        {
-            if (string.IsNullOrWhiteSpace(keyword))
-                return BadRequest(ApiResponse<List<ProvinceDto>>.Fail("Keyword is required"));
-
-            var provinces = await _locationService.SearchProvincesAsync(keyword);
-            return Ok(ApiResponse<List<ProvinceDto>>.Ok(provinces));
+            var all = await _locationService.GetAllProvincesAsync();
+            return Ok(ApiResponse<List<ProvinceDto>>.Ok(all));
         }
 
         /// <summary>
