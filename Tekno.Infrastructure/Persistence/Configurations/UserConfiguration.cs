@@ -97,29 +97,38 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasMaxLength(20);
 
-            builder.Property(a => a.AddressLine1)
+            builder.Property(a => a.AddressLine)
                 .IsRequired()
-                .HasMaxLength(200);
+                .HasMaxLength(200)
+                .HasColumnName("address_line");
 
-            builder.Property(a => a.AddressLine2)
-                .HasMaxLength(200);
-
-            builder.Property(a => a.City)
+            // Vietnam location system
+            builder.Property(a => a.ProvinceCode)
                 .IsRequired()
-                .HasMaxLength(100);
+                .HasColumnName("province_code");
 
-            builder.Property(a => a.State)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            builder.Property(a => a.PostalCode)
-                .IsRequired()
-                .HasMaxLength(20);
-
-            builder.Property(a => a.Country)
+            builder.Property(a => a.ProvinceName)
                 .IsRequired()
                 .HasMaxLength(100)
-                .HasDefaultValue("Vietnam");
+                .HasColumnName("province_name");
+
+            builder.Property(a => a.DistrictCode)
+                .IsRequired()
+                .HasColumnName("district_code");
+
+            builder.Property(a => a.DistrictName)
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasColumnName("district_name");
+
+            builder.Property(a => a.WardCode)
+                .IsRequired()
+                .HasColumnName("ward_code");
+
+            builder.Property(a => a.WardName)
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasColumnName("ward_name");
 
             builder.Property(a => a.IsDefault)
                 .HasDefaultValue(false);
@@ -139,36 +148,38 @@ namespace Tekno.Infrastructure.Persistence.Configurations
 
             // ========== SEED ADDRESS DATA (Customer User Only) ==========
             builder.HasData(
-                // Primary address for customer user (default)
+                // Primary address for customer user (default) - Quận 1, Hồ Chí Minh
                 new
                 {
                     Id = 1,
                     UserId = 2, // Customer user
                     RecipientName = "Customer User",
                     PhoneNumber = "0912345678",
-                    AddressLine1 = "123 Nguyen Hue Street",
-                    AddressLine2 = "Ben Nghe Ward",
-                    City = "District 1",
-                    State = "Ho Chi Minh City",
-                    PostalCode = "700000",
-                    Country = "Vietnam",
+                    AddressLine = "123 Nguyễn Huệ",
+                    ProvinceCode = 79,
+                    ProvinceName = "Thành phố Hồ Chí Minh",
+                    DistrictCode = 760,
+                    DistrictName = "Quận 1",
+                    WardCode = 26734,
+                    WardName = "Phường Bến Nghé",
                     IsDefault = true,
                     CreatedAt = SeedTime
                 },
                 
-                // Secondary address for customer user
+                // Secondary address for customer user - Quận 3, Hồ Chí Minh
                 new
                 {
                     Id = 2,
                     UserId = 2, // Customer user
                     RecipientName = "Customer User",
                     PhoneNumber = "0912345678",
-                    AddressLine1 = "456 Le Loi Boulevard",
-                    AddressLine2 = "Ben Thanh Ward",
-                    City = "District 1",
-                    State = "Ho Chi Minh City",
-                    PostalCode = "700000",
-                    Country = "Vietnam",
+                    AddressLine = "456 Võ Văn Tần",
+                    ProvinceCode = 79,
+                    ProvinceName = "Thành phố Hồ Chí Minh",
+                    DistrictCode = 769,
+                    DistrictName = "Quận 3",
+                    WardCode = 27031,
+                    WardName = "Phường 6",
                     IsDefault = false,
                     CreatedAt = SeedTime
                 }

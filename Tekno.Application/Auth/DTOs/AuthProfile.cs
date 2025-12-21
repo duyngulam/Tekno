@@ -20,8 +20,8 @@ namespace Tekno.Application.Auth.DTOs
                 .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.Name))
                 .ForMember(dest => dest.Addresses, opt => opt.MapFrom(src => src.Addresses));
 
-            CreateMap<UserAddress, UserAddressDto>();
-            CreateMap<CreateAddressDto, UserAddress>();
+            CreateMap<UserAddress, UserAddressDto>()
+                .ForMember(dest => dest.FullAddress, opt => opt.MapFrom(src => src.GetFullAddress()));
         }
     }
 }

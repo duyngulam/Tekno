@@ -235,12 +235,13 @@ namespace Tekno.Application.Auth.Services
                 userId: userId,
                 recipientName: dto.RecipientName,
                 phoneNumber: dto.PhoneNumber,
-                addressLine1: dto.AddressLine1,
-                city: dto.City,
-                state: dto.State,
-                postalCode: dto.PostalCode,
-                country: dto.Country,
-                addressLine2: dto.AddressLine2,
+                addressLine: dto.AddressLine,
+                provinceCode: dto.ProvinceCode,
+                provinceName: dto.ProvinceName,
+                districtCode: dto.DistrictCode,
+                districtName: dto.DistrictName,
+                wardCode: dto.WardCode,
+                wardName: dto.WardName,
                 isDefault: isDefault);
 
             user.AddAddress(address);
@@ -271,12 +272,13 @@ namespace Tekno.Application.Auth.Services
             address.Update(
                 recipientName: dto.RecipientName,
                 phoneNumber: dto.PhoneNumber,
-                addressLine1: dto.AddressLine1,
-                city: dto.City,
-                state: dto.State,
-                postalCode: dto.PostalCode,
-                country: dto.Country,
-                addressLine2: dto.AddressLine2);
+                addressLine: dto.AddressLine,
+                provinceCode: dto.ProvinceCode,
+                provinceName: dto.ProvinceName,
+                districtCode: dto.DistrictCode,
+                districtName: dto.DistrictName,
+                wardCode: dto.WardCode,
+                wardName: dto.WardName);
 
             await _userRepository.UpdateAddressAsync(address);
 

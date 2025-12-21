@@ -16,6 +16,30 @@ namespace Tekno.Application.Auth.DTOs
         public List<UserAddressDto> Addresses { get; set; } = new();
     }
 
+    public class UserAddressDto
+    {
+        public int Id { get; set; }
+        public string RecipientName { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string AddressLine { get; set; } = string.Empty;
+        
+        // Location codes
+        public int ProvinceCode { get; set; }
+        public int DistrictCode { get; set; }
+        public int WardCode { get; set; }
+        
+        // Cached names for display
+        public string ProvinceName { get; set; } = string.Empty;
+        public string DistrictName { get; set; } = string.Empty;
+        public string WardName { get; set; } = string.Empty;
+        
+        // Full formatted address
+        public string FullAddress { get; set; } = string.Empty;
+        
+        public bool IsDefault { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
     public class UpdateProfileDto
     {
         [Required]
@@ -80,21 +104,6 @@ namespace Tekno.Application.Auth.DTOs
         public string CurrentPassword { get; set; } = string.Empty;
     }
 
-    public class UserAddressDto
-    {
-        public int Id { get; set; }
-        public string RecipientName { get; set; } = string.Empty;
-        public string PhoneNumber { get; set; } = string.Empty;
-        public string AddressLine1 { get; set; } = string.Empty;
-        public string? AddressLine2 { get; set; }
-        public string City { get; set; } = string.Empty;
-        public string State { get; set; } = string.Empty;
-        public string PostalCode { get; set; } = string.Empty;
-        public string Country { get; set; } = "Vietnam";
-        public bool IsDefault { get; set; }
-        public DateTime CreatedAt { get; set; }
-    }
-
     public class CreateAddressDto
     {
         [Required]
@@ -107,27 +116,29 @@ namespace Tekno.Application.Auth.DTOs
         public string PhoneNumber { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(200, MinimumLength = 5)]
-        public string AddressLine1 { get; set; } = string.Empty;
-
-        [StringLength(200)]
-        public string? AddressLine2 { get; set; }
+        [StringLength(200, MinimumLength = 5, ErrorMessage = "Address line must be between 5 and 200 characters")]
+        public string AddressLine { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(100)]
-        public string City { get; set; } = string.Empty;
+        [Range(1, int.MaxValue, ErrorMessage = "Province is required")]
+        public int ProvinceCode { get; set; }
 
         [Required]
-        [StringLength(100)]
-        public string State { get; set; } = string.Empty;
+        public string ProvinceName { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(20)]
-        public string PostalCode { get; set; } = string.Empty;
+        [Range(1, int.MaxValue, ErrorMessage = "District is required")]
+        public int DistrictCode { get; set; }
 
         [Required]
-        [StringLength(100)]
-        public string Country { get; set; } = "Vietnam";
+        public string DistrictName { get; set; } = string.Empty;
+
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Ward is required")]
+        public int WardCode { get; set; }
+
+        [Required]
+        public string WardName { get; set; } = string.Empty;
 
         public bool IsDefault { get; set; } = false;
     }
@@ -144,26 +155,30 @@ namespace Tekno.Application.Auth.DTOs
         public string PhoneNumber { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(200, MinimumLength = 5)]
-        public string AddressLine1 { get; set; } = string.Empty;
-
-        [StringLength(200)]
-        public string? AddressLine2 { get; set; }
+        [StringLength(200, MinimumLength = 5, ErrorMessage = "Address line must be between 5 and 200 characters")]
+        public string AddressLine { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(100)]
-        public string City { get; set; } = string.Empty;
+        [Range(1, int.MaxValue, ErrorMessage = "Province is required")]
+        public int ProvinceCode { get; set; }
 
         [Required]
-        [StringLength(100)]
-        public string State { get; set; } = string.Empty;
+        public string ProvinceName { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(20)]
-        public string PostalCode { get; set; } = string.Empty;
+        [Range(1, int.MaxValue, ErrorMessage = "District is required")]
+        public int DistrictCode { get; set; }
 
         [Required]
-        [StringLength(100)]
-        public string Country { get; set; } = "Vietnam";
+        public string DistrictName { get; set; } = string.Empty;
+
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Ward is required")]
+        public int WardCode { get; set; }
+
+        [Required]
+        public string WardName { get; set; } = string.Empty;
     }
+
+    // Remove ProvinceOptionDto - use LocationController instead
 }
