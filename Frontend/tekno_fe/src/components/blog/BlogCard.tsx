@@ -34,7 +34,7 @@ export default function BlogCard({
         >
           <div className="text-sm text-gray-700 ">
             <Calendar className="inline-block mr-1 mb-1" size={14} />
-            {blog.createdAt}
+            {new Date(blog.createdAt).toLocaleString("vi-VN")}
           </div>
           <div className="font-semibold text-lg line-clamp-1 group-hover:text-secondary hoverEffect">
             {blog.title}

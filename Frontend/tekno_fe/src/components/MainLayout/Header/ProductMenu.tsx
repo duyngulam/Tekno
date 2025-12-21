@@ -1,61 +1,86 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCategoriesList } from "@/services/categories";
+import { getCategoriesTree } from "@/services/categories";
 import { Category } from "@/type/categories";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function ProductMenu() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [activeCategory, setActiveCategory] = useState<Category | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await getCategoriesList();
+      const data = await getCategoriesTree();
       setCategories(data);
+      setActiveCategory(data?.[0] ?? null); // 👈 mặc định category đầu tiên
     };
     fetchData();
   }, []);
 
   return (
-    <div
-      className="
-        fixed left-1/2 -translate-x-1/2 top-[80px]
-        bg-white shadow-xl rounded-lg 
-        w-[900px] h-[420px] p-6 z-[999]
-      "
-    >
-      <div className="flex h-full">
+    <div className="bg-white shadow-xl rounded-xl w-[900px] p-6 z-[999]">
+      <div className="grid grid-cols-3 gap-6">
         {/* LEFT: Category list */}
-        <div
-          className="flex flex-col flex-1 border-r pr-4 
-            max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400"
-        >
+        <div className="col-span-1 border-r pr-4 max-h-72 overflow-y-auto">
           {categories.map((cat) => (
             <Link
-              href={`/products?category=${cat.slug}`}
               key={cat.id}
-              className="flex items-center gap-5 py-2 cursor-pointer hover:text-primary hover:bg-gray-50 px-2 rounded"
+              href={`/products?category=${cat.slug}`}
+              onMouseEnter={() => setActiveCategory(cat)}
+              className={`
+                flex items-center gap-4 px-3 py-2 rounded cursor-pointer
+                ${
+                  activeCategory?.id === cat.id
+                    ? "bg-gray-100 text-primary font-medium"
+                    : "hover:bg-gray-50"
+                }
+              `}
             >
               <Image
                 src={cat.iconPath}
-                height={200}
-                width={200}
-                alt="icon"
-                sizes="icon"
-                className="w-10 h-10"
+                width={40}
+                height={40}
+                alt={cat.name}
+                className="w-10 h-10 object-contain"
               />
-
-              <p> {cat.name} </p>
+              <span className="text-sm">{cat.name}</span>
             </Link>
           ))}
         </div>
 
-        {/* RIGHT: Content preview */}
-        <div className="flex-1 pl-4">
-          <p className="text-gray-500">
-            Chọn danh mục để xem sản phẩm / hình ảnh / nội dung preview.
-          </p>
+        {/* RIGHT: Sub category / preview */}
+        <div className="col-span-2 pl-2">
+          {!activeCategory || activeCategory.subCategories.length === 0 ? (
+            <p className="text-gray-500 text-sm">Danh mục trống</p>
+          ) : (
+            <div className="grid grid-cols-4 gap-4">
+              {activeCategory.subCategories.map((subCat) => (
+                <Link
+                  key={subCat.id}
+                  href={`/products?category=${subCat.slug}`}
+                  className="
+                    bg-blue-50 rounded-lg p-4 text-center
+                    hover:shadow-md transition
+                  "
+                >
+                  <div className="w-full h-20 flex items-center justify-center mb-2">
+                    {subCat.iconPath && (
+                      <Image
+                        src={subCat.imageUrl}
+                        width={60}
+                        height={60}
+                        alt={subCat.name}
+                        className="object-contain"
+                      />
+                    )}
+                  </div>
+                  <span className="text-xs font-medium">{subCat.name}</span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

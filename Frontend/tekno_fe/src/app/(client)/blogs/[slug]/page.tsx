@@ -2,7 +2,8 @@ import RecentReports from "@/components/blog/RecentReports";
 import { Container } from "@/components/MainLayout/Container";
 import ProductCard from "@/components/product/ProductCard";
 import { Breadcrumb } from "@/components/share/breadcumbCustom";
-import { getBlogDetail } from "@/services/blogs";
+import Title from "@/components/share/Title";
+import { getBlogDetail, getBlogsRecent } from "@/services/blogs";
 import Image from "next/image";
 import React from "react";
 
@@ -33,7 +34,8 @@ export default async function BlogDetail({
       <Breadcrumb />
       <div className="flex gap-10">
         <div className="w-3/4 flex flex-col space-y-5">
-          <div> {blog.title} </div>
+          <Title title={blog.title} />
+
           <div>
             {" "}
             by {blog.authorName} on{" "}
@@ -50,7 +52,6 @@ export default async function BlogDetail({
           <div dangerouslySetInnerHTML={{ __html: blog.content }} />
         </div>
         <div className="w-1/4 gap-5 flex flex-col">
-          <p>cate</p>
           <RecentReports />
           <div className="flex flex-col space-y-2 ">
             <p className="text-xl font-bold">Tags</p>

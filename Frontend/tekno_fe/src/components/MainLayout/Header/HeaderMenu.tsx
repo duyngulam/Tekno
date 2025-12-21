@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import ProductMenu from "./ProductMenu";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function HeaderMenu() {
   const pathname = usePathname();
@@ -12,7 +13,7 @@ export default function HeaderMenu() {
   return (
     <div
       className="hidden md:inline-flex w-1/3 items-center gap-7 text-sm capitalize font-normal text-gray-900 relative"
-      onMouseLeave={() => setShowProductMenu(false)} // rời toàn menu -> ẩn dropdown
+      onMouseLeave={() => setShowProductMenu(false)}
     >
       {headerData?.map((item) => {
         const isRoot = item.match === "/";
@@ -54,11 +55,22 @@ export default function HeaderMenu() {
             </Link>
 
             {/* Mega menu only for Products */}
-            {isProduct && showProductMenu && (
-              <div className="absolute left-1/2 top-full">
-                <ProductMenu />
-              </div>
-            )}
+            <AnimatePresence>
+              {isProduct && showProductMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{
+                    duration: 0.25, // 👈 tốc độ
+                    ease: "easeOut",
+                  }}
+                  className="absolute left-1/2 top-full -translate-x-1/2 z-50"
+                >
+                  <ProductMenu />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         );
       })}

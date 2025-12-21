@@ -1,9 +1,11 @@
+import { API_BASE_URL } from "@/lib/apiConfig";
 import { Blog, BlogDetail } from "@/type/blog";
 
 
-export async function getBlogsRecent(): Promise<Blog[]> {
+
+export async function getBlogsRecent(count:number): Promise<Blog[]> {
   try {
-    const res = await fetch("http://localhost:5000/api/blog/recent?count=2", {
+    const res = await fetch(`${API_BASE_URL}/blog/recent?count=${count}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -13,7 +15,7 @@ export async function getBlogsRecent(): Promise<Blog[]> {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Lấy danh sách thất bại!");
+      throw new Error(err.message || "Lấy danh sách blog recent thất bại!");
     }
 
     // ⬇️ Trả về đúng kiểu Category[]
@@ -40,7 +42,7 @@ export async function getBlogsList() {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Lấy danh sách thất bại!");
+      throw new Error(err.message || "Lấy danh sách blog thất bại!");
     }
 
       console.log("fetch blog list", res);

@@ -6,7 +6,7 @@ export interface Category {
   imageUrl: string;
   parentId: number | null;
   description: string;
-  subCategories: []
+  subCategories: Category[]
 }
 
 export type CategoryAttribute = {
