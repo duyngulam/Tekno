@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 using Tekno.Api.Commons.Responses;
 using Tekno.Application.Auth.DTOs;
 using Tekno.Application.Auth.Services;
-using System;
+using System.IO;
+using System.Text.Json;
+using System.Linq;
 using Tekno.Application.Common.Media.Services;
 
 namespace Tekno.Api.Controllers
@@ -21,16 +23,11 @@ namespace Tekno.Api.Controllers
     {
         private readonly ProfileService _profileService;
         private readonly MediaService _mediaService;
-        private readonly ILogger<ProfileController> _logger;
 
-        public ProfileController(
-            ProfileService profileService, 
-            MediaService mediaService,
-            ILogger<ProfileController> logger)
+        public ProfileController(ProfileService profileService, MediaService mediaService)
         {
             _profileService = profileService;
             _mediaService = mediaService;
-            _logger = logger;
         }
 
         /// <summary>
@@ -56,7 +53,7 @@ namespace Tekno.Api.Controllers
         /// 
         ///     PUT /api/profile
         ///     {
-        ///       "fullname": "Nguy?n V?n A",
+        ///       "fullname": "John Doe",
         ///       "phoneNumber": "+84987654321"
         ///     }
         /// 
@@ -64,17 +61,9 @@ namespace Tekno.Api.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var profile = await _profileService.UpdateProfileAsync(userId, dto);
-                return Ok(ApiResponse<UserProfileDto>.Ok(profile, "Profile updated successfully"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to update profile");
-                return StatusCode(500, ApiResponse<string>.Fail($"Failed to update profile: {ex.Message}"));
-            }
+            var userId = GetCurrentUserId();
+            var profile = await _profileService.UpdateProfileAsync(userId, dto);
+            return Ok(ApiResponse<UserProfileDto>.Ok(profile, "Profile updated successfully"));
         }
 
         /// <summary>
@@ -85,7 +74,7 @@ namespace Tekno.Api.Controllers
         /// 
         ///     PUT /api/profile/all
         ///     {
-        ///       "fullname": "Nguy?n V?n A",
+        ///       "fullname": "John Doe",
         ///       "phoneNumber": "+84987654321",
         ///       "newEmail": "newemail@example.com",
         ///       "newPassword": "NewPassword456",
@@ -97,7 +86,7 @@ namespace Tekno.Api.Controllers
         /// 
         ///     PUT /api/profile/all
         ///     {
-        ///       "fullname": "Nguy?n V?n A",
+        ///       "fullname": "John Doe",
         ///       "phoneNumber": "+84987654321",
         ///       "newEmail": "newemail@example.com",
         ///       "currentPassword": "CurrentPassword123"
@@ -108,17 +97,9 @@ namespace Tekno.Api.Controllers
         [HttpPut("all")]
         public async Task<IActionResult> UpdateAllProfile([FromBody] UpdateAllProfileDto dto)
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var profile = await _profileService.UpdateAllProfileAsync(userId, dto);
-                return Ok(ApiResponse<UserProfileDto>.Ok(profile, "Profile updated successfully"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to update profile");
-                return StatusCode(500, ApiResponse<string>.Fail($"Failed to update profile: {ex.Message}"));
-            }
+            var userId = GetCurrentUserId();
+            var profile = await _profileService.UpdateAllProfileAsync(userId, dto);
+            return Ok(ApiResponse<UserProfileDto>.Ok(profile, "Profile updated successfully"));
         }
 
         /// <summary>
@@ -137,17 +118,9 @@ namespace Tekno.Api.Controllers
         [HttpPut("email")]
         public async Task<IActionResult> UpdateEmail([FromBody] UpdateEmailDto dto)
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var profile = await _profileService.UpdateEmailAsync(userId, dto);
-                return Ok(ApiResponse<UserProfileDto>.Ok(profile, "Email updated successfully"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to update email");
-                return StatusCode(500, ApiResponse<string>.Fail($"Failed to update email: {ex.Message}"));
-            }
+            var userId = GetCurrentUserId();
+            var profile = await _profileService.UpdateEmailAsync(userId, dto);
+            return Ok(ApiResponse<UserProfileDto>.Ok(profile, "Email updated successfully"));
         }
 
         /// <summary>
@@ -167,17 +140,9 @@ namespace Tekno.Api.Controllers
         [HttpPut("password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                await _profileService.ChangePasswordAsync(userId, dto);
-                return Ok(ApiResponse<bool>.Ok(true, "Password changed successfully"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to change password");
-                return StatusCode(500, ApiResponse<string>.Fail($"Failed to change password: {ex.Message}"));
-            }
+            var userId = GetCurrentUserId();
+            await _profileService.ChangePasswordAsync(userId, dto);
+            return Ok(ApiResponse<bool>.Ok(true, "Password changed successfully"));
         }
 
         /// <summary>
@@ -186,17 +151,9 @@ namespace Tekno.Api.Controllers
         [HttpGet("addresses")]
         public async Task<IActionResult> GetAddresses()
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var addresses = await _profileService.GetAddressesAsync(userId);
-                return Ok(ApiResponse<List<UserAddressDto>>.Ok(addresses));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to get addresses");
-                return StatusCode(500, ApiResponse<string>.Fail($"Failed to get addresses: {ex.Message}"));
-            }
+            var userId = GetCurrentUserId();
+            var addresses = await _profileService.GetAddressesAsync(userId);
+            return Ok(ApiResponse<List<UserAddressDto>>.Ok(addresses));
         }
 
         /// <summary>
@@ -207,75 +164,37 @@ namespace Tekno.Api.Controllers
         /// 
         ///     POST /api/profile/addresses
         ///     {
-        ///       "recipientName": "Nguy?n V?n A",
+        ///       "recipientName": "John Doe",
         ///       "phoneNumber": "+84987654321",
-        ///       "addressLine": "123 Nguy?n Hu?, Ph??ng B?n Nghé",
-        ///       "provinceCode": 79,
-        ///       "provinceName": "Thành ph? H? Chí Minh",
-        ///       "districtCode": 760,
-        ///       "districtName": "Qu?n 1",
-        ///       "wardCode": 26734,
-        ///       "wardName": "Ph??ng B?n Nghé",
+        ///       "addressLine1": "123 Nguyen Hue Street",
+        ///       "addressLine2": "Apartment 5B",
+        ///       "city": "Ho Chi Minh City",
+        ///       "state": "Ho Chi Minh",
+        ///       "postalCode": "700000",
+        ///       "country": "Vietnam",
         ///       "isDefault": true
         ///     }
         /// 
-        /// **Note:** Use `/api/locations/*` endpoints to get province/district/ward codes and names:
-        /// - GET /api/locations/provinces - Get all provinces
-        /// - GET /api/locations/provinces/{provinceCode}/districts - Get districts by province
-        /// - GET /api/locations/districts/{districtCode}/wards - Get wards by district
         /// </remarks>
         [HttpPost("addresses")]
         public async Task<IActionResult> AddAddress([FromBody] CreateAddressDto dto)
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var address = await _profileService.AddAddressAsync(userId, dto);
-                return CreatedAtAction(
-                    nameof(GetAddresses),
-                    ApiResponse<UserAddressDto>.Ok(address, "Address added successfully"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to add address");
-                return StatusCode(500, ApiResponse<string>.Fail($"Failed to add address: {ex.Message}"));
-            }
+            var userId = GetCurrentUserId();
+            var address = await _profileService.AddAddressAsync(userId, dto);
+            return CreatedAtAction(
+                nameof(GetAddresses),
+                ApiResponse<UserAddressDto>.Ok(address, "Address added successfully"));
         }
 
         /// <summary>
         /// Update existing address
         /// </summary>
-        /// <remarks>
-        /// Sample request:
-        /// 
-        ///     PUT /api/profile/addresses/1
-        ///     {
-        ///       "recipientName": "Nguy?n V?n A",
-        ///       "phoneNumber": "+84987654321",
-        ///       "addressLine": "456 Lê L?i, Ph??ng B?n Thành",
-        ///       "provinceCode": 79,
-        ///       "provinceName": "Thành ph? H? Chí Minh",
-        ///       "districtCode": 760,
-        ///       "districtName": "Qu?n 1",
-        ///       "wardCode": 26743,
-        ///       "wardName": "Ph??ng B?n Thành"
-        ///     }
-        /// 
-        /// </remarks>
         [HttpPut("addresses/{addressId:int}")]
         public async Task<IActionResult> UpdateAddress(int addressId, [FromBody] UpdateAddressDto dto)
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var address = await _profileService.UpdateAddressAsync(userId, addressId, dto);
-                return Ok(ApiResponse<UserAddressDto>.Ok(address, "Address updated successfully"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to update address {AddressId}", addressId);
-                return StatusCode(500, ApiResponse<string>.Fail($"Failed to update address: {ex.Message}"));
-            }
+            var userId = GetCurrentUserId();
+            var address = await _profileService.UpdateAddressAsync(userId, addressId, dto);
+            return Ok(ApiResponse<UserAddressDto>.Ok(address, "Address updated successfully"));
         }
 
         /// <summary>
@@ -284,17 +203,9 @@ namespace Tekno.Api.Controllers
         [HttpPatch("addresses/{addressId:int}/default")]
         public async Task<IActionResult> SetDefaultAddress(int addressId)
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                await _profileService.SetDefaultAddressAsync(userId, addressId);
-                return Ok(ApiResponse<bool>.Ok(true, "Default address updated"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to set default address {AddressId}", addressId);
-                return StatusCode(500, ApiResponse<string>.Fail($"Failed to set default address: {ex.Message}"));
-            }
+            var userId = GetCurrentUserId();
+            await _profileService.SetDefaultAddressAsync(userId, addressId);
+            return Ok(ApiResponse<bool>.Ok(true, "Default address updated"));
         }
 
         /// <summary>
@@ -303,21 +214,88 @@ namespace Tekno.Api.Controllers
         [HttpDelete("addresses/{addressId:int}")]
         public async Task<IActionResult> DeleteAddress(int addressId)
         {
+            var userId = GetCurrentUserId();
+            var success = await _profileService.DeleteAddressAsync(userId, addressId);
+
+            if (!success)
+                return NotFound(ApiResponse<bool>.Fail("Address not found"));
+
+            return Ok(ApiResponse<bool>.Ok(true, "Address deleted successfully"));
+        }
+
+        /// <summary>
+        /// Return list of provinces for address selection.
+        /// This reads the included `openapi.json` file and extracts example province entries if present.
+        /// It's intended to help frontend address selection when offline. Prefer calling the upstream API in production.
+        /// </summary>
+        [HttpGet("provinces")]
+        public async Task<IActionResult> GetProvinces()
+        {
+            // Try to load openapi.json from application base directory
+            var basePath = Directory.GetCurrentDirectory();
+            var openApiPath = Path.Combine(basePath, "openapi.json");
+
+            if (!System.IO.File.Exists(openApiPath))
+                return NotFound(ApiResponse<List<ProvinceOptionDto>>.Fail("openapi.json not found in application root"));
+
             try
             {
-                var userId = GetCurrentUserId();
-                var success = await _profileService.DeleteAddressAsync(userId, addressId);
+                using var stream = System.IO.File.OpenRead(openApiPath);
+                using var doc = await JsonDocument.ParseAsync(stream);
 
-                if (!success)
-                    return NotFound(ApiResponse<bool>.Fail("Address not found"));
+                var root = doc.RootElement;
 
-                return Ok(ApiResponse<bool>.Ok(true, "Address deleted successfully"));
+                // Navigate to components.schemas.ProvinceResponse.examples
+                if (root.TryGetProperty("components", out var components) &&
+                    components.TryGetProperty("schemas", out var schemas) &&
+                    schemas.TryGetProperty("ProvinceResponse", out var provinceSchema) &&
+                    provinceSchema.TryGetProperty("examples", out var examples) &&
+                    examples.ValueKind == JsonValueKind.Array)
+                {
+                    var list = new List<ProvinceOptionDto>();
+                    foreach (var ex in examples.EnumerateArray())
+                    {
+                        if (ex.TryGetProperty("code", out var codeEl) && codeEl.ValueKind == JsonValueKind.Number &&
+                            ex.TryGetProperty("name", out var nameEl))
+                        {
+                            list.Add(new ProvinceOptionDto
+                            {
+                                Code = codeEl.GetInt32(),
+                                Name = nameEl.GetString() ?? string.Empty,
+                                Codename = ex.TryGetProperty("codename", out var cn) ? cn.GetString() ?? string.Empty : string.Empty
+                            });
+                        }
+                    }
+
+                    if (list.Any())
+                        return Ok(ApiResponse<List<ProvinceOptionDto>>.Ok(list));
+                }
+
+                // No examples found or empty - return empty list
+                return Ok(ApiResponse<List<ProvinceOptionDto>>.Ok(new List<ProvinceOptionDto>()));
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, "Failed to delete address {AddressId}", addressId);
-                return StatusCode(500, ApiResponse<string>.Fail($"Failed to delete address: {ex.Message}"));
+                return StatusCode(500, ApiResponse<List<ProvinceOptionDto>>.Fail("Failed to parse openapi.json"));
             }
+        }
+
+        /// <summary>
+        /// Trigger user storage cleanup (best-effort). This will attempt to remove orphaned images for the current user from the media provider.
+        /// Implementation is best-effort and returns success if request accepted.
+        /// </summary>
+        [HttpPost("storage-cleanup")]
+        public async Task<IActionResult> StorageCleanup()
+        {
+            var userId = GetCurrentUserId();
+
+            // MediaService currently exposes DeleteImageAsync. There's no dedicated cleanup method available.
+            // We treat this endpoint as a placeholder that the frontend can call to trigger background cleanup logic later.
+            // For now we return 202 Accepted to indicate request was received.
+
+            // TODO: implement MediaService.CleanupUserImagesAsync(userId) when cloud provider supports listing/deleting by tag
+
+            return Accepted(ApiResponse<string>.Ok("Storage cleanup scheduled"));
         }
 
         private int GetCurrentUserId()

@@ -97,38 +97,29 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasMaxLength(20);
 
-            builder.Property(a => a.AddressLine)
+            builder.Property(a => a.AddressLine1)
                 .IsRequired()
-                .HasMaxLength(200)
-                .HasColumnName("address_line");
+                .HasMaxLength(200);
 
-            // Vietnam location system
-            builder.Property(a => a.ProvinceCode)
+            builder.Property(a => a.AddressLine2)
+                .HasMaxLength(200);
+
+            builder.Property(a => a.City)
                 .IsRequired()
-                .HasColumnName("province_code");
+                .HasMaxLength(100);
 
-            builder.Property(a => a.ProvinceName)
+            builder.Property(a => a.State)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            builder.Property(a => a.PostalCode)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            builder.Property(a => a.Country)
                 .IsRequired()
                 .HasMaxLength(100)
-                .HasColumnName("province_name");
-
-            builder.Property(a => a.DistrictCode)
-                .IsRequired()
-                .HasColumnName("district_code");
-
-            builder.Property(a => a.DistrictName)
-                .IsRequired()
-                .HasMaxLength(100)
-                .HasColumnName("district_name");
-
-            builder.Property(a => a.WardCode)
-                .IsRequired()
-                .HasColumnName("ward_code");
-
-            builder.Property(a => a.WardName)
-                .IsRequired()
-                .HasMaxLength(100)
-                .HasColumnName("ward_name");
+                .HasDefaultValue("Vietnam");
 
             builder.Property(a => a.IsDefault)
                 .HasDefaultValue(false);
@@ -148,38 +139,36 @@ namespace Tekno.Infrastructure.Persistence.Configurations
 
             // ========== SEED ADDRESS DATA (Customer User Only) ==========
             builder.HasData(
-                // Primary address for customer user (default) - Quận 1, Hồ Chí Minh
+                // Primary address for customer user (default)
                 new
                 {
                     Id = 1,
                     UserId = 2, // Customer user
                     RecipientName = "Customer User",
                     PhoneNumber = "0912345678",
-                    AddressLine = "123 Nguyễn Huệ",
-                    ProvinceCode = 79,
-                    ProvinceName = "Thành phố Hồ Chí Minh",
-                    DistrictCode = 760,
-                    DistrictName = "Quận 1",
-                    WardCode = 26734,
-                    WardName = "Phường Bến Nghé",
+                    AddressLine1 = "123 Nguyen Hue Street",
+                    AddressLine2 = "Ben Nghe Ward",
+                    City = "District 1",
+                    State = "Ho Chi Minh City",
+                    PostalCode = "700000",
+                    Country = "Vietnam",
                     IsDefault = true,
                     CreatedAt = SeedTime
                 },
                 
-                // Secondary address for customer user - Quận 3, Hồ Chí Minh
+                // Secondary address for customer user
                 new
                 {
                     Id = 2,
                     UserId = 2, // Customer user
                     RecipientName = "Customer User",
                     PhoneNumber = "0912345678",
-                    AddressLine = "456 Võ Văn Tần",
-                    ProvinceCode = 79,
-                    ProvinceName = "Thành phố Hồ Chí Minh",
-                    DistrictCode = 769,
-                    DistrictName = "Quận 3",
-                    WardCode = 27031,
-                    WardName = "Phường 6",
+                    AddressLine1 = "456 Le Loi Boulevard",
+                    AddressLine2 = "Ben Thanh Ward",
+                    City = "District 1",
+                    State = "Ho Chi Minh City",
+                    PostalCode = "700000",
+                    Country = "Vietnam",
                     IsDefault = false,
                     CreatedAt = SeedTime
                 }

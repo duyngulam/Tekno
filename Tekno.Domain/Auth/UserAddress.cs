@@ -8,20 +8,12 @@ namespace Tekno.Domain.Auth
         public int UserId { get; private set; }
         public string RecipientName { get; private set; } = string.Empty;
         public string PhoneNumber { get; private set; } = string.Empty;
-        
-        // Detailed address
-        public string AddressLine { get; private set; } = string.Empty; // Street, building, apartment
-        
-        // Vietnam location system
-        public int ProvinceCode { get; private set; }
-        public int DistrictCode { get; private set; }
-        public int WardCode { get; private set; }
-        
-        // Cached names for display (updated when codes change)
-        public string ProvinceName { get; private set; } = string.Empty;
-        public string DistrictName { get; private set; } = string.Empty;
-        public string WardName { get; private set; } = string.Empty;
-        
+        public string AddressLine1 { get; private set; } = string.Empty;
+        public string? AddressLine2 { get; private set; }
+        public string City { get; private set; } = string.Empty;
+        public string State { get; private set; } = string.Empty;
+        public string PostalCode { get; private set; } = string.Empty;
+        public string Country { get; private set; } = "Vietnam";
         public bool IsDefault { get; private set; }
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; private set; }
@@ -34,25 +26,23 @@ namespace Tekno.Domain.Auth
             int userId,
             string recipientName,
             string phoneNumber,
-            string addressLine,
-            int provinceCode,
-            string provinceName,
-            int districtCode,
-            string districtName,
-            int wardCode,
-            string wardName,
+            string addressLine1,
+            string city,
+            string state,
+            string postalCode,
+            string country = "Vietnam",
+            string? addressLine2 = null,
             bool isDefault = false)
         {
             UserId = userId;
             RecipientName = recipientName.Trim();
             PhoneNumber = phoneNumber.Trim();
-            AddressLine = addressLine.Trim();
-            ProvinceCode = provinceCode;
-            ProvinceName = provinceName.Trim();
-            DistrictCode = districtCode;
-            DistrictName = districtName.Trim();
-            WardCode = wardCode;
-            WardName = wardName.Trim();
+            AddressLine1 = addressLine1.Trim();
+            AddressLine2 = addressLine2?.Trim();
+            City = city.Trim();
+            State = state.Trim();
+            PostalCode = postalCode.Trim();
+            Country = country.Trim();
             IsDefault = isDefault;
             CreatedAt = DateTime.UtcNow;
         }
@@ -60,23 +50,21 @@ namespace Tekno.Domain.Auth
         public void Update(
             string recipientName,
             string phoneNumber,
-            string addressLine,
-            int provinceCode,
-            string provinceName,
-            int districtCode,
-            string districtName,
-            int wardCode,
-            string wardName)
+            string addressLine1,
+            string city,
+            string state,
+            string postalCode,
+            string country,
+            string? addressLine2 = null)
         {
             RecipientName = recipientName.Trim();
             PhoneNumber = phoneNumber.Trim();
-            AddressLine = addressLine.Trim();
-            ProvinceCode = provinceCode;
-            ProvinceName = provinceName.Trim();
-            DistrictCode = districtCode;
-            DistrictName = districtName.Trim();
-            WardCode = wardCode;
-            WardName = wardName.Trim();
+            AddressLine1 = addressLine1.Trim();
+            AddressLine2 = addressLine2?.Trim();
+            City = city.Trim();
+            State = state.Trim();
+            PostalCode = postalCode.Trim();
+            Country = country.Trim();
             UpdatedAt = DateTime.UtcNow;
         }
 
@@ -84,14 +72,6 @@ namespace Tekno.Domain.Auth
         {
             IsDefault = isDefault;
             UpdatedAt = DateTime.UtcNow;
-        }
-
-        /// <summary>
-        /// Get full address as formatted string
-        /// </summary>
-        public string GetFullAddress()
-        {
-            return $"{AddressLine}, {WardName}, {DistrictName}, {ProvinceName}";
         }
     }
 }
