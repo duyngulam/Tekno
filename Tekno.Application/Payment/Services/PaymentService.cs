@@ -246,10 +246,22 @@ namespace Tekno.Application.Payment.Services
             }
 
             // ? IDEMPOTENCY: If payment already processed (Completed or Failed), return existing status
+            // DO NOT process cart clearing/restoration again
             if (payment.Status == PaymentStatus.Completed || payment.Status == PaymentStatus.Failed)
             {
                 _logger.LogInformation(
-                    "Payment {TransactionId} already processed with status {Status}. Returning existing status (idempotent).",
+                    "Payment {TransactionId} already processed with status {Status}. Returning existing status (idempotent). " +
+                    "Cart operations were already performed, not repeating.",
+                    callback.TransactionId, payment.Status);
+                
+                return _mapper.Map<PaymentStatusDto>(payment);
+            }
+
+            // Only process if status is currently Processing (prevents race conditions)
+            if (payment.Status != PaymentStatus.Processing)
+            {
+                _logger.LogWarning(
+                    "Payment {TransactionId} is not in Processing status (current: {Status}). Skipping callback processing.",
                     callback.TransactionId, payment.Status);
                 
                 return _mapper.Map<PaymentStatusDto>(payment);
@@ -282,14 +294,19 @@ namespace Tekno.Application.Payment.Services
                         order.MarkAsProcessing();
                         await _orderRepository.UpdateAsync(order);
                         
-                        // ? NEW: Clear cart items (full or partial)
+                        _logger.LogInformation(
+                            "Payment {TransactionId} marked as Completed. Now clearing cart and updating stock for order {OrderId}...",
+                            callback.TransactionId, order.Id);
+                        
+                        // ? Clear cart items (full or partial)
                         await ClearCartItemsAfterSuccessfulPaymentAsync(payment.UserId, order);
                         
-                        // ? NEW: Reduce stock and increment sold count
+                        // ? Reduce stock and increment sold count
                         await ReduceStockAndIncrementSoldCountAsync(order);
                         
                         _logger.LogInformation(
-                            "Payment completed for transaction {TransactionId}. Order {OrderId} marked as Processing. Cart cleared, stock reduced, sold count updated.",
+                            "Payment completed for transaction {TransactionId}. Order {OrderId} marked as Processing. " +
+                            "Cart cleared, stock reduced, sold count updated.",
                             callback.TransactionId, order.Id);
                     }
                     else
@@ -305,6 +322,10 @@ namespace Tekno.Application.Payment.Services
                     payment.MarkAsFailed(verifyResult.ErrorMessage ?? "Payment verification failed",
                         JsonSerializer.Serialize(verifyResult.GatewayResponse));
                     await _paymentRepository.UpdateAsync(payment);
+
+                    _logger.LogWarning(
+                        "Payment {TransactionId} marked as Failed. Now restoring cart items...",
+                        callback.TransactionId);
 
                     // Restore cart items (Business logic in Backend, not DB trigger)
                     await RestoreCartItemsAsync(payment.UserId, payment.OrderId);
@@ -355,13 +376,13 @@ namespace Tekno.Application.Payment.Services
                         {
                             if (orderItem.Quantity >= cartItem.Quantity)
                             {
-                                // Remove entire item
+                                // Remove entire item using repository method
                                 await _cartRepository.RemoveItemAsync(cart.Id, orderItem.VariantId);
                                 _logger.LogInformation("Removed cart item: VariantId={VariantId}", orderItem.VariantId);
                             }
                             else
                             {
-                                // Decrease quantity (partial checkout)
+                                // Decrease quantity (partial checkout) - use domain method
                                 cartItem.UpdateQuantity(cartItem.Quantity - orderItem.Quantity);
                                 _logger.LogInformation("Decreased cart item: VariantId={VariantId}, OldQty={OldQty}, NewQty={NewQty}", 
                                     orderItem.VariantId, cartItem.Quantity + orderItem.Quantity, cartItem.Quantity);
@@ -377,8 +398,22 @@ namespace Tekno.Application.Payment.Services
                     }
                 }
 
-                // Save cart
-                await _cartRepository.UpdateAsync(cart);
+                // ? FIX: Reload cart from database to get fresh state after deletions
+                // This prevents EF Core from re-inserting deleted items
+                cart = await _cartRepository.GetByUserIdAsync(userId);
+                if (cart != null)
+                {
+                    // Only update if we decreased quantities (partial checkout)
+                    // If we only deleted items, no need to update
+                    var hasPartialCheckout = order.Items.Any(oi => 
+                        cart.Items.Any(ci => ci.VariantId == oi.VariantId));
+                    
+                    if (hasPartialCheckout)
+                    {
+                        await _cartRepository.UpdateAsync(cart);
+                        _logger.LogInformation("Updated cart quantities for partial checkout");
+                    }
+                }
 
                 _logger.LogInformation("Cart cleared for user {UserId}: {RemovedCount}/{TotalCount} items removed", 
                     userId, removedCount, order.Items.Count);
