@@ -41,22 +41,37 @@ namespace Tekno.Api.Controllers
         /// - Product details with images
         /// - Variant attributes (Color, Size, etc.)
         /// - Delivery tracking information
+        /// - Payment information
         /// - Order number for support
+        /// 
+        /// **Order Status Flow:**
+        /// 1. Pending (1) - Order created, awaiting payment
+        /// 2. Processing (2) - Payment received, preparing order
+        /// 3. Shipping (4) - Order shipped, on the way
+        /// 4. Delivered (5) - Order delivered to customer
         /// 
         /// **Filter by status:**
         /// - null: All orders
-        /// - 2: Processing (?ang x? lý)
-        /// - 4: Shipping (?ang giao hàng)
-        /// - 5: Delivered (?ã giao hàng)
-        /// - 7: Refund Requested (yêu c?u hoàn ti?n)
-        /// - 8: Refunded (?ã hoàn ti?n)
+        /// - 1: Pending (awaiting payment)
+        /// - 2: Processing (payment received, preparing order)
+        /// - 3: Completed (legacy status - use Shipping/Delivered instead)
+        /// - 4: Shipping (in transit)
+        /// - 5: Delivered (completed delivery)
+        /// - 6: Cancelled (order cancelled)
+        /// - 7: Refund Requested (customer requested refund)
+        /// - 8: Refunded (refund completed)
         /// 
         /// Examples:
         ///     GET /api/orders/history                    // All orders
+        ///     GET /api/orders/history?status=2           // Only processing orders
         ///     GET /api/orders/history?status=4           // Only shipping orders
         ///     GET /api/orders/history?page=2&pageSize=10 // Pagination
         /// 
         /// Response includes order ID for customer support inquiries.
+        /// 
+        /// **Status Names:**
+        /// - All status names are in English (e.g., "Processing", "Shipping", "Delivered")
+        /// - Payment status also in English (e.g., "Completed", "Failed", "Pending")
         /// </remarks>
         [HttpGet("history")]
         [Authorize]

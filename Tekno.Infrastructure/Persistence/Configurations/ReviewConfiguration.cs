@@ -26,10 +26,6 @@ namespace Tekno.Infrastructure.Persistence.Configurations
             builder.Property(r => r.Rating)
                 .IsRequired();
 
-            builder.Property(r => r.Title)
-                .HasMaxLength(200)
-                .IsRequired(false);
-
             builder.Property(r => r.Comment)
                 .HasMaxLength(2000)
                 .IsRequired();

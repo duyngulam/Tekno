@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Security.Claims;
@@ -6,9 +6,6 @@ using System.Threading.Tasks;
 using Tekno.Api.Commons.Responses;
 using Tekno.Application.Auth.DTOs;
 using Tekno.Application.Auth.Services;
-using System.IO;
-using System.Text.Json;
-using System.Linq;
 using Tekno.Application.Common.Media.Services;
 
 namespace Tekno.Api.Controllers
@@ -53,8 +50,8 @@ namespace Tekno.Api.Controllers
         /// 
         ///     PUT /api/profile
         ///     {
-        ///       "fullname": "John Doe",
-        ///       "phoneNumber": "+84987654321"
+        ///       "fullname": "Nguyễn Văn A",
+        ///       "phoneNumber": "0987654321"
         ///     }
         /// 
         /// </remarks>
@@ -74,8 +71,8 @@ namespace Tekno.Api.Controllers
         /// 
         ///     PUT /api/profile/all
         ///     {
-        ///       "fullname": "John Doe",
-        ///       "phoneNumber": "+84987654321",
+        ///       "fullname": "Nguyễn Văn A",
+        ///       "phoneNumber": "0987654321",
         ///       "newEmail": "newemail@example.com",
         ///       "newPassword": "NewPassword456",
         ///       "confirmPassword": "NewPassword456",
@@ -86,8 +83,8 @@ namespace Tekno.Api.Controllers
         /// 
         ///     PUT /api/profile/all
         ///     {
-        ///       "fullname": "John Doe",
-        ///       "phoneNumber": "+84987654321",
+        ///       "fullname": "Nguyễn Văn A",
+        ///       "phoneNumber": "0987654321",
         ///       "newEmail": "newemail@example.com",
         ///       "currentPassword": "CurrentPassword123"
         ///     }
@@ -146,8 +143,20 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
-        /// Get all user addresses
+        /// Get all user addresses with Vietnamese location format
         /// </summary>
+        /// <remarks>
+        /// Returns addresses with Vietnamese province/district/ward structure:
+        /// - address_line: Street address
+        /// - province_code/province_name: e.g., 79 / "Thành phố Hồ Chí Minh"
+        /// - district_code/district_name: e.g., 760 / "Quận 1"
+        /// - ward_code/ward_name: e.g., 26734 / "Phường Bến Nghé"
+        /// 
+        /// Use with Location API:
+        /// - GET /api/location/provinces - Get all provinces
+        /// - GET /api/location/provinces/{code}/districts - Get districts by province
+        /// - GET /api/location/districts/{code}/wards - Get wards by district
+        /// </remarks>
         [HttpGet("addresses")]
         public async Task<IActionResult> GetAddresses()
         {
@@ -157,24 +166,39 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
-        /// Add new address
+        /// Add new address with Vietnamese location structure
         /// </summary>
         /// <remarks>
         /// Sample request:
         /// 
         ///     POST /api/profile/addresses
         ///     {
-        ///       "recipientName": "John Doe",
-        ///       "phoneNumber": "+84987654321",
-        ///       "addressLine1": "123 Nguyen Hue Street",
-        ///       "addressLine2": "Apartment 5B",
-        ///       "city": "Ho Chi Minh City",
-        ///       "state": "Ho Chi Minh",
-        ///       "postalCode": "700000",
-        ///       "country": "Vietnam",
+        ///       "recipientName": "Nguyễn Văn A",
+        ///       "phoneNumber": "0987654321",
+        ///       "addressLine": "123 Nguyễn Huệ",
+        ///       "provinceCode": 79,
+        ///       "provinceName": "Thành phố Hồ Chí Minh",
+        ///       "districtCode": 760,
+        ///       "districtName": "Quận 1",
+        ///       "wardCode": 26734,
+        ///       "wardName": "Phường Bến Nghé",
         ///       "isDefault": true
         ///     }
         /// 
+        /// **How to get location data:**
+        /// 
+        /// 1. Call `GET /api/location/provinces` to get all provinces
+        /// 2. User selects province (e.g., code: 79, name: "Thành phố Hồ Chí Minh")
+        /// 3. Call `GET /api/location/provinces/79/districts` to get districts
+        /// 4. User selects district (e.g., code: 760, name: "Quận 1")
+        /// 5. Call `GET /api/location/districts/760/wards` to get wards
+        /// 6. User selects ward (e.g., code: 26734, name: "Phường Bến Nghé")
+        /// 7. Submit all codes and names in the address
+        /// 
+        /// **Why both code and name:**
+        /// - Codes are used for validation and lookups
+        /// - Names are stored for display (in case location data changes)
+        /// - This ensures addresses remain readable even if location database updates
         /// </remarks>
         [HttpPost("addresses")]
         public async Task<IActionResult> AddAddress([FromBody] CreateAddressDto dto)
@@ -187,8 +211,27 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
-        /// Update existing address
+        /// Update existing address with Vietnamese location structure
         /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///     PUT /api/profile/addresses/1
+        ///     {
+        ///       "recipientName": "Nguyễn Văn A",
+        ///       "phoneNumber": "0987654321",
+        ///       "addressLine": "456 Võ Văn Tần",
+        ///       "provinceCode": 79,
+        ///       "provinceName": "Thành phố Hồ Chí Minh",
+        ///       "districtCode": 769,
+        ///       "districtName": "Quận 3",
+        ///       "wardCode": 27031,
+        ///       "wardName": "Phường 6"
+        ///     }
+        /// 
+        /// Use the same Location API workflow as creating addresses.
+        /// All location codes and names must be provided.
+        /// </remarks>
         [HttpPut("addresses/{addressId:int}")]
         public async Task<IActionResult> UpdateAddress(int addressId, [FromBody] UpdateAddressDto dto)
         {
@@ -200,6 +243,13 @@ namespace Tekno.Api.Controllers
         /// <summary>
         /// Set address as default
         /// </summary>
+        /// <remarks>
+        /// Sets the specified address as the default shipping address.
+        /// All other addresses will be marked as non-default.
+        /// 
+        ///     PATCH /api/profile/addresses/1/default
+        /// 
+        /// </remarks>
         [HttpPatch("addresses/{addressId:int}/default")]
         public async Task<IActionResult> SetDefaultAddress(int addressId)
         {
@@ -211,6 +261,14 @@ namespace Tekno.Api.Controllers
         /// <summary>
         /// Delete address
         /// </summary>
+        /// <remarks>
+        /// Deletes the specified address.
+        /// Cannot delete the only address if it's marked as default.
+        /// If you delete a default address and other addresses exist, another will be automatically set as default.
+        /// 
+        ///     DELETE /api/profile/addresses/1
+        /// 
+        /// </remarks>
         [HttpDelete("addresses/{addressId:int}")]
         public async Task<IActionResult> DeleteAddress(int addressId)
         {
@@ -224,79 +282,31 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
-        /// Return list of provinces for address selection.
-        /// This reads the included `openapi.json` file and extracts example province entries if present.
-        /// It's intended to help frontend address selection when offline. Prefer calling the upstream API in production.
+        /// Trigger user storage cleanup (best-effort)
         /// </summary>
-        [HttpGet("provinces")]
-        public async Task<IActionResult> GetProvinces()
-        {
-            // Try to load openapi.json from application base directory
-            var basePath = Directory.GetCurrentDirectory();
-            var openApiPath = Path.Combine(basePath, "openapi.json");
-
-            if (!System.IO.File.Exists(openApiPath))
-                return NotFound(ApiResponse<List<ProvinceOptionDto>>.Fail("openapi.json not found in application root"));
-
-            try
-            {
-                using var stream = System.IO.File.OpenRead(openApiPath);
-                using var doc = await JsonDocument.ParseAsync(stream);
-
-                var root = doc.RootElement;
-
-                // Navigate to components.schemas.ProvinceResponse.examples
-                if (root.TryGetProperty("components", out var components) &&
-                    components.TryGetProperty("schemas", out var schemas) &&
-                    schemas.TryGetProperty("ProvinceResponse", out var provinceSchema) &&
-                    provinceSchema.TryGetProperty("examples", out var examples) &&
-                    examples.ValueKind == JsonValueKind.Array)
-                {
-                    var list = new List<ProvinceOptionDto>();
-                    foreach (var ex in examples.EnumerateArray())
-                    {
-                        if (ex.TryGetProperty("code", out var codeEl) && codeEl.ValueKind == JsonValueKind.Number &&
-                            ex.TryGetProperty("name", out var nameEl))
-                        {
-                            list.Add(new ProvinceOptionDto
-                            {
-                                Code = codeEl.GetInt32(),
-                                Name = nameEl.GetString() ?? string.Empty,
-                                Codename = ex.TryGetProperty("codename", out var cn) ? cn.GetString() ?? string.Empty : string.Empty
-                            });
-                        }
-                    }
-
-                    if (list.Any())
-                        return Ok(ApiResponse<List<ProvinceOptionDto>>.Ok(list));
-                }
-
-                // No examples found or empty - return empty list
-                return Ok(ApiResponse<List<ProvinceOptionDto>>.Ok(new List<ProvinceOptionDto>()));
-            }
-            catch
-            {
-                return StatusCode(500, ApiResponse<List<ProvinceOptionDto>>.Fail("Failed to parse openapi.json"));
-            }
-        }
-
-        /// <summary>
-        /// Trigger user storage cleanup (best-effort). This will attempt to remove orphaned images for the current user from the media provider.
+        /// <remarks>
+        /// This will attempt to remove orphaned images for the current user from the media provider.
         /// Implementation is best-effort and returns success if request accepted.
-        /// </summary>
-        [HttpPost("storage-cleanup")]
-        public async Task<IActionResult> StorageCleanup()
-        {
-            var userId = GetCurrentUserId();
+        /// 
+        /// **Note:** This is a placeholder endpoint. Full implementation requires cloud provider 
+        /// support for listing/deleting resources by user tag.
+        /// 
+        ///     POST /api/profile/storage-cleanup
+        /// 
+        /// </remarks>
+        //[HttpPost("storage-cleanup")]
+        //public async Task<IActionResult> StorageCleanup()
+        //{
+        //    var userId = GetCurrentUserId();
 
-            // MediaService currently exposes DeleteImageAsync. There's no dedicated cleanup method available.
-            // We treat this endpoint as a placeholder that the frontend can call to trigger background cleanup logic later.
-            // For now we return 202 Accepted to indicate request was received.
+        //    // MediaService currently exposes DeleteImageAsync. There's no dedicated cleanup method available.
+        //    // We treat this endpoint as a placeholder that the frontend can call to trigger background cleanup logic later.
+        //    // For now we return 202 Accepted to indicate request was received.
 
-            // TODO: implement MediaService.CleanupUserImagesAsync(userId) when cloud provider supports listing/deleting by tag
+        //    // TODO: implement MediaService.CleanupUserImagesAsync(userId) when cloud provider supports listing/deleting by tag
 
-            return Accepted(ApiResponse<string>.Ok("Storage cleanup scheduled"));
-        }
+        //    return Accepted(ApiResponse<string>.Ok("Storage cleanup scheduled"));
+        //}
 
         private int GetCurrentUserId()
         {

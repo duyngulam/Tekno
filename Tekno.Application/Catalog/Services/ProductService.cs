@@ -629,6 +629,9 @@ namespace Tekno.Application.Catalog.Services
                 }
             }
 
+            // Load existing attributes for the category once to avoid repeated DB calls
+            var existingAttributes = await _productRepository.GetAttributesByCategoryIdAsync(product.CategoryId);
+
             // Process attributes and get/create attribute values
             var attributeValueIds = new Dictionary<int, int>();
             
@@ -636,23 +639,34 @@ namespace Tekno.Application.Catalog.Services
             {
                 int attributeId;
                 
-                // If Name is provided, create new attribute
+                // If Name is provided, try to find existing attribute with the same name (case-insensitive)
                 if (!string.IsNullOrWhiteSpace(attrInput.Name))
                 {
-                    _logger.LogInformation("Creating new attribute '{AttributeName}' for category {CategoryId}", 
-                        attrInput.Name, product.CategoryId);
+                    var attrName = attrInput.Name.Trim();
+                    var found = existingAttributes.FirstOrDefault(a => string.Equals(a.Name, attrName, StringComparison.OrdinalIgnoreCase));
+                    if (found != null)
+                    {
+                        attributeId = found.Id;
+                        _logger.LogInformation("Found existing attribute '{AttributeName}' (ID: {AttributeId}) for category {CategoryId}", attrName, attributeId, product.CategoryId);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Creating new attribute '{AttributeName}' for category {CategoryId}", 
+                            attrName, product.CategoryId);
 
-                    var newAttribute = new ProductAttribute(
-                        name: attrInput.Name.Trim(),
-                        inputType: "select", // Default to select for variant attributes
-                        isGlobal: false,
-                        categoryId: product.CategoryId);
+                        var newAttribute = new ProductAttribute(
+                            name: attrName,
+                            inputType: "select", // Default to select for variant attributes
+                            isGlobal: false,
+                            categoryId: product.CategoryId);
 
-                    var createdAttribute = await _productRepository.CreateAttributeAsync(newAttribute);
-                    attributeId = createdAttribute.Id;
-                    
-                    _logger.LogInformation("Created new attribute '{AttributeName}' with ID {AttributeId}", 
-                        attrInput.Name, attributeId);
+                        var createdAttribute = await _productRepository.CreateAttributeAsync(newAttribute);
+                        attributeId = createdAttribute.Id;
+                        existingAttributes.Add(createdAttribute); // cache for subsequent iterations
+                        
+                        _logger.LogInformation("Created new attribute '{AttributeName}' with ID {AttributeId}", 
+                            attrName, attributeId);
+                    }
                 }
                 // If Id is provided, use existing attribute
                 else if (attrInput.Id.HasValue)
@@ -727,41 +741,138 @@ namespace Tekno.Application.Catalog.Services
                 throw;
             }
         }
-        private async Task UpdateProductSpecsFromVariantsAsync(int productId)
+
+        public async Task<ProductVariantDetailDto?> UpdateProductVariantAsync(int variantId, UpdateProductVariantDto dto)
         {
-            var product = await _productRepository.GetProductByIdAsync(productId);
-            if (product == null) return;
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
 
-            var specs = new Dictionary<string, HashSet<string>>();
-
-            foreach (var variant in product.Variants)
+            var variant = await _productRepository.GetProductVariantByIdAsync(variantId);
+            if (variant == null)
             {
-                foreach (var variantAttr in variant.VariantAttributes)
+                _logger.LogWarning("Update failed: Variant with ID {Id} not found", variantId);
+                return null;
+            }
+
+            var product = await _productRepository.GetProductByIdAsync(variant.ProductId);
+            if (product == null) throw new NotFoundException("Product", variant.ProductId);
+
+            // Validate attribute inputs
+            foreach (var attr in dto.Attributes)
+            {
+                if (!attr.IsValid(out var errorMessage))
                 {
-                    var attrName = variantAttr.Attribute?.Name;
-                    var attrValue = variantAttr.Value?.Value;
-
-                    if (string.IsNullOrEmpty(attrName) || string.IsNullOrEmpty(attrValue)) continue;
-
-                    if (!specs.ContainsKey(attrName))
-                        specs[attrName] = new HashSet<string>();
-
-                    specs[attrName].Add(attrValue);
+                    throw new InvalidOperationException($"Invalid attribute input: {errorMessage}");
                 }
             }
 
-            var specsList = specs.Select(kvp => new ProductAttributeDto
+            // Load existing attributes for the category once
+            var existingAttributes = await _productRepository.GetAttributesByCategoryIdAsync(product.CategoryId);
+
+            await using var transaction = await _productRepository.BeginTransactionAsync();
+
+            try
             {
-                Name = kvp.Key,
-                Value = kvp.Value.OrderBy(v => v).ToList()
-            }).ToList();
+                // SKU uniqueness check if changed
+                if (!string.Equals(variant.Sku, dto.Sku, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (await _productRepository.IsSkuExistsAsync(dto.Sku))
+                        throw new ConflictException($"SKU '{dto.Sku}' already exists", "SKU_EXISTS");
 
-            var specsJson = System.Text.Json.JsonSerializer.Serialize(specsList);
-            product.UpdateSpecs(specsJson);
+                    variant.UpdateSku(dto.Sku);
+                }
 
-            await _productRepository.UpdateProductAsync(product);
+                // Update price/stock/status
+                variant.UpdatePrice(dto.Price);
+                variant.UpdateStock(dto.Stock);
+                variant.UpdateStatus(dto.Status);
+
+                // Clear existing variant attributes
+                // We'll remove existing and re-add based on provided attributes
+                // Ensure repository will persist changes (we rely on EF change tracking)
+                variant.VariantAttributes.Clear();
+
+                var attributeValueIds = new Dictionary<int, int>();
+                foreach (var attrInput in dto.Attributes)
+                {
+                    int attributeId;
+
+                    if (!string.IsNullOrWhiteSpace(attrInput.Name))
+                    {
+                        var attrName = attrInput.Name.Trim();
+                        var found = existingAttributes.FirstOrDefault(a => string.Equals(a.Name, attrName, StringComparison.OrdinalIgnoreCase));
+                        if (found != null)
+                        {
+                            attributeId = found.Id;
+                            _logger.LogInformation("Found existing attribute '{AttributeName}' (ID: {AttributeId}) for category {CategoryId}", attrName, attributeId, product.CategoryId);
+                        }
+                        else
+                        {
+                            var newAttribute = new ProductAttribute(
+                                name: attrName,
+                                inputType: "select",
+                                isGlobal: false,
+                                categoryId: product.CategoryId);
+
+                            var createdAttribute = await _productRepository.CreateAttributeAsync(newAttribute);
+                            attributeId = createdAttribute.Id;
+                            existingAttributes.Add(createdAttribute);
+                        }
+                    }
+                    else if (attrInput.Id.HasValue)
+                    {
+                        attributeId = attrInput.Id.Value;
+                        var existingAttribute = await _productRepository.GetAttributeByIdAsync(attributeId);
+                        if (existingAttribute == null)
+                            throw new NotFoundException("Attribute", attributeId);
+
+                        if (!existingAttribute.IsGlobal && existingAttribute.CategoryId != product.CategoryId)
+                            throw new InvalidOperationException($"Attribute '{existingAttribute.Name}' (ID: {attributeId}) does not belong to product's category");
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Either attribute Id or Name must be provided");
+                    }
+
+                    var attributeValue = await _productRepository.GetOrCreateAttributeValueAsync(
+                        attributeId,
+                        attrInput.Value,
+                        product.CategoryId);
+
+                    if (attributeValue == null)
+                        throw new InvalidOperationException($"Failed to get or create attribute value: AttributeId={attributeId}, Value={attrInput.Value}");
+
+                    attributeValueIds.Add(attributeId, attributeValue.Id);
+                }
+
+                // Recreate variant attribute links
+                foreach (var kvp in attributeValueIds)
+                {
+                    variant.AddAttribute(kvp.Key, kvp.Value);
+                }
+
+                // Persist variant update (repository should handle update)
+                var updatedVariant = await _productRepository.UpdateProductVariantAsync(variant);
+
+                // Refresh product specs and index
+                await UpdateProductSpecsFromVariantsAsync(variant.ProductId);
+                var updatedProduct = await _productRepository.GetProductByIdAsync(variant.ProductId);
+                var summary = _mapper.Map<ProductSummaryDto>(updatedProduct);
+                await _elasticService.IndexProductAsync(summary);
+
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Updated variant {VariantId} for product {ProductId}", variantId, variant.ProductId);
+
+                var variantWithDetails = await _productRepository.GetProductVariantByIdAsync(updatedVariant.Id);
+                return _mapper.Map<ProductVariantDetailDto>(variantWithDetails);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update variant {VariantId}", variantId);
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
-
         public async Task<bool> DeleteProductVariantAsync(int variantId)
         {
             var variant = await _productRepository.GetProductVariantByIdAsync(variantId);
@@ -783,6 +894,7 @@ namespace Tekno.Application.Catalog.Services
                     await transaction.RollbackAsync();
                     return false;
                 }
+
                 await UpdateProductSpecsFromVariantsAsync(productId);
                 var product = await _productRepository.GetProductByIdAsync(productId);
                 var summary = _mapper.Map<ProductSummaryDto>(product);
@@ -880,125 +992,2174 @@ namespace Tekno.Application.Catalog.Services
             return dtos;
         }
 
-        public async Task<ProductVariantDetailDto?> UpdateProductVariantAsync(int variantId, UpdateProductVariantDto dto)
+        /// <summary>
+        /// Get products on sale (with active discounts)
+        /// </summary>
+        /// <param name="categorySlug">Optional category filter</param>
+        /// <param name="count">Number of products to return</param>
+        /// <returns>List of products on sale</returns>
+        public async Task<List<ProductSummaryDto>> GetProductsOnSaleAsync(string? categorySlug = null, int count = 20)
         {
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
-
-            var variant = await _productRepository.GetProductVariantByIdAsync(variantId);
-            if (variant == null)
+            var cacheKey = $"products:on-sale:{categorySlug ?? "all"}:{count}";
+            
+            return await _cacheService.CacheOrGetAsync(cacheKey, async () =>
             {
-                _logger.LogWarning("Update failed: Variant with ID {Id} not found", variantId);
-                return null;
-            }
+                _logger.LogInformation("Fetching products on sale from database");
+                
+                var products = await _productRepository.GetProductsWithDiscountAsync(categorySlug, count);
+                var productDtos = _mapper.Map<List<ProductSummaryDto>>(products);
+                
+                // Enrich with rating data
+                await EnrichWithRatingDataAsync(productDtos);
+                
+                return productDtos;
+            }, TimeSpan.FromMinutes(15));
+        }
 
-            var product = await _productRepository.GetProductByIdAsync(variant.ProductId);
-            if (product == null) throw new NotFoundException("Product", variant.ProductId);
+        private async Task UpdateProductSpecsFromVariantsAsync(int productId)
+        {
+            var product = await _productRepository.GetProductByIdAsync(productId);
+            if (product == null) return;
 
-            // Validate attribute inputs
-            foreach (var attr in dto.Attributes)
+            var specs = new Dictionary<string, HashSet<string>>();
+
+            foreach (var variant in product.Variants)
             {
-                if (!attr.IsValid(out var errorMessage))
+                foreach (var variantAttr in variant.VariantAttributes)
                 {
-                    throw new InvalidOperationException($"Invalid attribute input: {errorMessage}");
+                    var attrName = variantAttr.Attribute?.Name;
+                    var attrValue = variantAttr.Value?.Value;
+
+                    if (string.IsNullOrEmpty(attrName) || string.IsNullOrEmpty(attrValue)) continue;
+
+                    if (!specs.ContainsKey(attrName))
+                        specs[attrName] = new HashSet<string>();
+
+                    specs[attrName].Add(attrValue);
                 }
             }
 
-            await using var transaction = await _productRepository.BeginTransactionAsync();
-
-            try
+            var specsList = specs.Select(kvp => new ProductAttributeDto
             {
-                // SKU uniqueness check if changed
-                if (!string.Equals(variant.Sku, dto.Sku, StringComparison.OrdinalIgnoreCase))
-                {
-                    if (await _productRepository.IsSkuExistsAsync(dto.Sku))
-                        throw new ConflictException($"SKU '{dto.Sku}' already exists", "SKU_EXISTS");
+                Name = kvp.Key,
+                Value = kvp.Value.OrderBy(v => v).ToList()
+            }).ToList();
 
-                    variant.UpdateSku(dto.Sku);
-                }
+            var specsJson = System.Text.Json.JsonSerializer.Serialize(specsList);
+            product.UpdateSpecs(specsJson);
 
-                // Update price/stock/status
-                variant.UpdatePrice(dto.Price);
-                variant.UpdateStock(dto.Stock);
-                variant.UpdateStatus(dto.Status);
-
-                // Clear existing variant attributes
-                // We'll remove existing and re-add based on provided attributes
-                // Ensure repository will persist changes (we rely on EF change tracking)
-                variant.VariantAttributes.Clear();
-
-                var attributeValueIds = new Dictionary<int, int>();
-                foreach (var attrInput in dto.Attributes)
-                {
-                    int attributeId;
-
-                    if (!string.IsNullOrWhiteSpace(attrInput.Name))
-                    {
-                        var newAttribute = new ProductAttribute(
-                            name: attrInput.Name.Trim(),
-                            inputType: "select",
-                            isGlobal: false,
-                            categoryId: product.CategoryId);
-
-                        var createdAttribute = await _productRepository.CreateAttributeAsync(newAttribute);
-                        attributeId = createdAttribute.Id;
-                    }
-                    else if (attrInput.Id.HasValue)
-                    {
-                        attributeId = attrInput.Id.Value;
-                        var existingAttribute = await _productRepository.GetAttributeByIdAsync(attributeId);
-                        if (existingAttribute == null)
-                            throw new NotFoundException("Attribute", attributeId);
-
-                        if (!existingAttribute.IsGlobal && existingAttribute.CategoryId != product.CategoryId)
-                            throw new InvalidOperationException($"Attribute '{existingAttribute.Name}' (ID: {attributeId}) does not belong to product's category");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Either attribute Id or Name must be provided");
-                    }
-
-                    var attributeValue = await _productRepository.GetOrCreateAttributeValueAsync(
-                        attributeId,
-                        attrInput.Value,
-                        product.CategoryId);
-
-                    if (attributeValue == null)
-                        throw new InvalidOperationException($"Failed to get or create attribute value: AttributeId={attributeId}, Value={attrInput.Value}");
-
-                    attributeValueIds.Add(attributeId, attributeValue.Id);
-                }
-
-                // Recreate variant attribute links
-                foreach (var kvp in attributeValueIds)
-                {
-                    variant.AddAttribute(kvp.Key, kvp.Value);
-                }
-
-                // Persist variant update (repository should handle update)
-                var updatedVariant = await _productRepository.AddProductVariantAsync(variant); // Using Add or Update depending on repository
-
-                // Refresh product specs and index
-                await UpdateProductSpecsFromVariantsAsync(variant.ProductId);
-                var updatedProduct = await _productRepository.GetProductByIdAsync(variant.ProductId);
-                var summary = _mapper.Map<ProductSummaryDto>(updatedProduct);
-                await _elasticService.IndexProductAsync(summary);
-
-                await transaction.CommitAsync();
-
-                _logger.LogInformation("Updated variant {VariantId} for product {ProductId}", variantId, variant.ProductId);
-
-                var variantWithDetails = await _productRepository.GetProductVariantByIdAsync(updatedVariant.Id);
-                return _mapper.Map<ProductVariantDetailDto>(variantWithDetails);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to update variant {VariantId}", variantId);
-                await transaction.RollbackAsync();
-                throw;
-            }
+            await _productRepository.UpdateProductAsync(product);
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

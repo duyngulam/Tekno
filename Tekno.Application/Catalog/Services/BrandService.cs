@@ -241,5 +241,22 @@ namespace Tekno.Application.Catalog.Services
                 throw;
             }
         }
+
+        /// <summary>
+        /// Get brands that have products in a specific category
+        /// Only returns brands that have at least one product in the category
+        /// </summary>
+        public async Task<List<BrandDto>> GetBrandsByCategoryAsync(string categorySlug)
+        {
+            var cacheKey = $"brands:by-category:{categorySlug}";
+            
+            return await _cache.CacheOrGetAsync(cacheKey, async () =>
+            {
+                _logger.LogInformation("Fetching brands for category {CategorySlug} from database", categorySlug);
+                
+                var brands = await _brandRepository.GetBrandsByCategoryAsync(categorySlug);
+                return _mapper.Map<List<BrandDto>>(brands);
+            }, TimeSpan.FromMinutes(30));
+        }
     }
 }

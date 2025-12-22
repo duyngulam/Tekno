@@ -28,6 +28,9 @@ namespace Tekno.Domain.Order
 
         private readonly List<OrderItem> _items = new();
         public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
+        
+        // Navigation property to Payment
+        public Payment.Payment? Payment { get; private set; }
 
         public Order() { }
 

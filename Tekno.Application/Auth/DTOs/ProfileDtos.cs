@@ -85,12 +85,13 @@ namespace Tekno.Application.Auth.DTOs
         public int Id { get; set; }
         public string RecipientName { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
-        public string AddressLine1 { get; set; } = string.Empty;
-        public string? AddressLine2 { get; set; }
-        public string City { get; set; } = string.Empty;
-        public string State { get; set; } = string.Empty;
-        public string PostalCode { get; set; } = string.Empty;
-        public string Country { get; set; } = "Vietnam";
+        public string AddressLine { get; set; } = string.Empty;
+        public int ProvinceCode { get; set; }
+        public string ProvinceName { get; set; } = string.Empty;
+        public int DistrictCode { get; set; }
+        public string DistrictName { get; set; } = string.Empty;
+        public int WardCode { get; set; }
+        public string WardName { get; set; } = string.Empty;
         public bool IsDefault { get; set; }
         public DateTime CreatedAt { get; set; }
     }
@@ -108,26 +109,31 @@ namespace Tekno.Application.Auth.DTOs
 
         [Required]
         [StringLength(200, MinimumLength = 5)]
-        public string AddressLine1 { get; set; } = string.Empty;
+        public string AddressLine { get; set; } = string.Empty;
 
-        [StringLength(200)]
-        public string? AddressLine2 { get; set; }
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Province code is required")]
+        public int ProvinceCode { get; set; }
 
         [Required]
         [StringLength(100)]
-        public string City { get; set; } = string.Empty;
+        public string ProvinceName { get; set; } = string.Empty;
+
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "District code is required")]
+        public int DistrictCode { get; set; }
 
         [Required]
         [StringLength(100)]
-        public string State { get; set; } = string.Empty;
+        public string DistrictName { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(20)]
-        public string PostalCode { get; set; } = string.Empty;
+        [Range(1, int.MaxValue, ErrorMessage = "Ward code is required")]
+        public int WardCode { get; set; }
 
         [Required]
         [StringLength(100)]
-        public string Country { get; set; } = "Vietnam";
+        public string WardName { get; set; } = string.Empty;
 
         public bool IsDefault { get; set; } = false;
     }
@@ -145,25 +151,30 @@ namespace Tekno.Application.Auth.DTOs
 
         [Required]
         [StringLength(200, MinimumLength = 5)]
-        public string AddressLine1 { get; set; } = string.Empty;
+        public string AddressLine { get; set; } = string.Empty;
 
-        [StringLength(200)]
-        public string? AddressLine2 { get; set; }
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Province code is required")]
+        public int ProvinceCode { get; set; }
 
         [Required]
         [StringLength(100)]
-        public string City { get; set; } = string.Empty;
+        public string ProvinceName { get; set; } = string.Empty;
+
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "District code is required")]
+        public int DistrictCode { get; set; }
 
         [Required]
         [StringLength(100)]
-        public string State { get; set; } = string.Empty;
+        public string DistrictName { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(20)]
-        public string PostalCode { get; set; } = string.Empty;
+        [Range(1, int.MaxValue, ErrorMessage = "Ward code is required")]
+        public int WardCode { get; set; }
 
         [Required]
         [StringLength(100)]
-        public string Country { get; set; } = "Vietnam";
+        public string WardName { get; set; } = string.Empty;
     }
 }

@@ -7,7 +7,7 @@ namespace Tekno.Application.Order.DTOs
 {
     /// <summary>
     /// Order history - Full order details with nested objects
-    /// Used for: Order history, Order details page
+    /// Used for: Order history, Order details page, Order tracking
     /// </summary>
     public class OrderHistoryDto
     {
@@ -19,18 +19,18 @@ namespace Tekno.Application.Order.DTOs
         public DateTime CreatedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
 
-        // Nested Payment Details
+        // Payment Details (essential info only)
         public OrderPaymentDto? Payment { get; set; }
 
-        // Nested Order Items with Product/Variant details
+        // Order Items with Product/Variant details
         public List<OrderItemDto> Items { get; set; } = new();
 
-        // Delivery information (can be added later)
+        // Delivery information
         public OrderDeliveryDto? Delivery { get; set; }
     }
 
     /// <summary>
-    /// Payment details within order
+    /// Payment details within order (simplified)
     /// </summary>
     public class OrderPaymentDto
     {
@@ -80,17 +80,19 @@ namespace Tekno.Application.Order.DTOs
     }
 
     /// <summary>
-    /// Shipping address in order
+    /// Shipping address in order (Vietnamese location format)
     /// </summary>
     public class OrderShippingAddressDto
     {
         public string RecipientName { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
         public string AddressLine { get; set; } = string.Empty;
-        public string Ward { get; set; } = string.Empty;
-        public string District { get; set; } = string.Empty;
-        public string Province { get; set; } = string.Empty;
-        public bool IsDefault { get; set; }
+        public int ProvinceCode { get; set; }
+        public string ProvinceName { get; set; } = string.Empty;
+        public int DistrictCode { get; set; }
+        public string DistrictName { get; set; } = string.Empty;
+        public int WardCode { get; set; }
+        public string WardName { get; set; } = string.Empty;
     }
 
     /// <summary>

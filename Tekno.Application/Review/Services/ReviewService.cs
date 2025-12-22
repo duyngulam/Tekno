@@ -111,7 +111,6 @@ namespace Tekno.Application.Review.Services
                 productId: dto.ProductId,
                 userId: userId,
                 rating: dto.Rating,
-                title: dto.Title ?? string.Empty,
                 comment: dto.Comment,
                 orderId: order.Id,
                 variantId: orderItem.VariantId,
@@ -145,7 +144,7 @@ namespace Tekno.Application.Review.Services
                 throw new UnauthorizedAccessException("You can only update your own reviews");
             }
 
-            review.Update(dto.Rating, dto.Title ?? string.Empty, dto.Comment);
+            review.Update(dto.Rating, dto.Comment);
             review = await _reviewRepository.UpdateAsync(review);
 
             _logger.LogInformation(
@@ -318,7 +317,6 @@ namespace Tekno.Application.Review.Services
                 UserId = review.UserId,
                 UserEmail = "user@example.com", // Load from User entity if needed
                 Rating = review.Rating,
-                Title = review.Title,
                 Comment = review.Comment,
                 Status = review.Status.ToString(),
                 CreatedAt = review.CreatedAt,
