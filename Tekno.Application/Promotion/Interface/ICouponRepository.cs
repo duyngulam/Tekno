@@ -18,6 +18,8 @@ namespace Tekno.Application.Promotion.Interface
             DateTime? endDate,
             PagingParams paging);
         Task<List<Coupon>> GetActiveCouponsAsync();
+        Task<IEnumerable<Coupon>> GetExpiredActiveCouponsAsync();
+        Task<IEnumerable<Coupon>> GetExpiredActiveProductDiscountsAsync();
         Task<bool> IsCodeExistsAsync(string code);
         Task<Coupon> CreateAsync(Coupon coupon);
         Task<Coupon> UpdateAsync(Coupon coupon);

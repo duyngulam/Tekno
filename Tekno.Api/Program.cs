@@ -253,6 +253,10 @@ Example: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
             
             // Register background service to fetch provinces and store locally
             builder.Services.AddHostedService<Tekno.Api.Services.Hosted.ProvinceFetchBackgroundService>();
+            
+            // Register background services for auto-expiration
+            builder.Services.AddHostedService<Tekno.Infrastructure.BackgroundServices.CouponExpirationBackgroundService>();
+            builder.Services.AddHostedService<Tekno.Infrastructure.BackgroundServices.PromotionManagementBackgroundService>();
 
             // =======================================================
             // 3. AUTHENTICATION & AUTHORIZATION

@@ -251,7 +251,7 @@ namespace Tekno.Infrastructure.Catalog
                 query = query.Where(p => p.Status == status);
             }
 
-            // Order by newest first
+            // Order byNewest first
             query = query.OrderByDescending(p => p.CreatedAt);
 
             var totalRecords = await query.CountAsync();
