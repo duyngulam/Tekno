@@ -12,6 +12,7 @@ import Image from "next/image";
 import { uploadImage, updateImageMeta, deleteImage, reorderImages, deleteVariant } from "@/lib/productsImageApi";
 import { getAdminProducts, getAdminProduct, createAdminProduct, updateAdminProduct, deleteAdminProduct } from "@/services/products";
 import { getCategoryAttributes } from "@/services/categories";
+import AddProductVariant from "@/components/admin/AddProductVariant";
 
 type Product = {
   id: number;
@@ -79,6 +80,8 @@ export default function ProductPage() {
 
   const [createCategoryAttrs, setCreateCategoryAttrs] = useState<CategoryAttr[]>([]);
   const [variants, setVariants] = useState<Variant[]>([]);
+
+  const [openAddVariant, setOpenAddVariant] = useState(false);
 
   // load products, categories, brands
 useEffect(() => {
@@ -959,7 +962,28 @@ const generateVariants = () => {
           Close
         </button>
       </div>
+
+          <div className="mt-6 flex justify-end">
+  <button
+    className="px-4 py-2 bg-green-600 text-white rounded"
+    onClick={() => setOpenAddVariant(true)}
+  >
+    + Add Variant
+  </button>
+</div>
+
+    {openAddVariant && (
+  // Khi mở modal, truyền thêm existingVariants
+<AddProductVariant
+  productId={selectedProduct.id}
+  categoryId={selectedProduct.categoryId}
+  existingVariants={selectedProduct.variants || []}  // ✅ Thêm dòng này
+  onClose={() => setOpenAddVariant(false)}
+  onSuccess={() => loadProductDetail(selectedProduct)}
+/>
+)}
     </div>
+
   </div>
   )}
     
@@ -1005,15 +1029,18 @@ const generateVariants = () => {
     }
 
     try {
-      const attrs = await getCategoryAttributes(catId);
-      setCreateCategoryAttrs(
-        attrs.map((a: any) => ({
-          id: a.id,
-          name: a.name,
-          options: [],
-        }))
-      );
-      setVariants([]); // reset variants khi đổi category
+const attrs = await getCategoryAttributes(catId);
+
+setCreateCategoryAttrs(
+  attrs.map((a: any) => ({
+    id: a.id,
+    name: a.name,
+    options: Array.isArray(a.value) ? [...a.value] : [],
+  }))
+);
+
+setVariants([]);
+ // reset variants khi đổi category
     } catch (err) {
       console.error("Load category attributes failed", err);
       setCreateCategoryAttrs([]);
@@ -1075,128 +1102,6 @@ const generateVariants = () => {
           value={createData.overview}
           onChange={(e) => setCreateData({ ...createData, overview: e.target.value })}
         />
-      </div>
-
-        {/* Attributes (category-based) */}
-{createCategoryAttrs.length > 0 && (
-  <div className="mt-4">
-    <h3 className="font-medium mb-2">Attributes</h3>
-    {createCategoryAttrs.map((attr, ai) => (
-      <div key={attr.id} className="mb-3">
-        <div className="text-sm font-medium">{attr.name}</div>
-        <div className="flex gap-2 mt-1">
-          <input
-            type="text"
-            placeholder="Add option and press Enter"
-            className="border rounded p-2 flex-1"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                const v = (e.target as HTMLInputElement).value.trim();
-                if (!v) return;
-                setCreateCategoryAttrs(prev => {
-                  const copy = [...prev];
-                  copy[ai].options = Array.from(new Set([...copy[ai].options, v]));
-                  return copy;
-                });
-                (e.target as HTMLInputElement).value = "";
-              }
-            }}
-          />
-        </div>
-
-        <div className="flex gap-2 flex-wrap mt-2">
-          {attr.options.map((o, oi) => (
-            <span key={oi} className="text-xs bg-gray-100 px-2 py-1 rounded flex items-center gap-2">
-              {o}
-              <button className="text-red-500 text-xs" onClick={() =>
-                setCreateCategoryAttrs(prev => {
-                  const copy = [...prev];
-                  copy[ai].options = copy[ai].options.filter(x => x !== o);
-                  return copy;
-                })
-              }>×</button>
-            </span>
-          ))}
-        </div>
-      </div>
-    ))}
-
-    <div className="mt-3">
-      <button className="px-3 py-1 bg-blue-600 text-white rounded" onClick={() => generateVariants()}>
-        Generate Variants
-      </button>
-    </div>
-  </div>
-)}
-
-{/* Variants */}
-{variants.length > 0 && (
-  <div className="mt-4">
-    <h3 className="font-medium mb-2">Variants</h3>
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <tbody>
-          {variants.map((v, i) => (
-            <tr key={i}>
-              <td>
-                <input className="border p-1" value={v.sku} onChange={(e)=> {
-                  setVariants(prev=> prev.map((x, ii)=> ii===i ? { ...x, sku: e.target.value } : x));
-                }}/>
-              </td>
-              <td><input type="number" className="border p-1 w-24" value={v.price} onChange={(e)=> {
-                  setVariants(prev=> prev.map((x, ii)=> ii===i ? { ...x, price: Number(e.target.value) } : x));
-              }} /></td>
-              <td><input type="number" className="border p-1 w-20" value={v.stock} onChange={(e)=> {
-                  setVariants(prev=> prev.map((x, ii)=> ii===i ? { ...x, stock: Number(e.target.value) } : x));
-              }} /></td>
-              <td>
-                {v.attributes.map(attr => <div key={attr.attributeId} className="text-xs">{attr.value}</div>)}
-              </td>
-              <td>
-                <button className="text-red-500 text-xs" onClick={() => setVariants(prev=> prev.filter((_, ii)=>ii !== i))}>Remove</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
-
-      <div className="mt-4">
-        <label className="block font-medium mb-1">Images</label>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={(e) => {
-            const files = Array.from(e.target.files || []);
-            setCreateData({ ...createData, images: [...createData.images, ...files] });
-          }}
-        />
-
-
-        {/* Previews */}
-        {createData.images.length > 0 && (
-          <div className="flex flex-wrap gap-3 mt-3">
-            {createData.images.map((f, idx) => (
-              <div key={idx} className="w-32 border rounded p-2 bg-gray-50 text-center">
-                <div className="relative w-28 h-20 mb-2">
-                  <img src={URL.createObjectURL(f)} className="w-full h-full object-cover rounded" />
-                </div>
-                <div className="text-xs">{f.name}</div>
-                <button
-                  className="text-red-500 text-xs mt-1"
-                  onClick={() =>
-                    setCreateData({ ...createData, images: createData.images.filter((_, i) => i !== idx) })
-                  }
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="flex justify-end gap-3 mt-6">

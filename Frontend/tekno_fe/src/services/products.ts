@@ -1,4 +1,4 @@
-import { get, postForm, put, del, API_BASE } from "@/lib/api";
+import { get,post, postForm, put, del, API_BASE } from "@/lib/api";
 
 const API_BASE_URL = "http://localhost:5000/api"; // đổi theo API thật của bạn
 
@@ -154,4 +154,36 @@ export async function deleteAdminProduct(id: number | string) {
     console.error("❌ Failed to delete admin product:", error);
     throw error;
   }
+}
+
+export type CreateProductVariantPayload = {
+  productId: number;
+  sku: string;
+  price: number;
+  stock: number;
+  status?: string;
+  attributeValues: Record<string, string>;
+};
+
+export async function createProductVariant(
+  payload: CreateProductVariantPayload
+) {
+  try {
+    return await post(
+      `${API_BASE}/admin/products/variants`,
+      payload
+    );
+  } catch (error) {
+    console.error("❌ Failed to create product variant:", error);
+    throw error;
+  }
+}
+
+export async function deleteProductVariant(variantId: number | string) {
+  try {
+    return await del(`${API_BASE}/admin/products/variants/${variantId}`);
+  } catch (error) {
+    console.error("❌ Failed to delete product variant:", error);
+    throw error;
+}
 }
