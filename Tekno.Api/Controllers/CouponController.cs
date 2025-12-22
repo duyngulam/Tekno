@@ -66,15 +66,15 @@ namespace Tekno.Api.Controllers
         /// - Within valid date range
         /// - Have remaining quantity
         /// </remarks>
-        [HttpGet("active")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetActiveCoupons()
-        {
-            var coupons = await _couponService.GetActiveCouponsAsync();
-            return Ok(ApiResponse<System.Collections.Generic.List<CouponDto>>.Ok(
-                coupons, 
-                $"Found {coupons.Count} active coupon(s)"));
-        }
+        //[HttpGet("active")]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> GetActiveCoupons()
+        //{
+        //    var coupons = await _couponService.GetActiveCouponsAsync();
+        //    return Ok(ApiResponse<System.Collections.Generic.List<CouponDto>>.Ok(
+        //        coupons, 
+        //        $"Found {coupons.Count} active coupon(s)"));
+        //}
 
         /// <summary>
         /// Get coupon details by code (public - for preview/validation)
