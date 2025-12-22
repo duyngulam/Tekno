@@ -880,6 +880,123 @@ namespace Tekno.Application.Catalog.Services
             return dtos;
         }
 
+        public async Task<ProductVariantDetailDto?> UpdateProductVariantAsync(int variantId, UpdateProductVariantDto dto)
+        {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            var variant = await _productRepository.GetProductVariantByIdAsync(variantId);
+            if (variant == null)
+            {
+                _logger.LogWarning("Update failed: Variant with ID {Id} not found", variantId);
+                return null;
+            }
+
+            var product = await _productRepository.GetProductByIdAsync(variant.ProductId);
+            if (product == null) throw new NotFoundException("Product", variant.ProductId);
+
+            // Validate attribute inputs
+            foreach (var attr in dto.Attributes)
+            {
+                if (!attr.IsValid(out var errorMessage))
+                {
+                    throw new InvalidOperationException($"Invalid attribute input: {errorMessage}");
+                }
+            }
+
+            await using var transaction = await _productRepository.BeginTransactionAsync();
+
+            try
+            {
+                // SKU uniqueness check if changed
+                if (!string.Equals(variant.Sku, dto.Sku, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (await _productRepository.IsSkuExistsAsync(dto.Sku))
+                        throw new ConflictException($"SKU '{dto.Sku}' already exists", "SKU_EXISTS");
+
+                    variant.UpdateSku(dto.Sku);
+                }
+
+                // Update price/stock/status
+                variant.UpdatePrice(dto.Price);
+                variant.UpdateStock(dto.Stock);
+                variant.UpdateStatus(dto.Status);
+
+                // Clear existing variant attributes
+                // We'll remove existing and re-add based on provided attributes
+                // Ensure repository will persist changes (we rely on EF change tracking)
+                variant.VariantAttributes.Clear();
+
+                var attributeValueIds = new Dictionary<int, int>();
+                foreach (var attrInput in dto.Attributes)
+                {
+                    int attributeId;
+
+                    if (!string.IsNullOrWhiteSpace(attrInput.Name))
+                    {
+                        var newAttribute = new ProductAttribute(
+                            name: attrInput.Name.Trim(),
+                            inputType: "select",
+                            isGlobal: false,
+                            categoryId: product.CategoryId);
+
+                        var createdAttribute = await _productRepository.CreateAttributeAsync(newAttribute);
+                        attributeId = createdAttribute.Id;
+                    }
+                    else if (attrInput.Id.HasValue)
+                    {
+                        attributeId = attrInput.Id.Value;
+                        var existingAttribute = await _productRepository.GetAttributeByIdAsync(attributeId);
+                        if (existingAttribute == null)
+                            throw new NotFoundException("Attribute", attributeId);
+
+                        if (!existingAttribute.IsGlobal && existingAttribute.CategoryId != product.CategoryId)
+                            throw new InvalidOperationException($"Attribute '{existingAttribute.Name}' (ID: {attributeId}) does not belong to product's category");
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Either attribute Id or Name must be provided");
+                    }
+
+                    var attributeValue = await _productRepository.GetOrCreateAttributeValueAsync(
+                        attributeId,
+                        attrInput.Value,
+                        product.CategoryId);
+
+                    if (attributeValue == null)
+                        throw new InvalidOperationException($"Failed to get or create attribute value: AttributeId={attributeId}, Value={attrInput.Value}");
+
+                    attributeValueIds.Add(attributeId, attributeValue.Id);
+                }
+
+                // Recreate variant attribute links
+                foreach (var kvp in attributeValueIds)
+                {
+                    variant.AddAttribute(kvp.Key, kvp.Value);
+                }
+
+                // Persist variant update (repository should handle update)
+                var updatedVariant = await _productRepository.AddProductVariantAsync(variant); // Using Add or Update depending on repository
+
+                // Refresh product specs and index
+                await UpdateProductSpecsFromVariantsAsync(variant.ProductId);
+                var updatedProduct = await _productRepository.GetProductByIdAsync(variant.ProductId);
+                var summary = _mapper.Map<ProductSummaryDto>(updatedProduct);
+                await _elasticService.IndexProductAsync(summary);
+
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Updated variant {VariantId} for product {ProductId}", variantId, variant.ProductId);
+
+                var variantWithDetails = await _productRepository.GetProductVariantByIdAsync(updatedVariant.Id);
+                return _mapper.Map<ProductVariantDetailDto>(variantWithDetails);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update variant {VariantId}", variantId);
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
     }
 }
 

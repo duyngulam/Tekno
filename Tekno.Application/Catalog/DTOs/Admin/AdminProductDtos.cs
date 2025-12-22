@@ -142,6 +142,30 @@ namespace Tekno.Application.Catalog.DTOs.Admin
     }
 
     /// <summary>
+    /// Update variant input for admin
+    /// </summary>
+    public class   UpdateProductVariantDto
+    {
+        [Required]
+        [StringLength(100)]
+        public string Sku { get; set; } = string.Empty;
+
+        [Required]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
+        public decimal Price { get; set; }
+
+        [Required]
+        [Range(0, int.MaxValue, ErrorMessage = "Stock cannot be negative")]
+        public int Stock { get; set; }
+
+        public string Status { get; set; } = "available";
+
+        [Required]
+        [MinLength(1, ErrorMessage = "At least one attribute must be specified")]
+        public List<VariantAttributeInputDto> Attributes { get; set; } = new();
+    }
+
+    /// <summary>
     /// Input for variant attribute - supports both existing and new attributes
     /// </summary>
     public class VariantAttributeInputDto

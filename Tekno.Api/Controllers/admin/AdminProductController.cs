@@ -180,6 +180,27 @@ namespace Tekno.Api.Controllers.admin
                 return StatusCode(500, ApiResponse<string>.Fail($"Failed to add variant: {ex.Message}"));
             }
         }
+
+        /// <summary>
+        /// Update a product variant safely inside a transaction
+        /// </summary>
+        [HttpPut("variants/{variantId:int}")]
+        public async Task<IActionResult> UpdateProductVariant(int variantId, [FromBody] UpdateProductVariantDto dto)
+        {
+            try
+            {
+                var updated = await _productService.UpdateProductVariantAsync(variantId, dto);
+                if (updated == null)
+                    return NotFound(ApiResponse<ProductVariantDetailDto>.Fail("Variant not found"));
+
+                return Ok(ApiResponse<ProductVariantDetailDto>.Ok(updated, "Variant updated successfully"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update variant {VariantId}", variantId);
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to update variant: {ex.Message}"));
+            }
+        }
         /// Delete product variant (auto-updates product specs)
         [HttpDelete("variants/{variantId}")]
         public async Task<IActionResult> DeleteProductVariant(int variantId)

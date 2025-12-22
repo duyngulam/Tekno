@@ -308,6 +308,39 @@ namespace Tekno.Infrastructure.Catalog
             return variant;
         }
 
+        public async Task<ProductVariant> UpdateProductVariantAsync(ProductVariant variant)
+        {
+            var existing = await _context.ProductVariants
+                .Include(v => v.VariantAttributes)
+                .FirstOrDefaultAsync(v => v.Id == variant.Id);
+
+            if (existing == null)
+                throw new InvalidOperationException($"Variant with ID {variant.Id} not found");
+
+            // Update scalar fields
+            existing.UpdateSku(variant.Sku);
+            existing.UpdatePrice(variant.Price);
+            existing.UpdateStock(variant.Stock);
+            existing.UpdateStatus(variant.Status);
+
+            // Replace variant attributes
+            _context.Set<ProductVariantAttribute>().RemoveRange(existing.VariantAttributes);
+            existing.VariantAttributes.Clear();
+
+            foreach (var attr in variant.VariantAttributes)
+            {
+                existing.VariantAttributes.Add(new ProductVariantAttribute
+                {
+                    VariantId = existing.Id,
+                    AttributeId = attr.AttributeId,
+                    ValueId = attr.ValueId
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            return existing;
+        }
+
         public async Task<bool> DeleteProductVariantAsync(int variantId)
         {
             var variant = await GetProductVariantByIdAsync(variantId);
