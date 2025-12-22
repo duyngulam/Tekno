@@ -94,6 +94,7 @@ namespace Tekno.Infrastructure
             
             // Promotion
             services.AddScoped<ICouponRepository, CouponRepository>();
+            services.AddScoped<IPromotionRepository, PromotionRepository>();
             
             // Cart & Wishlist
             services.AddScoped<ICartRepository, CartRepository>();
@@ -133,6 +134,7 @@ namespace Tekno.Infrastructure
             
             // Promotion
             services.AddScoped<CouponService>();
+            services.AddScoped<PromotionService>();
             
             // Cart & Wishlist
             services.AddScoped<CartService>();

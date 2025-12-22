@@ -10,6 +10,7 @@ namespace Tekno.Application.Payment.Configuration
         public string HashSecret { get; set; } = string.Empty;
         public string PaymentUrl { get; set; } = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
         public string ReturnUrl { get; set; } = string.Empty;
+        public string IpnUrl { get; set; } = string.Empty;
         public string ApiUrl { get; set; } = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction";
         
         /// <summary>

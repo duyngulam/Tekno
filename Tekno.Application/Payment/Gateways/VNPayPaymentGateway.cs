@@ -57,29 +57,47 @@ namespace Tekno.Application.Payment.Gateways
                 // Get client IP (use request IP or default)
                 var vnpIpAddr = request.IpAddress ?? "127.0.0.1";
 
+                // Build backend return URL with frontend URL as query parameter
+                // This ensures backend processes the payment first, then redirects to frontend
+                var backendReturnUrl = _settings.ReturnUrl;
+                if (!string.IsNullOrEmpty(request.ReturnUrl))
+                {
+                    // Append frontend URL as query parameter
+                    var separator = backendReturnUrl.Contains("?") ? "&" : "?";
+                    backendReturnUrl = $"{backendReturnUrl}{separator}frontendUrl={Uri.EscapeDataString(request.ReturnUrl)}";
+                }
+
+                _logger.LogInformation("VNPay Return URL: {ReturnUrl} (frontend: {FrontendUrl})", 
+                    backendReturnUrl, request.ReturnUrl ?? "none");
+
                 // Build payment parameters
                 var vnpParams = new SortedDictionary<string, string>
                 {
                     { "vnp_Version", _version },
-                    { "vnp_Command", _command },
                     { "vnp_TmnCode", _settings.TmnCode },
                     { "vnp_Amount", vnpAmount },
-                    { "vnp_CurrCode", "VND" }, // VNPay only supports VND
+                    { "vnp_Command", _command },
+                    { "vnp_CreateDate", vnpCreateDate },
                     { "vnp_TxnRef", request.OrderNumber }, // Use order number as transaction reference
+                    { "vnp_CurrCode", "VND" }, // VNPay only supports VND
+                    { "vnp_IpAddr", vnpIpAddr },
+                    { "vnp_Locale", "vn" }, // Vietnamese language
                     { "vnp_OrderInfo", SanitizeOrderInfo(request.OrderNumber, request.Amount) },
                     { "vnp_OrderType", GetOrderType(request.Method) },
-                    { "vnp_Locale", "vn" }, // Vietnamese language
-                    { "vnp_ReturnUrl", request.ReturnUrl },
-                    { "vnp_IpAddr", vnpIpAddr },
-                    { "vnp_CreateDate", vnpCreateDate },
-                    { "vnp_ExpireDate", vnpExpireDate }
+                    { "vnp_ReturnUrl", backendReturnUrl }
                 };
 
-                // Add bank code if specified
-                var bankCode = GetBankCode(request.Method);
-                if (!string.IsNullOrEmpty(bankCode))
+                // Add expire date
+                if (!string.IsNullOrEmpty(vnpExpireDate))
                 {
-                    vnpParams.Add("vnp_BankCode", bankCode);
+                    vnpParams.Add("vnp_ExpireDate", vnpExpireDate);
+                }
+
+                // Log parameters for debugging
+                _logger.LogInformation("VNPay request parameters (sorted):");
+                foreach (var p in vnpParams)
+                {
+                    _logger.LogInformation("  {Key} = {Value}", p.Key, p.Value);
                 }
 
                 // Generate secure hash (HMACSHA512)
@@ -90,6 +108,7 @@ namespace Tekno.Application.Payment.Gateways
                 var paymentUrl = BuildPaymentUrl(_settings.PaymentUrl, vnpParams);
 
                 _logger.LogInformation("VNPay payment URL generated for order {OrderNumber}", request.OrderNumber);
+                _logger.LogInformation("VNPay secure hash: {Hash}", secureHash);
 
                 return await Task.FromResult(new PaymentInitResult
                 {
@@ -109,6 +128,7 @@ namespace Tekno.Application.Payment.Gateways
                         locale = "vn",
                         orderInfo = vnpParams["vnp_OrderInfo"],
                         paymentUrl = paymentUrl,
+                        returnUrl = backendReturnUrl,
                         note = "Redirect customer to paymentUrl to complete payment. Payment expires in 15 minutes."
                     }
                 });
@@ -133,6 +153,8 @@ namespace Tekno.Application.Payment.Gateways
                 // Parse callback data from VNPay
                 var vnpData = ParseVNPayCallback(callbackData);
 
+                _logger.LogInformation("VNPay callback raw data: {Callback}", System.Text.Json.JsonSerializer.Serialize(callbackData));
+
                 if (vnpData == null || !vnpData.Any())
                 {
                     _logger.LogWarning("VNPay callback data is empty or invalid");
@@ -148,6 +170,9 @@ namespace Tekno.Application.Payment.Gateways
 
                 // Extract parameters
                 var vnpSecureHash = vnpData.ContainsKey("vnp_SecureHash") ? vnpData["vnp_SecureHash"] : "";
+
+                _logger.LogInformation("VNPay provided secure hash: {Hash}", vnpSecureHash);
+
                 var vnpResponseCode = vnpData.ContainsKey("vnp_ResponseCode") ? vnpData["vnp_ResponseCode"] : "";
                 var vnpTransactionStatus = vnpData.ContainsKey("vnp_TransactionStatus") ? vnpData["vnp_TransactionStatus"] : "";
                 var vnpTxnRef = vnpData.ContainsKey("vnp_TxnRef") ? vnpData["vnp_TxnRef"] : "";
@@ -163,12 +188,23 @@ namespace Tekno.Application.Payment.Gateways
                     .OrderBy(p => p.Key)
                     .ToDictionary(p => p.Key, p => p.Value);
 
+                _logger.LogInformation("VNPay parameters used for hash (sorted):");
+                foreach (var p in paramsToVerify)
+                {
+                    _logger.LogInformation("  {Key} = {Value}", p.Key, p.Value);
+                }
+
+                var verifyData = string.Join("&", paramsToVerify.Select(p => $"{p.Key}={p.Value}"));
+                _logger.LogInformation("VNPay hash verify input string: {Data}", verifyData);
+
                 var computedHash = GenerateSecureHash(new SortedDictionary<string, string>(paramsToVerify), _settings.HashSecret);
+                _logger.LogInformation("VNPay computed hash: {Hash}", computedHash);
+
                 var isValidSignature = computedHash.Equals(vnpSecureHash, StringComparison.OrdinalIgnoreCase);
 
                 if (!isValidSignature)
                 {
-                    _logger.LogWarning("VNPay signature verification failed for transaction {TransactionId}", transactionId);
+                    _logger.LogWarning("VNPay signature verification failed for transaction {TransactionId}. computed={Computed} provided={Provided}", transactionId, computedHash, vnpSecureHash);
                     return Task.FromResult(new PaymentVerificationResult
                     {
                         IsValid = false,
@@ -252,26 +288,28 @@ namespace Tekno.Application.Payment.Gateways
 
         /// <summary>
         /// Generate HMAC SHA512 secure hash for VNPay
-        /// IMPORTANT: VNPay expects hash from RAW values, NOT URL-encoded values
+        /// NOTE: Updated to match PHP sample: hash is computed over URL-encoded keys and values
+        /// (application/x-www-form-urlencoded style, spaces = '+').
         /// </summary>
         private string GenerateSecureHash(SortedDictionary<string, string> parameters, string secretKey)
         {
-            // Build query string with RAW values (no URL encoding for hash calculation)
-            // VNPay documentation: hash is calculated from raw parameter values
-            var data = string.Join("&", parameters
+            // Build query string using URL-encoded keys/values (to match PHP urlencode behavior)
+            var encodedPairs = parameters
                 .Where(p => !string.IsNullOrEmpty(p.Value))
-                .Select(p => $"{p.Key}={p.Value}")); // ← NO Uri.EscapeDataString here!
+                .Select(p => $"{UrlEncodeLikeVNPay(p.Key)}={UrlEncodeLikeVNPay(p.Value)}");
 
-            _logger.LogInformation("VNPay hash input data: {Data}", data);
+            var data = string.Join("&", encodedPairs);
+
+            _logger.LogInformation("VNPay hash input data (urlencoded): {Data}", data);
 
             // Compute HMAC SHA512
             using (var hmac = new HMACSHA512(Encoding.UTF8.GetBytes(secretKey)))
             {
                 var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
                 var hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
-                
+
                 _logger.LogInformation("VNPay generated hash: {Hash}", hashString);
-                
+
                 return hashString;
             }
         }

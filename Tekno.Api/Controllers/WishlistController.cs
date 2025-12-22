@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Tekno.Api.Commons.Responses;
 using Tekno.Application.Cart.DTOs;
 using Tekno.Application.Cart.Services;
+using Tekno.Application.Catalog.DTOs.Products;
 
 namespace Tekno.Api.Controllers
 {
@@ -30,8 +32,16 @@ namespace Tekno.Api.Controllers
         public async Task<IActionResult> GetWishlist()
         {
             var userId = GetCurrentUserId();
-            var wishlist = await _wishlistService.GetWishlistAsync(userId);
-            return Ok(ApiResponse<List<WishlistDto>>.Ok(wishlist));
+            var wishlist = await _wishlistService.GetWishlistAsync(userId) ?? new List<WishlistDto>();
+
+            List<ProductSummaryDto> productSummary = new List<ProductSummaryDto>();
+            foreach (var item in wishlist)
+            {
+                if (item?.Product != null)
+                    productSummary.Add(item.Product);
+            }
+
+            return Ok(ApiResponse<List<ProductSummaryDto>>.Ok(productSummary));
         }
 
         /// <summary>

@@ -109,6 +109,24 @@ namespace Tekno.Infrastructure.Promotion
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Coupon>> GetExpiredActiveCouponsAsync()
+        {
+            var now = DateTime.UtcNow;
+            return await _context.Set<Coupon>()
+                .Where(c => c.Status == CouponStatus.Active && 
+                            (c.EndDate < now || c.UsedCount >= c.Quantity))
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Coupon>> GetExpiredActiveProductDiscountsAsync()
+        {
+            var now = DateTime.UtcNow;
+            return await _context.Set<Coupon>()
+                .Where(c => c.Status == CouponStatus.Active &&
+                            c.EndDate < now)
+                .ToListAsync();
+        }
+
         public async Task<bool> IsCodeExistsAsync(string code)
         {
             var normalizedCode = code.Trim().ToUpperInvariant();

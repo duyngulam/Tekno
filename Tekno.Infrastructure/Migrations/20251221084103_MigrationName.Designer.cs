@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tekno.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Tekno.Infrastructure.Persistence;
 namespace Tekno.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251221084103_MigrationName")]
+    partial class MigrationName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4375,96 +4378,6 @@ namespace Tekno.Infrastructure.Migrations
                     b.ToTable("coupon_usages", (string)null);
                 });
 
-            modelBuilder.Entity("Tekno.Domain.Promotion.Promotion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("Priority")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<bool>("StackableWithCoupons")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<decimal>("Value")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Priority");
-
-                    b.HasIndex("Status");
-
-                    b.HasIndex("StartDate", "EndDate");
-
-                    b.ToTable("Promotions", (string)null);
-                });
-
-            modelBuilder.Entity("Tekno.Domain.Promotion.PromotionCategory", b =>
-                {
-                    b.Property<int>("PromotionId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("PromotionId", "CategoryId");
-
-                    b.ToTable("PromotionCategories", (string)null);
-                });
-
-            modelBuilder.Entity("Tekno.Domain.Promotion.PromotionProduct", b =>
-                {
-                    b.Property<int>("PromotionId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("PromotionId", "ProductId");
-
-                    b.ToTable("PromotionProducts", (string)null);
-                });
-
             modelBuilder.Entity("Tekno.Domain.Review.ProductReview", b =>
                 {
                     b.Property<int>("Id")
@@ -4829,28 +4742,6 @@ namespace Tekno.Infrastructure.Migrations
                     b.Navigation("Coupon");
                 });
 
-            modelBuilder.Entity("Tekno.Domain.Promotion.PromotionCategory", b =>
-                {
-                    b.HasOne("Tekno.Domain.Promotion.Promotion", "Promotion")
-                        .WithMany("ApplicableCategories")
-                        .HasForeignKey("PromotionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Promotion");
-                });
-
-            modelBuilder.Entity("Tekno.Domain.Promotion.PromotionProduct", b =>
-                {
-                    b.HasOne("Tekno.Domain.Promotion.Promotion", "Promotion")
-                        .WithMany("ApplicableProducts")
-                        .HasForeignKey("PromotionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Promotion");
-                });
-
             modelBuilder.Entity("Tekno.Domain.Review.ReviewHelpfulness", b =>
                 {
                     b.HasOne("Tekno.Domain.Review.ProductReview", "Review")
@@ -4930,13 +4821,6 @@ namespace Tekno.Infrastructure.Migrations
                     b.Navigation("ApplicableProducts");
 
                     b.Navigation("Usages");
-                });
-
-            modelBuilder.Entity("Tekno.Domain.Promotion.Promotion", b =>
-                {
-                    b.Navigation("ApplicableCategories");
-
-                    b.Navigation("ApplicableProducts");
                 });
 #pragma warning restore 612, 618
         }

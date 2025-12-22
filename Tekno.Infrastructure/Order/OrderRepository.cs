@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Tekno.Application.Common.Paging;
 using Tekno.Application.Order.Interface;
 using Tekno.Domain.Order;
 using Tekno.Infrastructure.Persistence;
@@ -25,7 +26,15 @@ namespace Tekno.Infrastructure.Order
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
 
-        public async Task<List<Domain.Order.Order>> GetUserOrdersAsync(int userId)
+        public async Task<Domain.Order.Order?> GetByOrderNumberAsync(string orderNumber)
+        {
+            return await _context.Set<Domain.Order.Order>()
+                .Include(o => o.Items)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
+        }
+
+        public async Task<List<Domain.Order.Order>> GetByUserIdAsync(int userId)
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
@@ -33,6 +42,11 @@ namespace Tekno.Infrastructure.Order
                 .Where(o => o.UserId == userId)
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
+        }
+
+        public async Task<List<Domain.Order.Order>> GetUserOrdersAsync(int userId)
+        {
+            return await GetByUserIdAsync(userId);
         }
 
         public async Task<List<Domain.Order.Order>> GetUserCompletedOrdersAsync(int userId)
@@ -70,6 +84,55 @@ namespace Tekno.Infrastructure.Order
             _context.Set<Domain.Order.Order>().Add(order);
             await _context.SaveChangesAsync();
             return order;
+        }
+
+        public async Task<Domain.Order.Order> UpdateAsync(Domain.Order.Order order)
+        {
+            _context.Set<Domain.Order.Order>().Update(order);
+            await _context.SaveChangesAsync();
+            return order;
+        }
+
+        public async Task<PagedResult<Domain.Order.Order>> GetPagedAsync(
+            int? userId = null,
+            OrderStatus? status = null,
+            PagingParams? paging = null)
+        {
+            var query = _context.Set<Domain.Order.Order>()
+                .Include(o => o.Items)
+                .AsNoTracking()
+                .AsQueryable();
+
+            // Filter by user
+            if (userId.HasValue)
+            {
+                query = query.Where(o => o.UserId == userId.Value);
+            }
+
+            // Filter by status
+            if (status.HasValue)
+            {
+                query = query.Where(o => o.Status == status.Value);
+            }
+
+            // Order by most recent first
+            query = query.OrderByDescending(o => o.CreatedAt);
+
+            // Get total count
+            var totalRecords = await query.CountAsync();
+
+            // Apply pagination
+            var pagingParams = paging ?? new PagingParams(1, 20);
+            var data = await query
+                .Skip((pagingParams.Page - 1) * pagingParams.PageSize)
+                .Take(pagingParams.PageSize)
+                .ToListAsync();
+
+            return new PagedResult<Domain.Order.Order>(
+                data,
+                totalRecords,
+                pagingParams.Page,
+                pagingParams.PageSize);
         }
     }
 }

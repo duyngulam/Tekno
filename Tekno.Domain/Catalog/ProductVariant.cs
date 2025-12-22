@@ -73,5 +73,16 @@ namespace Tekno.Domain.Catalog
             
             Status = status;
         }
+
+        /// <summary>
+        /// Update variant SKU
+        /// </summary>
+        public void UpdateSku(string sku)
+        {
+            if (string.IsNullOrWhiteSpace(sku))
+                throw new ArgumentException("SKU cannot be empty", nameof(sku));
+
+            Sku = sku;
+        }
     }
 }

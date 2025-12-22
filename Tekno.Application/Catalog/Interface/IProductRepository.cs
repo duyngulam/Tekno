@@ -45,6 +45,7 @@ namespace Tekno.Application.Catalog.Interface
 
         // Variant management
         Task<ProductVariant> AddProductVariantAsync(ProductVariant variant);
+        Task<ProductVariant> UpdateProductVariantAsync(ProductVariant variant);
         Task<bool> DeleteProductVariantAsync(int variantId);
         Task<bool> IsSkuExistsAsync(string sku);
 
@@ -53,9 +54,6 @@ namespace Tekno.Application.Catalog.Interface
         
         // Attribute and value management
         Task<AttributeValue?> GetOrCreateAttributeValueAsync(int attributeId, string value, int categoryId);
-        Task<List<ProductAttribute>> GetAttributesByCategoryIdAsync(int categoryId);
-        Task<ProductAttribute?> GetAttributeByIdAsync(int attributeId);
-        Task<AttributeValue?> GetAttributeValueAsync(int attributeId, string value);
         Task<ProductAttribute> CreateAttributeAsync(ProductAttribute attribute);
         Task<ProductAttribute?> UpdateAttributeAsync(ProductAttribute attribute);
         Task<bool> DeleteAttributeAsync(int attributeId);
@@ -63,6 +61,8 @@ namespace Tekno.Application.Catalog.Interface
         Task<AttributeValue?> UpdateAttributeValueAsync(AttributeValue value);
         Task<bool> DeleteAttributeValueAsync(int valueId);
         Task<AttributeValue?> GetAttributeValueByIdAsync(int valueId);
+        Task<List<ProductAttribute>> GetAttributesByCategoryIdAsync(int categoryId);
+        Task<ProductAttribute?> GetAttributeByIdAsync(int attributeId);
 
         // Variant methods
         Task<ProductVariant?> GetProductVariantByIdAsync(int variantId);

@@ -146,12 +146,11 @@ namespace Tekno.Api.Controllers.Admin
         [HttpPatch("{id:int}/activate")]
         public async Task<IActionResult> Activate(int id)
         {
-            var coupon = await _couponService.GetCouponByIdAsync(id);
+            var coupon = await _couponService.ActivateCouponAsync(id);
             if (coupon == null)
                 return NotFound(ApiResponse<CouponDto>.Fail("Coupon not found"));
 
-            // Note: You may want to add an ActivateCoupon method to the service
-            return Ok(ApiResponse<string>.Ok("Coupon activated", "Use PUT endpoint to update status"));
+            return Ok(ApiResponse<CouponDto>.Ok(coupon, "Coupon activated successfully"));
         }
 
         /// <summary>
@@ -160,12 +159,11 @@ namespace Tekno.Api.Controllers.Admin
         [HttpPatch("{id:int}/deactivate")]
         public async Task<IActionResult> Deactivate(int id)
         {
-            var coupon = await _couponService.GetCouponByIdAsync(id);
+            var coupon = await _couponService.DeactivateCouponAsync(id);
             if (coupon == null)
                 return NotFound(ApiResponse<CouponDto>.Fail("Coupon not found"));
 
-            // Note: You may want to add a DeactivateCoupon method to the service
-            return Ok(ApiResponse<string>.Ok("Coupon deactivated", "Use PUT endpoint to update status"));
+            return Ok(ApiResponse<CouponDto>.Ok(coupon, "Coupon deactivated successfully"));
         }
 
         /// <summary>
