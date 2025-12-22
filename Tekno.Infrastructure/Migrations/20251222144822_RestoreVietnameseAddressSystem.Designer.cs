@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tekno.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Tekno.Infrastructure.Persistence;
 namespace Tekno.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251222144822_RestoreVietnameseAddressSystem")]
+    partial class RestoreVietnameseAddressSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4168,9 +4171,6 @@ namespace Tekno.Infrastructure.Migrations
                     b.Property<int>("OrderId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("OrderId1")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -4187,9 +4187,6 @@ namespace Tekno.Infrastructure.Migrations
                     b.HasIndex("CreatedAt");
 
                     b.HasIndex("OrderId");
-
-                    b.HasIndex("OrderId1")
-                        .IsUnique();
 
                     b.HasIndex("Status");
 
@@ -4533,6 +4530,10 @@ namespace Tekno.Infrastructure.Migrations
                         .HasColumnType("character varying(20)")
                         .HasDefaultValue("Pending");
 
+                    b.Property<string>("Title")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamptz");
 
@@ -4802,10 +4803,6 @@ namespace Tekno.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Tekno.Domain.Order.Order", null)
-                        .WithOne("Payment")
-                        .HasForeignKey("Tekno.Domain.Payment.Payment", "OrderId1");
-
                     b.Navigation("Order");
                 });
 
@@ -4934,8 +4931,6 @@ namespace Tekno.Infrastructure.Migrations
             modelBuilder.Entity("Tekno.Domain.Order.Order", b =>
                 {
                     b.Navigation("Items");
-
-                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("Tekno.Domain.Promotion.Coupon", b =>

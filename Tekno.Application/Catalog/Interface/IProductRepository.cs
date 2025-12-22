@@ -77,6 +77,9 @@ namespace Tekno.Application.Catalog.Interface
         // Rating statistics
         Task<Dictionary<int, (double AverageRating, int TotalReviews)>> GetProductsRatingStatsAsync(List<int> productIds);
         
+        // Products on sale
+        Task<List<Product>> GetProductsWithDiscountAsync(string? categorySlug, int count);
+        
         // Transaction support
         IDbContextTransaction BeginTransaction();
         Task<IDbContextTransaction> BeginTransactionAsync();

@@ -22,6 +22,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
+                .Include(o => o.Payment)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
@@ -30,6 +31,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
+                .Include(o => o.Payment)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
         }
@@ -38,6 +40,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
+                .Include(o => o.Payment)
                 .AsNoTracking()
                 .Where(o => o.UserId == userId)
                 .OrderByDescending(o => o.CreatedAt)
@@ -53,6 +56,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
+                .Include(o => o.Payment)
                 .AsNoTracking()
                 .Where(o => o.UserId == userId && o.Status == OrderStatus.Completed)
                 .OrderByDescending(o => o.CreatedAt)
@@ -100,6 +104,7 @@ namespace Tekno.Infrastructure.Order
         {
             var query = _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
+                .Include(o => o.Payment)
                 .AsNoTracking()
                 .AsQueryable();
 

@@ -182,6 +182,24 @@ namespace Tekno.Application.Order.Services
                 Items = new List<OrderItemDto>()
             };
 
+            // Map payment info if available
+            if (order.Payment != null)
+            {
+                dto.Payment = new OrderPaymentDto
+                {
+                    PaymentId = order.Payment.Id,
+                    TransactionId = order.Payment.TransactionId,
+                    Gateway = GetPaymentGatewayName(order.Payment.Gateway),
+                    Method = GetPaymentMethodName(order.Payment.Method),
+                    Status = GetPaymentStatusName(order.Payment.Status),
+                    Amount = order.Payment.Amount,
+                    Currency = order.Payment.Currency,
+                    CreatedAt = order.Payment.CreatedAt,
+                    CompletedAt = order.Payment.CompletedAt,
+                    ErrorMessage = order.Payment.ErrorMessage
+                };
+            }
+
             // Map delivery info if order is shipped or delivered
             if (order.Status >= OrderStatus.Shipping)
             {
@@ -228,14 +246,14 @@ namespace Tekno.Application.Order.Services
         {
             return status switch
             {
-                OrderStatus.Pending => "Ch? x? lý",
-                OrderStatus.Processing => "?ang x? lý",
-                OrderStatus.Completed => "Hoàn thành",
-                OrderStatus.Shipping => "?ang giao hàng",
-                OrderStatus.Delivered => "?ã giao hàng",
-                OrderStatus.Cancelled => "?ã h?y",
-                OrderStatus.RefundRequested => "Yêu c?u hoàn ti?n",
-                OrderStatus.Refunded => "?ã hoàn ti?n",
+                OrderStatus.Pending => "Pending",
+                OrderStatus.Processing => "Processing",
+                OrderStatus.Completed => "Completed",
+                OrderStatus.Shipping => "Shipping",
+                OrderStatus.Delivered => "Delivered",
+                OrderStatus.Cancelled => "Cancelled",
+                OrderStatus.RefundRequested => "Refund Requested",
+                OrderStatus.Refunded => "Refunded",
                 _ => status.ToString()
             };
         }
@@ -244,12 +262,53 @@ namespace Tekno.Application.Order.Services
         {
             return orderStatus switch
             {
-                OrderStatus.Processing => "?ang chu?n b?",
-                OrderStatus.Shipping => "?ang giao",
-                OrderStatus.Delivered => "?ã giao",
-                OrderStatus.Cancelled => "?ã h?y",
-                OrderStatus.Refunded => "?ã hoàn ti?n",
-                _ => "?ang x? lý"
+                OrderStatus.Processing => "Preparing",
+                OrderStatus.Shipping => "In Transit",
+                OrderStatus.Delivered => "Delivered",
+                OrderStatus.Cancelled => "Cancelled",
+                OrderStatus.Refunded => "Refunded",
+                _ => "Processing"
+            };
+        }
+
+        private string GetPaymentGatewayName(Domain.Payment.PaymentGateway gateway)
+        {
+            return gateway switch
+            {
+                Domain.Payment.PaymentGateway.Mock => "Mock (Test)",
+                Domain.Payment.PaymentGateway.Stripe => "Stripe",
+                Domain.Payment.PaymentGateway.PayPal => "PayPal",
+                Domain.Payment.PaymentGateway.VNPay => "VNPay",
+                Domain.Payment.PaymentGateway.MoMo => "MoMo",
+                Domain.Payment.PaymentGateway.ZaloPay => "ZaloPay",
+                _ => gateway.ToString()
+            };
+        }
+
+        private string GetPaymentMethodName(Domain.Payment.PaymentMethod method)
+        {
+            return method switch
+            {
+                Domain.Payment.PaymentMethod.CreditCard => "Credit Card",
+                Domain.Payment.PaymentMethod.DebitCard => "Debit Card",
+                Domain.Payment.PaymentMethod.BankTransfer => "Bank Transfer",
+                Domain.Payment.PaymentMethod.EWallet => "E-Wallet",
+                Domain.Payment.PaymentMethod.Cash => "Cash (COD)",
+                _ => method.ToString()
+            };
+        }
+
+        private string GetPaymentStatusName(Domain.Payment.PaymentStatus status)
+        {
+            return status switch
+            {
+                Domain.Payment.PaymentStatus.Pending => "Pending",
+                Domain.Payment.PaymentStatus.Processing => "Processing",
+                Domain.Payment.PaymentStatus.Completed => "Completed",
+                Domain.Payment.PaymentStatus.Failed => "Failed",
+                Domain.Payment.PaymentStatus.Refunded => "Refunded",
+                Domain.Payment.PaymentStatus.Cancelled => "Cancelled",
+                _ => status.ToString()
             };
         }
     }

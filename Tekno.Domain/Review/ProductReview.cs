@@ -9,7 +9,6 @@ namespace Tekno.Domain.Review
         public int UserId { get; private set; }
         public int? OrderId { get; private set; } // Track which order this review is for
         public int Rating { get; private set; } // 1-5 stars
-        public string Title { get; private set; } = string.Empty;
         public string Comment { get; private set; } = string.Empty;
         public ReviewStatus Status { get; private set; } = ReviewStatus.Pending;
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
@@ -36,7 +35,6 @@ namespace Tekno.Domain.Review
             int productId,
             int userId,
             int rating,
-            string title,
             string comment,
             int? orderId = null,
             int? variantId = null,
@@ -51,7 +49,6 @@ namespace Tekno.Domain.Review
             ProductId = productId;
             UserId = userId;
             Rating = rating;
-            Title = title?.Trim() ?? string.Empty;
             Comment = comment.Trim();
             OrderId = orderId;
             VariantId = variantId;
@@ -60,7 +57,7 @@ namespace Tekno.Domain.Review
             CreatedAt = DateTime.UtcNow;
         }
 
-        public void Update(int rating, string title, string comment)
+        public void Update(int rating, string comment)
         {
             if (rating < 1 || rating > 5)
                 throw new ArgumentException("Rating must be between 1 and 5", nameof(rating));
@@ -69,7 +66,6 @@ namespace Tekno.Domain.Review
                 throw new ArgumentException("Comment cannot be empty", nameof(comment));
 
             Rating = rating;
-            Title = title?.Trim() ?? string.Empty;
             Comment = comment.Trim();
             UpdatedAt = DateTime.UtcNow;
             

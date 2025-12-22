@@ -194,7 +194,8 @@ namespace Tekno.Application.Auth.Services
         }
 
         /// <summary>
-        /// Get all addresses for user
+        /// Get all addresses for user with Vietnamese location structure
+        /// Returns addresses ordered by default flag, then by creation date (newest first)
         /// </summary>
         public async Task<List<UserAddressDto>> GetAddressesAsync(int userId)
         {
@@ -208,7 +209,9 @@ namespace Tekno.Application.Auth.Services
         }
 
         /// <summary>
-        /// Add new address
+        /// Add new address with Vietnamese location structure (province/district/ward codes and names)
+        /// If this is the first address, it will be automatically set as default.
+        /// If isDefault is true, all other addresses will be marked as non-default.
         /// </summary>
         public async Task<UserAddressDto> AddAddressAsync(int userId, CreateAddressDto dto)
         {
@@ -235,24 +238,27 @@ namespace Tekno.Application.Auth.Services
                 userId: userId,
                 recipientName: dto.RecipientName,
                 phoneNumber: dto.PhoneNumber,
-                addressLine1: dto.AddressLine1,
-                city: dto.City,
-                state: dto.State,
-                postalCode: dto.PostalCode,
-                country: dto.Country,
-                addressLine2: dto.AddressLine2,
+                addressLine: dto.AddressLine,
+                provinceCode: dto.ProvinceCode,
+                provinceName: dto.ProvinceName,
+                districtCode: dto.DistrictCode,
+                districtName: dto.DistrictName,
+                wardCode: dto.WardCode,
+                wardName: dto.WardName,
                 isDefault: isDefault);
 
             user.AddAddress(address);
             await _userRepository.UpdateAsync(user);
 
-            _logger.LogInformation("User {UserId} added new address", userId);
+            _logger.LogInformation("User {UserId} added new address with province {ProvinceCode}, district {DistrictCode}, ward {WardCode}", 
+                userId, dto.ProvinceCode, dto.DistrictCode, dto.WardCode);
 
             return _mapper.Map<UserAddressDto>(address);
         }
 
         /// <summary>
-        /// Update existing address
+        /// Update existing address with Vietnamese location structure (province/district/ward codes and names)
+        /// All location fields (codes and names) must be provided for consistency.
         /// </summary>
         public async Task<UserAddressDto> UpdateAddressAsync(int userId, int addressId, UpdateAddressDto dto)
         {
@@ -271,16 +277,18 @@ namespace Tekno.Application.Auth.Services
             address.Update(
                 recipientName: dto.RecipientName,
                 phoneNumber: dto.PhoneNumber,
-                addressLine1: dto.AddressLine1,
-                city: dto.City,
-                state: dto.State,
-                postalCode: dto.PostalCode,
-                country: dto.Country,
-                addressLine2: dto.AddressLine2);
+                addressLine: dto.AddressLine,
+                provinceCode: dto.ProvinceCode,
+                provinceName: dto.ProvinceName,
+                districtCode: dto.DistrictCode,
+                districtName: dto.DistrictName,
+                wardCode: dto.WardCode,
+                wardName: dto.WardName);
 
             await _userRepository.UpdateAddressAsync(address);
 
-            _logger.LogInformation("User {UserId} updated address {AddressId}", userId, addressId);
+            _logger.LogInformation("User {UserId} updated address {AddressId} with province {ProvinceCode}, district {DistrictCode}, ward {WardCode}", 
+                userId, addressId, dto.ProvinceCode, dto.DistrictCode, dto.WardCode);
 
             return _mapper.Map<UserAddressDto>(address);
         }

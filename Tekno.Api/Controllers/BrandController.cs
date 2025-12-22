@@ -51,5 +51,29 @@ namespace Tekno.Api.Controllers
             var result = _mapper.Map<BrandDto>(brand);
             return Ok(ApiResponse<BrandDto>.Ok(result, "Brand loaded successfully"));
         }
+
+        /// <summary>
+        /// Get brands by category - Only brands that have products in the specified category
+        /// </summary>
+        /// <remarks>
+        /// ## Description
+        /// Returns a list of brands that have at least one product in the specified category.
+        /// This ensures that when filtering products by category, only relevant brands are shown.
+
+        /// ## Validation
+        /// - **categorySlug**: Required, must be valid URL slug
+        /// - **categorySlug**: Only lowercase, numbers, hyphens allowed
+        /// </remarks>
+        /// <param name="categorySlug">Category URL slug (e.g., "laptops", "smartphones")</param>
+        /// <response code="200">Returns list of brands with products in category</response>
+        [HttpGet("by-category/{categorySlug}")]
+        [ProducesResponseType(typeof(ApiResponse<List<BrandDto>>), 200)]
+        public async Task<IActionResult> GetBrandsByCategory(string categorySlug)
+        {
+            var brands = await _brandService.GetBrandsByCategoryAsync(categorySlug);
+            return Ok(ApiResponse<List<BrandDto>>.Ok(
+                brands,
+                $"Retrieved {brands.Count} brands in category"));
+        }
     }
 }

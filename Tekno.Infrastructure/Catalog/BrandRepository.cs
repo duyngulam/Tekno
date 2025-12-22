@@ -95,6 +95,20 @@ namespace Tekno.Infrastructure.Catalog
             return true;
         }
 
+        public async Task<List<Brand>> GetBrandsByCategoryAsync(string categorySlug)
+        {
+            // Get distinct brands that have at least one product in the specified category
+            return await _context.Products
+                .Include(p => p.Brand)
+                .Include(p => p.Category)
+                .Where(p => p.Category.Slug == categorySlug)
+                .Select(p => p.Brand)
+                .Distinct()
+                .OrderBy(b => b.Name)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
         // Transaction support
         public async Task<IDbContextTransaction> BeginTransactionAsync()
         {

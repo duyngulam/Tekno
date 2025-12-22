@@ -11,7 +11,6 @@ namespace Tekno.Application.Review.DTOs
         public int UserId { get; set; }
         public string UserEmail { get; set; } = string.Empty;
         public int Rating { get; set; }
-        public string Title { get; set; } = string.Empty;
         public string Comment { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
@@ -35,9 +34,6 @@ namespace Tekno.Application.Review.DTOs
         [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5")]
         public int Rating { get; set; }
 
-        [StringLength(200, ErrorMessage = "Title cannot exceed 200 characters")]
-        public string? Title { get; set; }
-
         [Required]
         [StringLength(2000, MinimumLength = 10, ErrorMessage = "Comment must be between 10 and 2000 characters")]
         public string Comment { get; set; } = string.Empty;
@@ -54,9 +50,6 @@ namespace Tekno.Application.Review.DTOs
         [Required]
         [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5")]
         public int Rating { get; set; }
-
-        [StringLength(200, ErrorMessage = "Title cannot exceed 200 characters")]
-        public string? Title { get; set; }
 
         [Required]
         [StringLength(2000, MinimumLength = 10, ErrorMessage = "Comment must be between 10 and 2000 characters")]

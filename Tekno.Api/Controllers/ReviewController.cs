@@ -79,7 +79,6 @@ namespace Tekno.Api.Controllers
         ///     {
         ///       "productId": 1,
         ///       "rating": 5,
-        ///       "title": "Excellent laptop!",
         ///       "comment": "This is the best laptop I've ever owned. Fast, reliable, and great battery life."
         ///     }
         /// 

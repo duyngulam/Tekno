@@ -143,6 +143,10 @@ namespace Tekno.Infrastructure
             // Review
             services.AddScoped<ReviewService>();
             
+            // Order
+            services.AddScoped<Application.Order.Services.OrderService>();
+            services.AddScoped<Application.Order.Services.AdminOrderService>();
+            
             // Blog
             services.AddScoped<BlogPostService>();
             

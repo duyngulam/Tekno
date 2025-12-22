@@ -429,5 +429,30 @@ namespace Tekno.Api.Controllers
                 products, 
                 $"Retrieved {products.Count} newest products"));
         }
+
+        /// <summary>
+        /// Get products on sale (hot sale)
+        /// </summary>
+        /// <param name="categorySlug">Optional category filter (e.g., "laptops")</param>
+        /// <param name="count">Number of products to return (1-100, default: 20)</param>
+        /// <response code="200">Returns list of products on sale</response>
+        /// <response code="400">Invalid parameters</response>
+        [HttpGet("on-sale")]
+        [ProducesResponseType(typeof(ApiResponse<List<ProductSummaryDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        public async Task<IActionResult> GetProductsOnSale(
+            [FromQuery] string? categorySlug = null,
+            [FromQuery] int count = 20)
+        {
+            if (count < 1 || count > 100)
+            {
+                return BadRequest(ApiResponse<string>.Fail("Count must be between 1 and 100"));
+            }
+
+            var products = await _productService.GetProductsOnSaleAsync(categorySlug, count);
+            return Ok(ApiResponse<List<ProductSummaryDto>>.Ok(
+                products,
+                $"Retrieved {products.Count} products on sale"));
+        }
     }
 }

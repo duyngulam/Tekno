@@ -34,7 +34,6 @@ namespace Tekno.Api.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
-            // Force status to Active for public API
             var result = await _couponService.GetPagedCouponsAsync(
                 search, 
                 "Active", 
@@ -177,29 +176,29 @@ namespace Tekno.Api.Controllers
         /// <summary>
         /// Get user's coupon usage history (requires authentication)
         /// </summary>
-        [HttpGet("my-usage")]
-        [Authorize]
-        public async Task<IActionResult> GetMyUsage(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20)
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
-                return Unauthorized(ApiResponse<object>.Fail("User not authenticated"));
+        //[HttpGet("my-usage")]
+        //[Authorize]
+        //public async Task<IActionResult> GetMyUsage(
+        //    [FromQuery] int page = 1,
+        //    [FromQuery] int pageSize = 20)
+        //{
+        //    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        //    if (userIdClaim == null)
+        //        return Unauthorized(ApiResponse<object>.Fail("User not authenticated"));
 
-            if (!int.TryParse(userIdClaim.Value, out var userId))
-                return BadRequest(ApiResponse<object>.Fail("Invalid user ID"));
+        //    if (!int.TryParse(userIdClaim.Value, out var userId))
+        //        return BadRequest(ApiResponse<object>.Fail("Invalid user ID"));
 
-            // Note: You may want to add a GetUserCouponUsageAsync method to the service
-            // For now, return a placeholder message
-            return Ok(ApiResponse<object>.Ok(new 
-            { 
-                message = "User coupon usage history endpoint - implementation pending",
-                userId = userId,
-                page = page,
-                pageSize = pageSize
-            }));
-        }
+        //    // Note: You may want to add a GetUserCouponUsageAsync method to the service
+        //    // For now, return a placeholder message
+        //    return Ok(ApiResponse<object>.Ok(new 
+        //    { 
+        //        message = "User coupon usage history endpoint - implementation pending",
+        //        userId = userId,
+        //        page = page,
+        //        pageSize = pageSize
+        //    }));
+        //}
 
         /// <summary>
         /// Get available coupons for a specific product (public)

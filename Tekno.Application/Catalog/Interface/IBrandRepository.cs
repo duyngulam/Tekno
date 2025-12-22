@@ -19,6 +19,9 @@ namespace Tekno.Application.Catalog.Interface
         Task<bool> UpdateAsync(Brand brand);
         Task<bool> DeleteAsync(int id);
         
+        // Get brands by category (only brands with products in that category)
+        Task<List<Brand>> GetBrandsByCategoryAsync(string categorySlug);
+        
         // Transaction support
         Task<IDbContextTransaction> BeginTransactionAsync();
     }

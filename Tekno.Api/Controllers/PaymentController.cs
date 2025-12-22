@@ -31,28 +31,22 @@ namespace Tekno.Api.Controllers
         /// Get current user's payment history (completed payments only)
         /// </summary>
         /// <remarks>
-        /// **For Support/Debugging Purpose** - Shows completed payment transactions
+        /// **DEPRECATED - Use Order History Instead**
         /// 
-        /// **Note:** For order tracking and delivery status, use `/api/orders/history` instead.
+        /// **Recommended endpoints for users:**
+        /// - GET /api/orders/history - Complete order history with products, delivery, and payment info
+        /// - GET /api/orders/{orderNumber} - Single order details
         /// 
-        /// This endpoint returns:
-        /// - Only completed payment transactions
-        /// - Payment gateway used (VNPay, Stripe, etc.)
-        /// - Transaction IDs for support
-        /// - Payment timestamps
-        /// 
-        /// **Use this for:**
-        /// - Payment verification
+        /// This endpoint returns lightweight payment records without order details.
+        /// Only use for:
+        /// - Payment verification/debugging
         /// - Financial records
-        /// - Support inquiries about payments
-        /// 
-        /// **For user-facing order tracking, use:**
-        /// - GET /api/orders/history (recommended)
+        /// - Support inquiries about payment transactions
         /// 
         /// Example:
         ///     GET /api/payment/my-payments?page=1&amp;pageSize=20
         /// 
-        /// Returns only successful payment transactions.
+        /// Returns only transaction info. For order details, use /api/orders/history
         /// </remarks>
         [HttpGet("my-payments")]
         [Authorize]
@@ -69,7 +63,7 @@ namespace Tekno.Api.Controllers
 
                 return Ok(ApiResponse<PagedResult<PaymentStatusDto>>.Ok(
                     payments, 
-                    "Payment history retrieved successfully. For order tracking, use /api/orders/history"));
+                    "Payment history retrieved. For order details, use /api/orders/history"));
             }
             catch (Exception ex)
             {
@@ -380,103 +374,89 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
-        /// Get payment status by transaction ID
+        /// Get payment status by transaction ID (lightweight)
         /// </summary>
         /// <remarks>
-        /// Use this to check payment status after customer returns from payment gateway.
+        /// Returns basic payment information without order details.
+        /// 
+        /// **For complete order information, use:**
+        /// - GET /api/orders/{orderNumber} - Full order details with products, delivery tracking
+        /// - GET /api/orders/history - All user orders
+        /// 
+        /// This endpoint only returns:
+        /// - Payment status (Completed, Failed, Pending, etc.)
+        /// - Transaction ID for support
+        /// - Gateway and method used
+        /// - Amount and currency
         /// 
         /// Example:
         ///     GET /api/payment/status/MOCK-abc123
         /// </remarks>
-        [HttpGet("status/{transactionId}")]
-        [Authorize]
-        public async Task<IActionResult> GetPaymentStatus(string transactionId)
-        {
-            try
-            {
-                var result = await _paymentService.GetPaymentStatusAsync(transactionId);
+        //[HttpGet("status/{transactionId}")]
+        //[Authorize]
+        //public async Task<IActionResult> GetPaymentStatus(string transactionId)
+        //{
+        //    try
+        //    {
+        //        var result = await _paymentService.GetPaymentStatusAsync(transactionId);
 
-                if (result == null)
-                {
-                    return NotFound(ApiResponse<string>.Fail("Payment not found"));
-                }
+        //        if (result == null)
+        //        {
+        //            return NotFound(ApiResponse<string>.Fail("Payment not found"));
+        //        }
 
-                return Ok(ApiResponse<PaymentStatusDto>.Ok(result));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to get payment status for {TransactionId}", transactionId);
-                return StatusCode(500, ApiResponse<string>.Fail($"Failed to get payment status: {ex.Message}"));
-            }
-        }
+        //        return Ok(ApiResponse<PaymentStatusDto>.Ok(result));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Failed to get payment status for {TransactionId}", transactionId);
+        //        return StatusCode(500, ApiResponse<string>.Fail($"Failed to get payment status: {ex.Message}"));
+        //    }
+        //}
 
         /// <summary>
-        /// Get payment details with full order information (products, variants)
+        /// Get payment details by transaction ID
         /// </summary>
         /// <remarks>
-        /// Returns payment with complete order details including:
-        /// - All order items
-        /// - Product information (name, thumbnail, brand, category)
-        /// - Variant details (SKU, attributes like Color, RAM, Storage)
+        /// **DEPRECATED - Use Order Details Instead**
         /// 
-        /// Example response structure:
-        /// {
-        ///   "transactionId": "ORD-20241220-ABC123",
-        ///   "status": "Completed",
-        ///   "amount": 67980000,
-        ///   "order": {
-        ///     "orderNumber": "ORD-20241220-ABC123",
-        ///     "items": [
-        ///       {
-        ///         "quantity": 2,
-        ///         "price": 33990000,
-        ///         "product": {
-        ///           "name": "iPhone 15 Pro Max",
-        ///           "thumbnailUrl": "...",
-        ///           "brandName": "Apple",
-        ///           "categoryName": "Smartphones"
-        ///         },
-        ///         "variant": {
-        ///           "sku": "IP15PM-BL-256",
-        ///           "attributes": [
-        ///             { "name": "Color", "value": "Black" },
-        ///             { "name": "Storage", "value": "256GB" }
-        ///           ]
-        ///         }
-        ///       }
-        ///     ]
-        ///   }
-        /// }
+        /// **Recommended endpoints:**
+        /// - GET /api/orders/{orderNumber} - Full order with products, variants, delivery tracking
+        /// - GET /api/orders/by-id/{orderId} - Order by ID
         /// 
-        /// Use this for:
-        /// - Payment confirmation page
-        /// - Order history details
-        /// - Receipt display
+        /// This endpoint returns basic payment info. You can get the orderNumber from the response
+        /// and use it with /api/orders/{orderNumber} for complete order details.
         /// 
         /// Example:
         ///     GET /api/payment/details/MOCK-abc123
+        ///     Response: { "orderNumber": "ORD-20241220-ABC123", ... }
+        ///     
+        ///     Then use:
+        ///     GET /api/orders/ORD-20241220-ABC123
         /// </remarks>
-        [HttpGet("details/{transactionId}")]
-        [Authorize]
-        public async Task<IActionResult> GetPaymentDetails(string transactionId)
-        {
-            try
-            {
-                var result = await _paymentService.GetPaymentStatusWithDetailsAsync(transactionId);
+        //[HttpGet("details/{transactionId}")]
+        //[Authorize]
+        //public async Task<IActionResult> GetPaymentDetails(string transactionId)
+        //{
+        //    try
+        //    {
+        //        var result = await _paymentService.GetPaymentStatusAsync(transactionId);
 
-                if (result == null)
-                {
-                    return NotFound(ApiResponse<string>.Fail("Payment not found"));
-                }
+        //        if (result == null)
+        //        {
+        //            return NotFound(ApiResponse<string>.Fail("Payment not found"));
+        //        }
 
-                return Ok(ApiResponse<PaymentStatusDto>.Ok(result));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to get payment details for {TransactionId}", transactionId);
-                return StatusCode(500, ApiResponse<string>.Fail($"Failed to get payment details: {ex.Message}"));
-            }
-        }
+        //        // Return lightweight status with orderNumber to use with Order endpoints
+        //        return Ok(ApiResponse<PaymentStatusDto>.Ok(result, 
+        //            $"For complete order details, use: /api/orders/{result.OrderNumber}"));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Failed to get payment details for {TransactionId}", transactionId);
+        //        return StatusCode(500, ApiResponse<string>.Fail($"Failed to get payment details: {ex.Message}"));
+        //    }
+        //}
 
         /// <summary>
         /// Get list of available payment gateways
@@ -528,18 +508,19 @@ namespace Tekno.Api.Controllers
         /// </summary>
         private string BuildFrontendRedirectUrl(string baseUrl, PaymentStatusDto result, string responseCode)
         {
-            var separator = baseUrl.Contains("?") ? "&" : "?";
-            
-            return $"{baseUrl}{separator}" +
-                   $"transactionId={Uri.EscapeDataString(result.TransactionId)}&" +
-                   $"orderId={result.OrderId}&" +
-                   $"orderNumber={Uri.EscapeDataString(result.OrderNumber)}&" +
-                   $"status={result.Status}&" +
-                   $"statusName={Uri.EscapeDataString(result.StatusName ?? "")}&" +
-                   $"amount={result.Amount}&" +
-                   $"currency={result.Currency}&" +
-                   $"responseCode={responseCode}&" +
-                   $"gateway={result.Gateway}";
+            //var separator = baseUrl.Contains("?") ? "&" : "?";
+
+            //return $"{baseUrl}{separator}" +
+            //       $"transactionId={Uri.EscapeDataString(result.TransactionId)}&" +
+            //       $"orderId={result.OrderId}&" +
+            //       $"orderNumber={Uri.EscapeDataString(result.OrderNumber)}&" +
+            //       $"status={result.Status}&" +
+            //       $"statusName={Uri.EscapeDataString(result.StatusName ?? "")}&" +
+            //       $"amount={result.Amount}&" +
+            //       $"currency={result.Currency}&" +
+            //       $"responseCode={responseCode}&" +
+            //       $"gateway={result.Gateway}";
+            return baseUrl;
         }
 
         #endregion
