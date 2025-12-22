@@ -202,45 +202,11 @@ namespace Tekno.Application.Payment.Services
                 // 9. Commit transaction
                 await transaction.CommitAsync();
 
-                // 10. Remove checked out items from cart
-                if (request.SelectedItems != null && request.SelectedItems.Any())
-                {
-                    // Partial checkout - remove only selected items
-                    foreach (var selectedItem in request.SelectedItems)
-                    {
-                        var cartItem = cart.Items.First(i => i.VariantId == selectedItem.VariantId);
-                        
-                        if (selectedItem.Quantity == cartItem.Quantity)
-                        {
-                            // Remove entire item
-                            await _cartRepository.RemoveItemAsync(cart.Id, selectedItem.VariantId);
-                        }
-                        else
-                        {
-                            // Decrease quantity
-                            cartItem.UpdateQuantity(cartItem.Quantity - selectedItem.Quantity);
-                        }
-                    }
-                    
-                    await _cartRepository.UpdateAsync(cart);
-                    
-                    _logger.LogInformation(
-                        "Removed {Count} selected items from cart for user {UserId}",
-                        request.SelectedItems.Count, userId);
-                }
-                else
-                {
-                    // Full checkout - clear entire cart
-                    cart.Clear();
-                    await _cartRepository.UpdateAsync(cart);
-                    
-                    _logger.LogInformation(
-                        "Cleared entire cart for user {UserId} after checkout",
-                        userId);
-                }
+                // ? REMOVED: Don't clear cart here - wait for payment confirmation
+                // Cart will be cleared in HandlePaymentCallbackAsync when payment succeeds
 
                 _logger.LogInformation(
-                    "Payment processed successfully for user {UserId}, order {OrderNumber}, transaction {TransactionId}, items: {ItemCount}",
+                    "Payment initiated for user {UserId}, order {OrderNumber}, transaction {TransactionId}, items: {ItemCount}",
                     userId, orderNumber, initResult.TransactionId, itemsToCheckout.Count);
 
                 return new PaymentResponseDto
@@ -267,7 +233,9 @@ namespace Tekno.Application.Payment.Services
 
         /// <summary>
         /// Handle payment callback from gateway
+        /// Clears cart, reduces stock, and increments sold count when payment succeeds
         /// Restores cart items if payment fails
+        /// Handles idempotency - safe to call multiple times
         /// </summary>
         public async Task<PaymentStatusDto> HandlePaymentCallbackAsync(PaymentCallbackDto callback)
         {
@@ -275,6 +243,16 @@ namespace Tekno.Application.Payment.Services
             if (payment == null)
             {
                 throw new NotFoundException("Payment", callback.TransactionId);
+            }
+
+            // ? IDEMPOTENCY: If payment already processed (Completed or Failed), return existing status
+            if (payment.Status == PaymentStatus.Completed || payment.Status == PaymentStatus.Failed)
+            {
+                _logger.LogInformation(
+                    "Payment {TransactionId} already processed with status {Status}. Returning existing status (idempotent).",
+                    callback.TransactionId, payment.Status);
+                
+                return _mapper.Map<PaymentStatusDto>(payment);
             }
 
             // Get gateway and verify payment
@@ -303,9 +281,23 @@ namespace Tekno.Application.Payment.Services
                     {
                         order.MarkAsProcessing();
                         await _orderRepository.UpdateAsync(order);
+                        
+                        // ? NEW: Clear cart items (full or partial)
+                        await ClearCartItemsAfterSuccessfulPaymentAsync(payment.UserId, order);
+                        
+                        // ? NEW: Reduce stock and increment sold count
+                        await ReduceStockAndIncrementSoldCountAsync(order);
+                        
+                        _logger.LogInformation(
+                            "Payment completed for transaction {TransactionId}. Order {OrderId} marked as Processing. Cart cleared, stock reduced, sold count updated.",
+                            callback.TransactionId, order.Id);
                     }
-
-                    _logger.LogInformation("Payment completed for transaction {TransactionId}, order marked as Processing", callback.TransactionId);
+                    else
+                    {
+                        _logger.LogWarning(
+                            "Payment completed for transaction {TransactionId} but order {OrderId} not found.",
+                            callback.TransactionId, payment.OrderId);
+                    }
                 }
                 else
                 {
@@ -330,6 +322,123 @@ namespace Tekno.Application.Payment.Services
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error handling payment callback for transaction {TransactionId}", callback.TransactionId);
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Clear cart items after successful payment
+        /// Handles both full and partial checkout
+        /// </summary>
+        private async Task ClearCartItemsAfterSuccessfulPaymentAsync(int userId, Domain.Order.Order order)
+        {
+            _logger.LogInformation("Clearing cart items for user {UserId} after successful payment for order {OrderId}", 
+                userId, order.Id);
+
+            try
+            {
+                var cart = await _cartRepository.GetByUserIdAsync(userId);
+                if (cart == null)
+                {
+                    _logger.LogWarning("Cart not found for user {UserId} - nothing to clear", userId);
+                    return;
+                }
+
+                // Remove order items from cart
+                int removedCount = 0;
+                foreach (var orderItem in order.Items)
+                {
+                    try
+                    {
+                        var cartItem = cart.Items.FirstOrDefault(ci => ci.VariantId == orderItem.VariantId);
+                        
+                        if (cartItem != null)
+                        {
+                            if (orderItem.Quantity >= cartItem.Quantity)
+                            {
+                                // Remove entire item
+                                await _cartRepository.RemoveItemAsync(cart.Id, orderItem.VariantId);
+                                _logger.LogInformation("Removed cart item: VariantId={VariantId}", orderItem.VariantId);
+                            }
+                            else
+                            {
+                                // Decrease quantity (partial checkout)
+                                cartItem.UpdateQuantity(cartItem.Quantity - orderItem.Quantity);
+                                _logger.LogInformation("Decreased cart item: VariantId={VariantId}, OldQty={OldQty}, NewQty={NewQty}", 
+                                    orderItem.VariantId, cartItem.Quantity + orderItem.Quantity, cartItem.Quantity);
+                            }
+                            
+                            removedCount++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to remove cart item: VariantId={VariantId}", orderItem.VariantId);
+                        // Continue with other items
+                    }
+                }
+
+                // Save cart
+                await _cartRepository.UpdateAsync(cart);
+
+                _logger.LogInformation("Cart cleared for user {UserId}: {RemovedCount}/{TotalCount} items removed", 
+                    userId, removedCount, order.Items.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to clear cart for user {UserId}, order {OrderId}", userId, order.Id);
+                // Don't throw - cart clearing failure shouldn't stop payment callback processing
+            }
+        }
+
+        /// <summary>
+        /// Reduce product variant stock and increment sold count for each order item
+        /// Called when payment completes successfully
+        /// </summary>
+        private async Task ReduceStockAndIncrementSoldCountAsync(Domain.Order.Order order)
+        {
+            _logger.LogInformation("Reducing stock and incrementing sold count for order {OrderId}", order.Id);
+
+            try
+            {
+                foreach (var orderItem in order.Items)
+                {
+                    try
+                    {
+                        // Reduce variant stock
+                        var variant = await _productRepository.GetProductVariantByIdAsync(orderItem.VariantId);
+                        if (variant == null)
+                        {
+                            _logger.LogWarning("Variant {VariantId} not found - cannot reduce stock", orderItem.VariantId);
+                            continue;
+                        }
+
+                        variant.ReduceStock(orderItem.Quantity);
+                        await _productRepository.UpdateProductVariantAsync(variant);
+                        
+                        _logger.LogInformation("Reduced stock for variant {VariantId}: Quantity={Quantity}, NewStock={NewStock}", 
+                            orderItem.VariantId, orderItem.Quantity, variant.Stock);
+
+                        // Increment product sold count
+                        await _productRepository.IncrementProductSoldCountAsync(orderItem.ProductId, orderItem.Quantity);
+                        
+                        _logger.LogInformation("Incremented sold count for product {ProductId}: Quantity={Quantity}", 
+                            orderItem.ProductId, orderItem.Quantity);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to reduce stock for variant {VariantId}", orderItem.VariantId);
+                        // Don't throw - continue with other items
+                        // In production, you might want to implement compensation logic here
+                    }
+                }
+
+                _logger.LogInformation("Stock reduction and sold count update completed for order {OrderId}", order.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to reduce stock for order {OrderId}", order.Id);
+                // Don't throw - stock reduction failure shouldn't stop payment callback processing
+                // You might want to implement a retry mechanism or manual reconciliation
             }
         }
 
