@@ -187,3 +187,18 @@ export async function deleteProductVariant(variantId: number | string) {
     throw error;
 }
 }
+
+export async function updateProductVariant(
+  variantId: number | string,
+  payload: Partial<CreateProductVariantPayload>
+) {
+  try {
+    return await put(
+      `${API_BASE}/admin/products/variants/${variantId}`,
+      payload
+    );
+  } catch (error) {
+    console.error("❌ Failed to update product variant:", error);
+    throw error;
+  }
+}

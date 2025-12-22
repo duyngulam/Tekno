@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getCategoryAttributes } from "@/services/categories";
-import { createProductVariant, deleteProductVariant } from "@/services/products";
+import { createProductVariant, updateProductVariant, deleteProductVariant } from "@/services/products";
 import { Pencil, Trash2, Plus, X } from "lucide-react";
 
 type AddProductVariantProps = {
@@ -13,10 +13,17 @@ type AddProductVariantProps = {
   onSuccess: () => void;
 };
 
+type AttrValue = {
+  id: number;
+  attributeId: number;
+  value: string;
+};
+
 type Attr = {
   id: number;
   name: string;
-  values: string[];
+  inputType: string;
+  values: AttrValue[];
 };
 
 type VariantForm = {
@@ -38,6 +45,7 @@ export default function AddProductVariant({
   const [variants, setVariants] = useState<any[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingVariant, setEditingVariant] = useState<VariantForm | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const [formData, setFormData] = useState<VariantForm>({
     sku: "",
@@ -47,28 +55,28 @@ export default function AddProductVariant({
   });
 
   // Load attributes and existing variants
-  useEffect(() => {
-    loadData();
-  }, [categoryId, productId]);
-
+useEffect(() => {
   const loadData = async () => {
     try {
-      // Load category attributes
-      const attrRes = await getCategoryAttributes(categoryId);
+      const data = await getCategoryAttributes(categoryId);
+
       setAttrs(
-        attrRes.map((a: any) => ({
+        data.map((a: any) => ({
           id: a.id,
           name: a.name,
           values: Array.isArray(a.value) ? a.value : [],
+          selected: "",
         }))
       );
-
-      // Set existing variants
-      setVariants(existingVariants);
     } catch (err) {
-      console.error("Failed to load data", err);
+      console.error(err);
+      alert("Không load được attributes");
     }
   };
+
+  if (categoryId) loadData();
+}, [categoryId]);
+
 
   const openAddForm = () => {
     setEditingVariant(null);
@@ -119,7 +127,18 @@ export default function AddProductVariant({
         alert("Please select at least one attribute value");
         return;
       }
-        if (editingVariant) {
+
+      if (editingVariant?.id) {
+        // Update existing variant
+        await updateProductVariant(editingVariant.id, {
+          productId,
+          sku: formData.sku,
+          price: formData.price,
+          stock: formData.stock,
+          status: "Active",
+          attributeValues: formData.attributeValues,
+        });
+      } else {
         // Create new variant
         await createProductVariant({
           productId,
@@ -132,6 +151,7 @@ export default function AddProductVariant({
       }
 
       setIsFormOpen(false);
+      alert("Variant saved successfully!");
       onSuccess();
     } catch (err) {
       console.error("Save variant failed", err);
@@ -139,6 +159,19 @@ export default function AddProductVariant({
     }
   };
 
+  const handleDelete = async (variantId: number) => {
+    if (!confirm("Delete this variant?")) return;
+
+    try {
+      await deleteProductVariant(variantId);
+      setVariants(variants.filter(v => v.id !== variantId));
+      alert("Variant deleted");
+      onSuccess();
+    } catch (err) {
+      console.error("Delete failed", err);
+      alert("Failed to delete variant");
+    }
+  };
 
   const updateAttributeValue = (attrId: number, value: string) => {
     setFormData(prev => ({
@@ -149,6 +182,16 @@ export default function AddProductVariant({
       },
     }));
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="bg-white w-[800px] rounded-lg p-6">
+          <p className="text-center">Loading attributes...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -164,16 +207,29 @@ export default function AddProductVariant({
         </div>
 
         {/* Category Attributes Info */}
-        <div className="mb-4 p-3 bg-blue-50 rounded">
-          <h3 className="font-medium text-sm mb-2">Category Attributes:</h3>
-          <div className="flex flex-wrap gap-2">
-            {attrs.map(attr => (
-              <span key={attr.id} className="px-2 py-1 bg-blue-100 rounded text-xs">
-                {attr.name}: {attr.values.join(", ")}
-              </span>
-            ))}
+        {attrs.length > 0 && (
+          <div className="mb-4 p-3 bg-blue-50 rounded">
+            <h3 className="font-medium text-sm mb-2">Category Attributes:</h3>
+            <div className="space-y-2">
+              {attrs.map(attr => (
+                <div key={attr.id} className="text-xs">
+                  <strong>{attr.name}:</strong>{" "}
+                  <span className="text-gray-600">
+                    {attr.values.map(v => v.value).join(", ")}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {attrs.length === 0 && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+            <p className="text-sm text-yellow-800">
+              ⚠️ No attributes found for this category. Please add attributes to the category first.
+            </p>
+          </div>
+        )}
 
         {/* Existing Variants List */}
         <div className="mb-6">
@@ -181,7 +237,8 @@ export default function AddProductVariant({
             <h3 className="font-semibold">Existing Variants ({variants.length})</h3>
             <button
               onClick={openAddForm}
-              className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              disabled={attrs.length === 0}
+              className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               <Plus size={16} />
               Add Variant
@@ -238,6 +295,13 @@ export default function AddProductVariant({
                       >
                         <Pencil size={16} />
                       </button>
+                      <button
+                        onClick={() => handleDelete(variant.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -260,6 +324,7 @@ export default function AddProductVariant({
                   className="border rounded p-2 w-full"
                   value={formData.sku}
                   onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                  placeholder="e.g., PROD-001"
                 />
               </div>
 
@@ -270,6 +335,7 @@ export default function AddProductVariant({
                   className="border rounded p-2 w-full"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: +e.target.value })}
+                  placeholder="0"
                 />
               </div>
 
@@ -280,6 +346,7 @@ export default function AddProductVariant({
                   className="border rounded p-2 w-full"
                   value={formData.stock}
                   onChange={(e) => setFormData({ ...formData, stock: +e.target.value })}
+                  placeholder="0"
                 />
               </div>
             </div>
@@ -290,16 +357,18 @@ export default function AddProductVariant({
               <div className="grid grid-cols-2 gap-3">
                 {attrs.map((attr) => (
                   <div key={attr.id}>
-                    <label className="text-xs text-gray-600">{attr.name}</label>
+                    <label className="text-xs text-gray-600 mb-1 block">
+                      {attr.name} ({attr.inputType})
+                    </label>
                     <select
                       className="border rounded p-2 w-full"
                       value={formData.attributeValues[String(attr.id)] || ""}
                       onChange={(e) => updateAttributeValue(attr.id, e.target.value)}
                     >
-                      <option value="">-- Select --</option>
+                      <option value="">-- Select {attr.name} --</option>
                       {attr.values.map((v) => (
-                        <option key={v} value={v}>
-                          {v}
+                        <option key={v.id} value={v.value}>
+                          {v.value}
                         </option>
                       ))}
                     </select>
