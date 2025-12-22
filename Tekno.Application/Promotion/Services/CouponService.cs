@@ -319,5 +319,37 @@ namespace Tekno.Application.Promotion.Services
             var usages = await _couponRepository.GetUsageHistoryAsync(couponId, paging);
             return _mapper.Map<List<CouponUsageDto>>(usages);
         }
+
+        public async Task<CouponDto?> ActivateCouponAsync(int id)
+        {
+            var coupon = await _couponRepository.GetByIdAsync(id);
+            if (coupon == null)
+            {
+                _logger.LogWarning("Activate failed: Coupon with ID {Id} not found", id);
+                return null;
+            }
+
+            coupon.Activate();
+            var updated = await _couponRepository.UpdateAsync(coupon);
+            _logger.LogInformation("Activated coupon ID {Id} ({Code})", id, updated.Code);
+
+            return _mapper.Map<CouponDto>(updated);
+        }
+
+        public async Task<CouponDto?> DeactivateCouponAsync(int id)
+        {
+            var coupon = await _couponRepository.GetByIdAsync(id);
+            if (coupon == null)
+            {
+                _logger.LogWarning("Deactivate failed: Coupon with ID {Id} not found", id);
+                return null;
+            }
+
+            coupon.Deactivate();
+            var updated = await _couponRepository.UpdateAsync(coupon);
+            _logger.LogInformation("Deactivated coupon ID {Id} ({Code})", id, updated.Code);
+
+            return _mapper.Map<CouponDto>(updated);
+        }
     }
 }

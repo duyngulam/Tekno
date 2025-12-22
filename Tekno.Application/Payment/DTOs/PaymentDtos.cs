@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Tekno.Application.Cart.DTOs;
+using Tekno.Application.Catalog.DTOs.Products;
 using Tekno.Domain.Payment;
 
 namespace Tekno.Application.Payment.DTOs
@@ -68,7 +69,7 @@ namespace Tekno.Application.Payment.DTOs
     }
 
     /// <summary>
-    /// Payment status check
+    /// Payment status check with optional order details
     /// </summary>
     public class PaymentStatusDto
     {
@@ -87,6 +88,42 @@ namespace Tekno.Application.Payment.DTOs
         public DateTime CreatedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
         public string? ErrorMessage { get; set; }
+
+        // Nested Order Details (optional, loaded when needed)
+        public OrderDetailsDto? Order { get; set; }
+    }
+
+    /// <summary>
+    /// Order details within payment status (reusing catalog DTOs)
+    /// </summary>
+    public class OrderDetailsDto
+    {
+        public int Id { get; set; }
+        public string OrderNumber { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public decimal TotalAmount { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? CompletedAt { get; set; }
+
+        // Order items with product/variant details (reusing catalog DTOs)
+        public List<OrderItemDetailDto> Items { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Order item with nested product and variant (reusing catalog DTOs)
+    /// </summary>
+    public class OrderItemDetailDto
+    {
+        public int Id { get; set; }
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+        public decimal TotalPrice { get; set; }
+
+        // Reuse existing Product DTO
+        public ProductSummaryDto Product { get; set; } = new();
+
+        // Reuse existing Variant DTO with attributes
+        public ProductVariantDto Variant { get; set; } = new();
     }
 
     /// <summary>

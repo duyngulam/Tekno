@@ -39,6 +39,11 @@ namespace Tekno.Infrastructure.Persistence
         public DbSet<CouponProduct> CouponProducts => Set<CouponProduct>();
         public DbSet<CouponUsage> CouponUsages => Set<CouponUsage>();
         
+        // Promotion entities
+        public DbSet<Domain.Promotion.Promotion> Promotions => Set<Domain.Promotion.Promotion>();
+        public DbSet<PromotionCategory> PromotionCategories => Set<PromotionCategory>();
+        public DbSet<PromotionProduct> PromotionProducts => Set<PromotionProduct>();
+        
         // Cart entities
         public DbSet<UserCart> UserCarts => Set<UserCart>();
         public DbSet<CartItem> CartItems => Set<CartItem>();
@@ -91,6 +96,11 @@ namespace Tekno.Infrastructure.Persistence
             modelBuilder.ApplyConfiguration(new CouponCategoryConfiguration());
             modelBuilder.ApplyConfiguration(new CouponProductConfiguration());
             modelBuilder.ApplyConfiguration(new CouponUsageConfiguration());
+            
+            // Promotion configurations
+            modelBuilder.ApplyConfiguration(new PromotionConfiguration());
+            modelBuilder.ApplyConfiguration(new PromotionCategoryConfiguration());
+            modelBuilder.ApplyConfiguration(new PromotionProductConfiguration());
             
             // Cart configurations
             modelBuilder.ApplyConfiguration(new CartConfiguration());

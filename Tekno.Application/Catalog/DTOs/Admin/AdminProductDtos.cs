@@ -120,13 +120,78 @@ namespace Tekno.Application.Catalog.DTOs.Admin
         public string Status { get; set; } = "available";
         
         /// <summary>
-        /// Attribute value selections: AttributeId -> Value string
-        /// Example: { 1: "Black", 2: "16GB" } means AttributeId=1 uses value "Black"
-        /// If the value doesn't exist for that attribute in the product's category, it will be created automatically.
+        /// Attribute selections for the variant.
+        /// Supports two formats:
+        /// 
+        /// 1. Using existing attribute by ID:
+        ///    { "id": 1, "value": "Black" }
+        /// 
+        /// 2. Creating new attribute by name:
+        ///    { "name": "Material", "value": "Aluminum" }
+        /// 
+        /// Examples:
+        /// [
+        ///   { "id": 1, "value": "Black" },           // Use existing Color attribute
+        ///   { "id": 2, "value": "128GB" },           // Use existing Storage attribute
+        ///   { "name": "Material", "value": "Metal" } // Create new Material attribute
+        /// ]
         /// </summary>
         [Required]
-        [MinLength(1, ErrorMessage = "At least one attribute value must be selected")]
-        public Dictionary<int, string> AttributeValues { get; set; } = new();
+        [MinLength(1, ErrorMessage = "At least one attribute must be specified")]
+        public List<VariantAttributeInputDto> Attributes { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Input for variant attribute - supports both existing and new attributes
+    /// </summary>
+    public class VariantAttributeInputDto
+    {
+        /// <summary>
+        /// Existing attribute ID (use this OR name, not both)
+        /// </summary>
+        public int? Id { get; set; }
+        
+        /// <summary>
+        /// New attribute name (use this OR id, not both)
+        /// If provided, a new attribute will be created in the product's category
+        /// </summary>
+        [StringLength(100)]
+        public string? Name { get; set; }
+        
+        /// <summary>
+        /// Attribute value (required)
+        /// If the value doesn't exist for the attribute, it will be created
+        /// </summary>
+        [Required]
+        [StringLength(200)]
+        public string Value { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Validate that either Id or Name is provided, but not both
+        /// </summary>
+        public bool IsValid(out string errorMessage)
+        {
+            if (!Id.HasValue && string.IsNullOrWhiteSpace(Name))
+            {
+                errorMessage = "Either 'Id' (existing attribute) or 'Name' (new attribute) must be provided";
+                return false;
+            }
+
+            if (Id.HasValue && !string.IsNullOrWhiteSpace(Name))
+            {
+                errorMessage = "Cannot specify both 'Id' and 'Name'. Use one or the other";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(Value))
+            {
+                errorMessage = "Value is required";
+                return false;
+            }
+
+            errorMessage = string.Empty;
+            return true;
+        }
     }
 
     /// <summary>

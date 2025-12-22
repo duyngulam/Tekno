@@ -620,25 +620,74 @@ namespace Tekno.Application.Catalog.Services
             if (await _productRepository.IsSkuExistsAsync(dto.Sku))
                 throw new ConflictException($"SKU '{dto.Sku}' already exists", "SKU_EXISTS");
 
-            // Validate and get/create attribute values
+            // Validate attribute inputs
+            foreach (var attr in dto.Attributes)
+            {
+                if (!attr.IsValid(out var errorMessage))
+                {
+                    throw new InvalidOperationException($"Invalid attribute input: {errorMessage}");
+                }
+            }
+
+            // Process attributes and get/create attribute values
             var attributeValueIds = new Dictionary<int, int>();
             
-            foreach (var kvp in dto.AttributeValues)
+            foreach (var attrInput in dto.Attributes)
             {
-                var attributeId = kvp.Key;
-                var valueString = kvp.Value;
+                int attributeId;
+                
+                // If Name is provided, create new attribute
+                if (!string.IsNullOrWhiteSpace(attrInput.Name))
+                {
+                    _logger.LogInformation("Creating new attribute '{AttributeName}' for category {CategoryId}", 
+                        attrInput.Name, product.CategoryId);
 
-                if (string.IsNullOrWhiteSpace(valueString))
-                    throw new InvalidOperationException($"Attribute value cannot be empty for AttributeId={attributeId}");
+                    var newAttribute = new ProductAttribute(
+                        name: attrInput.Name.Trim(),
+                        inputType: "select", // Default to select for variant attributes
+                        isGlobal: false,
+                        categoryId: product.CategoryId);
+
+                    var createdAttribute = await _productRepository.CreateAttributeAsync(newAttribute);
+                    attributeId = createdAttribute.Id;
+                    
+                    _logger.LogInformation("Created new attribute '{AttributeName}' with ID {AttributeId}", 
+                        attrInput.Name, attributeId);
+                }
+                // If Id is provided, use existing attribute
+                else if (attrInput.Id.HasValue)
+                {
+                    attributeId = attrInput.Id.Value;
+                    
+                    // Validate attribute exists and belongs to category
+                    var existingAttribute = await _productRepository.GetAttributeByIdAsync(attributeId);
+                    if (existingAttribute == null)
+                    {
+                        throw new NotFoundException("Attribute", attributeId);
+                    }
+
+                    if (!existingAttribute.IsGlobal && existingAttribute.CategoryId != product.CategoryId)
+                    {
+                        throw new InvalidOperationException(
+                            $"Attribute '{existingAttribute.Name}' (ID: {attributeId}) does not belong to product's category");
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException("Either attribute Id or Name must be provided");
+                }
 
                 // Get or create the attribute value
                 var attributeValue = await _productRepository.GetOrCreateAttributeValueAsync(
                     attributeId, 
-                    valueString, 
+                    attrInput.Value, 
                     product.CategoryId);
 
                 if (attributeValue == null)
-                    throw new InvalidOperationException($"Failed to get or create attribute value: AttributeId={attributeId}, Value={valueString}");
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to get or create attribute value: AttributeId={attributeId}, Value={attrInput.Value}");
+                }
 
                 attributeValueIds.Add(attributeId, attributeValue.Id);
             }
@@ -665,7 +714,9 @@ namespace Tekno.Application.Catalog.Services
 
                 await transaction.CommitAsync();
 
-                _logger.LogInformation("Added variant {Sku} to product {ProductId}", dto.Sku, dto.ProductId);
+                _logger.LogInformation("Added variant {Sku} to product {ProductId} with {AttributeCount} attributes", 
+                    dto.Sku, dto.ProductId, attributeValueIds.Count);
+                
                 var variantWithDetails = await _productRepository.GetProductVariantByIdAsync(created.Id);
                 return _mapper.Map<ProductVariantDetailDto>(variantWithDetails);
             }
@@ -831,6 +882,22 @@ namespace Tekno.Application.Catalog.Services
 
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
