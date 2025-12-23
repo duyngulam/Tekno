@@ -1,5 +1,5 @@
 import { Category, CategoryAttribute } from "@/type/categories";
-import { get, post, put, del, API_BASE } from "@/lib/api";
+import { get, post, put, putForm, del, API_BASE } from "@/lib/api";
 
 export interface AttributeValue {
   id: number;
@@ -97,7 +97,7 @@ export async function getCategoryAttributes(categoryId: number) {
   return result.data; // ✅ TRẢ VỀ ARRAY
 }
 
-export async function createCategoryAttribute(categoryId: number, name: string) {
+export async function createCategoryAttribute(categoryId: number, name: string, inputType: string = "text") {
   return post(
     `${API_BASE}/admin/categories/attributes`,
     {
@@ -107,13 +107,22 @@ export async function createCategoryAttribute(categoryId: number, name: string) 
   );
 }
 
-export async function updateCategoryAttribute(attributeId: number, fd: FormData) {
-  try {
-    return await put(`${API_BASE}/admin/categories/attributes/${attributeId}`, fd);
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
+export async function updateCategoryAttribute(
+  attributeId: number,
+  name: string,
+  inputType: string = "text"
+) {
+  if (!attributeId) {
+    throw new Error("attributeId is required");
   }
+
+  // Gửi JSON thay vì FormData
+  return put(
+    `${API_BASE}/admin/categories/attributes/${attributeId}`,
+    {
+      name: name,
+    }
+  );
 }
 
 export async function deleteCategoryAttribute(attributeId: number) {

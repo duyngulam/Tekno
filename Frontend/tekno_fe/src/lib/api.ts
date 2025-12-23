@@ -77,6 +77,10 @@ export async function put(url: string, body?: any, opts?: RequestInit) {
   return request(url, init);
 }
 
+export async function putForm(url: string, formData: FormData, opts?: RequestInit) {
+  return request(url, { method: 'PUT', body: formData, ...opts });
+}
+
 export async function del(url: string, opts?: RequestInit) {
   return request(url, { method: 'DELETE', ...opts });
 }
@@ -86,6 +90,7 @@ export default {
   post,
   postForm,
   put,
+  putForm,
   del,
   setAuthToken,
   getAuthToken,
