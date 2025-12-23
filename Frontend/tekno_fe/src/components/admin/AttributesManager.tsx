@@ -81,29 +81,17 @@ export default function AttributesManager({ categoryId, categoryName }: Attribut
   };
 
   const handleUpdateAttribute = async () => {
-    console.log("🟢 handleUpdateAttribute called");
-    console.log("🟢 editingAttribute:", editingAttribute);
-    console.log("🟢 attributeForm:", attributeForm);
-    
     try {
       if (!editingAttribute) {
-        console.log("❌ No editing attribute");
+
         alert("Chưa chọn attribute để cập nhật!");
         return;
       }
 
       if (!attributeForm.name.trim()) {
-        console.log("❌ Name is empty");
         alert("Tên attribute là bắt buộc!");
         return;
       }
-
-      console.log("✅ Validation passed, calling API...");
-      console.log("📤 Sending:", {
-        id: editingAttribute.id,
-        name: attributeForm.name,
-        inputType: attributeForm.inputType
-      });
 
       const result = await updateCategoryAttribute(
         editingAttribute.id, 
@@ -111,19 +99,13 @@ export default function AttributesManager({ categoryId, categoryName }: Attribut
         attributeForm.inputType
       );
 
-      console.log("✅ API Response:", result);
-
       // Reset form trước khi load lại
       resetAttributeForm();
       
-      console.log("🔄 Reloading attributes...");
       // Load lại danh sách attributes
       await loadAttributes();
-      console.log("✅ Attributes reloaded");
-      
       alert("Cập nhật attribute thành công!");
     } catch (error) {
-      console.error("❌ Update attribute failed:", error);
       alert("Cập nhật attribute thất bại! " + (error as Error).message);
     }
   };

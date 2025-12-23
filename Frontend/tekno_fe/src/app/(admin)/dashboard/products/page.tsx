@@ -13,6 +13,8 @@ import { uploadImage, updateImageMeta, deleteImage, reorderImages, deleteVariant
 import { getAdminProducts, getAdminProduct, createAdminProduct, updateAdminProduct, deleteAdminProduct } from "@/services/products";
 import { getCategoryAttributes } from "@/services/categories";
 import AddProductVariant from "@/components/admin/AddProductVariant";
+import ProductSpecifications from "@/components/admin/ProductSpecifications";
+import ProductVariants from "@/components/admin/ProductVariants";
 
 type Product = {
   id: number;
@@ -82,6 +84,9 @@ export default function ProductPage() {
   const [variants, setVariants] = useState<Variant[]>([]);
 
   const [openAddVariant, setOpenAddVariant] = useState(false);
+
+  /*const [specifications, setSpecifications] = useState<ProductSpec[]>([]);
+  const [addvariants, setAddVariants] = useState<ProductVariant[]>([]);*/
 
   // load products, categories, brands
 useEffect(() => {

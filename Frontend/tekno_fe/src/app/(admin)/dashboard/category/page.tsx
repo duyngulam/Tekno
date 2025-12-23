@@ -516,18 +516,6 @@ export default function CategoryPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium block mb-1">Trạng thái</label>
-              <select
-                className="w-full border rounded-md p-2"
-                value={editData.isActive ? "true" : "false"}
-                onChange={(e) => setEditData({ ...editData, isActive: e.target.value === "true" })}
-              >
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-              </select>
-            </div>
-
-            <div>
               <label className="text-sm font-medium block mb-1">Icon File</label>
               <input
                 type="file"
