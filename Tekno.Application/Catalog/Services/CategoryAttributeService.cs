@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Tekno.Application.Catalog.DTOs.Admin;
 using Tekno.Application.Catalog.Interface;
@@ -111,13 +112,18 @@ namespace Tekno.Application.Catalog.Services
                 return null;
             }
 
-            var updated = new ProductAttribute(dto.Name, dto.InputType, existing.IsGlobal, existing.CategoryId)
-            {
-                // Set the ID via reflection or use a different approach
-            };
+            // Update mutable fields via reflection because domain properties have non-public setters
+            var nameProp = typeof(ProductAttribute).GetProperty("Name", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (nameProp == null)
+                throw new InvalidOperationException("Unable to find Name property on ProductAttribute");
+            nameProp.SetValue(existing, dto.Name?.Trim() ?? existing.Name);
 
-            // Since ProductAttribute might not have a setter, we need to use the repository's update method
-            // which should handle the update properly
+            var inputTypeProp = typeof(ProductAttribute).GetProperty("InputType", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (inputTypeProp == null)
+                throw new InvalidOperationException("Unable to find InputType property on ProductAttribute");
+            inputTypeProp.SetValue(existing, dto.InputType?.Trim() ?? existing.InputType);
+
+            // Call repository update with the modified existing instance (Id remains unchanged)
             var result = await _productRepository.UpdateAttributeAsync(existing);
 
             if (result == null)
@@ -182,9 +188,11 @@ namespace Tekno.Application.Catalog.Services
                 return null;
             }
 
-            var updated = new AttributeValue(existing.AttributeId, dto.Value.Trim());
-            // Set ID if needed
-            
+            var valueProp = typeof(AttributeValue).GetProperty("Value", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (valueProp == null)
+                throw new InvalidOperationException("Unable to find Value property on AttributeValue");
+            valueProp.SetValue(existing, dto.Value.Trim());
+
             var result = await _productRepository.UpdateAttributeValueAsync(existing);
             if (result == null)
                 return null;
