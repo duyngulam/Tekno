@@ -520,7 +520,9 @@ namespace Tekno.Api.Controllers
             //       $"currency={result.Currency}&" +
             //       $"responseCode={responseCode}&" +
             //       $"gateway={result.Gateway}";
-            return baseUrl;
+            return baseUrl + $"/{result.TransactionId}";
+            ;
+            ;
         }
 
         #endregion
