@@ -5,74 +5,127 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { get, postForm } from "@/lib/api";
+import  Actions  from "@/components/admin/Actions";
+import { getBrandList, createBrand, updateBrand, deleteBrand } from "@/services/brand";
 
 export default function BrandPage() {
   const [brands, setBrands] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [openCreate, setOpenCreate] = useState(false);
   const [search, setSearch] = useState("");
+  
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editingBrand, setEditingBrand] = useState<any>(null);
+
 
   const [form, setForm] = useState({
     name: "",
+    slug: "",
     country: "",
-    isActive: true,
     image: null as File | null,
   });
 
-  useEffect(() => {
-    const fetchBrands = async () => {
-      try {
-        const json = await get("http://localhost:5000/api/admin/brands/list", { cache: "no-store" });
-        const list = Array.isArray(json?.data?.data)
-          ? json.data.data
-          : Array.isArray(json?.data)
-          ? json.data
-          : [];
-        setBrands(list);
-      } catch (err) {
-        console.error("Fetch brands error:", err);
-        setBrands([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+const fetchBrands = async () => {
+  try {
+    const res = await getBrandList();
 
+    const list = Array.isArray(res?.data)
+      ? res.data
+      : Array.isArray(res?.data?.data)
+      ? res.data.data
+      : [];
+
+    setBrands(list);
+  } catch (err) {
+    console.error(err);
+    setBrands([]);
+  } finally {
+    setLoading(false);
+  }
+};
+  useEffect(() => {
     fetchBrands();
   }, []);
 
-  const handleCreate = async () => {
-    try {
-      if (!form.name) {
-        alert("Please enter brand name");
-        return;
-      }
-
-      const fd = new FormData();
-      if (form.image) fd.append("image", form.image);
-      fd.append("Name", form.name);
-      fd.append("Country", form.country);
-      fd.append("IsActive", String(form.isActive));
-
-      await postForm("http://localhost:5000/api/admin/brands", fd);
-
-      // refresh
-      const json = await get("http://localhost:5000/api/admin/brands/list", { cache: "no-store" });
-      const list = Array.isArray(json?.data?.data) ? json.data.data : Array.isArray(json?.data) ? json.data : [];
-      setBrands(list);
-
-      setOpenCreate(false);
-      setForm({ name: "", country: "", isActive: true, image: null });
-      alert("Brand created successfully");
-    } catch (e) {
-      console.error("Create brand error", e);
-      alert("Failed to create brand");
+const handleCreate = async () => {
+  try {
+    if (!form.name || !form.slug) {
+      alert("Name and Slug are required");
+      return;
     }
-  };
+
+    const fd = new FormData();
+    fd.append("Name", form.name);
+    fd.append("Slug", form.slug);
+    fd.append("Country", form.country);
+    if (form.image) fd.append("image", form.image);
+
+    await createBrand(fd);
+
+    await fetchBrands(); // refresh list
+
+    setOpenCreate(false);
+    setForm({ name: "", slug: "", country: "", image: null });
+  } catch (e: any) {
+    alert(e.message || "Create brand failed");
+  }
+};
 
   const filtered = brands.filter((b) =>
     (b.name || "").toLowerCase().includes(search.toLowerCase())
   );
+
+const handleEdit = (brand: any) => {
+  setEditingBrand(brand);
+  setForm({
+    name: brand.name || "",
+    slug: brand.slug || "",
+    country: brand.country || "",
+    image: null,
+  });
+  setOpenEdit(true);
+};
+
+const handleUpdate = async () => {
+  if (!editingBrand?.id) return;
+
+  if (!form.name || !form.slug) {
+    alert("Name and Slug are required");
+    return;
+  }
+
+  try {
+    const fd = new FormData();
+    fd.append("Id", editingBrand.id);
+    fd.append("Name", form.name);
+    fd.append("Slug", form.slug);
+    fd.append("Country", form.country);
+    if (form.image) fd.append("image", form.image);
+
+    await updateBrand(fd);
+
+    await fetchBrands();
+
+    setOpenEdit(false);
+    setEditingBrand(null);
+    setForm({ name: "", slug: "", country: "", image: null });
+  } catch (e: any) {
+    alert(e.message || "Update brand failed");
+  }
+};
+
+
+const handleDelete = async (id: string) => {
+  if (!confirm("Are you sure you want to delete this brand?")) return;
+
+  try {
+    await deleteBrand(id);
+    setBrands((prev) => prev.filter((b) => b.id !== id));
+  } catch (e: any) {
+    alert(e.message || "Delete brand failed");
+  }
+};
+
 
   return (
     <div className="p-6">
@@ -80,7 +133,16 @@ export default function BrandPage() {
         <div className="flex items-center gap-5">
           <h2 className="text-xl font-semibold">Brands</h2>
         </div>
-        <Button onClick={() => setOpenCreate(true)}>+ Create Brand</Button>
+        <Button
+          onClick={() => {
+          setForm({ name: "", slug: "", country: "", image: null });
+          setEditingBrand(null);
+          setOpenCreate(true);
+          }}
+          >
+          + Create Brand
+        </Button>
+
       </div>
 
       <div className="flex items-center gap-4 mb-4">
@@ -105,6 +167,7 @@ export default function BrandPage() {
                 <th>Logo</th>
                 <th>Name</th>
                 <th>Country</th>
+                <th>  </th>
               </tr>
             </thead>
             <tbody>
@@ -113,11 +176,17 @@ export default function BrandPage() {
                   <td className="p-2">{b.id}</td>
                   <td>
                     {b.logoPath && (
-                      <img src={b.logoPath} alt={b.name || 'Brand'} className="w-42 h-30 object-cover rounded" />
+                      <img src={b.logoPath} alt={b.name || 'Brand'} className="h-12 w-auto object-contain" />
                     )}
                   </td>
                   <td>{b.name}</td>
                   <td>{b.country}</td>
+                  <td>
+                    <Actions
+                      onEdit={() => handleEdit(b)}
+                      onDelete={() => handleDelete(b.id)}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -125,6 +194,47 @@ export default function BrandPage() {
         </div>
       )}
 
+{/*EDIT DIALOG*/}
+<Dialog open={openEdit} onOpenChange={setOpenEdit}>
+  <DialogContent className="max-w-md">
+    <DialogHeader>
+      <DialogTitle>Edit Brand</DialogTitle>
+    </DialogHeader>
+
+    <div className="grid gap-3 mt-2">
+      
+      <label className="block text-sm font-medium mb-1">Brand Name*</label>
+      <Input
+        value={form.name}
+        onChange={(e) => setForm({ ...form, name: e.target.value })}
+      />
+
+      <label className="block text-sm font-medium mb-1">Slug*</label>
+      <Input
+        value={form.slug}
+        onChange={(e) => setForm({ ...form, slug: e.target.value })}
+      />
+
+      <label className="block text-sm font-medium mb-1">Country</label>
+      <Input
+        value={form.country}
+        onChange={(e) => setForm({ ...form, country: e.target.value })}
+      />
+
+      <label className="block text-sm font-medium mb-1">Logo</label>
+      <Input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setForm({ ...form, image: e.target.files?.[0] || null })}
+      />
+
+
+      <Button onClick={handleUpdate}>Update Brand</Button>
+    </div>
+  </DialogContent>
+</Dialog>
+
+      {/*CREATE DIALOG*/}
       <Dialog open={openCreate} onOpenChange={setOpenCreate}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -133,8 +243,13 @@ export default function BrandPage() {
 
           <div className="grid gap-3 mt-2">
             <div>
-              <label className="block text-sm font-medium mb-1">Name *</label>
+              <label className="block text-sm font-medium mb-1">Name*</label>
               <Input placeholder="Brand name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Slug*</label>
+              <Input placeholder="e.g., brand-slug" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} />
             </div>
 
             <div>
@@ -146,11 +261,6 @@ export default function BrandPage() {
               <label className="block text-sm font-medium mb-1">Image</label>
               <Input type="file" accept="image/*" onChange={(e) => setForm({ ...form, image: e.target.files?.[0] || null })} />
               {form.image && <p className="text-xs text-gray-600 mt-1">Selected: {form.image.name}</p>}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input type="checkbox" id="isActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="w-4 h-4" />
-              <label htmlFor="isActive" className="text-sm font-medium">Active</label>
             </div>
 
             <Button onClick={handleCreate} className="mt-3">Create Brand</Button>

@@ -9,6 +9,7 @@ export interface Category {
 }
 
 export type CategoryAttribute = {
+  id: number;
   name: string;
   value: string[];
 };
