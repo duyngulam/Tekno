@@ -1,3 +1,5 @@
+import { get,post, postForm, put, del, API_BASE } from "@/lib/api";
+
 const API_BASE_URL = "http://localhost:5000/api"; // đổi theo API thật của bạn
 
 // services/products.ts
@@ -108,3 +110,95 @@ export async function getProductsInCart() {
 //   }
 }
 
+// Admin product helpers
+export async function getAdminProducts() {
+  try {
+    return await get(`${API_BASE}/admin/products`, { cache: "no-store" });
+  } catch (error) {
+    console.error("❌ Failed to load admin products:", error);
+    throw error;
+  }
+}
+
+export async function getAdminProduct(slug: string) {
+  try {
+    return await get(`${API_BASE}/admin/products/${slug}`, { cache: "no-store" });
+  } catch (error) {
+    console.error("❌ Failed to load admin product:", error);
+    throw error;
+  }
+}
+
+export async function createAdminProduct(fd: FormData) {
+  try {
+    return await postForm(`${API_BASE}/admin/products`, fd);
+  } catch (error) {
+    console.error("❌ Failed to create admin product:", error);
+    throw error;
+  }
+}
+
+export async function updateAdminProduct(id: number | string, fd: FormData) {
+  try {
+    return await put(`${API_BASE}/admin/products/${id}`, fd);
+  } catch (error) {
+    console.error("❌ Failed to update admin product:", error);
+    throw error;
+  }
+}
+
+export async function deleteAdminProduct(id: number | string) {
+  try {
+    return await del(`${API_BASE}/admin/products/${id}`);
+  } catch (error) {
+    console.error("❌ Failed to delete admin product:", error);
+    throw error;
+  }
+}
+
+export type CreateProductVariantPayload = {
+  productId: number;
+  sku: string;
+  price: number;
+  stock: number;
+  status?: string;
+  attributeValues: Record<string, string>;
+};
+
+export async function createProductVariant(
+  payload: CreateProductVariantPayload
+) {
+  try {
+    return await post(
+      `${API_BASE}/admin/products/variants`,
+      payload
+    );
+  } catch (error) {
+    console.error("❌ Failed to create product variant:", error);
+    throw error;
+  }
+}
+
+export async function deleteProductVariant(variantId: number | string) {
+  try {
+    return await del(`${API_BASE}/admin/products/variants/${variantId}`);
+  } catch (error) {
+    console.error("❌ Failed to delete product variant:", error);
+    throw error;
+}
+}
+
+export async function updateProductVariant(
+  variantId: number | string,
+  payload: Partial<CreateProductVariantPayload>
+) {
+  try {
+    return await put(
+      `${API_BASE}/admin/products/variants/${variantId}`,
+      payload
+    );
+  } catch (error) {
+    console.error("❌ Failed to update product variant:", error);
+    throw error;
+  }
+}

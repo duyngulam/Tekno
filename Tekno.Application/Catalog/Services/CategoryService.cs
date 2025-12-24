@@ -19,6 +19,7 @@ namespace Tekno.Application.Catalog.Services
     public class CategoryService
     {
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IProductRepository _productRepository;
         private readonly IMapper _mapper;
         private readonly ICacheService _cache;
         private readonly MediaService _mediaService;
@@ -26,12 +27,14 @@ namespace Tekno.Application.Catalog.Services
 
         public CategoryService(
             ICategoryRepository categoryRepository, 
+            IProductRepository productRepository,
             IMapper mapper, 
             ICacheService cacheService,
             MediaService mediaService,
             IAppLogger<CategoryService> logger)
         {
             _categoryRepository = categoryRepository;
+            _productRepository = productRepository;
             _mapper = mapper;
             _cache = cacheService;
             _mediaService = mediaService;
@@ -273,6 +276,29 @@ namespace Tekno.Application.Catalog.Services
 
             var iconPath = category.IconPath;
             var imageUrl = category.ImageUrl;
+
+            // SAFE CHECK: ensure no subcategories
+            if (category.SubCategories != null && category.SubCategories.Any())
+            {
+                _logger.LogWarning("Delete failed: Category ID {Id} has child categories and cannot be deleted", id);
+                return false;
+            }
+
+            // SAFE CHECK: ensure no products reference this category
+            try
+            {
+                var products = await _productRepository.GetPagedProductAsync(category.Slug, null, null, null, null, null, new PagingParams(1,1));
+                if (products.TotalRecords > 0)
+                {
+                    _logger.LogWarning("Delete failed: Category ID {Id} ({Slug}) has {Count} products and cannot be deleted", id, category.Slug, products.TotalRecords);
+                    return false; // prevent deletion when in use
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to check products for category ID {Id} before deletion", id);
+                return false;
+            }
 
             await using var transaction = await _categoryRepository.BeginTransactionAsync();
 

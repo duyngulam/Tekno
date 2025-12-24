@@ -18,8 +18,13 @@ namespace Tekno.Infrastructure.Search
         [Keyword(Name = "brand")]
         public string Brand { get; set; } = string.Empty;
 
+        // Primary category (single) - kept for backward compatibility
         [Keyword(Name = "category")]
         public string Category { get; set; } = string.Empty;
+
+        // Categories list contains product's category plus all ancestor category slugs
+        [Keyword(Name = "categories")]
+        public List<string> Categories { get; set; } = new();
 
         [Number(NumberType.Double, Name = "price")]
         public decimal Price { get; set; }

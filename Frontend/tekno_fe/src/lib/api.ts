@@ -1,7 +1,8 @@
-// Lightweight fetch helper with JWT bearer support
-// Usage: import { get, post, put, del, postForm, setAuthToken, getAuthToken } from '@/lib/api'
+﻿// Lightweight fetch helper with JWT bearer support
+// Usage: import { get, post, put, del, postForm, setAuthToken, getAuthToken, API_BASE } from '@/lib/api'
+export const API_BASE = "http://localhost:5000/api";
 
-export const AUTH_TOKEN_KEY = 'auth_token';
+export const AUTH_TOKEN_KEY = 'token';
 
 export function setAuthToken(token?: string | null) {
   if (!token) {
@@ -76,6 +77,10 @@ export async function put(url: string, body?: any, opts?: RequestInit) {
   return request(url, init);
 }
 
+export async function putForm(url: string, formData: FormData, opts?: RequestInit) {
+  return request(url, { method: 'PUT', body: formData, ...opts });
+}
+
 export async function del(url: string, opts?: RequestInit) {
   return request(url, { method: 'DELETE', ...opts });
 }
@@ -85,6 +90,7 @@ export default {
   post,
   postForm,
   put,
+  putForm,
   del,
   setAuthToken,
   getAuthToken,

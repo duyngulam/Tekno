@@ -18,6 +18,7 @@ namespace Tekno.Application.Catalog.Services
     public class BrandService
     {
         private readonly IBrandRepository _brandRepository;
+        private readonly IProductRepository _productRepository;
         private readonly IMapper _mapper;
         private readonly ICacheService _cache;
         private readonly MediaService _mediaService;
@@ -25,12 +26,14 @@ namespace Tekno.Application.Catalog.Services
 
         public BrandService(
             IBrandRepository brandRepository, 
+            IProductRepository productRepository,
             IMapper mapper, 
             ICacheService cache,
             MediaService mediaService,
             IAppLogger<BrandService> logger)
         {
             _brandRepository = brandRepository;
+            _productRepository = productRepository;
             _mapper = mapper;
             _cache = cache;
             _mediaService = mediaService;
@@ -207,6 +210,23 @@ namespace Tekno.Application.Catalog.Services
             }
 
             var logoPath = brand.LogoPath;
+
+            // SAFE CHECK: ensure no products reference this brand
+            try
+            {
+                var products = await _productRepository.GetPagedProductAsync(null, brand.Slug, null, null, null, null, new PagingParams(1,1));
+                if (products.TotalRecords > 0)
+                {
+                    _logger.LogWarning("Delete failed: Brand ID {Id} ({Slug}) has {Count} products and cannot be deleted", id, brand.Slug, products.TotalRecords);
+                    return false; // prevent deletion when in use
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to check products for brand ID {Id} before deletion", id);
+                // allow proceed? better to abort to be safe
+                return false;
+            }
 
             await using var transaction = await _brandRepository.BeginTransactionAsync();
 

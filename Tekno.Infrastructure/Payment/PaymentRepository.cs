@@ -30,7 +30,6 @@ namespace Tekno.Infrastructure.Payment
         {
             return await _context.Set<Domain.Payment.Payment>()
                 .Include(p => p.Order)
-                .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.TransactionId == transactionId);
         }
 
