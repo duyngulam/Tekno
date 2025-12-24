@@ -58,9 +58,135 @@ namespace Tekno.Application.Payment.Services
         }
 
         /// <summary>
-        /// Process payment: Create order and initiate payment
+        /// Process payment for an existing pending order (Step 2 of two-step checkout)
+        /// Applies shipping address and coupon before initiating payment
+        /// </summary>
+        public async Task<PaymentResponseDto> ProcessOrderPaymentAsync(int userId, ProcessOrderPaymentRequestDto request)
+        {
+            _logger.LogInformation("Processing payment for order {OrderId}, user {UserId}", request.OrderId, userId);
+
+            // 1. Get and validate order
+            var order = await _orderRepository.GetByIdAsync(request.OrderId);
+            if (order == null)
+            {
+                throw new NotFoundException("Order", request.OrderId);
+            }
+
+            if (order.UserId != userId)
+            {
+                throw new UnauthorizedAccessException("Order does not belong to the user");
+            }
+
+            if (order.Status != OrderStatus.Pending)
+            {
+                throw new InvalidOperationException($"Order is not in Pending status (current: {order.Status})");
+            }
+
+            // 2. Check if payment already exists for this order
+            var existingPayments = await _paymentRepository.GetByOrderIdAsync(request.OrderId);
+            var existingPayment = existingPayments.FirstOrDefault(p => 
+                p.Status == PaymentStatus.Processing || 
+                p.Status == PaymentStatus.Completed);
+
+            if (existingPayment != null)
+            {
+                throw new InvalidOperationException(
+                    $"Payment already exists for this order (Status: {existingPayment.Status})");
+            }
+
+            await using var transaction = await _paymentRepository.BeginTransactionAsync();
+
+            try
+            {
+                // 3. Set shipping address on order
+                order.SetShippingAddress(request.ShippingAddressId);
+
+                // 4. Apply coupon if provided
+                if (!string.IsNullOrWhiteSpace(request.CouponCode))
+                {
+                    // TODO: Validate and apply coupon discount
+                    // For now, just store the coupon code
+                    // You can integrate with your CouponService here
+                    order.ApplyCoupon(request.CouponCode, 0); // Pass actual discount amount
+                    
+                    _logger.LogInformation("Coupon {CouponCode} applied to order {OrderId}", 
+                        request.CouponCode, request.OrderId);
+                }
+
+                // 5. Update order with shipping and coupon info
+                await _orderRepository.UpdateAsync(order);
+
+                // 6. Create payment record
+                var payment = new Domain.Payment.Payment(
+                    order.Id,
+                    userId,
+                    request.Gateway,
+                    request.Method,
+                    order.TotalAmount, // Use final amount after discount
+                    "VND");
+
+                var createdPayment = await _paymentRepository.CreateAsync(payment);
+ 
+                // 7. Get payment gateway and initiate payment
+                var gateway = _gatewayFactory.GetGateway(request.Gateway);
+                
+                var paymentRequest = new PaymentRequest
+                {
+                    OrderId = order.Id,
+                    UserId = userId,
+                    OrderNumber = order.OrderNumber,
+                    Amount = order.TotalAmount,
+                    Currency = "VND",
+                    Method = request.Method,
+                    ReturnUrl = request.ReturnUrl,
+                    CallbackUrl = $"{GetBaseUrl()}/api/payment/callback"
+                };
+
+                var initResult = await gateway.InitiatePaymentAsync(paymentRequest);
+
+                if (!initResult.Success)
+                {
+                    throw new InvalidOperationException($"Payment initiation failed: {initResult.ErrorMessage}");
+                }
+
+                // 8. Update payment with transaction ID
+                createdPayment.MarkAsProcessing(initResult.TransactionId);
+                await _paymentRepository.UpdateAsync(createdPayment);
+
+                // 9. Commit transaction
+                await transaction.CommitAsync();
+
+                _logger.LogInformation(
+                    "Payment initiated for order {OrderNumber}, transaction {TransactionId}, shipping address {AddressId}, coupon {CouponCode}",
+                    order.OrderNumber, initResult.TransactionId, request.ShippingAddressId, request.CouponCode ?? "none");
+
+                return new PaymentResponseDto
+                {
+                    OrderId = order.Id,
+                    OrderNumber = order.OrderNumber,
+                    PaymentId = createdPayment.Id,
+                    TransactionId = initResult.TransactionId,
+                    PaymentUrl = initResult.PaymentUrl,
+                    PaymentToken = initResult.PaymentToken,
+                    QrCodeUrl = initResult.QrCodeUrl,
+                    Status = PaymentStatus.Processing,
+                    TotalAmount = order.TotalAmount,
+                    ItemsCount = order.Items.Count
+                };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Payment processing failed for order {OrderId}", request.OrderId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Process payment: Create order and initiate payment (DEPRECATED - use two-step checkout)
         /// Supports partial cart checkout via SelectedItems
         /// </summary>
+        [Obsolete("Use two-step checkout: CreateOrderFromCart then ProcessOrderPayment")]
         public async Task<PaymentResponseDto> ProcessPaymentAsync(int userId, PaymentRequestDto request)
         {
             // 1. Get user's cart
@@ -234,7 +360,7 @@ namespace Tekno.Application.Payment.Services
         /// <summary>
         /// Handle payment callback from gateway
         /// Clears cart, reduces stock, and increments sold count when payment succeeds
-        /// Restores cart items if payment fails
+        /// Restores cart items if payment fails or times out
         /// Handles idempotency - safe to call multiple times
         /// </summary>
         public async Task<PaymentStatusDto> HandlePaymentCallbackAsync(PaymentCallbackDto callback)
@@ -277,6 +403,15 @@ namespace Tekno.Application.Payment.Services
                 throw new InvalidOperationException("Invalid payment callback");
             }
 
+            // Get order to check status
+            var order = await _orderRepository.GetByIdAsync(payment.OrderId);
+            if (order == null)
+            {
+                _logger.LogError("Order {OrderId} not found for payment {TransactionId}", 
+                    payment.OrderId, callback.TransactionId);
+                throw new NotFoundException("Order", payment.OrderId);
+            }
+
             await using var transaction = await _paymentRepository.BeginTransactionAsync();
 
             try
@@ -288,33 +423,23 @@ namespace Tekno.Application.Payment.Services
                     await _paymentRepository.UpdateAsync(payment);
 
                     // Mark order as Processing (payment received, preparing order)
-                    var order = await _orderRepository.GetByIdAsync(payment.OrderId);
-                    if (order != null)
-                    {
-                        order.MarkAsProcessing();
-                        await _orderRepository.UpdateAsync(order);
-                        
-                        _logger.LogInformation(
-                            "Payment {TransactionId} marked as Completed. Now clearing cart and updating stock for order {OrderId}...",
-                            callback.TransactionId, order.Id);
-                        
-                        // ? Clear cart items (full or partial)
-                        await ClearCartItemsAfterSuccessfulPaymentAsync(payment.UserId, order);
-                        
-                        // ? Reduce stock and increment sold count
-                        await ReduceStockAndIncrementSoldCountAsync(order);
-                        
-                        _logger.LogInformation(
-                            "Payment completed for transaction {TransactionId}. Order {OrderId} marked as Processing. " +
-                            "Cart cleared, stock reduced, sold count updated.",
-                            callback.TransactionId, order.Id);
-                    }
-                    else
-                    {
-                        _logger.LogWarning(
-                            "Payment completed for transaction {TransactionId} but order {OrderId} not found.",
-                            callback.TransactionId, payment.OrderId);
-                    }
+                    order.MarkAsProcessing();
+                    await _orderRepository.UpdateAsync(order);
+                    
+                    _logger.LogInformation(
+                        "Payment {TransactionId} marked as Completed. Now clearing cart and updating stock for order {OrderId}...",
+                        callback.TransactionId, order.Id);
+                    
+                    // ? Clear cart items (full or partial)
+                    await ClearCartItemsAfterSuccessfulPaymentAsync(payment.UserId, order);
+                    
+                    // ? Reduce stock and increment sold count
+                    await ReduceStockAndIncrementSoldCountAsync(order);
+                    
+                    _logger.LogInformation(
+                        "Payment completed for transaction {TransactionId}. Order {OrderId} marked as Processing. " +
+                        "Cart cleared, stock reduced, sold count updated.",
+                        callback.TransactionId, order.Id);
                 }
                 else
                 {
@@ -323,9 +448,13 @@ namespace Tekno.Application.Payment.Services
                         JsonSerializer.Serialize(verifyResult.GatewayResponse));
                     await _paymentRepository.UpdateAsync(payment);
 
+                    // Mark order as Cancelled
+                    order.Cancel("Payment failed");
+                    await _orderRepository.UpdateAsync(order);
+
                     _logger.LogWarning(
-                        "Payment {TransactionId} marked as Failed. Now restoring cart items...",
-                        callback.TransactionId);
+                        "Payment {TransactionId} marked as Failed. Order {OrderId} cancelled. Now restoring cart items...",
+                        callback.TransactionId, order.Id);
 
                     // Restore cart items (Business logic in Backend, not DB trigger)
                     await RestoreCartItemsAsync(payment.UserId, payment.OrderId);
@@ -554,6 +683,7 @@ namespace Tekno.Application.Payment.Services
 
         /// <summary>
         /// Get payment status (without full details)
+        /// Handles timeouts - marks payment as failed and restores cart if timed out
         /// </summary>
         public async Task<PaymentStatusDto?> GetPaymentStatusAsync(string transactionId)
         {
@@ -565,12 +695,24 @@ namespace Tekno.Application.Payment.Services
                 return null;
             }
 
-            // If payment was just marked as timed out, restore cart items
+            // If payment was just marked as timed out, restore cart items and cancel order
             if (payment.Status == PaymentStatus.Failed && 
                 payment.ErrorMessage != null && 
                 payment.ErrorMessage.Contains("timed out"))
             {
-                _logger.LogInformation("Payment {TransactionId} timed out, restoring cart items", transactionId);
+                _logger.LogInformation("Payment {TransactionId} timed out, restoring cart items and cancelling order", 
+                    transactionId);
+
+                // Get order and cancel it
+                var order = await _orderRepository.GetByIdAsync(payment.OrderId);
+                if (order != null && order.Status == OrderStatus.Pending)
+                {
+                    order.Cancel("Payment timeout");
+                    await _orderRepository.UpdateAsync(order);
+                    _logger.LogInformation("Order {OrderId} cancelled due to payment timeout", order.Id);
+                }
+
+                // Restore cart items
                 await RestoreCartItemsAsync(payment.UserId, payment.OrderId);
             }
 

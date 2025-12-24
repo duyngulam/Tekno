@@ -17,6 +17,10 @@ namespace Tekno.Domain.Order
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime? CompletedAt { get; private set; }
         
+        // Shipping address
+        public int? ShippingAddressId { get; private set; }
+        public Auth.UserAddress? ShippingAddress { get; private set; }
+        
         // Delivery tracking
         public DateTime? ShippedAt { get; private set; }
         public DateTime? DeliveredAt { get; private set; }
@@ -25,6 +29,10 @@ namespace Tekno.Domain.Order
         
         // Customer note
         public string? CustomerNote { get; private set; }
+        
+        // Coupon/Discount
+        public string? CouponCode { get; private set; }
+        public decimal DiscountAmount { get; private set; }
 
         private readonly List<OrderItem> _items = new();
         public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
@@ -48,6 +56,20 @@ namespace Tekno.Domain.Order
         {
             var item = new OrderItem(Id, productId, variantId, quantity, price);
             _items.Add(item);
+        }
+
+        public void SetShippingAddress(int shippingAddressId)
+        {
+            ShippingAddressId = shippingAddressId;
+        }
+
+        public void ApplyCoupon(string couponCode, decimal discountAmount)
+        {
+            CouponCode = couponCode;
+            DiscountAmount = discountAmount;
+            
+            // Update total amount with discount
+            TotalAmount = Math.Max(0, TotalAmount - discountAmount);
         }
 
         public void Complete()

@@ -29,6 +29,61 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
+        /// Create pending order from cart (Step 1 of two-step checkout)
+        /// </summary>
+        /// <remarks>
+        /// Creates an order with Pending status. Cart items remain in cart.
+        /// Shipping address and coupon will be provided in Step 2 (payment).
+        /// 
+        /// **Two-Step Checkout Flow:**
+        /// 1. POST /api/orders/create - Creates pending order (this endpoint)
+        /// 2. POST /api/payment/process-order - Add shipping, coupon & process payment
+        /// 3. Payment callback - Marks order as Processing/Cancelled, clears/restores cart
+        /// 
+        /// **If payment fails or times out:**
+        /// - Order status ? Cancelled
+        /// - Cart items ? Restored automatically
+        /// - User can retry payment or modify cart
+        /// 
+        /// Example request (full cart):
+        /// 
+        ///     POST /api/orders/create
+        ///     {
+        ///       "note": "Please deliver after 5pm"
+        ///     }
+        /// 
+        /// Example request (partial cart):
+        /// 
+        ///     POST /api/orders/create
+        ///     {
+        ///       "note": "Selected items only",
+        ///       "selectedItems": [
+        ///         { "variantId": 11, "quantity": 2 }
+        ///       ]
+        ///     }
+        /// 
+        /// For full cart checkout, omit selectedItems or pass empty array.
+        /// </remarks>
+        [HttpPost("create")]
+        [Authorize]
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequestDto request)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var result = await _orderService.CreateOrderFromCartAsync(userId, request);
+
+                return Ok(ApiResponse<CreateOrderResponseDto>.Ok(result, 
+                    "Order created successfully. Proceed to payment with the orderId."));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create order for user");
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to create order: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
         /// Get current user's order history
         /// </summary>
         /// <remarks>
@@ -49,6 +104,7 @@ namespace Tekno.Api.Controllers
         /// 2. Processing (2) - Payment received, preparing order
         /// 3. Shipping (4) - Order shipped, on the way
         /// 4. Delivered (5) - Order delivered to customer
+        /// 5. Cancelled (6) - Order cancelled (payment failed/timeout)
         /// 
         /// **Filter by status:**
         /// - null: All orders

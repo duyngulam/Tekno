@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Tekno.Application.Cart.Interface;
 using Tekno.Application.Catalog.DTOs.Products;
 using Tekno.Application.Catalog.Interface;
+using Tekno.Application.Common.Exceptions;
 using Tekno.Application.Common.Interfaces;
 using Tekno.Application.Common.Paging;
 using Tekno.Application.Order.DTOs;
@@ -21,19 +23,137 @@ namespace Tekno.Application.Order.Services
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IProductRepository _productRepository;
+        private readonly ICartRepository _cartRepository;
         private readonly IMapper _mapper;
         private readonly IAppLogger<OrderService> _logger;
 
         public OrderService(
             IOrderRepository orderRepository,
             IProductRepository productRepository,
+            ICartRepository cartRepository,
             IMapper mapper,
             IAppLogger<OrderService> logger)
         {
             _orderRepository = orderRepository;
             _productRepository = productRepository;
+            _cartRepository = cartRepository;
             _mapper = mapper;
             _logger = logger;
+        }
+
+        /// <summary>
+        /// Create pending order from cart (Step 1 of two-step checkout)
+        /// Does NOT clear cart - cart is cleared when payment succeeds
+        /// Shipping address will be added during payment step
+        /// </summary>
+        public async Task<CreateOrderResponseDto> CreateOrderFromCartAsync(int userId, CreateOrderRequestDto request)
+        {
+            _logger.LogInformation("Creating pending order for user {UserId}", userId);
+
+            // 1. Get user's cart
+            var cart = await _cartRepository.GetByUserIdAsync(userId);
+            if (cart == null || !cart.Items.Any())
+            {
+                throw new ValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        { "Cart", new[] { "Cart is empty" } }
+                    });
+            }
+
+            // 2. Determine which items to order
+            List<Domain.Cart.CartItem> itemsToOrder;
+            
+            if (request.SelectedItems != null && request.SelectedItems.Any())
+            {
+                // Partial checkout - only selected items
+                itemsToOrder = new List<Domain.Cart.CartItem>();
+                
+                foreach (var selectedItem in request.SelectedItems)
+                {
+                    var cartItem = cart.Items.FirstOrDefault(i => i.VariantId == selectedItem.VariantId);
+                    if (cartItem == null)
+                    {
+                        throw new ValidationException(
+                            new Dictionary<string, string[]>
+                            {
+                                { "SelectedItems", new[] { $"Variant {selectedItem.VariantId} not found in cart" } }
+                            });
+                    }
+
+                    // Validate quantity
+                    if (selectedItem.Quantity > cartItem.Quantity)
+                    {
+                        throw new ValidationException(
+                            new Dictionary<string, string[]>
+                            {
+                                { "SelectedItems", new[] { $"Selected quantity ({selectedItem.Quantity}) exceeds cart quantity ({cartItem.Quantity}) for variant {selectedItem.VariantId}" } }
+                            });
+                    }
+
+                    // Create a temporary cart item with selected quantity
+                    var orderItem = new Domain.Cart.CartItem(
+                        cart.Id,
+                        selectedItem.VariantId,
+                        selectedItem.Quantity,
+                        cartItem.Price
+                    );
+                    itemsToOrder.Add(orderItem);
+                }
+
+                _logger.LogInformation("Creating order with selected items: {SelectedCount} of {TotalCount}", 
+                    itemsToOrder.Count, cart.Items.Count);
+            }
+            else
+            {
+                // Full cart order
+                itemsToOrder = cart.Items.ToList();
+                
+                _logger.LogInformation("Creating order with all cart items: {ItemCount}", itemsToOrder.Count);
+            }
+
+            // 3. Calculate order total
+            var orderTotal = itemsToOrder.Sum(item => item.Quantity * item.Price);
+
+            // 4. Create pending order (no shipping address yet)
+            var orderNumber = GenerateOrderNumber();
+            var order = new Domain.Order.Order(userId, orderNumber, orderTotal, request.Note);
+
+            var createdOrder = await _orderRepository.CreateAsync(order);
+
+            // 5. Add order items
+            foreach (var cartItem in itemsToOrder)
+            {
+                // Get variant to find ProductId
+                var variant = await _productRepository.GetProductVariantByIdAsync(cartItem.VariantId);
+                if (variant == null)
+                {
+                    throw new NotFoundException("ProductVariant", cartItem.VariantId);
+                }
+
+                createdOrder.AddItem(
+                    variant.ProductId,
+                    cartItem.VariantId,
+                    cartItem.Quantity,
+                    cartItem.Price
+                );
+            }
+
+            // 6. Save order with items
+            await _orderRepository.UpdateAsync(createdOrder);
+
+            _logger.LogInformation("Created pending order {OrderNumber} (ID: {OrderId}) for user {UserId} with {ItemCount} items. Shipping address will be added during payment.",
+                orderNumber, createdOrder.Id, userId, itemsToOrder.Count);
+
+            return new CreateOrderResponseDto
+            {
+                OrderId = createdOrder.Id,
+                OrderNumber = orderNumber,
+                TotalAmount = orderTotal,
+                ItemsCount = itemsToOrder.Count,
+                Status = "Pending",
+                Note = request.Note
+            };
         }
 
         /// <summary>
@@ -310,6 +430,12 @@ namespace Tekno.Application.Order.Services
                 Domain.Payment.PaymentStatus.Cancelled => "Cancelled",
                 _ => status.ToString()
             };
+        }
+
+        private static string GenerateOrderNumber()
+        {
+            var guidPart = Guid.NewGuid().ToString("N")[..8].ToUpper();
+            return $"ORD-{DateTime.UtcNow:yyyyMMdd}-{guidPart}";
         }
     }
 }

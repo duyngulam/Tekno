@@ -23,6 +23,7 @@ namespace Tekno.Infrastructure.Order
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
                 .Include(o => o.Payment)
+                .Include(o => o.ShippingAddress)
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
 
@@ -31,6 +32,7 @@ namespace Tekno.Infrastructure.Order
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
                 .Include(o => o.Payment)
+                .Include(o => o.ShippingAddress)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
         }
@@ -40,6 +42,7 @@ namespace Tekno.Infrastructure.Order
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
                 .Include(o => o.Payment)
+                .Include(o => o.ShippingAddress)
                 .AsNoTracking()
                 .Where(o => o.UserId == userId)
                 .OrderByDescending(o => o.CreatedAt)
@@ -56,6 +59,7 @@ namespace Tekno.Infrastructure.Order
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
                 .Include(o => o.Payment)
+                .Include(o => o.ShippingAddress)
                 .AsNoTracking()
                 .Where(o => o.UserId == userId && o.Status == OrderStatus.Completed)
                 .OrderByDescending(o => o.CreatedAt)
@@ -75,6 +79,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
+                .Include(o => o.ShippingAddress)
                 .AsNoTracking()
                 .Where(o => o.UserId == userId && o.Status == OrderStatus.Completed)
                 .Where(o => o.Items.Any(item => item.ProductId == productId))
@@ -104,6 +109,7 @@ namespace Tekno.Infrastructure.Order
             var query = _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
                 .Include(o => o.Payment)
+                .Include(o => o.ShippingAddress)
                 .AsNoTracking()
                 .AsQueryable();
 
