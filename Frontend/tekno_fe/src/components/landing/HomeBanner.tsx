@@ -1,10 +1,57 @@
+"use client";
+
 import Link from "next/link";
-import React from "react";
-import { Button } from "../ui/button";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import banner from "@/asset/MainLogo.png";
+import { getAdvertisementsByPosition } from "@/services/advertisementApi";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function HomeBanner() {
+  const [banners, setBanners] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await getAdvertisementsByPosition("ProductSidebar");
+        if (mounted) setBanners(res ?? []);
+      } catch (e) {
+        console.error("fetch advertisements error:", e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // auto-rotate
+  useEffect(() => {
+    if (!banners.length) return;
+    const t = setInterval(
+      () => setCurrent((p) => (p + 1) % banners.length),
+      4000
+    );
+    return () => clearInterval(t);
+  }, [banners.length]);
+
+  // reset index when data changes
+  useEffect(() => {
+    setCurrent(0);
+  }, [banners.length]);
+
+  const next = () => setCurrent((p) => (p + 1) % Math.max(1, banners.length));
+  const prev = () =>
+    setCurrent(
+      (p) => (p - 1 + Math.max(1, banners.length)) % Math.max(1, banners.length)
+    );
+
+  const active = banners[current];
+
   return (
     <div className="py-16 md:py-0 bg-amber-100 px-10 lg:px-24 flex items-center justify-between">
       {/* title */}
@@ -20,19 +67,81 @@ export default function HomeBanner() {
         </div>
         <Link
           href={"/products"}
-          className="bg-secondary/90 rounded-lg text-white/90 px-15 py-4 text-md font-semibold
-          hover:bg-secondary hover:text-white hoverEffect"
+          className="bg-secondary/90 rounded-lg text-white/90 px-15 py-4 text-md font-semibold hover:bg-secondary hover:text-white hoverEffect"
         >
           Explore more
         </Link>
       </div>
-      {/* image */}
-      <div>
-        <Image
-          src={banner}
-          alt="banner"
-          className="hidden md:inline-flex w-82"
-        />
+
+      {/* rotating product banner */}
+      <div className="relative w-full max-w-md flex flex-col items-center">
+        {loading ? (
+          <Image
+            src={banner}
+            alt="banner"
+            className="hidden md:inline-flex w-82"
+          />
+        ) : banners.length ? (
+          <>
+            <div className="relative w-full flex items-center justify-center">
+              <button
+                type="button"
+                onClick={prev}
+                aria-label="Previous"
+                className="absolute left-0 p-2 rounded-full bg-white/70 hover:bg-white shadow"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              <Link
+                href={`/products/${active.productSlug}`}
+                className="text-center"
+              >
+                <img
+                  src={active?.imageUrl}
+                  alt={active?.productName ?? "Advertisement"}
+                  className="max-h-80 object-contain mx-auto"
+                />
+                {active?.productName && (
+                  <p className="mt-2 text-sm">{active.productName}</p>
+                )}
+              </Link>
+
+              <button
+                type="button"
+                onClick={next}
+                aria-label="Next"
+                className="absolute right-0 p-2 rounded-full bg-white/70 hover:bg-white shadow"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* indicators */}
+            <div className="mt-4 flex items-center justify-center gap-4">
+              {banners.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  aria-label={`Slide ${i + 1}`}
+                  className="focus:outline-none"
+                >
+                  <span
+                    className={`block h-2 rounded-full transition-all ${
+                      i === current ? "w-16 bg-blue-500" : "w-10 bg-gray-300"
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <Image
+            src={banner}
+            alt="banner"
+            className="hidden md:inline-flex w-82"
+          />
+        )}
       </div>
     </div>
   );

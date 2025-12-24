@@ -18,11 +18,14 @@ import Stepper from "@/components/share/Stepper";
 import { CreditCard, Plus, Edit2, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { PaymentGateway } from "@/type/payment";
-import { getPaymentGateways } from "@/services/payment";
+import { PaymentGateway, PaymentPayload } from "@/type/payment";
+import { getPaymentGateways, processPayment } from "@/services/payment";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "recharts";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ProfileAddress } from "@/type/address";
+import { getProfileAddresses } from "@/services/profile";
+import { toast } from "sonner";
 
 type OrderItem = {
   id: string | number;
@@ -69,6 +72,32 @@ export default function PaymentPage() {
   // payment method
   const [gateways, setGateways] = useState<PaymentGateway[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<string>("");
+
+  // address (mock default)
+  const [open, setOpen] = useState(false);
+  const [addresses, setAddresses] = useState<ProfileAddress[]>([]);
+  const defaultAddress = addresses.length ? addresses[0] : undefined;
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    // fetch addresses
+    (async () => {
+      try {
+        const list = await getProfileAddresses(token);
+        setAddresses(Array.isArray(list) ? list : []);
+      } catch (e) {
+        console.error("Fetch addresses error:", e);
+        setAddresses([]);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -117,13 +146,85 @@ export default function PaymentPage() {
     );
   };
 
+  const handlePaySelected = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Missing token");
+
+      const payload: PaymentPayload = {
+        shippingAddressId: 1,
+        gateway: 0,
+        method: 1,
+        returnUrl: "http://localhost:3000/payment/result",
+        selectedItems: [
+          {
+            variantId: 12,
+            quantity: 2,
+          },
+          {
+            variantId: 18,
+            quantity: 1,
+          },
+        ],
+      };
+
+      const { paymentUrl } = await processPayment(token, payload);
+
+      window.location.href = paymentUrl;
+    } catch (e: any) {
+      toast.error(e.message || "Payment error");
+    }
+  };
+
   return (
     <Container className="flex flex-col space-y-6 my-10">
       <Stepper isActive={3} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* địa chỉ nhân hàng */}
+
         {/* Left: Payment + Billing */}
         <div className="lg:col-span-7 rounded-xl bg-blue-50 p-4 space-y-4 border border-blue-100">
+          <div>
+            <div className="rounded-md border bg-white">
+              <div className="border-b bg-gradient-to-r from-red-200 via-blue-200 to-red-200 h-2 rounded-t-md" />
+              <div className="p-4 flex items-start gap-3">
+                <span className="text-red-500 mt-1">📍</span>
+                <div className="flex-1">
+                  <div className="text-lg font-semibold text-red-600">
+                    Địa Chỉ Nhận Hàng
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <span className="font-semibold">
+                      {defaultAddress?.recipientName || "Khánh Trang"}
+                    </span>
+                    <span className="text-gray-700">
+                      (
+                      {defaultAddress?.phoneNumber
+                        ? `+84 ${defaultAddress.phoneNumber}`
+                        : "(+84) 358 517 126"}
+                      )
+                    </span>
+                    <span className="text-gray-800">
+                      {defaultAddress
+                        ? `${defaultAddress.addressLine} , ${defaultAddress.wardName}, ${defaultAddress.districtName}, ${defaultAddress.provinceName}`
+                        : "Xóm 4-Trà Tri, Xã Hải Hưng, Huyện Hải Lăng, Quảng Trị"}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    /* open change address modal/page */
+                  }}
+                  className="text-blue-600 hover:underline whitespace-nowrap"
+                >
+                  Thay Đổi
+                </button>
+              </div>
+            </div>
+          </div>
+
           <h2 className="font-semibold text-gray-800">Payment</h2>
 
           <RadioGroup
@@ -132,7 +233,7 @@ export default function PaymentPage() {
           >
             {gateways.map((g) => (
               <div key={g.id} className="flex items-center gap-2">
-                <RadioGroupItem value={g.name} disabled={g.available} />
+                <RadioGroupItem value={g.name} disabled={!g.available} />
                 <span>{g.name}</span>
               </div>
             ))}
