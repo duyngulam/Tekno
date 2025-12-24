@@ -3,6 +3,7 @@ import EmptyCart from "@/components/cart-payment-checkout/EmptyCart";
 import NoAccess from "@/components/cart-payment-checkout/NoAccess";
 import ProductInCart from "@/components/cart-payment-checkout/ProductInCart";
 import { Container } from "@/components/MainLayout/Container";
+import FormattedPriced from "@/components/share/FormattedPriced";
 import Stepper from "@/components/share/Stepper";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hook/useAuth";
@@ -19,7 +20,7 @@ interface CartItem {
   quantity: number;
 }
 export default function CartPage() {
-  const { items, cleanCart, getSubTotalPrice, getTotalPrice } = useCart();
+  const { items, cleanCart, SubTotalPrice, getTotalPrice } = useCart();
   const { user, isAuthenticated } = useAuth();
 
   const ProductsInCart = items ?? [];
@@ -53,7 +54,7 @@ export default function CartPage() {
                   <div className="p-1 flex flex-col">
                     <div className="flex justify-between">
                       <p className="text-start">Subtotal</p>
-                      <p className="text-end">$519.52</p>
+                      <FormattedPriced price={SubTotalPrice} />
                     </div>
                     <hr></hr>
                     <div className="flex justify-between">

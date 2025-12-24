@@ -136,10 +136,10 @@ export default async function SingleProductPage({
           <ProductVariantSelectorDynamic product={product} />
 
           {/* button add to cart and favor */}
-          <div className="flex items-center justify-center gap-5">
+          {/* <div className="flex items-center justify-center gap-5">
             <AddToCartButton product={product} />
             <AddToFavorButton product={product} className="relative" />
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -154,10 +154,6 @@ export default async function SingleProductPage({
 
       {/* SFrequently bought together */}
       <FrequentlyBoughtTogether />
-      {/* Reviews */}
-      <div className="col-span-12 bg-amber-100">
-        <div className="font-medium py-2 ">Reviews</div>
-      </div>
     </Container>
   );
 }

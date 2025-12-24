@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/lib/apiConfig";
 import { Category, CategoryAttribute } from "@/type/categories";
 import { get, post, put, putForm, del, API_BASE } from "@/lib/api";
 
@@ -44,14 +45,34 @@ export async function getCategoriesList(): Promise<Category[]> {
   }
 }
 
-export async function createCategory(fd: FormData) {
+export async function getCategoriesTree(): Promise<Category[]> {
   try {
-    return await post(`${API_BASE}/admin/categories/create`, fd);
+    const res = await fetch(`${API_BASE_URL}/categories/tree`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store", // optional: tránh cache khi SSR
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Lấy danh sách thất bại!");
+    }
+
+    // ⬇️ Trả về đúng kiểu Category[]
+    const result = await res.json();
+
+    // Trả về chỉ phần data là Category[]
+    return result.data as Category[];
+
   } catch (error) {
     console.error("❌ Lỗi khi gọi API:", error);
     throw error;
   }
 }
+
+
 
 export async function updateCategory(fd: FormData) {
   try {

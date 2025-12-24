@@ -19,6 +19,8 @@ import SearchBar from "./SearchBar";
 import CartIcon from "./CartIcon";
 import SignIn from "./SignIn";
 import MobileMenu from "./MobileMenu";
+import ProfileMenu from "../ProfileMenu";
+import Link from "next/link";
 
 const Header = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -38,7 +40,29 @@ const Header = () => {
           <SearchBar />
           <CartIcon />
 
-          {!user ? <SignIn /> : <button onClick={logout}>Logout</button>}
+          {/* {!user ? <SignIn /> : <UserRound />} */}
+          {/* USER MENU DROPDOWN */}
+          <div className="relative group">
+            {!user ? (
+              <SignIn />
+            ) : (
+              <>
+                <Link href="/account/personal-data">
+                  <UserRound className="cursor-pointer" />
+                </Link>
+
+                {/* Dropdown */}
+                <div
+                  className="
+          absolute right-0 top-full mt-2
+          hidden group-hover:block
+        "
+                >
+                  <ProfileMenu />
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </Container>
     </header>

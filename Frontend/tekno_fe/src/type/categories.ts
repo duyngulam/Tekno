@@ -5,7 +5,8 @@ export interface Category {
   iconPath: string;
   imageUrl: string;
   parentId: number | null;
-  description: string
+  description: string;
+  subCategories: Category[]
 }
 
 export type CategoryAttribute = {

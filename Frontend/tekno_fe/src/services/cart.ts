@@ -36,7 +36,7 @@ export const cartApi = {
 
   removeFromCart: async (token: string, variantId: number) => {
     const res = await fetch(`${BASE_URL}/cart/items/${variantId}`, {
-      method: "POST",
+      method: "DELETE ",
       credentials: "include",
       headers: {
         "Content-Type": "application/json",

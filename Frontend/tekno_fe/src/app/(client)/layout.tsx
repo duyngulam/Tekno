@@ -6,6 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { Breadcrumb } from "@/components/share/breadcumbCustom";
 import { Container } from "@/components/MainLayout/Container";
 import { Metadata } from "next";
+import { Toaster } from "sonner";
 
 // Đặt metadata cho layout
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default function ClientLayout({
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
+            <Toaster />
           </div>
         </AuthProvider>
       </body>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuthContext } from "@/context/AuthContext"; // ✅ thêm dòng này
 import { Field, FieldError, FieldGroup, FieldSet } from "../ui/field";
 import { Input } from "../ui/input";
+
 import {
   InputGroup,
   InputGroupAddon,
@@ -13,6 +14,7 @@ import {
   InputGroupInput,
 } from "../ui/input-group";
 import { EyeClosed, Key, MailIcon } from "lucide-react";
+import { toast } from "sonner";
 
 type LoginFormProps = {
   switchToRegister: () => void;
@@ -36,7 +38,8 @@ export default function LoginForm({ switchToRegister }: LoginFormProps) {
 
     try {
       const user = await login(email, password); // ✅ user trả về ngay dữ liệu đúng
-      alert("Đăng nhập thành công!");
+      toast.success("Đăng nhập thành công!");
+      //alert("Đăng nhập thành công!");
 
       if (user && user.role.toLowerCase() === "admin")
         router.push("/dashboard");
