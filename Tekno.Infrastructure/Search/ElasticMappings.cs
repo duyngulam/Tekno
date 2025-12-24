@@ -55,6 +55,7 @@ namespace Tekno.Infrastructure.Search
                         .Keyword(k => k.Name(n => n.Slug).Normalizer("lowercase_normalizer"))
                         .Keyword(k => k.Name(n => n.Brand).Normalizer("lowercase_normalizer"))
                         .Keyword(k => k.Name(n => n.Category).Normalizer("lowercase_normalizer"))
+                        .Keyword(k => k.Name("categories").Normalizer("lowercase_normalizer"))
                         .Number(nu => nu.Name(n => n.Price).Type(NumberType.Double))
                         .Number(nu => nu.Name(n => n.DiscountPercent).Type(NumberType.Integer))
                         .Keyword(k => k.Name(n => n.ImageUrl))

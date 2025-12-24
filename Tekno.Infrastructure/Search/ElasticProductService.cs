@@ -289,7 +289,8 @@ namespace Tekno.Infrastructure.Search
             }
 
             if (!string.IsNullOrWhiteSpace(categorySlug))
-                filterQueries.Add(new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Category), Value = categorySlug.ToLowerInvariant() });
+                // Use multi-value 'Categories' field which contains the product's category plus ancestor slugs
+                filterQueries.Add(new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Categories), Value = categorySlug.ToLowerInvariant() });
 
             if (!string.IsNullOrWhiteSpace(brandSlug))
                 filterQueries.Add(new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Brand), Value = brandSlug.ToLowerInvariant() });

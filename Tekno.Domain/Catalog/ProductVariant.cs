@@ -53,6 +53,31 @@ namespace Tekno.Domain.Catalog
         }
 
         /// <summary>
+        /// Reduce stock by quantity (for order fulfillment)
+        /// </summary>
+        public void ReduceStock(int quantity)
+        {
+            if (quantity <= 0)
+                throw new ArgumentException("Quantity must be positive", nameof(quantity));
+
+            if (Stock < quantity)
+                throw new InvalidOperationException($"Insufficient stock. Available: {Stock}, Requested: {quantity}");
+
+            Stock -= quantity;
+        }
+
+        /// <summary>
+        /// Increase stock by quantity (for order cancellation/refund)
+        /// </summary>
+        public void IncreaseStock(int quantity)
+        {
+            if (quantity <= 0)
+                throw new ArgumentException("Quantity must be positive", nameof(quantity));
+
+            Stock += quantity;
+        }
+
+        /// <summary>
         /// Update variant price
         /// </summary>
         public void UpdatePrice(decimal newPrice)

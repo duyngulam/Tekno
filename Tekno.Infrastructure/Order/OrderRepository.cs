@@ -23,7 +23,6 @@ namespace Tekno.Infrastructure.Order
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
                 .Include(o => o.Payment)
-                .AsNoTracking()
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
 
