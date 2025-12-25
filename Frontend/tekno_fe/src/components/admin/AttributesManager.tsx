@@ -3,10 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Edit2, Trash2, X } from "lucide-react";
+import { Edit2, Trash2, X } from "lucide-react";
 import {
   getCategoryAttributes,
-  createCategoryAttribute,
   updateCategoryAttribute,
   deleteCategoryAttribute,
 } from "@/services/categories";
@@ -21,8 +20,8 @@ interface AttributesManagerProps {
 export default function AttributesManager({ categoryId, categoryName }: AttributesManagerProps) {
   const [attributes, setAttributes] = useState<CategoryAttribute[]>([]);
   const [loadingAttributes, setLoadingAttributes] = useState(false);
-  const [showAddAttribute, setShowAddAttribute] = useState(false);
   const [editingAttribute, setEditingAttribute] = useState<CategoryAttribute | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
   
   const [attributeForm, setAttributeForm] = useState({
     name: "",
@@ -55,35 +54,12 @@ export default function AttributesManager({ categoryId, categoryName }: Attribut
       inputType: "text",
     });
     setEditingAttribute(null);
-    setShowAddAttribute(false);
-  };
-
-  const handleCreateAttribute = async () => {
-    try {
-      if (!attributeForm.name.trim()) {
-        alert("Tên attribute là bắt buộc!");
-        return;
-      }
-
-      await createCategoryAttribute(
-        categoryId, 
-        attributeForm.name,
-        attributeForm.inputType
-      );
-
-      await loadAttributes();
-      resetAttributeForm();
-      alert("Tạo attribute thành công!");
-    } catch (error) {
-      console.error("Create attribute failed:", error);
-      alert("Tạo attribute thất bại!");
-    }
+    setShowEditForm(false);
   };
 
   const handleUpdateAttribute = async () => {
     try {
       if (!editingAttribute) {
-
         alert("Chưa chọn attribute để cập nhật!");
         return;
       }
@@ -93,7 +69,7 @@ export default function AttributesManager({ categoryId, categoryName }: Attribut
         return;
       }
 
-      const result = await updateCategoryAttribute(
+      await updateCategoryAttribute(
         editingAttribute.id, 
         attributeForm.name,
         attributeForm.inputType
@@ -135,7 +111,7 @@ export default function AttributesManager({ categoryId, categoryName }: Attribut
       name: attr.name,
       inputType: (attr as any).inputType || "text",
     });
-    setShowAddAttribute(true);
+    setShowEditForm(true);
   };
 
   const toggleValuesSection = (attributeId: number) => {
@@ -152,20 +128,12 @@ export default function AttributesManager({ categoryId, categoryName }: Attribut
         <h2 className="text-xl font-bold">Quản lý Attributes - {categoryName}</h2>
       </div>
 
-      {/* Add Attribute Button */}
-      {!showAddAttribute && (
-        <Button onClick={() => setShowAddAttribute(true)} className="w-full">
-          <Plus className="w-4 h-4 mr-2" />
-          Thêm Attribute Mới
-        </Button>
-      )}
-
-      {/* Attribute Form */}
-      {showAddAttribute && (
+      {/* Edit Attribute Form */}
+      {showEditForm && editingAttribute && (
         <div className="border rounded-lg p-4 bg-gray-50">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold text-lg">
-              {editingAttribute ? `Chỉnh sửa Attribute: ${editingAttribute.name}` : "Thêm Attribute Mới"}
+              Chỉnh sửa Attribute: {editingAttribute.name}
             </h3>
             <Button variant="ghost" size="sm" onClick={resetAttributeForm}>
               <X className="w-4 h-4" />
@@ -192,9 +160,9 @@ export default function AttributesManager({ categoryId, categoryName }: Attribut
                 Loại Input <span className="text-red-500">*</span>
               </label>
               <select
-                className="w-full border rounded-md p-2"
+                className="w-full border rounded-md p-2 bg-gray-200 cursor-not-allowed"
                 value={attributeForm.inputType}
-                onChange={(e) => setAttributeForm({ ...attributeForm, inputType: e.target.value })}
+                disabled
               >
                 <option value="text">Text (Nhập văn bản)</option>
                 <option value="select">Select (Chọn từ danh sách)</option>
@@ -203,17 +171,14 @@ export default function AttributesManager({ categoryId, categoryName }: Attribut
                 <option value="radio">Radio</option>
               </select>
               <p className="text-xs text-gray-500 mt-1">
-                Kiểu input để người dùng nhập/chọn giá trị
+                Loại input không thể thay đổi sau khi tạo
               </p>
             </div>
           </div>
 
           <div className="flex gap-2 mt-4">
-            <Button
-              onClick={editingAttribute ? handleUpdateAttribute : handleCreateAttribute}
-              className="flex-1"
-            >
-              {editingAttribute ? "Cập nhật Attribute" : "Tạo Attribute"}
+            <Button onClick={handleUpdateAttribute} className="flex-1">
+              Cập nhật Attribute
             </Button>
             <Button variant="outline" onClick={resetAttributeForm} className="flex-1">
               Hủy
@@ -224,7 +189,12 @@ export default function AttributesManager({ categoryId, categoryName }: Attribut
 
       {/* Attributes List */}
       <div className="space-y-3">
-        <h3 className="font-semibold text-lg">Danh sách Attributes</h3>
+        <div className="flex justify-between items-center">
+          <h3 className="font-semibold text-lg">Danh sách Attributes</h3>
+          <p className="text-sm text-gray-500">
+            Sử dụng nút "Create Attribute" ở trên để thêm attribute mới cho category này
+          </p>
+        </div>
 
         {loadingAttributes ? (
           <div className="text-center py-8">
@@ -232,7 +202,7 @@ export default function AttributesManager({ categoryId, categoryName }: Attribut
           </div>
         ) : attributes.length === 0 ? (
           <div className="text-center py-8 text-gray-500 border rounded-lg bg-gray-50">
-            Chưa có attribute nào. Hãy thêm attribute mới!
+            Chưa có attribute nào. Sử dụng nút "Create Attribute" ở header để thêm!
           </div>
         ) : (
           <div className="space-y-3">

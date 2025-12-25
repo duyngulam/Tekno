@@ -10,9 +10,11 @@ import {
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronRight, Plus, Settings } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Settings, Globe, FolderPlus } from "lucide-react";
 import Actions from "@/components/admin/Actions";
 import AttributesManager from "@/components/admin/AttributesManager";
+import CreateAttributeModal from "@/components/admin/CreateAttributeModal";
+import GlobalAttributesManager from "@/components/admin/GlobalAttributesManager";
 import {
   createCategory,
   updateCategory,
@@ -40,6 +42,8 @@ export default function CategoryPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openAttributes, setOpenAttributes] = useState(false);
+  const [openCreateAttribute, setOpenCreateAttribute] = useState(false);
+  const [openGlobalAttributes, setOpenGlobalAttributes] = useState(false);
   
   // Form states
   const [createData, setCreateData] = useState({
@@ -357,10 +361,30 @@ export default function CategoryPage() {
           <p className="text-sm text-gray-500 mt-1">Tổng số: {totalCategories} categories</p>
         </div>
 
-        <Button onClick={() => setOpenCreate(true)} size="lg">
-          <Plus className="w-4 h-4 mr-2" />
-          Tạo Category
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setOpenGlobalAttributes(true)} 
+            size="lg"
+            variant="outline"
+          >
+            <Globe className="w-4 h-4 mr-2" />
+            Global Attributes
+          </Button>
+          
+          <Button 
+            onClick={() => setOpenCreateAttribute(true)} 
+            size="lg"
+            variant="outline"
+          >
+            <FolderPlus className="w-4 h-4 mr-2" />
+            Create Attribute
+          </Button>
+
+          <Button onClick={() => setOpenCreate(true)} size="lg">
+            <Plus className="w-4 h-4 mr-2" />
+            Tạo Category
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
@@ -403,7 +427,7 @@ export default function CategoryPage() {
         </div>
       )}
 
-      {/* CREATE DIALOG */}
+      {/* CREATE CATEGORY DIALOG */}
       <Dialog open={openCreate} onOpenChange={setOpenCreate}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -477,7 +501,7 @@ export default function CategoryPage() {
         </DialogContent>
       </Dialog>
 
-      {/* EDIT DIALOG */}
+      {/* EDIT CATEGORY DIALOG */}
       <Dialog open={openEdit} onOpenChange={setOpenEdit}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -549,11 +573,11 @@ export default function CategoryPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ATTRIBUTES MANAGEMENT DIALOG */}
+      {/* CATEGORY ATTRIBUTES MANAGEMENT DIALOG */}
       <Dialog open={openAttributes} onOpenChange={setOpenAttributes}>
-          <VisuallyHidden>
-            <DialogTitle>Quản lý Attribute</DialogTitle>
-          </VisuallyHidden>
+        <VisuallyHidden>
+          <DialogTitle>Quản lý Attribute</DialogTitle>
+        </VisuallyHidden>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           {selectedCategoryId && (
             <AttributesManager
@@ -563,6 +587,20 @@ export default function CategoryPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* CREATE ATTRIBUTE MODAL */}
+      <CreateAttributeModal
+        open={openCreateAttribute}
+        onOpenChange={setOpenCreateAttribute}
+        categories={tree}
+        onSuccess={loadCategoriesTree}
+      />
+
+      {/* GLOBAL ATTRIBUTES MANAGER */}
+      <GlobalAttributesManager
+        open={openGlobalAttributes}
+        onOpenChange={setOpenGlobalAttributes}
+      />
     </div>
   );
 }
