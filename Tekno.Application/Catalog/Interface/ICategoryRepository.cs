@@ -22,8 +22,10 @@ namespace Tekno.Application.Catalog.Interface
        Task<bool> DeleteAsync(int id);
        Task<List<ProductAttribute>> GetAttributesForCategoryAsync(int categoryId);
        Task<List<ProductAttribute>> GetAttributesForCategoryBySlugAsync(string slug);
+       Task <List<ProductAttribute>> GetGlobalAttributesAsync();
 
         // NEW: Transaction support
         Task<IDbContextTransaction> BeginTransactionAsync();
+
     }
 }

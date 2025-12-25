@@ -75,7 +75,20 @@ namespace Tekno.Api.Controllers.admin
             var result = _mapper.Map<CategoryTreeDto>(category);
             return Ok(ApiResponse<CategoryTreeDto>.Ok(result, "Category loaded successfully"));
         }
-
+        [HttpGet("attributes/global")]
+        public async Task<IActionResult> GetGlobalAttributes()
+        {
+            try
+            {
+                var attributes = await _categoryService.GetGlobalAttributesAsync();
+                return Ok(ApiResponse<List<ProductAttributeDto>>.Ok(attributes, "Global attributes loaded successfully"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get global attributes");
+                return StatusCode(500, ApiResponse<string>.Fail($"Failed to get global attributes: {ex.Message}"));
+            }
+        }
         /// <summary>
         /// Get available attributes for a category (for variant creation)
         /// </summary>
