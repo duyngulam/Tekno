@@ -11,6 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Edit2, Trash2, X, Globe } from "lucide-react";
 import AttributeValuesManager from "@/components/admin/AttributeValueManager";
+import {
+  getGlobalAttributes,
+  updateCategoryAttribute,
+  deleteCategoryAttribute,
+} from "@/services/categories";
 
 interface GlobalAttribute {
   id: number;
@@ -48,20 +53,8 @@ export default function GlobalAttributesManager({
   const loadGlobalAttributes = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/api/admin/categories/attributes/global", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        throw new Error("Không thể tải global attributes");
-      }
-
-      const result = await response.json();
-      setAttributes(result.data || []);
+      const data = await getGlobalAttributes();
+      setAttributes(data || []);
     } catch (error) {
       console.error("Failed to load global attributes:", error);
       alert("Không thể tải danh sách global attributes");
@@ -101,22 +94,11 @@ export default function GlobalAttributesManager({
         return;
       }
 
-      const response = await fetch(
-        `http://localhost:5000/api/admin/categories/attributes/${editingAttribute.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: editForm.name,
-          }),
-        }
+      await updateCategoryAttribute(
+        editingAttribute.id,
+        editForm.name,
+        editForm.inputType
       );
-
-      if (!response.ok) {
-        throw new Error("Cập nhật thất bại");
-      }
 
       resetEditForm();
       await loadGlobalAttributes();
@@ -131,20 +113,7 @@ export default function GlobalAttributesManager({
     if (!confirm("Bạn có chắc muốn xóa global attribute này?")) return;
 
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/admin/categories/attributes/${attributeId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ AttributeId: attributeId }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Xóa thất bại");
-      }
+      await deleteCategoryAttribute(attributeId);
 
       if (expandedAttributeId === attributeId) {
         setExpandedAttributeId(null);

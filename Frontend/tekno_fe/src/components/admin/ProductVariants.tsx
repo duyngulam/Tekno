@@ -74,25 +74,11 @@ export default function ProductVariants({
     try {
       setLoading(true);
       
-      // Fetch all attributes (we'll filter global ones)
-      // Note: You might need an API endpoint that returns only global attributes
-      // For now, we'll use a workaround by fetching from a known global attribute category
+      // Import from service
+      const { getGlobalAttributes } = await import("@/services/categories");
       
-      // Alternative: Create a service function to get global attributes
-      // const globalAttrs = await getGlobalAttributes();
-      
-      // Temporary: Hardcode or fetch from specific endpoint
-      // Let's assume we have a way to get global attributes
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/categories/attributes/global`, {
-        cache: "no-store",
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch global attributes");
-      }
-      
-      const result = await response.json();
-      const attrs = result.data || [];
+      // Get global attributes
+      const attrs = await getGlobalAttributes();
       
       // Load values for each global attribute
       const attrsWithValues = await Promise.all(
@@ -103,7 +89,7 @@ export default function ProductVariants({
             return {
               id: attr.id,
               name: attr.name,
-              inputType: attr.inputType,
+              inputType: attr.inputType || "text",
               availableValues: valuesResponse.values.map((v) => v.value),
             };
           } catch (error) {
@@ -111,7 +97,7 @@ export default function ProductVariants({
             return {
               id: attr.id,
               name: attr.name,
-              inputType: attr.inputType,
+              inputType: attr.inputType || "text",
               availableValues: [],
             };
           }
@@ -299,15 +285,14 @@ export default function ProductVariants({
                   <div>
                     <span className="text-xs text-gray-600">Attributes:</span>
                     <div className="flex flex-wrap gap-2 mt-1">
-                      {variant.attributes.map((attr, attrIdx) => (
-                        <span
-                          key={attrIdx}
-                          className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs"
-                        >
-                          <strong>{attr.attributeName || `Attr ${attr.attributeId}`}:</strong>{" "}
-                          {attr.value}
-                        </span>
-                      ))}
+{variant.attributes?.map((attr: any, idx: number) => (
+  <div key={idx} className="px-2 py-1 bg-blue-200 text-blue-800 rounded text-xs">
+    <span>
+      {attr.attributeName || attr.name || `Attr ${attr.attributeId}`} :
+    </span>
+    <span> {attr.value}</span>
+  </div>
+))}
                     </div>
                   </div>
                 </div>
@@ -440,13 +425,13 @@ export default function ProductVariants({
               <div className="mb-4 p-3 bg-blue-50 rounded">
                 <p className="text-xs text-gray-600 mb-2">Selected attributes:</p>
                 <div className="flex flex-wrap gap-2">
-                  {formData.attributes.map((attr, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-1 bg-blue-200 text-blue-800 rounded text-xs"
-                    >
-                      {attr.attributeName}: {attr.value}
+                  {formData.attributes.map((attr:any, idx) => (
+                  <div key={idx} className="px-2 py-1 bg-blue-200 text-blue-800 rounded text-xs">
+                    <span>
+                      {attr.attributeName || attr.name || `Attr ${attr.attributeId}`} : 
                     </span>
+                    <span> {attr.value}</span>
+                  </div>
                   ))}
                 </div>
               </div>

@@ -9,9 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Plus, X } from "lucide-react";
-import { createCategoryAttribute } from "@/services/categories";
+import { createAttribute } from "@/services/categories";
 
 interface CategoryNode {
   id: number;
@@ -113,26 +112,13 @@ export default function CreateAttributeModal({
 
       setLoading(true);
 
-      const body = {
+      await createAttribute({
         name: formData.name,
         inputType: formData.inputType,
         isGlobal: formData.isGlobal,
         categoryId: formData.isGlobal ? 0 : parseInt(formData.categoryId),
         initialValues: formData.initialValues,
-      };
-
-      const response = await fetch("http://localhost:5000/api/admin/categories/attributes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Tạo attribute thất bại!");
-      }
 
       alert("Tạo attribute thành công!");
       resetForm();
@@ -156,9 +142,9 @@ export default function CreateAttributeModal({
         <div className="space-y-4 mt-4">
           {/* Attribute Name */}
           <div>
-            <Label className="text-sm font-medium block mb-1">
+            <label className="text-sm font-medium block mb-1">
               Tên Attribute <span className="text-red-500">*</span>
-            </Label>
+            </label>
             <Input
               placeholder="vd: Brand, Color, Size"
               value={formData.name}
@@ -168,9 +154,9 @@ export default function CreateAttributeModal({
 
           {/* Input Type */}
           <div>
-            <Label className="text-sm font-medium block mb-1">
+            <label className="text-sm font-medium block mb-1">
               Loại Input <span className="text-red-500">*</span>
-            </Label>
+            </label>
             <select
               className="w-full border rounded-md p-2"
               value={formData.inputType}
@@ -186,7 +172,7 @@ export default function CreateAttributeModal({
 
           {/* Is Global */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium block">Phạm vi Attribute</Label>
+            <label className="text-sm font-medium block">Phạm vi Attribute</label>
             <div className="flex gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -214,9 +200,9 @@ export default function CreateAttributeModal({
           {/* Category Selection (only if not global) */}
           {!formData.isGlobal && (
             <div>
-              <Label className="text-sm font-medium block mb-1">
+              <label className="text-sm font-medium block mb-1">
                 Chọn Category <span className="text-red-500">*</span>
-              </Label>
+              </label>
               <select
                 className="w-full border rounded-md p-2"
                 value={formData.categoryId}
@@ -234,9 +220,9 @@ export default function CreateAttributeModal({
 
           {/* Initial Values */}
           <div>
-            <Label className="text-sm font-medium block mb-2">
+            <label className="text-sm font-medium block mb-2">
               Giá trị ban đầu (tùy chọn)
-            </Label>
+            </label>
             
             <div className="flex gap-2 mb-3">
               <Input

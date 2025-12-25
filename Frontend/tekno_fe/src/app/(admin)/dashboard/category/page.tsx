@@ -19,8 +19,8 @@ import {
   createCategory,
   updateCategory,
   deleteCategory as deleteCategoryAPI,
+  getCategoriesTree,
 } from "@/services/categories";
-import { get } from "@/lib/api";
 
 type CategoryNode = {
   id: number;
@@ -28,7 +28,7 @@ type CategoryNode = {
   slug: string;
   iconPath?: string;
   imageUrl?: string;
-  parentId?: number;
+  parentId?: number | null;
   isActive?: boolean;
   subCategories?: CategoryNode[];
 };
@@ -78,13 +78,11 @@ export default function CategoryPage() {
   const loadCategoriesTree = async () => {
     try {
       setLoading(true);
-      const response = await get("http://localhost:5000/api/admin/categories/tree");
-      
-      const categoriesData = response?.data?.data || response?.data || response || [];
+      const categoriesData = await getCategoriesTree();
       
       const assignParentIds = (nodes: CategoryNode[], parentId: number | null = null): CategoryNode[] => {
         return nodes.map(node => {
-          const updatedNode = { ...node, parentId: parentId || undefined };
+          const updatedNode = { ...node, parentId: parentId };
           
           if (node.subCategories && node.subCategories.length > 0) {
             updatedNode.subCategories = assignParentIds(node.subCategories, node.id);
