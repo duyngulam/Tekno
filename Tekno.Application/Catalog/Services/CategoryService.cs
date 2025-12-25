@@ -339,7 +339,11 @@ namespace Tekno.Application.Catalog.Services
                 throw;
             }
         }
-
+        public async Task<List<ProductAttributeDto>> GetGlobalAttributesAsync()
+        {
+            var categories = await _categoryRepository.GetGlobalAttributesAsync();
+            return _mapper.Map<List<ProductAttributeDto>>(categories);
+        }
         public async Task<List<ProductAttributeDto>> GetAttributesByCategoryIdAsync(int categoryId)
         {
             var attrs = await _categoryRepository.GetAttributesForCategoryAsync(categoryId);

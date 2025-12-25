@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tekno.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Tekno.Infrastructure.Persistence;
 namespace Tekno.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251224170539_shipaddresstoorder")]
+    partial class shipaddresstoorder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4040,8 +4043,7 @@ namespace Tekno.Infrastructure.Migrations
                         .HasColumnType("timestamptz");
 
                     b.Property<string>("CouponCode")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -4049,17 +4051,13 @@ namespace Tekno.Infrastructure.Migrations
                         .HasDefaultValueSql("NOW()");
 
                     b.Property<string>("CustomerNote")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("DeliveredAt")
-                        .HasColumnType("timestamptz");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("DiscountAmount")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)")
-                        .HasDefaultValue(0m);
+                        .HasColumnType("numeric");
 
                     b.Property<string>("OrderNumber")
                         .IsRequired()
@@ -4067,14 +4065,13 @@ namespace Tekno.Infrastructure.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<DateTime?>("ShippedAt")
-                        .HasColumnType("timestamptz");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("ShippingAddressId")
                         .HasColumnType("integer");
 
                     b.Property<string>("ShippingCarrier")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -4088,8 +4085,7 @@ namespace Tekno.Infrastructure.Migrations
                         .HasColumnType("numeric(12,2)");
 
                     b.Property<string>("TrackingNumber")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -4098,8 +4094,6 @@ namespace Tekno.Infrastructure.Migrations
 
                     b.HasIndex("OrderNumber")
                         .IsUnique();
-
-                    b.HasIndex("ShippingAddressId");
 
                     b.HasIndex("Status");
 
@@ -4799,16 +4793,6 @@ namespace Tekno.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("District");
-                });
-
-            modelBuilder.Entity("Tekno.Domain.Order.Order", b =>
-                {
-                    b.HasOne("Tekno.Domain.Auth.UserAddress", "ShippingAddress")
-                        .WithMany()
-                        .HasForeignKey("ShippingAddressId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("ShippingAddress");
                 });
 
             modelBuilder.Entity("Tekno.Domain.Order.OrderItem", b =>

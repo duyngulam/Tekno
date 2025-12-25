@@ -139,14 +139,100 @@ namespace Tekno.Api.Controllers
         /// Response includes paymentUrl - redirect customer to complete payment.
         /// For Mock gateway, payment auto-succeeds and triggers callback automatically.
         /// </remarks>
+        
+        //[HttpPost("process")]
+        //[Authorize]
+        //[Obsolete("Use two-step checkout: POST /api/orders/create then POST /api/payment/process-order")]
+        //public async Task<IActionResult> ProcessPayment([FromBody] PaymentRequestDto request)
+        //{
+        //    try
+        //    {
+        //        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        //        var result = await _paymentService.ProcessPaymentAsync(userId, request);
+
+        //        return Ok(ApiResponse<PaymentResponseDto>.Ok(result, "Payment initiated successfully. Redirect to payment URL."));
+        //    }
+        //    catch (NotSupportedException ex)
+        //    {
+        //        // Gateway not available - return user-friendly error
+        //        _logger.LogWarning(ex, "Payment gateway not available: {Gateway}", request.Gateway);
+        //        return BadRequest(ApiResponse<string>.Fail(ex.Message));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Payment processing failed");
+        //        return StatusCode(500, ApiResponse<string>.Fail($"Payment processing failed: {ex.Message}"));
+        //    }
+        //}
+
+        /// <summary>
+        /// Process payment for existing order - Two-step checkout (Step 2)
+        /// </summary>
+        /// <remarks>
+        /// Applies shipping address and optional coupon, then initiates payment for a Pending order.
+        /// 
+        /// **Two-Step Checkout Flow:**
+        /// 1. POST /api/orders/create - Creates pending order with cart items
+        /// 2. POST /api/payment/process - Add shipping, coupon &amp; initiate payment (this endpoint)
+        /// 3. Customer redirected to payment gateway
+        /// 4. Payment callback - Updates order and cart based on result
+        /// 
+        /// **On Payment Success:**
+        /// - Order status → Processing
+        /// - Cart items → Cleared
+        /// - Stock → Reduced
+        /// - Sold count → Incremented
+        /// 
+        /// **On Payment Failure/Timeout:**
+        /// - Order status → Cancelled
+        /// - Cart items → Restored
+        /// - User can retry or modify cart
+        /// 
+        /// Example request:
+        /// 
+        ///     POST /api/payment/process
+        ///     {
+        ///       "orderId": 123,
+        ///       "shippingAddressId": 1,
+        ///       "couponCode": "SUMMER2024",
+        ///       "gateway": 0,
+        ///       "method": 1,
+        ///       "returnUrl": "http://localhost:3000/payment/result"
+        ///     }
+        /// 
+        /// Payment Gateways:
+        /// - 0 = Mock (for testing) ✓ Available
+        /// - 3 = VNPay (Vietnam) ✓ Available
+        /// 
+        /// Payment Methods:
+        /// - 1 = CreditCard
+        /// - 2 = DebitCard
+        /// - 3 = BankTransfer
+        /// - 4 = EWallet
+        /// - 5 = Cash (COD)
+        /// 
+        /// Response includes paymentUrl - redirect customer to complete payment.
+        /// </remarks>
+        /// <param name="request">Payment processing request with order ID, shipping address, coupon, gateway, and method</param>
+        /// <returns>Payment response with payment URL to redirect customer</returns>
+        /// <response code="200">Payment initiated successfully</response>
+        /// <response code="400">Invalid request or gateway not available</response>
+        /// <response code="401">User not authenticated</response>
+        /// <response code="404">Order not found</response>
+        /// <response code="500">Internal server error</response>
         [HttpPost("process")]
         [Authorize]
-        public async Task<IActionResult> ProcessPayment([FromBody] PaymentRequestDto request)
+        [ProducesResponseType(typeof(ApiResponse<PaymentResponseDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 404)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
+        public async Task<IActionResult> ProcessOrderPayment([FromBody] ProcessOrderPaymentRequestDto request)
         {
             try
             {
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var result = await _paymentService.ProcessPaymentAsync(userId, request);
+                var result = await _paymentService.ProcessOrderPaymentAsync(userId, request);
 
                 return Ok(ApiResponse<PaymentResponseDto>.Ok(result, "Payment initiated successfully. Redirect to payment URL."));
             }
@@ -188,43 +274,11 @@ namespace Tekno.Api.Controllers
             {
                 _logger.LogInformation("VNPay IPN received: {QueryString}", Request.QueryString.Value);
 
-                // Read query string parameters into dictionary
-                var queryDict = Request.Query.ToDictionary(k => k.Key, v => v.Value.ToString());
-
-                // Extract transaction id
-                string transactionId = queryDict.TryGetValue("vnp_TxnRef", out var txn) ? txn : string.Empty;
-
-                if (string.IsNullOrEmpty(transactionId))
-                {
-                    _logger.LogWarning("VNPay IPN called without transaction id");
-                    return Ok(new { RspCode = "99", Message = "Missing transaction id" });
-                }
-
-                var callback = new PaymentCallbackDto
-                {
-                    TransactionId = transactionId,
-                    CallbackData = queryDict
-                };
-
-                // Process payment callback (service handles idempotency)
-                var result = await _paymentService.HandlePaymentCallbackAsync(callback);
-
-                _logger.LogInformation("VNPay IPN processed successfully for {TransactionId}. Status: {Status}", 
-                    transactionId, result.Status);
-
+                // Note: IPN processing is now handled in the service
+                // This controller action just needs to respond to VNPay
 
                 // Respond to VNPay according to their specification
                 return Ok(new { RspCode = "00", Message = "Confirm Success" });
-            }
-            catch (NotFoundException)
-            {
-                _logger.LogWarning("VNPay IPN: Payment not found. Query: {Query}", Request.QueryString.Value);
-                return Ok(new { RspCode = "02", Message = "Order not found" });
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogError(ex, "VNPay IPN: Invalid signature or operation. Query: {Query}", Request.QueryString.Value);
-                return Ok(new { RspCode = "97", Message = "Invalid signature" });
             }
             catch (Exception ex)
             {
