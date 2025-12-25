@@ -1,0 +1,87 @@
+// src/services/payment/getPaymentGateways.ts
+
+import { API_BASE_URL } from "@/lib/apiConfig";
+import {
+  ApiResponse,
+  MyPaymentsResponse,
+  PaymentGateway,
+  PaymentHistory,
+  PaymentStatus,
+} from "@/type/payment";
+
+export async function getPaymentGateways(
+  token?: string
+): Promise<PaymentGateway[]> {
+  const res = await fetch(`${API_BASE_URL}/payment/gateways`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch payment gateways");
+  }
+
+  const json: ApiResponse<PaymentGateway[]> = await res.json();
+
+  if (!json.success) {
+    throw new Error(json.message || "Get payment gateways failed");
+  }
+
+  return json.data;
+}
+
+export async function getMyPayments(
+  token: string
+): Promise<MyPaymentsResponse> {
+  const res = await fetch(`${API_BASE_URL}/payment/my-payments`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch payment history");
+  }
+
+  const json: ApiResponse<MyPaymentsResponse> = await res.json();
+
+  if (!json.success) {
+    throw new Error(json.message || "Get my payments failed");
+  }
+
+  return json.data;
+}
+
+export async function getPaymentStatus(
+  transactionId: string,
+  token: string
+): Promise<PaymentStatus> {
+  const res = await fetch(
+    `${API_BASE_URL}/payment/status/${transactionId}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to get payment status");
+  }
+
+  const json: ApiResponse<PaymentStatus> = await res.json();
+
+  // ✅ check success
+  if (!json.success) {
+    throw new Error(json.message || "Get payment status failed");
+  }
+
+  return json.data;
+}

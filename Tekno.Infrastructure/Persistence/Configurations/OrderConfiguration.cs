@@ -32,12 +32,54 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 .HasPrecision(12, 2)
                 .IsRequired();
 
+            // Shipping Address ID (nullable - set during payment)
+            builder.Property(o => o.ShippingAddressId)
+                .IsRequired(false);
+
+            // Shipping Address Navigation Property
+            builder.HasOne(o => o.ShippingAddress)
+                .WithMany()
+                .HasForeignKey(o => o.ShippingAddressId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
+
+            // Coupon/Discount
+            builder.Property(o => o.CouponCode)
+                .HasMaxLength(50)
+                .IsRequired(false);
+
+            builder.Property(o => o.DiscountAmount)
+                .HasPrecision(12, 2)
+                .HasDefaultValue(0);
+
+            // Customer Note
+            builder.Property(o => o.CustomerNote)
+                .HasMaxLength(500)
+                .IsRequired(false);
+
             builder.Property(o => o.CreatedAt)
                 .HasColumnType("timestamptz")
                 .HasDefaultValueSql("NOW()");
 
             builder.Property(o => o.CompletedAt)
                 .HasColumnType("timestamptz")
+                .IsRequired(false);
+
+            // Delivery tracking
+            builder.Property(o => o.ShippedAt)
+                .HasColumnType("timestamptz")
+                .IsRequired(false);
+
+            builder.Property(o => o.DeliveredAt)
+                .HasColumnType("timestamptz")
+                .IsRequired(false);
+
+            builder.Property(o => o.TrackingNumber)
+                .HasMaxLength(100)
+                .IsRequired(false);
+
+            builder.Property(o => o.ShippingCarrier)
+                .HasMaxLength(100)
                 .IsRequired(false);
 
             builder.HasMany(o => o.Items)
@@ -47,6 +89,7 @@ namespace Tekno.Infrastructure.Persistence.Configurations
 
             builder.HasIndex(o => o.UserId);
             builder.HasIndex(o => o.Status);
+            builder.HasIndex(o => o.ShippingAddressId);
         }
     }
 

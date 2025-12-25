@@ -21,11 +21,13 @@ export interface Product {
   categoryName: string;
   basePrice: number;
   discountPercent: number | null;
+  primaryImagePath: string;
   finalPrice: number;
   overview: string;
   description: string;
   warrantyInfo: string | null;
   totalSold: number;
+  averageRating: number;
   specs: {
     name: string;
     value: string[];

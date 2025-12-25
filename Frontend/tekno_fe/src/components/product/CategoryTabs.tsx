@@ -4,6 +4,7 @@ import { getCategoriesList } from "@/services/categories";
 import { Category } from "@/type/categories";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 
 export function CategoryTabs({ queryCategory }: { queryCategory: string }) {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -31,11 +32,15 @@ export function CategoryTabs({ queryCategory }: { queryCategory: string }) {
           className="flex flex-col items-center gap-2 min-w-30 relative group"
           // onClick={() => handleCategorySelect(category)}
         >
-          <img
-            src={category.iconPath}
-            alt={category.slug}
-            className="w-7 h-7 "
-          ></img>
+          {category.iconPath && (
+            <Image
+              src={category.iconPath}
+              alt={category.slug}
+              width={28}
+              height={28}
+              className="w-7 h-7 "
+            ></Image>
+          )}
 
           <div className="text-[14px] text-center font-medium leading-tight pt-3">
             {category.name}

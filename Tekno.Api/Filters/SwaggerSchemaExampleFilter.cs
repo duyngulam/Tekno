@@ -65,6 +65,31 @@ namespace Tekno.Api.Filters
                     schema.Properties["shippingAddressId"].Example = new OpenApiInteger(1);
                 }
             }
+            if(context.Type.Name == "ProcessOrderPaymentRequestDto")
+            {
+                if (schema.Properties.ContainsKey("gateway"))
+                {
+                    schema.Properties["gateway"].Example = new OpenApiInteger(0);
+                    schema.Properties["gateway"].Description = "Payment Gateway: 0=Mock, 1=Stripe, 2=PayPal, 3=VNPay, 4=MoMo, 5=ZaloPay";
+                }
+                if (schema.Properties.ContainsKey("method"))
+                {
+                    schema.Properties["method"].Example = new OpenApiInteger(1);
+                    schema.Properties["method"].Description = "Payment Method: 1=CreditCard, 2=DebitCard, 3=BankTransfer, 4=EWallet, 5=Cash";
+                }
+                if (schema.Properties.ContainsKey("returnUrl"))
+                {
+                    schema.Properties["returnUrl"].Example = new OpenApiString("http://localhost:3000/payment/result");
+                }
+                if (schema.Properties.ContainsKey("shippingAddressId"))
+                {
+                    schema.Properties["shippingAddressId"].Example = new OpenApiInteger(2);
+                }
+                if (schema.Properties.ContainsKey("orderId"))
+                {
+                    schema.Properties["orderId"].Example = new OpenApiInteger(12345);
+                }
+            }
 
             // Add examples for specific DTO properties
             if (context.Type.Name == "CreateCouponDto" || context.Type.Name == "UpdateCouponDto")

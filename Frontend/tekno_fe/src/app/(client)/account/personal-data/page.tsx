@@ -134,7 +134,7 @@ export default function Page() {
         </div>
 
         {/* Address - không cho sửa */}
-        <div className="grid w-full items-center gap-3">
+        {/* <div className="grid w-full items-center gap-3">
           <Label htmlFor="address">Address</Label>
           <InputGroup>
             <InputGroupInput
@@ -148,10 +148,10 @@ export default function Page() {
               <MapPinHouse />
             </InputGroupAddon>
           </InputGroup>
-        </div>
+        </div> */}
 
         {/* Postal Code - không cho sửa */}
-        <div className="grid w-full items-center gap-3">
+        {/* <div className="grid w-full items-center gap-3">
           <Label htmlFor="postal">Postal Code</Label>
           <InputGroup>
             <InputGroupInput
@@ -165,7 +165,7 @@ export default function Page() {
               <Milestone />
             </InputGroupAddon>
           </InputGroup>
-        </div>
+        </div> */}
       </div>
 
       <div>
@@ -186,6 +186,7 @@ export default function Page() {
           </button>
         )}
       </div>
+      <div>Address</div>
     </div>
   );
 }

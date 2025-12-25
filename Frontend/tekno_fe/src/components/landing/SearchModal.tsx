@@ -11,7 +11,7 @@ import { Product } from "@/type/product";
 import { Search, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import ProductCard from "../product/ProductCard";
+import ProductCard, { ProductCardInSearch } from "../product/ProductCard";
 
 export default function SearchModal({
   open,
@@ -147,9 +147,9 @@ export default function SearchModal({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-50">
+          <div className="gap-50">
             {products?.slice(0, 4).map((p) => (
-              <ProductCard product={p} />
+              <ProductCardInSearch product={p} />
             ))}
           </div>
         )}
