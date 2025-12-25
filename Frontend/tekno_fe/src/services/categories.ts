@@ -72,7 +72,14 @@ export async function getCategoriesTree(): Promise<Category[]> {
   }
 }
 
-
+export async function createCategory(fd: FormData) {
+  try {
+    return await post(`${API_BASE}/admin/categories/create`, fd);
+  } catch (error) {
+    console.error("❌ Lỗi khi gọi API:", error);
+    throw error;
+  }
+}
 
 export async function updateCategory(fd: FormData) {
   try {
