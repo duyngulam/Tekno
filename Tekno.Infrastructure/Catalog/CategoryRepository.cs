@@ -120,6 +120,14 @@ namespace Tekno.Infrastructure.Catalog
                 .AsNoTracking()
                 .ToListAsync();
         }
+        public async Task<List<ProductAttribute>> GetGlobalAttributesAsync()
+        {
+            return await _context.Set<ProductAttribute>()
+                .Include(a => a.Values)
+                .Where(a => a.IsGlobal)
+                .AsNoTracking()
+                .ToListAsync();
+        }
 
         // NEW: Transaction support
         public async Task<IDbContextTransaction> BeginTransactionAsync()
