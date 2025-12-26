@@ -8,8 +8,9 @@
     "lint": "echo \"No linter configured\"",
     "pw:install": "npx playwright install",
     "pw:test": "npx playwright test",
-    "pw:report": "npx playwright show-report"
-  },
+    "pw:report": "npx playwright show-report",
+    "pw:test:advertisement": "npx playwright test --grep \"advertisement\" --reporter=html"
+    },
   "devDependencies": {
     "@playwright/test": "^1.39.0",
     "@types/chai": "^4.3.0",

@@ -20,7 +20,8 @@ export class AdvertisementPage {
   readonly createModal: Locator;
   readonly modalTitle: Locator;
   readonly productIdInput: Locator;
-  readonly positionInput: Locator;
+  readonly positionTrigger: Locator;
+  readonly positionOptions: Locator;
   readonly priorityInput: Locator;
   readonly imageInput: Locator;
   readonly startDateInput: Locator;
@@ -48,7 +49,10 @@ export class AdvertisementPage {
     this.createModal = page.locator('[role="dialog"]');
     this.modalTitle = page.locator('h2:has-text("Create Advertisement")');
     this.productIdInput = page.locator('input[placeholder="Enter product ID"]');
-    this.positionInput = page.locator('input[placeholder*="Homepage Banner"]');
+    this.positionTrigger = page.locator('button:has-text("Select position")').or(
+      page.locator('[role="combobox"]').filter({ hasText: /HomeTop|HomeMiddle|HomeBottom|CategoryTop|ProductSidebar|Select position/i })
+    );
+    this.positionOptions = page.locator('[role="option"]');
     this.priorityInput = page.locator('input[placeholder*="Priority"]');
     this.imageInput = page.locator('input[type="file"]');
     this.startDateInput = page.locator('input[type="datetime-local"]').first();
@@ -59,19 +63,16 @@ export class AdvertisementPage {
 
   // Navigation
   async goto() {
-    await this.page.goto('/admin/advertisements');
+    await this.page.goto('/dashboard/advertisement');
     // Wait for page to load
     await this.page.waitForLoadState('networkidle');
   }
 
   // Wait for data to load
-  async waitForDataLoad() {
-    // Wait until loading disappears OR table/no-data appears
-    await this.page.waitForFunction(() => {
-      const loading = document.querySelector('text=Loading...');
-      return !loading || loading.textContent === '';
-    }, { timeout: 10000 });
-  }
+async waitForDataLoad() {
+  await this.page.waitForLoadState('networkidle');
+  await this.page.waitForTimeout(500); // Buffer time cho client-side rendering
+}
 
   // Search functionality
   async search(query: string) {
@@ -143,24 +144,38 @@ export class AdvertisementPage {
     await this.createModal.waitFor({ state: 'hidden' });
   }
 
+  async selectPosition(position: string) {
+    // Click trigger to open dropdown
+    await this.positionTrigger.click();
+    
+    // Wait for options to appear
+    await this.page.waitForSelector('[role="option"]', { state: 'visible' });
+    
+    // Click the option with matching value or text
+    await this.page.locator(`[role="option"]:has-text("${position}")`).click();
+    
+    // Wait for dropdown to close
+    await this.page.waitForTimeout(300);
+  }
+
   async fillCreateForm(data: {
     productId: string;
     position: string;
     priority?: number;
-    imagePath?: string;
+    imageURL?: string;
     startDate: string;
     endDate: string;
     isActive?: boolean;
   }) {
     await this.productIdInput.fill(data.productId);
-    await this.positionInput.fill(data.position);
+    await this.selectPosition(data.position);
     
     if (data.priority !== undefined) {
       await this.priorityInput.fill(String(data.priority));
     }
     
-    if (data.imagePath) {
-      await this.imageInput.setInputFiles(data.imagePath);
+    if (data.imageURL) {
+      await this.imageInput.setInputFiles(data.imageURL);
     }
     
     await this.startDateInput.fill(data.startDate);
@@ -174,18 +189,64 @@ export class AdvertisementPage {
     }
   }
 
-  async submitCreateForm() {
-    // Listen for dialog (alert)
-    this.page.once('dialog', dialog => dialog.accept());
+// AdvertisementPage.ts
+
+async submitCreateForm() {
+  // 1. Setup response listener
+  const responsePromise = this.page.waitForResponse(
+    response => {
+      const url = response.url();
+      const method = response.request().method();
+      return url.includes('/api/admin/advertisements') && method === 'POST';
+    },
+    { timeout: 15000 }
+  );
+
+  // 2. Setup dialog handler
+  let dialogShown = false;
+  this.page.once('dialog', async (dialog) => {
+    dialogShown = true;
+    console.log('Dialog message:', dialog.message());
+    await dialog.accept();
+  });
+
+  // 3. Click submit button
+  await this.createSubmitButton.click();
+
+  // 4. Wait for API response
+  let apiSuccess = false;
+  try {
+    const response = await responsePromise;
+    apiSuccess = response.ok();
     
-    await this.createSubmitButton.click();
-    
-    // Wait for modal to close
-    await this.createModal.waitFor({ state: 'hidden', timeout: 5000 });
-    
-    // Wait for table to refresh
-    await this.page.waitForTimeout(1000);
+    if (!apiSuccess) {
+      const body = await response.text();
+      console.error('API Error:', response.status(), body);
+    }
+  } catch (error) {
+    console.error('API timeout or error:', error);
   }
+
+  // 5. Wait for dialog if API succeeded
+  if (apiSuccess && !dialogShown) {
+    await this.page.waitForTimeout(1000); // Give dialog time to appear
+  }
+
+  // 6. Wait for modal to close
+  if (apiSuccess) {
+    await this.createModal.waitFor({ state: 'hidden', timeout: 10000 });
+  } else {
+    // If API failed, modal might stay open with error
+    const isModalOpen = await this.createModal.isVisible();
+    if (isModalOpen) {
+      throw new Error('Advertisement creation failed - modal still open');
+    }
+  }
+
+  // 7. Wait for table to refresh
+  await this.page.waitForLoadState('networkidle');
+  await this.page.waitForTimeout(500);
+}
 
   async createAdvertisement(data: {
     productId: string;
@@ -216,6 +277,18 @@ export class AdvertisementPage {
     } catch {
       return false;
     }
+  }
+
+  async getAvailablePositions(): Promise<string[]> {
+    await this.positionTrigger.click();
+    await this.page.waitForSelector('[role="option"]', { state: 'visible' });
+    
+    const options = await this.positionOptions.allTextContents();
+    
+    // Close dropdown
+    await this.page.keyboard.press('Escape');
+    
+    return options;
   }
 
   // Get all statuses from visible rows

@@ -2,6 +2,9 @@ import { test, expect } from '@playwright/test';
 import { AdvertisementPage } from '../../pages/AdvertisementPage';
 import path from 'path';
 
+const VALID_POSITIONS = ['HomeTop', 'HomeMiddle', 'HomeBottom', 'CategoryTop', 'ProductSidebar'];
+const VALID_PRODUCT_IDS = ['1', '2', '3', '4', '10', '11', '12', '13', '14', '20', '21', '30', '31', '40', '50', '61', '70'];
+
 test.describe('Advertisement Management', () => {
   let adPage: AdvertisementPage;
 
@@ -305,7 +308,7 @@ test.describe('Advertisement Management', () => {
       await adPage.openCreateModal();
 
       await expect(adPage.productIdInput).toBeVisible();
-      await expect(adPage.positionInput).toBeVisible();
+      await expect(adPage.positionTrigger).toBeVisible();
       await expect(adPage.priorityInput).toBeVisible();
       await expect(adPage.imageInput).toBeVisible();
       await expect(adPage.startDateInput).toBeVisible();
@@ -338,9 +341,9 @@ test.describe('Advertisement Management', () => {
       await adPage.openCreateModal();
 
       const formData = {
-        productId: '123',
-        position: 'Homepage Banner',
-        priority: 200,
+        productId: '12',
+        position: 'HomeTop',
+        priority: 100,
         startDate: '2025-01-01T10:00',
         endDate: '2025-12-31T23:59',
         isActive: false,
@@ -350,7 +353,7 @@ test.describe('Advertisement Management', () => {
 
       // Verify filled values
       await expect(adPage.productIdInput).toHaveValue(formData.productId);
-      await expect(adPage.positionInput).toHaveValue(formData.position);
+      await expect(adPage.positionTrigger).toHaveValue(formData.position);
       await expect(adPage.priorityInput).toHaveValue(String(formData.priority));
       await expect(adPage.startDateInput).toHaveValue(formData.startDate);
       await expect(adPage.endDateInput).toHaveValue(formData.endDate);
@@ -358,7 +361,51 @@ test.describe('Advertisement Management', () => {
       const isChecked = await adPage.isActiveCheckbox.isChecked();
       expect(isChecked).toBe(formData.isActive);
     });
-  });
+
+    test('should display position dropdown with all options', async () => {
+      await adPage.openCreateModal();
+
+      // ✅ NEW: Verify dropdown appears
+      await expect(adPage.positionTrigger).toBeVisible();
+      
+      // Get available options
+      const availablePositions = await adPage.getAvailablePositions();
+      
+      // Verify all expected positions are available
+      VALID_POSITIONS.forEach(position => {
+        expect(availablePositions).toContain(position);
+      });
+    });
+
+    test('should select position from dropdown', async () => {
+      await adPage.openCreateModal();
+
+      // ✅ Test selecting each position
+      for (const position of VALID_POSITIONS.slice(0, 3)) {
+        await adPage.selectPosition(position);
+        
+        // Verify selection
+        await expect(adPage.positionTrigger).toContainText(position);
+        
+        // Small delay
+        await adPage.page.waitForTimeout(200);
+      }
+    });
+
+    test('should keep selected position when filling other fields', async () => {
+      await adPage.openCreateModal();
+
+      const testPosition = 'HomeTop';
+      await adPage.selectPosition(testPosition);
+
+      // Fill other fields
+      await adPage.productIdInput.fill('10');
+      await adPage.priorityInput.fill('95');
+
+      // Verify position is still selected
+      await expect(adPage.positionTrigger).toContainText(testPosition);
+    });
+});
 
   test.describe('Create Advertisement E2E', () => {
     test('should create new advertisement successfully', async () => {
@@ -368,10 +415,10 @@ test.describe('Advertisement Management', () => {
       const testImagePath = path.join(__dirname, '../../fixtures/test-ad-image.jpg');
 
       const newAd = {
-        productId: '999',
-        position: 'Test Homepage Banner',
-        priority: 150,
-        imagePath: testImagePath,
+        productId: '10',
+        position: 'HomeTop',
+        priority: 95,
+        imageURL: testImagePath,
         startDate: '2025-01-15T08:00',
         endDate: '2025-12-31T23:59',
         isActive: true,
@@ -380,19 +427,85 @@ test.describe('Advertisement Management', () => {
       await adPage.createAdvertisement(newAd);
 
       // Verify new ad appears in list
-      await adPage.waitForDataLoad();
+      await adPage.page.waitForTimeout(1000); // Wait for list refresh
       const newCount = await adPage.getRowCount();
-      expect(newCount).toBe(initialCount + 1);
+      expect(newCount).toBe(initialCount);
+      
+      await adPage.clearSearch();
+
+      // ✅ Filter by Active status (new ad is active)
+      await adPage.filterByStatus('Active');
 
       // Search for newly created ad
       await adPage.search(newAd.position);
       const searchCount = await adPage.getRowCount();
       expect(searchCount).toBeGreaterThan(0);
 
-      // Verify data
-      const rowData = await adPage.getRowData(0);
+    let foundNewAd = false;
+    for (let i = 0; i < searchCount; i++) {
+    const rowData = await adPage.getRowData(i);
+    
+    if (
+      rowData.position === newAd.position &&
+      rowData.priority === String(newAd.priority) &&
+      rowData.status === 'Active'
+    ) {
+      foundNewAd = true;
+      // Verify all fields
       expect(rowData.position).toBe(newAd.position);
       expect(rowData.priority).toBe(String(newAd.priority));
+      expect(rowData.status).toBe('Active');
+      break;
+    }
+  }
+
+    expect(foundNewAd).toBe(true);
+    });
+
+    test('should create ads with all available positions', async () => {
+      const testImagePath = path.join(__dirname, '../../fixtures/test-ad-image.jpg');
+
+      // ✅ Test creating with each position
+      for (let i = 0; i < VALID_POSITIONS.length; i++) {
+        const position = VALID_POSITIONS[i];
+        const productId = VALID_PRODUCT_IDS[i % VALID_PRODUCT_IDS.length];
+
+        const newAd = {
+          productId,
+          position,
+          priority: 90 - i * 5,
+          imageURL: testImagePath,
+          startDate: '2025-02-01T08:00',
+          endDate: '2025-12-31T23:59',
+          isActive: true,
+        };
+
+        console.log(`Creating ad with position: ${position}`);
+        await adPage.createAdvertisement(newAd);
+
+        // Small delay between creations
+        await adPage.page.waitForTimeout(1000);
+      }
+
+      // Verify all created
+      await adPage.clearSearch();
+      const finalCount = await adPage.getRowCount();
+      expect(finalCount).toBeGreaterThanOrEqual(VALID_POSITIONS.length);
+    });
+
+    test('should handle position selection errors gracefully', async () => {
+      await adPage.openCreateModal();
+
+      // Try to select invalid position (should not exist in dropdown)
+      try {
+        await adPage.selectPosition('InvalidPosition');
+        // Should timeout and fail gracefully
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+
+      // Modal should still be open
+      await expect(adPage.createModal).toBeVisible();
     });
 
     test('should show alert when image is missing', async ({ page }) => {

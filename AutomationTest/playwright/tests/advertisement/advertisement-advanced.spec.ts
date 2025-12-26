@@ -22,6 +22,7 @@ test.describe('Advertisement - Advanced Tests', () => {
     screenshotHelper = new ScreenshotHelper(page);
 
     // Set auth token before each test
+    await page.goto('/dashboard/advertisement');
     await authHelper.loginAsAdmin();
   });
 
