@@ -10,6 +10,7 @@ namespace Tekno.Application.Catalog.DTOs.Products
         public string BrandName { get; set; } = string.Empty;
         public string CategoryName { get; set; } = string.Empty;
         public decimal BasePrice { get; set; }
+        public decimal? Rating { get; set; }
         public decimal? DiscountPercent { get; set; }
 
         public decimal FinalPrice =>

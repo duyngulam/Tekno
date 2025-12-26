@@ -19,7 +19,6 @@ namespace Tekno.Application.Catalog.Interface
             string? minPrice,
             string? maxPrice,
             PagingParams paging);
-
         Task<Product> GetProductBySlugAsync(string slug);
         Task<Product> GetProductByIdAsync(int id);
         Task<bool> IsProductExistBySlugAsync(string slug);
