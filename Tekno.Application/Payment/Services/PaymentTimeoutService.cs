@@ -162,6 +162,7 @@ namespace Tekno.Application.Payment.Services
         /// <summary>
         /// Mark payment as timed out (failed due to timeout)
         /// Also cancels order and restores cart items
+        /// Order can be reactivated later for retry if within 24 hours
         /// </summary>
         private async Task MarkPaymentAsTimedOutAsync(Domain.Payment.Payment payment)
         {
@@ -182,7 +183,7 @@ namespace Tekno.Application.Payment.Services
                     payment.TransactionId, payment.OrderId, payment.CreatedAt, 
                     (DateTime.UtcNow - payment.CreatedAt).TotalMinutes);
 
-                // 2. Cancel the order
+                // 2. Cancel the order (but preserve items for potential retry)
                 var order = await _orderRepository.GetByIdAsync(payment.OrderId);
                 if (order != null && order.Status == OrderStatus.Pending)
                 {
@@ -190,20 +191,23 @@ namespace Tekno.Application.Payment.Services
                     await _orderRepository.UpdateAsync(order);
                     
                     _logger.LogInformation(
-                        "Order {OrderId} cancelled due to payment timeout for transaction {TransactionId}",
+                        "Order {OrderId} cancelled due to payment timeout for transaction {TransactionId}. " +
+                        "Order can be reactivated for retry if customer acts within 24 hours.",
                         order.Id, payment.TransactionId);
 
                     // 3. Restore cart items
                     await RestoreCartItemsAsync(payment.UserId, order);
                     
                     _logger.LogInformation(
-                        "Cart items restored for user {UserId} after payment timeout for transaction {TransactionId}",
+                        "Cart items restored for user {UserId} after payment timeout for transaction {TransactionId}. " +
+                        "Customer can retry payment for this order within 24 hours.",
                         payment.UserId, payment.TransactionId);
                 }
                 else if (order != null)
                 {
                     _logger.LogWarning(
-                        "Order {OrderId} is in status {Status}, not Pending. Cannot cancel or restore cart.",
+                        "Order {OrderId} is in status {Status}, not Pending. Cannot cancel or restore cart. " +
+                        "Payment timeout handling skipped.",
                         order.Id, order.Status);
                 }
 
