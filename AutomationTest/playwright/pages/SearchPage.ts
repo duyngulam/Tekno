@@ -29,7 +29,7 @@ export class SearchPage {
 
   async applyFilter(labelText: string) {
     // Try checkbox or select filter by visible label
-    const checkbox = this.page.locator(`label:has-text("${labelText}") input[type=checkbox]");
+    const checkbox = this.page.locator(`label:has-text("${labelText}") input[type=checkbox]`);
     try {
       await checkbox.first().check({ force: true });
       await this.page.waitForLoadState('networkidle');
