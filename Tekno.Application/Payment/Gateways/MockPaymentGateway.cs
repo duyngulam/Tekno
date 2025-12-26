@@ -42,7 +42,7 @@ namespace Tekno.Application.Payment.Gateways
             // Mock payment URL with Vietnamese parameters
             //var paymentUrl = $"{request.ReturnUrl}?transactionId={transactionId}&status=success&amount={request.Amount}&currency={request.Currency}";
             //mock will redirect to returnUrl with orderId only ( frontend)
-            var paymentUrl = $"{request.ReturnUrl}";
+            var paymentUrl = $"{request.ReturnUrl}?OrderId={request.OrderId}";
             // Log Vietnamese pricing for testing
             var amountFormatted = request.Amount.ToString("N0"); // Format: 1,500,000
             _logger.LogInformation("Mock payment URL generated: Amount = {Amount} VND", amountFormatted);
