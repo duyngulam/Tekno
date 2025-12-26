@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Tekno.Application.Cart.Interface;
 using Tekno.Application.Common.Interfaces;
+using Tekno.Application.Order.Interface;
 using Tekno.Application.Payment.Interfaces;
+using Tekno.Domain.Order;
 using Tekno.Domain.Payment;
 
 namespace Tekno.Application.Payment.Services
@@ -16,21 +19,27 @@ namespace Tekno.Application.Payment.Services
     public class PaymentTimeoutService
     {
         private readonly IPaymentRepository _paymentRepository;
+        private readonly IOrderRepository _orderRepository;
+        private readonly ICartRepository _cartRepository;
         private readonly IAppLogger<PaymentTimeoutService> _logger;
         private readonly TimeSpan _paymentTimeout;
 
         public PaymentTimeoutService(
             IPaymentRepository paymentRepository,
+            IOrderRepository orderRepository,
+            ICartRepository cartRepository,
             IAppLogger<PaymentTimeoutService> logger)
         {
             _paymentRepository = paymentRepository;
+            _orderRepository = orderRepository;
+            _cartRepository = cartRepository;
             _logger = logger;
             
-            // Default timeout: 30 minutes
+            // Default timeout: 15 minutes (reasonable time for customer to complete payment)
             // Can be configured via environment variable
             var timeoutMinutes = int.TryParse(
                 Environment.GetEnvironmentVariable("PAYMENT_TIMEOUT_MINUTES"), 
-                out var minutes) ? minutes : 30;
+                out var minutes) ? minutes : 15;
             
             _paymentTimeout = TimeSpan.FromMinutes(timeoutMinutes);
             
@@ -152,13 +161,18 @@ namespace Tekno.Application.Payment.Services
 
         /// <summary>
         /// Mark payment as timed out (failed due to timeout)
+        /// Also cancels order and restores cart items
         /// </summary>
         private async Task MarkPaymentAsTimedOutAsync(Domain.Payment.Payment payment)
         {
+            await using var transaction = await _paymentRepository.BeginTransactionAsync();
+            
             try
             {
-                var errorMessage = $"Payment timed out after {_paymentTimeout.TotalMinutes} minutes without receiving callback from gateway";
+                var errorMessage = $"Payment timed out after {_paymentTimeout.TotalMinutes} minutes without receiving callback from gateway. " +
+                                   "Customer may have closed the payment window or abandoned the transaction.";
                 
+                // 1. Mark payment as failed
                 payment.MarkAsFailed(errorMessage, gatewayResponse: null);
                 await _paymentRepository.UpdateAsync(payment);
 
@@ -167,12 +181,118 @@ namespace Tekno.Application.Payment.Services
                     "CreatedAt={CreatedAt}, Age={Age} minutes",
                     payment.TransactionId, payment.OrderId, payment.CreatedAt, 
                     (DateTime.UtcNow - payment.CreatedAt).TotalMinutes);
+
+                // 2. Cancel the order
+                var order = await _orderRepository.GetByIdAsync(payment.OrderId);
+                if (order != null && order.Status == OrderStatus.Pending)
+                {
+                    order.Cancel("Payment timeout - customer did not complete payment within allocated time");
+                    await _orderRepository.UpdateAsync(order);
+                    
+                    _logger.LogInformation(
+                        "Order {OrderId} cancelled due to payment timeout for transaction {TransactionId}",
+                        order.Id, payment.TransactionId);
+
+                    // 3. Restore cart items
+                    await RestoreCartItemsAsync(payment.UserId, order);
+                    
+                    _logger.LogInformation(
+                        "Cart items restored for user {UserId} after payment timeout for transaction {TransactionId}",
+                        payment.UserId, payment.TransactionId);
+                }
+                else if (order != null)
+                {
+                    _logger.LogWarning(
+                        "Order {OrderId} is in status {Status}, not Pending. Cannot cancel or restore cart.",
+                        order.Id, order.Status);
+                }
+
+                await transaction.CommitAsync();
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, 
                     "Failed to mark payment as timed out: TransactionId={TransactionId}",
                     payment.TransactionId);
+            }
+        }
+
+        /// <summary>
+        /// Restore cart items from timed-out order
+        /// </summary>
+        private async Task RestoreCartItemsAsync(int userId, Domain.Order.Order order)
+        {
+            _logger.LogInformation("Restoring cart items for user {UserId} from timed-out order {OrderId}", 
+                userId, order.Id);
+
+            try
+            {
+                if (!order.Items.Any())
+                {
+                    _logger.LogWarning("No order items to restore for order {OrderId}", order.Id);
+                    return;
+                }
+
+                // Get user's cart
+                var cart = await _cartRepository.GetByUserIdAsync(userId);
+                if (cart == null)
+                {
+                    // Cart might have been deleted - create new one
+                    _logger.LogWarning("Cart not found for user {UserId}, creating new cart", userId);
+                    cart = new Domain.Cart.UserCart(userId);
+                    cart = await _cartRepository.CreateAsync(cart);
+                }
+
+                // Add order items back to cart
+                int restoredCount = 0;
+                foreach (var orderItem in order.Items)
+                {
+                    try
+                    {
+                        // Check if item already exists in cart
+                        var existingCartItem = cart.Items.FirstOrDefault(ci => ci.VariantId == orderItem.VariantId);
+                        
+                        if (existingCartItem != null)
+                        {
+                            // Increase quantity
+                            var newQuantity = existingCartItem.Quantity + orderItem.Quantity;
+                            existingCartItem.UpdateQuantity(newQuantity);
+                            _logger.LogInformation(
+                                "Updated cart item: VariantId={VariantId}, Quantity={OldQty} -> {NewQty}", 
+                                orderItem.VariantId, existingCartItem.Quantity - orderItem.Quantity, newQuantity);
+                        }
+                        else
+                        {
+                            // Add new cart item
+                            cart.AddItem(orderItem.VariantId, orderItem.Quantity, orderItem.Price);
+                            _logger.LogInformation(
+                                "Added cart item: VariantId={VariantId}, Quantity={Quantity}, Price={Price}", 
+                                orderItem.VariantId, orderItem.Quantity, orderItem.Price);
+                        }
+                        
+                        restoredCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to restore cart item: VariantId={VariantId}", 
+                            orderItem.VariantId);
+                        // Continue with other items
+                    }
+                }
+
+                // Save cart
+                await _cartRepository.UpdateAsync(cart);
+
+                _logger.LogInformation(
+                    "Cart restored for user {UserId}: {RestoredCount}/{TotalCount} items added back", 
+                    userId, restoredCount, order.Items.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to restore cart for user {UserId}, order {OrderId}", 
+                    userId, order.Id);
+                // Don't throw - cart restoration is best effort
             }
         }
 

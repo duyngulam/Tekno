@@ -60,6 +60,7 @@ namespace Tekno.Application.Payment.Services
         /// <summary>
         /// Process payment for an existing pending order (Step 2 of two-step checkout)
         /// Applies shipping address and coupon before initiating payment
+        /// Supports retry for failed/timed-out payments
         /// </summary>
         public async Task<PaymentResponseDto> ProcessOrderPaymentAsync(int userId, ProcessOrderPaymentRequestDto request)
         {
@@ -84,24 +85,96 @@ namespace Tekno.Application.Payment.Services
 
             // 2. Check if payment already exists for this order
             var existingPayments = await _paymentRepository.GetByOrderIdAsync(request.OrderId);
-            var existingPayment = existingPayments.FirstOrDefault(p => 
+            
+            // Check for active payments (Processing or Completed)
+            var activePayment = existingPayments.FirstOrDefault(p => 
                 p.Status == PaymentStatus.Processing || 
                 p.Status == PaymentStatus.Completed);
 
-            if (existingPayment != null)
+            if (activePayment != null)
             {
-                throw new InvalidOperationException(
-                    $"Payment already exists for this order (Status: {existingPayment.Status})");
+                // Active payment exists
+                if (activePayment.Status == PaymentStatus.Completed)
+                {
+                    throw new InvalidOperationException(
+                        $"Order already has a completed payment (TransactionId: {activePayment.TransactionId})");
+                }
+
+                // Payment is Processing - return existing payment URL for retry
+                _logger.LogInformation(
+                    "Payment already processing for order {OrderId}, returning existing payment URL for retry",
+                    request.OrderId);
+
+                // Get gateway and regenerate payment URL
+                var gateway = _gatewayFactory.GetGateway(activePayment.Gateway);
+                
+                var paymentRequest = new PaymentRequest
+                {
+                    OrderId = order.Id,
+                    UserId = userId,
+                    OrderNumber = order.OrderNumber,
+                    Amount = order.TotalAmount,
+                    Currency = "VND",
+                    Method = activePayment.Method,
+                    ReturnUrl = request.ReturnUrl,
+                    CallbackUrl = $"{GetBaseUrl()}/api/payment/callback"
+                };
+
+                var initResult = await gateway.InitiatePaymentAsync(paymentRequest);
+
+                if (!initResult.Success)
+                {
+                    throw new InvalidOperationException($"Payment retry failed: {initResult.ErrorMessage}");
+                }
+
+                // Update transaction ID if it changed (shouldn't happen for most gateways)
+                if (initResult.TransactionId != activePayment.TransactionId)
+                {
+                    _logger.LogInformation(
+                        "Payment transaction ID changed from {OldId} to {NewId} for order {OrderId}",
+                        activePayment.TransactionId, initResult.TransactionId, request.OrderId);
+                    
+                    activePayment.MarkAsProcessing(initResult.TransactionId);
+                    await _paymentRepository.UpdateAsync(activePayment);
+                }
+
+                return new PaymentResponseDto
+                {
+                    OrderId = order.Id,
+                    OrderNumber = order.OrderNumber,
+                    PaymentId = activePayment.Id,
+                    TransactionId = activePayment.TransactionId,
+                    PaymentUrl = initResult.PaymentUrl,
+                    PaymentToken = initResult.PaymentToken,
+                    QrCodeUrl = initResult.QrCodeUrl,
+                    Status = PaymentStatus.Processing,
+                    TotalAmount = order.TotalAmount,
+                    ItemsCount = order.Items.Count,
+                    IsRetry = true
+                };
+            }
+
+            // Check for failed/cancelled payments that can be retried
+            var failedPayment = existingPayments.FirstOrDefault(p => 
+                p.Status == PaymentStatus.Failed || 
+                p.Status == PaymentStatus.Cancelled);
+
+            if (failedPayment != null)
+            {
+                _logger.LogInformation(
+                    "Retrying payment for order {OrderId} after previous failure. " +
+                    "Previous payment status: {Status}, Error: {Error}",
+                    request.OrderId, failedPayment.Status, failedPayment.ErrorMessage);
             }
 
             await using var transaction = await _paymentRepository.BeginTransactionAsync();
 
             try
             {
-                // 3. Set shipping address on order
+                // 3. Set shipping address on order (may have changed for retry)
                 order.SetShippingAddress(request.ShippingAddressId);
 
-                // 4. Apply coupon if provided
+                // 4. Apply coupon if provided (may have changed for retry)
                 if (!string.IsNullOrWhiteSpace(request.CouponCode))
                 {
                     // TODO: Validate and apply coupon discount
@@ -116,7 +189,7 @@ namespace Tekno.Application.Payment.Services
                 // 5. Update order with shipping and coupon info
                 await _orderRepository.UpdateAsync(order);
 
-                // 6. Create payment record
+                // 6. Create NEW payment record (don't reuse failed payment)
                 var payment = new Domain.Payment.Payment(
                     order.Id,
                     userId,
@@ -157,8 +230,10 @@ namespace Tekno.Application.Payment.Services
                 await transaction.CommitAsync();
 
                 _logger.LogInformation(
-                    "Payment initiated for order {OrderNumber}, transaction {TransactionId}, shipping address {AddressId}, coupon {CouponCode}",
-                    order.OrderNumber, initResult.TransactionId, request.ShippingAddressId, request.CouponCode ?? "none");
+                    "Payment initiated for order {OrderNumber}, transaction {TransactionId}, " +
+                    "shipping address {AddressId}, coupon {CouponCode}, isRetry: {IsRetry}",
+                    order.OrderNumber, initResult.TransactionId, request.ShippingAddressId, 
+                    request.CouponCode ?? "none", failedPayment != null);
 
                 return new PaymentResponseDto
                 {
@@ -171,7 +246,8 @@ namespace Tekno.Application.Payment.Services
                     QrCodeUrl = initResult.QrCodeUrl,
                     Status = PaymentStatus.Processing,
                     TotalAmount = order.TotalAmount,
-                    ItemsCount = order.Items.Count
+                    ItemsCount = order.Items.Count,
+                    IsRetry = failedPayment != null
                 };
             }
             catch (Exception ex)

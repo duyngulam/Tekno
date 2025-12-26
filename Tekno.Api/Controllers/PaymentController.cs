@@ -170,12 +170,28 @@ namespace Tekno.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Applies shipping address and optional coupon, then initiates payment for a Pending order.
+        /// **Supports payment retry** - customers can retry if they closed the payment window or experienced failures.
         /// 
         /// **Two-Step Checkout Flow:**
         /// 1. POST /api/orders/create - Creates pending order with cart items
         /// 2. POST /api/payment/process - Add shipping, coupon &amp; initiate payment (this endpoint)
         /// 3. Customer redirected to payment gateway
         /// 4. Payment callback - Updates order and cart based on result
+        /// 
+        /// **Payment Retry Scenarios:**
+        /// 
+        /// **Scenario A - Active Payment (Within Timeout):**
+        /// - Customer closes VNPay window before completing payment
+        /// - Payment still in Processing status (timeout not reached)
+        /// - Customer calls this endpoint again with same orderId
+        /// - Returns existing payment URL (continues same payment session)
+        /// - Response includes `isRetry: true`
+        /// 
+        /// **Scenario B - After Failed Payment:**
+        /// - Payment fails or times out (Status: Failed, Order: Cancelled)
+        /// - Cart items automatically restored
+        /// - Customer must create new order from cart
+        /// - Cannot retry payment for cancelled orders
         /// 
         /// **On Payment Success:**
         /// - Order status → Processing
@@ -186,18 +202,41 @@ namespace Tekno.Api.Controllers
         /// **On Payment Failure/Timeout:**
         /// - Order status → Cancelled
         /// - Cart items → Restored
-        /// - User can retry or modify cart
+        /// - User can create new order and retry
         /// 
-        /// Example request:
+        /// Example request (initial payment):
         /// 
         ///     POST /api/payment/process
         ///     {
         ///       "orderId": 123,
         ///       "shippingAddressId": 1,
         ///       "couponCode": "SUMMER2024",
-        ///       "gateway": 0,
-        ///       "method": 1,
+        ///       "gateway": 3,
+        ///       "method": 3,
         ///       "returnUrl": "http://localhost:3000/payment/result"
+        ///     }
+        /// 
+        /// Response (initial):
+        ///     {
+        ///       "paymentUrl": "https://sandbox.vnpayment.vn/...",
+        ///       "isRetry": false
+        ///     }
+        /// 
+        /// Example request (retry - same orderId):
+        /// 
+        ///     POST /api/payment/process
+        ///     {
+        ///       "orderId": 123,
+        ///       "shippingAddressId": 1,
+        ///       "gateway": 3,
+        ///       "method": 3,
+        ///       "returnUrl": "http://localhost:3000/payment/result"
+        ///     }
+        /// 
+        /// Response (retry):
+        ///     {
+        ///       "paymentUrl": "https://sandbox.vnpayment.vn/...",
+        ///       "isRetry": true
         ///     }
         /// 
         /// Payment Gateways:
@@ -211,7 +250,14 @@ namespace Tekno.Api.Controllers
         /// - 4 = EWallet
         /// - 5 = Cash (COD)
         /// 
+        /// Error Responses:
+        /// - 400: Order not in Pending status (cancelled/completed)
+        /// - 400: Order already has completed payment
+        /// - 404: Order not found
+        /// - 401: User not authenticated or order doesn't belong to user
+        /// 
         /// Response includes paymentUrl - redirect customer to complete payment.
+        /// isRetry flag indicates whether this is a retry attempt (true) or new payment (false).
         /// </remarks>
         /// <param name="request">Payment processing request with order ID, shipping address, coupon, gateway, and method</param>
         /// <returns>Payment response with payment URL to redirect customer</returns>
@@ -265,7 +311,7 @@ namespace Tekno.Api.Controllers
         /// 
         /// vs ReturnUrl: IPN is reliable server callback, ReturnUrl is browser redirect for UX
         /// </summary>
-        [HttpGet("vnpay/IPN")]
+        [HttpGet("vnpay/ipn")]
         [HttpGet("/api/v1/payments/vnpay-ipn")]
         [AllowAnonymous]
         public async Task<IActionResult> VNPayIPN()
@@ -274,18 +320,50 @@ namespace Tekno.Api.Controllers
             {
                 _logger.LogInformation("VNPay IPN received: {QueryString}", Request.QueryString.Value);
 
-                // Note: IPN processing is now handled in the service
-                // This controller action just needs to respond to VNPay
+                // Read query string parameters into dictionary
+                var queryDict = Request.Query.ToDictionary(k => k.Key, v => v.Value.ToString());
 
-                // Respond to VNPay according to their specification
-                return Ok(new { RspCode = "00", Message = "Confirm Success" });
+                // Extract transaction id
+                string transactionId = queryDict.TryGetValue("vnp_TxnRef", out var txn) ? txn : string.Empty;
+
+                if (string.IsNullOrEmpty(transactionId))
+                {
+                    _logger.LogWarning("VNPay IPN called without transaction id");
+                    return Ok(new { RspCode = "99", Message = "Missing transaction id" });
+                }
+
+                // Process the callback
+                try
+                {
+                    var callback = new PaymentCallbackDto
+                    {
+                        TransactionId = transactionId,
+                        CallbackData = queryDict
+                    };
+
+                    var result = await _paymentService.HandlePaymentCallbackAsync(callback);
+
+                    _logger.LogInformation(
+                        "VNPay IPN processed successfully for {TransactionId}. Status: {Status}",
+                        transactionId, result.Status);
+
+                    // Respond to VNPay according to their specification
+                    return Ok(new { RspCode = "00", Message = "Confirm Success" });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "VNPay IPN callback processing failed for {TransactionId}", transactionId);
+                    
+                    // Tell VNPay to retry (RspCode 99 = Unknown error, VNPay will retry)
+                    return Ok(new { RspCode = "99", Message = "System error - please retry" });
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "VNPay IPN processing failed. Query: {Query}", Request.QueryString.Value);
                 
                 // Tell VNPay to retry
-                return Ok(new { RspCode = "99", Message = $"System error" });
+                return Ok(new { RspCode = "99", Message = "System error" });
             }
         }
 
