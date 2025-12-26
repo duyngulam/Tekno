@@ -1,3 +1,7 @@
+import { API_BASE_URL } from "@/lib/apiConfig";
+import { Advertisement, AdvertisementPosition } from "@/type/advertisement";
+import { ApiResponse } from "@/type/share";
+
 export const API_BASE = "http://localhost:5000/api/admin/advertisements";
 
 export const advertisementApi = {
@@ -48,3 +52,37 @@ export const advertisementApi = {
     return fetch(`${API_BASE}/${id}/deactivate`, { method: "PATCH" });
   },
 };
+
+
+// src/services/advertisements.ts
+
+
+export async function getAdvertisementsByPosition(
+  position: AdvertisementPosition,
+  token?: string
+): Promise<Advertisement[]> {
+  const res = await fetch(
+    `${API_BASE_URL}/advertisements/position/${position}`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      // Server Component nên dùng:
+      cache: "no-store",
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch advertisements");
+  }
+
+  const json: ApiResponse<Advertisement[]> = await res.json();
+
+  if (!json.success) {
+    throw new Error(json.message || "API Error");
+  }
+
+  return json.data;
+}

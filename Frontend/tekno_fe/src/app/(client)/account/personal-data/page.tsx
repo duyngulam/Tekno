@@ -7,21 +7,46 @@ import {
 } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import {
+  CirclePlus,
+  Edit,
   MailIcon,
   MapPinHouse,
   Milestone,
   Phone,
+  Plug,
   SquarePen,
   UserRound,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import TitleAccount from "@/components/account/TitleAccount";
-import { getProfile, Profile } from "@/services/profile";
+import { getProfile, getProfileAddresses, Profile } from "@/services/profile";
 import { updateProfileAll } from "@/services/profile";
+import { ProfileAddress } from "@/type/address";
+import { Button } from "@/components/ui/button";
+import EditAddress from "@/components/account/EditAddress";
+import NewAddress from "@/components/account/NewAddress";
 
 export default function Page() {
   const [profile, setProfile] = useState<Profile>();
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [addresses, setAddresses] = useState<ProfileAddress[]>([]);
 
   // Local state để edit
   const [fullname, setFullname] = useState("");
@@ -39,8 +64,6 @@ export default function Page() {
     getProfile(token)
       .then((res) => {
         setProfile(res);
-
-        // Set vào form
         setFullname(res.fullname);
         setEmail(res.email);
         setPhoneNumber(res.phoneNumber);
@@ -51,6 +74,17 @@ export default function Page() {
       .finally(() => {
         setLoading(false);
       });
+
+    // fetch addresses
+    (async () => {
+      try {
+        const list = await getProfileAddresses(token);
+        setAddresses(Array.isArray(list) ? list : []);
+      } catch (e) {
+        console.error("Fetch addresses error:", e);
+        setAddresses([]);
+      }
+    })();
   }, []);
 
   if (loading) return <p>Loading...</p>;
@@ -186,7 +220,73 @@ export default function Page() {
           </button>
         )}
       </div>
-      <div>Address</div>
+      {/* Addresses list */}
+      <div className="mt-2">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold">My Addresses</h3>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger className="text-md border rounded-md p-3 border-gray-400">
+              <div className="flex items-center gap-2">
+                <CirclePlus className="w-5 h-5" />
+                New address
+              </div>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create new address</DialogTitle>
+                <DialogDescription>
+                  <NewAddress onClose={() => setOpen(false)} />
+                </DialogDescription>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {addresses.length === 0 ? (
+          <p className="text-sm text-gray-500">No addresses found.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {addresses.map((addr) => (
+              <div
+                key={addr.id}
+                className="border rounded-md p-3 flex flex-col gap-1 bg-white"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">
+                    {addr.recipientName} · {addr.phoneNumber}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {addr.isDefault && (
+                      <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-700">
+                        Default
+                      </span>
+                    )}
+                    <Sheet>
+                      <SheetTrigger className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
+                        Edit
+                      </SheetTrigger>
+                      <SheetContent>
+                        <SheetHeader>
+                          <SheetTitle>Edit address {addr.id} </SheetTitle>
+                          <SheetDescription>
+                            Make changes to your profile here. Click save when
+                            you&apos;re done.
+                          </SheetDescription>
+                        </SheetHeader>
+                        <EditAddress address={addr} />
+                      </SheetContent>
+                    </Sheet>
+                  </div>
+                </div>
+                <div className="text-sm text-gray-700">{addr.addressLine}</div>
+                <div className="text-sm text-gray-500">
+                  {addr.wardName}, {addr.districtName}, {addr.provinceName}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
