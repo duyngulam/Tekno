@@ -11,6 +11,9 @@ using Tekno.Application.Order.Interface;
 using Tekno.Application.Review.DTOs;
 using Tekno.Application.Review.Interface;
 using Tekno.Domain.Review;
+using Tekno.Application.Catalog.Interface;
+using Tekno.Application.Catalog.DTOs.Products;
+using AutoMapper;
 
 namespace Tekno.Application.Review.Services
 {
@@ -19,15 +22,24 @@ namespace Tekno.Application.Review.Services
         private readonly IReviewRepository _reviewRepository;
         private readonly IOrderRepository _orderRepository;
         private readonly IAppLogger<ReviewService> _logger;
+        private readonly IProductRepository _productRepository;
+        private readonly IElasticProductService _elasticService;
+        private readonly IMapper _mapper;
 
         public ReviewService(
             IReviewRepository reviewRepository,
             IOrderRepository orderRepository,
-            IAppLogger<ReviewService> logger)
+            IAppLogger<ReviewService> logger,
+            IProductRepository productRepository,
+            IElasticProductService elasticService,
+            IMapper mapper)
         {
             _reviewRepository = reviewRepository;
             _orderRepository = orderRepository;
             _logger = logger;
+            _productRepository = productRepository;
+            _elasticService = elasticService;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -121,6 +133,10 @@ namespace Tekno.Application.Review.Services
                 "User {UserId} created review {ReviewId} for product {ProductId} (Order: {OrderId})",
                 userId, review.Id, dto.ProductId, order.Id);
 
+            // Re-index product in Elasticsearch to refresh rating (approved reviews only affect rating,
+            // but indexing ensures search data is up-to-date when admin approves the review later)
+            await TryIndexProductAsync(dto.ProductId);
+
             return await MapToReviewDtoAsync(review);
         }
 
@@ -148,6 +164,9 @@ namespace Tekno.Application.Review.Services
             _logger.LogInformation(
                 "User {UserId} updated review {ReviewId}",
                 userId, reviewId);
+
+            // Re-index product so Elasticsearch rating is updated
+            await TryIndexProductAsync(review.ProductId);
 
             return await MapToReviewDtoAsync(review);
         }
@@ -177,6 +196,9 @@ namespace Tekno.Application.Review.Services
                 _logger.LogInformation(
                     "User {UserId} deleted review {ReviewId}",
                     userId, reviewId);
+
+                // Re-index product to update rating
+                await TryIndexProductAsync(review.ProductId);
             }
 
             return success;
@@ -286,6 +308,9 @@ namespace Tekno.Application.Review.Services
                 "Admin {AdminId} approved review {ReviewId}",
                 adminUserId, reviewId);
 
+            // Re-index product to include this approved review in rating
+            await TryIndexProductAsync(review.ProductId);
+
             return await MapToReviewDtoAsync(review);
         }
 
@@ -300,6 +325,9 @@ namespace Tekno.Application.Review.Services
             _logger.LogInformation(
                 "Admin {AdminId} rejected review {ReviewId}",
                 adminUserId, reviewId);
+
+            // Re-index product to remove this review from rating if it was approved before
+            await TryIndexProductAsync(review.ProductId);
 
             return await MapToReviewDtoAsync(review);
         }
@@ -363,6 +391,23 @@ namespace Tekno.Application.Review.Services
                 RatingDistribution = distribution.OrderByDescending(kv => kv.Key).ToDictionary(kv => kv.Key, kv => kv.Value),
                 VerifiedPurchaseCount = reviews.Count(r => r.IsVerifiedPurchase)
             };
+        }
+
+        private async Task TryIndexProductAsync(int productId)
+        {
+            try
+            {
+                var product = await _productRepository.GetProductByIdAsync(productId);
+                if (product != null)
+                {
+                    var summary = _mapper.Map<ProductSummaryDto>(product);
+                    await _elasticService.IndexProductAsync(summary);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to index product {ProductId} after review change", productId);
+            }
         }
     }
 }
