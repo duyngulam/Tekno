@@ -93,14 +93,12 @@ namespace Tekno.Application.Review.Services
                 throw new InvalidOperationException(canReview.Message);
             }
 
-            // Get the order to mark as verified purchase
-            var order = dto.OrderId.HasValue
-                ? await _orderRepository.GetByIdAsync(dto.OrderId.Value)
-                : await _orderRepository.GetUserOrderForProductAsync(userId, dto.ProductId);
+            // Auto-detect the most recent order for this product
+            var order = await _orderRepository.GetUserOrderForProductAsync(userId, dto.ProductId);
 
             if (order == null || !order.HasPurchasedProduct(dto.ProductId))
             {
-                throw new InvalidOperationException("Invalid order for this product");
+                throw new InvalidOperationException("No valid order found for this product");
             }
 
             // Get variant info from order
@@ -120,8 +118,8 @@ namespace Tekno.Application.Review.Services
             review = await _reviewRepository.CreateAsync(review);
 
             _logger.LogInformation(
-                "User {UserId} created review {ReviewId} for product {ProductId}",
-                userId, review.Id, dto.ProductId);
+                "User {UserId} created review {ReviewId} for product {ProductId} (Order: {OrderId})",
+                userId, review.Id, dto.ProductId, order.Id);
 
             return await MapToReviewDtoAsync(review);
         }
