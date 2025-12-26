@@ -174,7 +174,7 @@ export default function ProductPage() {
               </p>
 
               <div className="flex items-center gap-4">
-                <Select value={sortBy} onValueChange={setSortBy}>
+                <Select aria-label="Sort by" value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue />
                   </SelectTrigger>

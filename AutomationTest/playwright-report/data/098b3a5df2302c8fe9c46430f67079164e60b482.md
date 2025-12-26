@@ -1,0 +1,539 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - button
+          - link "Logo" [ref=e6] [cursor=pointer]:
+            - /url: /
+            - img "Logo" [ref=e7]
+        - generic [ref=e8]:
+          - link "Home" [ref=e10] [cursor=pointer]:
+            - /url: /
+            - text: Home
+          - link "Products" [ref=e12] [cursor=pointer]:
+            - /url: /products?category=smartphone
+            - text: Products
+          - link "Blogs" [ref=e16] [cursor=pointer]:
+            - /url: /blogs
+            - text: Blogs
+          - link "FAQ" [ref=e18] [cursor=pointer]:
+            - /url: /faq
+            - text: FAQ
+          - link "Contact us" [ref=e20] [cursor=pointer]:
+            - /url: /contact-us
+            - text: Contact us
+        - generic [ref=e21]:
+          - img [ref=e23]
+          - link "0" [ref=e27] [cursor=pointer]:
+            - /url: /cart
+            - img [ref=e28]
+            - generic [ref=e31]: "0"
+          - generic [ref=e32]:
+            - button "Đăng nhập" [ref=e33]
+            - separator [ref=e34]
+            - button "Đăng kí" [ref=e35]
+    - main [ref=e36]:
+      - generic [ref=e37]:
+        - navigation [ref=e38]:
+          - link "Home" [ref=e39] [cursor=pointer]:
+            - /url: /
+          - generic [ref=e40]:
+            - img [ref=e41]
+            - generic [ref=e43]: products
+        - generic [ref=e44]:
+          - link "smartphone Smartphone" [ref=e45] [cursor=pointer]:
+            - /url: /products?category=smartphone
+            - img "smartphone" [ref=e46]
+            - generic [ref=e47]: Smartphone
+          - link "tablet Tablet" [ref=e48] [cursor=pointer]:
+            - /url: /products?category=tablet
+            - img "tablet" [ref=e49]
+            - generic [ref=e50]: Tablet
+          - link "camera Camera" [ref=e51] [cursor=pointer]:
+            - /url: /products?category=camera
+            - img "camera" [ref=e52]
+            - generic [ref=e53]: Camera
+          - link "computer-office Computer & Office" [ref=e54] [cursor=pointer]:
+            - /url: /products?category=computer-office
+            - img "computer-office" [ref=e55]
+            - generic [ref=e56]: Computer & Office
+          - link "gaming Gaming" [ref=e57] [cursor=pointer]:
+            - /url: /products?category=gaming
+            - img "gaming" [ref=e58]
+            - generic [ref=e59]: Gaming
+          - link "monitor Monitor" [ref=e60] [cursor=pointer]:
+            - /url: /products?category=monitor
+            - img "monitor" [ref=e61]
+            - generic [ref=e62]: Monitor
+          - link "cpu CPU" [ref=e63] [cursor=pointer]:
+            - /url: /products?category=cpu
+            - img "cpu" [ref=e64]
+            - generic [ref=e65]: CPU
+          - link "gpu GPU" [ref=e66] [cursor=pointer]:
+            - /url: /products?category=gpu
+            - img "gpu" [ref=e67]
+            - generic [ref=e68]: GPU
+          - link "ram RAM" [ref=e69] [cursor=pointer]:
+            - /url: /products?category=ram
+            - img "ram" [ref=e70]
+            - generic [ref=e71]: RAM
+          - link "storage Storage (SSD / HDD)" [ref=e72] [cursor=pointer]:
+            - /url: /products?category=storage
+            - img "storage" [ref=e73]
+            - generic [ref=e74]: Storage (SSD / HDD)
+          - link "mouse Mouse" [ref=e75] [cursor=pointer]:
+            - /url: /products?category=mouse
+            - img "mouse" [ref=e76]
+            - generic [ref=e77]: Mouse
+          - link "headphone Headphone / Headset" [ref=e78] [cursor=pointer]:
+            - /url: /products?category=headphone
+            - img "headphone" [ref=e79]
+            - generic [ref=e80]: Headphone / Headset
+          - link "charger-cable Charger & Cable" [ref=e81] [cursor=pointer]:
+            - /url: /products?category=charger-cable
+            - img "charger-cable" [ref=e82]
+            - generic [ref=e83]: Charger & Cable
+          - link "case-cover Case & Cover" [ref=e84] [cursor=pointer]:
+            - /url: /products?category=case-cover
+            - img "case-cover" [ref=e85]
+            - generic [ref=e86]: Case & Cover
+          - link "accessory Accessory" [ref=e87] [cursor=pointer]:
+            - /url: /products?category=accessory
+            - img "accessory" [ref=e88]
+            - generic [ref=e89]: Accessory
+          - link "Xbox" [ref=e90] [cursor=pointer]:
+            - /url: /products?category=xbox
+            - generic [ref=e91]: Xbox
+          - link "keyboard Keyboard" [ref=e92] [cursor=pointer]:
+            - /url: /products?category=keyboard
+            - img "keyboard" [ref=e93]
+            - generic [ref=e94]: Keyboard
+          - link "laptop Laptop" [ref=e95] [cursor=pointer]:
+            - /url: /products?category=laptop
+            - img "laptop" [ref=e96]
+            - generic [ref=e97]: Laptop
+          - link "Charm" [ref=e98] [cursor=pointer]:
+            - /url: /products?category=charm
+            - generic [ref=e99]: Charm
+        - generic [ref=e100]:
+          - complementary [ref=e103]:
+            - generic [ref=e104]:
+              - generic [ref=e105]:
+                - heading "Filters" [level=3] [ref=e106]:
+                  - img [ref=e107]
+                  - text: Filters
+                - button "Clear All" [ref=e108]
+              - generic [ref=e109]:
+                - generic [ref=e110]:
+                  - heading "Brand" [level=3] [ref=e111]:
+                    - button "Brand" [expanded] [ref=e112]:
+                      - text: Brand
+                      - img [ref=e113]
+                  - region "Brand" [ref=e115]:
+                    - generic [ref=e116]:
+                      - generic [ref=e117]:
+                        - checkbox "Dell" [ref=e118]
+                        - generic [ref=e119]: Dell
+                      - generic [ref=e120]:
+                        - checkbox "Apple" [ref=e121]
+                        - generic [ref=e122]: Apple
+                      - generic [ref=e123]:
+                        - checkbox "Asus" [ref=e124]
+                        - generic [ref=e125]: Asus
+                      - generic [ref=e126]:
+                        - checkbox "HP" [ref=e127]
+                        - generic [ref=e128]: HP
+                      - generic [ref=e129]:
+                        - checkbox "Lenovo" [ref=e130]
+                        - generic [ref=e131]: Lenovo
+                      - generic [ref=e132]:
+                        - checkbox "Samsung" [ref=e133]
+                        - generic [ref=e134]: Samsung
+                      - generic [ref=e135]:
+                        - checkbox "Google" [ref=e136]
+                        - generic [ref=e137]: Google
+                      - generic [ref=e138]:
+                        - checkbox "Xiaomi" [ref=e139]
+                        - generic [ref=e140]: Xiaomi
+                      - generic [ref=e141]:
+                        - checkbox "OnePlus" [ref=e142]
+                        - generic [ref=e143]: OnePlus
+                      - generic [ref=e144]:
+                        - checkbox "LG" [ref=e145]
+                        - generic [ref=e146]: LG
+                      - generic [ref=e147]:
+                        - checkbox "Logitech" [ref=e148]
+                        - generic [ref=e149]: Logitech
+                      - generic [ref=e150]:
+                        - checkbox "Razer" [ref=e151]
+                        - generic [ref=e152]: Razer
+                      - generic [ref=e153]:
+                        - checkbox "Anker" [ref=e154]
+                        - generic [ref=e155]: Anker
+                      - generic [ref=e156]:
+                        - checkbox "Baseus" [ref=e157]
+                        - generic [ref=e158]: Baseus
+                      - generic [ref=e159]:
+                        - checkbox "Spigen" [ref=e160]
+                        - generic [ref=e161]: Spigen
+                      - generic [ref=e162]:
+                        - checkbox "UAG" [ref=e163]
+                        - generic [ref=e164]: UAG
+                      - generic [ref=e165]:
+                        - checkbox "Vivo" [ref=e166]
+                        - generic [ref=e167]: Vivo
+                - generic [ref=e168]:
+                  - heading "Price" [level=3] [ref=e169]:
+                    - button "Price" [expanded] [ref=e170]:
+                      - text: Price
+                      - img [ref=e171]
+                  - region "Price" [ref=e173]:
+                    - generic [ref=e174]:
+                      - generic [ref=e175]:
+                        - spinbutton [ref=e176]: "500"
+                        - spinbutton [ref=e177]: "2000"
+                      - slider "Minimum" [ref=e182]
+          - generic [ref=e183]:
+            - generic [ref=e184]:
+              - paragraph [ref=e185]: Showing 26 results
+              - combobox [ref=e187]:
+                - generic: Newest First
+                - img [ref=e188]
+            - generic [ref=e190]:
+              - link "SBTC 15 SBTC 200.000đ 200.000đ 0" [ref=e192] [cursor=pointer]:
+                - /url: /products/sbtc
+                - generic [ref=e193]:
+                  - img "SBTC" [ref=e195]
+                  - button [ref=e197]:
+                    - img [ref=e198]
+                  - paragraph [ref=e200]: "15"
+                  - generic [ref=e201]:
+                    - paragraph [ref=e202]: SBTC
+                    - generic [ref=e203]:
+                      - generic [ref=e204]:
+                        - generic [ref=e205]: 200.000đ
+                        - generic [ref=e206]: 200.000đ
+                      - generic [ref=e207]:
+                        - img [ref=e208]
+                        - generic [ref=e210]: "0"
+              - link "Sting 15 Sting 7.990.000đ 7.990.000đ 0" [ref=e212] [cursor=pointer]:
+                - /url: /products/string
+                - generic [ref=e213]:
+                  - img "Sting" [ref=e215]
+                  - button [ref=e217]:
+                    - img [ref=e218]
+                  - paragraph [ref=e220]: "15"
+                  - generic [ref=e221]:
+                    - paragraph [ref=e222]: Sting
+                    - generic [ref=e223]:
+                      - generic [ref=e224]:
+                        - generic [ref=e225]: 7.990.000đ
+                        - generic [ref=e226]: 7.990.000đ
+                      - generic [ref=e227]:
+                        - img [ref=e228]
+                        - generic [ref=e230]: "0"
+              - link "Dell XPS 13 15 Dell XPS 13 25.990.000đ 25.990.000đ 0" [ref=e232] [cursor=pointer]:
+                - /url: /products/dell-xps-13
+                - generic [ref=e233]:
+                  - img "Dell XPS 13" [ref=e235]
+                  - button [ref=e237]:
+                    - img [ref=e238]
+                  - paragraph [ref=e240]: "15"
+                  - generic [ref=e241]:
+                    - paragraph [ref=e242]: Dell XPS 13
+                    - generic [ref=e243]:
+                      - generic [ref=e244]:
+                        - generic [ref=e245]: 25.990.000đ
+                        - generic [ref=e246]: 25.990.000đ
+                      - generic [ref=e247]:
+                        - img [ref=e248]
+                        - generic [ref=e250]: "0"
+              - link "Lenovo ThinkPad X1 Carbon Gen 11 15 Lenovo ThinkPad X1 Carbon Gen 11 48.990.000đ 48.990.000đ 0" [ref=e252] [cursor=pointer]:
+                - /url: /products/thinkpad-x1-carbon-gen11
+                - generic [ref=e253]:
+                  - img "Lenovo ThinkPad X1 Carbon Gen 11" [ref=e255]
+                  - button [ref=e257]:
+                    - img [ref=e258]
+                  - paragraph [ref=e260]: "15"
+                  - generic [ref=e261]:
+                    - paragraph [ref=e262]: Lenovo ThinkPad X1 Carbon Gen 11
+                    - generic [ref=e263]:
+                      - generic [ref=e264]:
+                        - generic [ref=e265]: 48.990.000đ
+                        - generic [ref=e266]: 48.990.000đ
+                      - generic [ref=e267]:
+                        - img [ref=e268]
+                        - generic [ref=e270]: "0"
+              - link "iPhone 15 Pro Max 15 iPhone 15 Pro Max 33.990.000đ 33.990.000đ 0" [ref=e272] [cursor=pointer]:
+                - /url: /products/iphone-15-pro-max
+                - generic [ref=e273]:
+                  - img "iPhone 15 Pro Max" [ref=e275]
+                  - button [ref=e277]:
+                    - img [ref=e278]
+                  - paragraph [ref=e280]: "15"
+                  - generic [ref=e281]:
+                    - paragraph [ref=e282]: iPhone 15 Pro Max
+                    - generic [ref=e283]:
+                      - generic [ref=e284]:
+                        - generic [ref=e285]: 33.990.000đ
+                        - generic [ref=e286]: 33.990.000đ
+                      - generic [ref=e287]:
+                        - img [ref=e288]
+                        - generic [ref=e290]: "0"
+              - link "Samsung Galaxy S24 Ultra 15 Samsung Galaxy S24 Ultra 29.990.000đ 29.990.000đ 0" [ref=e292] [cursor=pointer]:
+                - /url: /products/samsung-galaxy-s24-ultra
+                - generic [ref=e293]:
+                  - img "Samsung Galaxy S24 Ultra" [ref=e295]
+                  - button [ref=e297]:
+                    - img [ref=e298]
+                  - paragraph [ref=e300]: "15"
+                  - generic [ref=e301]:
+                    - paragraph [ref=e302]: Samsung Galaxy S24 Ultra
+                    - generic [ref=e303]:
+                      - generic [ref=e304]:
+                        - generic [ref=e305]: 29.990.000đ
+                        - generic [ref=e306]: 29.990.000đ
+                      - generic [ref=e307]:
+                        - img [ref=e308]
+                        - generic [ref=e310]: "0"
+              - link "Google Pixel 8 Pro 15 Google Pixel 8 Pro 24.990.000đ 24.990.000đ 0" [ref=e312] [cursor=pointer]:
+                - /url: /products/google-pixel-8-pro
+                - generic [ref=e313]:
+                  - img "Google Pixel 8 Pro" [ref=e315]
+                  - button [ref=e317]:
+                    - img [ref=e318]
+                  - paragraph [ref=e320]: "15"
+                  - generic [ref=e321]:
+                    - paragraph [ref=e322]: Google Pixel 8 Pro
+                    - generic [ref=e323]:
+                      - generic [ref=e324]:
+                        - generic [ref=e325]: 24.990.000đ
+                        - generic [ref=e326]: 24.990.000đ
+                      - generic [ref=e327]:
+                        - img [ref=e328]
+                        - generic [ref=e330]: "0"
+              - link "Xiaomi 14 15 Xiaomi 14 18.990.000đ 18.990.000đ 0" [ref=e332] [cursor=pointer]:
+                - /url: /products/xiaomi-14
+                - generic [ref=e333]:
+                  - img "Xiaomi 14" [ref=e335]
+                  - button [ref=e337]:
+                    - img [ref=e338]
+                  - paragraph [ref=e340]: "15"
+                  - generic [ref=e341]:
+                    - paragraph [ref=e342]: Xiaomi 14
+                    - generic [ref=e343]:
+                      - generic [ref=e344]:
+                        - generic [ref=e345]: 18.990.000đ
+                        - generic [ref=e346]: 18.990.000đ
+                      - generic [ref=e347]:
+                        - img [ref=e348]
+                        - generic [ref=e350]: "0"
+              - link "OnePlus 12 15 OnePlus 12 19.990.000đ 19.990.000đ 0" [ref=e352] [cursor=pointer]:
+                - /url: /products/oneplus-12
+                - generic [ref=e353]:
+                  - img "OnePlus 12" [ref=e355]
+                  - button [ref=e357]:
+                    - img [ref=e358]
+                  - paragraph [ref=e360]: "15"
+                  - generic [ref=e361]:
+                    - paragraph [ref=e362]: OnePlus 12
+                    - generic [ref=e363]:
+                      - generic [ref=e364]:
+                        - generic [ref=e365]: 19.990.000đ
+                        - generic [ref=e366]: 19.990.000đ
+                      - generic [ref=e367]:
+                        - img [ref=e368]
+                        - generic [ref=e370]: "0"
+              - link "iPad Pro M2 11 inch 15 iPad Pro M2 11 inch 24.990.000đ 24.990.000đ 0" [ref=e372] [cursor=pointer]:
+                - /url: /products/ipad-pro-m2-11
+                - generic [ref=e373]:
+                  - img "iPad Pro M2 11 inch" [ref=e375]
+                  - button [ref=e377]:
+                    - img [ref=e378]
+                  - paragraph [ref=e380]: "15"
+                  - generic [ref=e381]:
+                    - paragraph [ref=e382]: iPad Pro M2 11 inch
+                    - generic [ref=e383]:
+                      - generic [ref=e384]:
+                        - generic [ref=e385]: 24.990.000đ
+                        - generic [ref=e386]: 24.990.000đ
+                      - generic [ref=e387]:
+                        - img [ref=e388]
+                        - generic [ref=e390]: "0"
+              - link "Samsung Galaxy Tab S9 15 Samsung Galaxy Tab S9 19.990.000đ 19.990.000đ 0" [ref=e392] [cursor=pointer]:
+                - /url: /products/samsung-galaxy-tab-s9
+                - generic [ref=e393]:
+                  - img "Samsung Galaxy Tab S9" [ref=e395]
+                  - button [ref=e397]:
+                    - img [ref=e398]
+                  - paragraph [ref=e400]: "15"
+                  - generic [ref=e401]:
+                    - paragraph [ref=e402]: Samsung Galaxy Tab S9
+                    - generic [ref=e403]:
+                      - generic [ref=e404]:
+                        - generic [ref=e405]: 19.990.000đ
+                        - generic [ref=e406]: 19.990.000đ
+                      - generic [ref=e407]:
+                        - img [ref=e408]
+                        - generic [ref=e410]: "0"
+              - link "Xiaomi Pad 6 15 Xiaomi Pad 6 8.990.000đ 8.990.000đ 0" [ref=e412] [cursor=pointer]:
+                - /url: /products/xiaomi-pad-6
+                - generic [ref=e413]:
+                  - img "Xiaomi Pad 6" [ref=e415]
+                  - button [ref=e417]:
+                    - img [ref=e418]
+                  - paragraph [ref=e420]: "15"
+                  - generic [ref=e421]:
+                    - paragraph [ref=e422]: Xiaomi Pad 6
+                    - generic [ref=e423]:
+                      - generic [ref=e424]:
+                        - generic [ref=e425]: 8.990.000đ
+                        - generic [ref=e426]: 8.990.000đ
+                      - generic [ref=e427]:
+                        - img [ref=e428]
+                        - generic [ref=e430]: "0"
+              - link "Dell UltraSharp U2723DE 15 Dell UltraSharp U2723DE 17.990.000đ 17.990.000đ 0" [ref=e432] [cursor=pointer]:
+                - /url: /products/dell-ultrasharp-u2723de
+                - generic [ref=e433]:
+                  - img "Dell UltraSharp U2723DE" [ref=e435]
+                  - button [ref=e437]:
+                    - img [ref=e438]
+                  - paragraph [ref=e440]: "15"
+                  - generic [ref=e441]:
+                    - paragraph [ref=e442]: Dell UltraSharp U2723DE
+                    - generic [ref=e443]:
+                      - generic [ref=e444]:
+                        - generic [ref=e445]: 17.990.000đ
+                        - generic [ref=e446]: 17.990.000đ
+                      - generic [ref=e447]:
+                        - img [ref=e448]
+                        - generic [ref=e450]: "0"
+              - link "LG UltraGear 27GN800-B 15 LG UltraGear 27GN800-B 8.490.000đ 8.490.000đ 0" [ref=e452] [cursor=pointer]:
+                - /url: /products/lg-ultragear-27gn800
+                - generic [ref=e453]:
+                  - img "LG UltraGear 27GN800-B" [ref=e455]
+                  - button [ref=e457]:
+                    - img [ref=e458]
+                  - paragraph [ref=e460]: "15"
+                  - generic [ref=e461]:
+                    - paragraph [ref=e462]: LG UltraGear 27GN800-B
+                    - generic [ref=e463]:
+                      - generic [ref=e464]:
+                        - generic [ref=e465]: 8.490.000đ
+                        - generic [ref=e466]: 8.490.000đ
+                      - generic [ref=e467]:
+                        - img [ref=e468]
+                        - generic [ref=e470]: "0"
+              - link "Logitech MX Keys 15 Logitech MX Keys 2.990.000đ 2.990.000đ 0" [ref=e472] [cursor=pointer]:
+                - /url: /products/logitech-mx-keys
+                - generic [ref=e473]:
+                  - img "Logitech MX Keys" [ref=e475]
+                  - button [ref=e477]:
+                    - img [ref=e478]
+                  - paragraph [ref=e480]: "15"
+                  - generic [ref=e481]:
+                    - paragraph [ref=e482]: Logitech MX Keys
+                    - generic [ref=e483]:
+                      - generic [ref=e484]:
+                        - generic [ref=e485]: 2.990.000đ
+                        - generic [ref=e486]: 2.990.000đ
+                      - generic [ref=e487]:
+                        - img [ref=e488]
+                        - generic [ref=e490]: "0"
+            - navigation "pagination" [ref=e491]:
+              - list [ref=e492]:
+                - listitem [ref=e493]:
+                  - link "Go to previous page" [ref=e494] [cursor=pointer]:
+                    - /url: "#"
+                    - img
+                    - generic [ref=e495]: Previous
+                - listitem [ref=e496]:
+                  - link "1" [ref=e497] [cursor=pointer]:
+                    - /url: "#"
+                - listitem [ref=e498]:
+                  - link "Go to next page" [ref=e499] [cursor=pointer]:
+                    - /url: "#"
+                    - generic [ref=e500]: Next
+                    - img
+    - contentinfo [ref=e501]:
+      - generic [ref=e502]:
+        - generic [ref=e503]:
+          - generic [ref=e504]:
+            - heading "Services" [level=3] [ref=e505]
+            - list [ref=e506]:
+              - listitem [ref=e507]:
+                - link "Bonus program" [ref=e508] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e509]:
+                - link "Gift cards" [ref=e510] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e511]:
+                - link "Credit and payment" [ref=e512] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e513]:
+                - link "Service contracts" [ref=e514] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e515]:
+                - link "Non-cash account" [ref=e516] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e517]:
+                - link "Payment" [ref=e518] [cursor=pointer]:
+                  - /url: "#"
+          - generic [ref=e519]:
+            - heading "Help" [level=3] [ref=e520]
+            - list [ref=e521]:
+              - listitem [ref=e522]:
+                - link "Find an order" [ref=e523] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e524]:
+                - link "Terms of delivery" [ref=e525] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e526]:
+                - link "Exchange and return of goods" [ref=e527] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e528]:
+                - link "Guarantee" [ref=e529] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e530]:
+                - link "Frequently asked questions" [ref=e531] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e532]:
+                - link "Terms of use of the site" [ref=e533] [cursor=pointer]:
+                  - /url: "#"
+          - generic [ref=e534]:
+            - heading "Contact us" [level=3] [ref=e535]
+            - generic [ref=e536]:
+              - paragraph [ref=e537]: 600 Seventh Street, Suite 204
+              - paragraph [ref=e538]: Fort Worth, TX 76104
+              - paragraph [ref=e539]: "Monday - Friday: 9am - 5pm"
+              - paragraph [ref=e540]: "Saturday: 10am - 3pm"
+              - paragraph [ref=e541]: "Email: shop@email.com"
+          - generic [ref=e542]:
+            - heading "Sign up to e-mail and updates" [level=3] [ref=e543]
+            - generic [ref=e544]:
+              - textbox "Email Address" [ref=e545]
+              - button [ref=e546]:
+                - img [ref=e547]
+            - generic [ref=e550]:
+              - link [ref=e551] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e552]
+              - link [ref=e554] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e555]
+              - link [ref=e557] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e558]
+              - link [ref=e561] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e562]
+        - generic [ref=e565]: footer bottom
+    - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e571] [cursor=pointer]:
+    - img [ref=e572]
+  - alert [ref=e575]
+```

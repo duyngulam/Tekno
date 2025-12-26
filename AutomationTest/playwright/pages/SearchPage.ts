@@ -4,54 +4,36 @@ export class SearchPage {
   readonly page: Page;
   readonly searchInput: Locator;
   readonly searchButton: Locator;
-  readonly results: Locator;
-  readonly filterPanel: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    // Flexible selectors - adjust to your app's markup
-    this.searchInput = page.locator('input[name="q"], input[aria-label="Search"], #search-input');
-    this.searchButton = page.locator('button[type="submit"], #search-btn, button:has-text("Search")');
-    this.results = page.locator('.search-result, .result-item, .product-item');
-    this.filterPanel = page.locator('.filters, .filter-panel');
+    this.searchInput = page.locator('input[name="q"], input[type="search"], input[placeholder*="Search"], input[aria-label*="Search"]');
+    this.searchButton = page.locator('button:has-text("Search"), button[aria-label*="search"], button#search-btn');
   }
 
   async goto() {
-    await this.page.goto('/search');
-  }
-
-  async search(query: string) {
-    await this.searchInput.fill(query);
-    await this.searchButton.click();
-    // wait for results or loading to finish
+    // Prefer a dedicated search route if present, otherwise go to products
+    await this.page.goto('/products');
     await this.page.waitForLoadState('networkidle');
   }
 
-  async applyFilter(labelText: string) {
-    // Try checkbox or select filter by visible label
-    const checkbox = this.page.locator(`label:has-text("${labelText}") input[type=checkbox]");
-    try {
-      await checkbox.first().check({ force: true });
+  async search(query: string) {
+    // Try native search input first
+    if (await this.searchInput.count() > 0) {
+      await this.searchInput.fill(query);
+      if (await this.searchButton.count() > 0) {
+        await this.searchButton.click();
+      } else {
+        // press Enter if no explicit button
+        await this.searchInput.press('Enter');
+      }
       await this.page.waitForLoadState('networkidle');
       return;
-    } catch (e) {
-      // fallback: click a filter button/link
-      const btn = this.page.locator(`button:has-text("${labelText}"), a:has-text("${labelText}")`);
-      await btn.first().click();
-      await this.page.waitForLoadState('networkidle');
     }
-  }
 
-  async resultsCount() {
-    return await this.results.count();
-  }
-
-  async firstResultTitle() {
-    const el = this.results.first();
-    try {
-      return await el.innerText();
-    } catch (e) {
-      return '';
-    }
+    // fallback: navigate to products with keyword query param (app may support it)
+    const url = `/products?keyword=${encodeURIComponent(query)}`;
+    await this.page.goto(url);
+    await this.page.waitForLoadState('networkidle');
   }
 }

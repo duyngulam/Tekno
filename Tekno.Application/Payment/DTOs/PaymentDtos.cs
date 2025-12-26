@@ -50,6 +50,11 @@ namespace Tekno.Application.Payment.DTOs
         public PaymentStatus Status { get; set; }
         public decimal TotalAmount { get; set; }
         public int ItemsCount { get; set; }
+        
+        /// <summary>
+        /// Indicates whether this is a retry of a previous failed/timed-out payment
+        /// </summary>
+        public bool IsRetry { get; set; }
     }
 
     /// <summary>
