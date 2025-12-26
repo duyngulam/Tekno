@@ -51,16 +51,12 @@ export type MyPaymentsResponse = {
 };
 
 export type PaymentPayload = {
+  orderId: number
   shippingAddressId: number;
-  gateway: number;        // ví dụ: 0 = VNPay, 1 = Momo (tuỳ backend)
-  method: number;         // ví dụ: 1 = Credit Card
-  couponCode?: string;    // optional
-  note?: string;          // optional
+  gateway: number;     
+  method: number;        
+  couponCode?: string;   
   returnUrl: string;
-  selectedItems: {
-    variantId: number;
-    quantity: number;
-  }[];
 };
 export type PaymentProcessResponse = {
   orderId: number;

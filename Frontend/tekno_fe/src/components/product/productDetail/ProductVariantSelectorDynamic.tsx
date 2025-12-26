@@ -71,7 +71,7 @@ export default function ProductVariantSelectorDynamic({
                   "px-4 py-2 rounded-md",
                   selectedAttrs[attrName] === value
                     ? "border-primary text-primary"
-                    : "border-gray-300"
+                    : "border-gray-300 text-gray-700"
                 )}
               >
                 {value}

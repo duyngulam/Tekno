@@ -28,3 +28,20 @@ export type OrderItem = {
   product: Product;
   variant: ProductVariant;
 };
+
+export type CreateOrderRequest = {
+  note?: string;
+  selectedItems: {
+    variantId: number;
+    quantity: number;
+  }[];
+};
+
+export type CreateOrderResponse = {
+    orderId: number;
+    orderNumber: string;
+    totalAmount: number;
+    itemsCount: number;
+    status: string;
+    note: string;
+};

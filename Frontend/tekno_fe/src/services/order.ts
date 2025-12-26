@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "@/lib/apiConfig";
-import { Order, OrderHistoryResponse } from "@/type/order";
+import { CreateOrderRequest, CreateOrderResponse, Order, OrderHistoryResponse } from "@/type/order";
 import { ApiResponse } from "@/type/share";
 
 export async function fetchOrderHistory(
@@ -42,6 +42,23 @@ export async function fetchOrderHistory(
   return json.data;
 }
 
+export async function getOrderByOrderId(token: string, orderId: number): Promise<Order> {
+  const res = await fetch(`${API_BASE_URL}/orders/by-id/${orderId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
+
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json?.message || "Failed to fetch order by id");
+
+  // API có thể trả về { data: Order } hoặc trực tiếp Order
+  return (json?.data ?? json) as Order;
+}
+
 /**
  * GET /api/orders/by-id/{orderId}
  * Trả về chi tiết đơn hàng
@@ -61,4 +78,24 @@ export async function getOrderByOrderNumber(token: string, orderNumber: string):
 
   // API có thể trả về { data: Order } hoặc trực tiếp Order
   return (json?.data ?? json) as Order;
+}
+
+export async function createOrder(
+  payload: CreateOrderRequest,
+  token: string
+): Promise<ApiResponse<CreateOrderResponse>> {
+  const res = await fetch(`${API_BASE_URL}/orders/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error("Create order failed");
+  }
+
+  return res.json();
 }

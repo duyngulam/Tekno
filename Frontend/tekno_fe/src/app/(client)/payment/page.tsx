@@ -26,44 +26,48 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ProfileAddress } from "@/type/address";
 import { getProfileAddresses } from "@/services/profile";
 import { toast } from "sonner";
-
-type OrderItem = {
-  id: string | number;
-  name: string;
-  price: number;
-  qty: number;
-  image: string;
-  color?: string;
-};
+import { useSearchParams } from "next/navigation";
+import { getOrderByOrderId } from "@/services/order";
+import { OrderItem } from "@/type/order";
+import { log } from "console";
 
 export default function PaymentPage() {
-  // mock order items (replace with real cart state)
-  const [items] = useState<OrderItem[]>([
-    {
-      id: 1,
-      name: "MacBook Pro M2 MNEJ3 2022 LLA 13.3 inch",
-      price: 433.0,
-      qty: 1,
-      image: "/images/sample/macbook.jpg",
-      color: "Black",
-    },
-    {
-      id: 2,
-      name: "Hardcase 13-15 inch Laptop Case Silicone",
-      price: 35.25,
-      qty: 1,
-      image: "/images/sample/case.jpg",
-      color: "Blue",
-    },
-    {
-      id: 3,
-      name: "Laptop Privacy Screen for 13 inch MacBook",
-      price: 33.58,
-      qty: 1,
-      image: "/images/sample/privacy.jpg",
-      color: "Black",
-    },
-  ]);
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get("orderId");
+
+  // remove mock
+  const [items, setItems] = useState<OrderItem[]>([]);
+  const [loadingOrder, setLoadingOrder] = useState(true);
+  const [orderTotal, setOrderTotal] = useState<number>(0);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!orderId) return;
+      try {
+        setLoadingOrder(true);
+        const token = localStorage.getItem("token") || "";
+        const res = await getOrderByOrderId(token, Number(orderId));
+        // normalize response
+
+        console.log(res);
+
+        const order = res;
+        const list = order.items as OrderItem[];
+        if (mounted) {
+          setItems(list);
+          setOrderTotal(Number(order.totalAmount ?? 0));
+        }
+      } catch (e) {
+        console.error("Fetch order by id error:", e);
+      } finally {
+        if (mounted) setLoadingOrder(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [orderId]);
 
   // discount code
   const [code, setCode] = useState("");
@@ -103,10 +107,8 @@ export default function PaymentPage() {
     (async () => {
       try {
         const data = await getPaymentGateways();
-        // const available = data.filter((g) => g.available);
         setGateways(data);
-        if (data.length && !paymentMethod)
-          setPaymentMethod(data[0].id.toString());
+        if (data.length && !paymentMethod) setPaymentMethod(String(data[0].id));
       } catch (e) {
         console.error("Fetch gateways error", e);
       }
@@ -119,14 +121,17 @@ export default function PaymentPage() {
   // shipment cost (mock)
   const shipmentCost = 22.5;
 
+  // recompute subtotal from fetched items
   const subtotal = useMemo(
-    () => items.reduce((sum, it) => sum + it.price * it.qty, 0),
+    () => items.reduce((sum, it) => sum + it.price * it.quantity, 0),
     [items]
   );
-  const grandTotal = useMemo(
-    () => Math.max(0, subtotal - appliedDiscount + shipmentCost),
-    [subtotal, appliedDiscount, shipmentCost]
-  );
+
+  // prefer backend total if present; otherwise compute
+  const grandTotal = useMemo(() => {
+    const computed = Math.max(0, subtotal - appliedDiscount + shipmentCost);
+    return orderTotal > 0 ? orderTotal : computed;
+  }, [orderTotal, subtotal, appliedDiscount, shipmentCost]);
 
   const applyCode = () => {
     // Simple mock: apply -$11.87 if any non-empty code
@@ -137,42 +142,45 @@ export default function PaymentPage() {
     }
   };
 
-  const continueToPay = () => {
-    // Normally redirect to payment gateway step or call backend to create session
-    alert(
-      `Proceeding to pay with ${paymentMethod.toUpperCase()} - Total: $${grandTotal.toFixed(
-        2
-      )}`
-    );
-  };
-
-  const handlePaySelected = async () => {
+  const continueToPay = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || "";
       if (!token) throw new Error("Missing token");
+      if (!orderId) throw new Error("Missing orderId");
+
+      const shippingAddressId = defaultAddress?.id;
+      if (!shippingAddressId) throw new Error("Select a shipping address");
+
+      const gatewayId = Number(paymentMethod || gateways[0]?.id);
+      console.log("Selected gatewayId:", gateways);
+
+      // if (!gatewayId) throw new Error("Select a payment gateway");
+
+      const gw = gateways.find((g) => Number(g.id) === gatewayId);
+      // pick a method id from gateway definition if available; fallback to 1
+      const method =
+        Number((gw as any)?.methods?.[0]?.id) ||
+        Number((gw as any)?.defaultMethod) ||
+        Number((gw as any)?.method) ||
+        1;
 
       const payload: PaymentPayload = {
-        shippingAddressId: 1,
-        gateway: 0,
-        method: 1,
-        returnUrl: "http://localhost:3000/payment/result",
-        selectedItems: [
-          {
-            variantId: 12,
-            quantity: 2,
-          },
-          {
-            variantId: 18,
-            quantity: 1,
-          },
-        ],
+        shippingAddressId,
+        gateway: gatewayId,
+        method,
+        returnUrl: `${window.location.origin}/payment/result?orderId=${orderId}`,
+        orderId: Number(orderId),
       };
 
-      const { paymentUrl } = await processPayment(token, payload);
+      console.log("Payment payload:", payload);
 
+      const { paymentUrl } = await processPayment(token, payload);
+      localStorage.setItem("Payment URL:", paymentUrl);
+
+      if (!paymentUrl) throw new Error("No payment URL returned");
       window.location.href = paymentUrl;
     } catch (e: any) {
-      toast.error(e.message || "Payment error");
+      toast.error(e?.message || "Payment error");
     }
   };
 
@@ -233,7 +241,7 @@ export default function PaymentPage() {
           >
             {gateways.map((g) => (
               <div key={g.id} className="flex items-center gap-2">
-                <RadioGroupItem value={g.name} disabled={!g.available} />
+                <RadioGroupItem value={String(g.id)} disabled={!g.available} />
                 <span>{g.name}</span>
               </div>
             ))}
@@ -253,30 +261,35 @@ export default function PaymentPage() {
             <h3 className="font-semibold text-gray-800 mb-4">Your Order</h3>
 
             <div className="space-y-3 max-h-72 overflow-auto">
-              {items.map((it) => (
-                <div key={it.id} className="flex items-center gap-3">
-                  <div className="w-16 h-16 rounded-md bg-gray-100 overflow-hidden">
-                    <Image
-                      src={it.image}
-                      alt={it.name}
-                      width={64}
-                      height={64}
-                      className="w-16 h-16 object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium line-clamp-2">
-                      {it.name}
+              {loadingOrder ? (
+                <div className="py-3 text-sm text-gray-500">Loading order…</div>
+              ) : (
+                items.map((it) => (
+                  <div key={it.id} className="flex items-center gap-3">
+                    <div className="w-16 h-16 rounded-md bg-gray-100 overflow-hidden">
+                      <Image
+                        src={it.product.primaryImagePath}
+                        alt={it.product.slug}
+                        width={64}
+                        height={64}
+                        className="w-16 h-16 object-cover"
+                      />
                     </div>
-                    <div className="text-xs text-gray-500">
-                      x{it.qty} {it.color ? `· ${it.color}` : ""}
+                    <div className="flex-1">
+                      <div className="text-sm font-medium line-clamp-2">
+                        {it.product.name}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        x{it.quantity}
+                        {/* {it.variant. ? `· ${it.color}` : ""} */}
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-700">
+                      ${it.price.toFixed(2)}
                     </div>
                   </div>
-                  <div className="text-sm text-gray-700">
-                    ${it.price.toFixed(2)}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             {/* Discount code */}

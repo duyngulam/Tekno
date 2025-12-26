@@ -39,6 +39,8 @@ export default async function SingleProductPage({
   const product = await getProductDetail(slug);
   const isStock = product?.variants[0].stock > 0;
 
+  console.log("Product detail fetched:", product);
+
   if (!product) return NotFoundPage;
 
   return (
@@ -51,6 +53,7 @@ export default async function SingleProductPage({
         )}
         <div className="w-full md:w-1/2 flex flex-col gap-4">
           <h2 className="text-2xl">{product.name}</h2>
+          <p>{product.description}</p>
           <div className="flex items-center gap-2 ">
             {/* sao */}
             <div className="flex items-center text-white gap-2 rounded-md bg-primary px-2 py-1">
@@ -59,7 +62,7 @@ export default async function SingleProductPage({
             </div>
             {/* sold */}
             <div className="border-l border-gray-500 px-2">
-              sold <span>125</span>
+              sold <span> {product.totalSold} </span>
             </div>
           </div>
           {/* 3 */}
@@ -77,61 +80,6 @@ export default async function SingleProductPage({
               <span>Free Delivery</span>
             </div>
           </div>
-
-          {/* Select color */}
-          <div className="flex flex-col md:flex-row md:items-center gap-4 border-b border-gray-500 md:border-none pb-2">
-            <p>Select color</p>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center rounded-md border border-gray-500/80 hover:border-gray-500/100 hover:bg-gray-100 py-1 px-5 gap-2">
-                <div className="h-7 w-7 rounded-full bg-gray-800 flex items-center justify-center">
-                  <Check className="h-5 w-5 text-white" />
-                </div>
-                <p>gray</p>
-              </div>
-              <button className="rounded-md border border-gray-500/80 hover:border-gray-500/100 hover:bg-gray-100 py-2 px-1">
-                <div className="rounded-full bg-gray-50"></div>
-                <p>gray</p>
-              </button>
-            </div>
-          </div>
-
-          {/* table */}
-          <Table>
-            <TableBody>
-              <TableRow>
-                <TableCell className="text-gray-500 before:content-['•'] before:mr-2">
-                  Brand
-                </TableCell>
-                <TableCell>{product.brandName}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="text-gray-500 before:content-['•'] before:mr-2">
-                  Model Name{" "}
-                </TableCell>
-                <TableCell>{product.name}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="text-gray-500 before:content-['•'] before:mr-2">
-                  Screen Size
-                </TableCell>
-                <TableCell>
-                  {product.variants[0]?.attributes[0]?.value}
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="text-gray-500 before:content-['•'] before:mr-2">
-                  Hard Disk Size
-                </TableCell>
-                <TableCell>{product.brandName}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="text-gray-500 before:content-['•'] before:mr-2">
-                  CPU Model
-                </TableCell>
-                <TableCell>{product.brandName}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
 
           <ProductVariantSelectorDynamic product={product} />
 

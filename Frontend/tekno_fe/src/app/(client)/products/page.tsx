@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Grid3x3, List, ChevronDown, Loader2 } from "lucide-react";
+import { Grid3x3, List, ChevronDown, Loader2, Search } from "lucide-react";
 import Filter from "@/components/product/Filter";
 import ProductCard from "@/components/product/ProductCard";
 import { Product } from "@/type/product";
@@ -40,6 +40,7 @@ export default function ProductPage() {
   // filter
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedBrands, setSelectedBrands] = useState<string>();
+  const [keyword, setKeyword] = useState<string>("");
   const [sortBy, setSortBy] = useState("created_desc");
   const [minPrice, setMinPrice] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number>();
@@ -78,10 +79,13 @@ export default function ProductPage() {
           maxPrice: maxPrice,
           minPrice: minPrice,
           filters: filters,
+          keyword, // <-- truyền keyword
         });
-        //console.log("respon:", res);
         setproductsList(res.data);
         setTotalRecords(res.totalRecords);
+        setTotalPages(
+          res.totalPages ?? Math.ceil((res.totalRecords ?? 0) / pageSize)
+        );
       } catch (error) {
         console.error("Product fetch error", error);
       } finally {
@@ -98,6 +102,7 @@ export default function ProductPage() {
     minPrice,
     maxPrice,
     filters,
+    keyword, // <-- theo dõi keyword
   ]);
 
   // chuyển object -> mảng chips để hiển thị
@@ -165,13 +170,19 @@ export default function ProductPage() {
 
             {/* Thanh công cụ */}
             <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-wrap justify-between items-center gap-4 shadow-sm">
-              <p className="text-gray-600 text-sm">
-                Showing{" "}
-                <span className="font-semibold text-gray-800">
-                  {totalRecords}
-                </span>{" "}
-                results
-              </p>
+              {/* input keyword search here */}
+              <div className="relative flex items-center flex-1 max-w-md">
+                <Search className="w-5 h-5 text-gray-400 absolute left-3" />
+
+                <input
+                  type="text"
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  placeholder="Search products…"
+                  className="w-full border rounded-md pl-10 pr-3 py-2
+               focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
 
               <div className="flex items-center gap-4">
                 <Select value={sortBy} onValueChange={setSortBy}>
