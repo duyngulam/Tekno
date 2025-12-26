@@ -50,10 +50,10 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasDefaultValueSql("NOW()");
 
-            // Relationship with Order
+            // Relationship with Order (One-to-One)
             builder.HasOne(p => p.Order)
-                .WithMany()
-                .HasForeignKey(p => p.OrderId)
+                .WithOne(o => o.Payment)
+                .HasForeignKey<PaymentEntity>(p => p.OrderId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Indexes for common queries
