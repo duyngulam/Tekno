@@ -24,6 +24,7 @@ export interface Product {
   primaryImagePath: string;
   finalPrice: number;
   overview: string;
+  rating: number;
   description: string;
   warrantyInfo: string | null;
   totalSold: number;

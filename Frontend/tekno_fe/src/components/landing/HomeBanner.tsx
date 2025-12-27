@@ -83,7 +83,7 @@ export default function HomeBanner() {
           />
         ) : banners.length ? (
           <>
-            <div className="relative w-full flex items-center justify-center">
+            <div className="relative w-full flex items-center justify-center mt-10">
               <button
                 type="button"
                 onClick={prev}
@@ -97,10 +97,12 @@ export default function HomeBanner() {
                 href={`/products/${active.productSlug}`}
                 className="text-center"
               >
-                <img
+                <Image
                   src={active?.imageUrl}
                   alt={active?.productName ?? "Advertisement"}
-                  className="max-h-80 object-contain mx-auto"
+                  height={200}
+                  width={300}
+                  className="h-70 w-100 object-fill mx-auto "
                 />
                 {active?.productName && (
                   <p className="mt-2 text-sm">{active.productName}</p>
@@ -118,7 +120,7 @@ export default function HomeBanner() {
             </div>
 
             {/* indicators */}
-            <div className="mt-4 flex items-center justify-center gap-4">
+            <div className="my-4 flex items-center justify-center gap-4">
               {banners.map((_, i) => (
                 <button
                   key={i}

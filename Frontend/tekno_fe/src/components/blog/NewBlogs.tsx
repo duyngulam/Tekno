@@ -4,8 +4,7 @@ import BlogCard from "./BlogCard";
 import { Blog } from "@/type/blog";
 
 export default async function NewBlogs() {
-  const data = await getBlogsList(); // await getBlogsRecent();
-  console.log("newblog", data);
+  const data = await getBlogsList();
 
   const blogs: Blog[] = data.data.data.slice(0, 4);
 

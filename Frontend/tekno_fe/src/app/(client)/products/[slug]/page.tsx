@@ -37,7 +37,7 @@ export default async function SingleProductPage({
 }) {
   const { slug } = await params;
   const product = await getProductDetail(slug);
-  const isStock = product?.variants[0].stock > 0;
+  const isStock = product?.variants[0].stock > 0 || false;
 
   console.log("Product detail fetched:", product);
 
@@ -58,7 +58,7 @@ export default async function SingleProductPage({
             {/* sao */}
             <div className="flex items-center text-white gap-2 rounded-md bg-primary px-2 py-1">
               <Star fill="white" className="h-5 w-5" />
-              <span>4.9</span>
+              <span>{product.rating ?? 0}</span>
             </div>
             {/* sold */}
             <div className="border-l border-gray-500 px-2">
@@ -98,7 +98,7 @@ export default async function SingleProductPage({
       <SimilarProducts />
 
       {/* Comments */}
-      <Comments />
+      <Comments productId={product.id} />
 
       {/* SFrequently bought together */}
       <FrequentlyBoughtTogether />
