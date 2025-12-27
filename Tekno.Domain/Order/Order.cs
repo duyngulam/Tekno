@@ -155,14 +155,16 @@ namespace Tekno.Domain.Order
 
         public bool HasPurchasedProduct(int productId)
         {
-            return Status == OrderStatus.Completed && 
-                   Items.Any(i => i.ProductId == productId);
+            // Treat orders that have progressed past Pending (Processing, Shipping, Delivered, Completed)
+            // as purchased for the purpose of reviews and entitlement checks.
+            var purchasedStates = new[] { OrderStatus.Processing, OrderStatus.Completed, OrderStatus.Shipping, OrderStatus.Delivered };
+            return purchasedStates.Contains(Status) && Items.Any(i => i.ProductId == productId);
         }
 
         public bool HasPurchasedVariant(int variantId)
         {
-            return Status == OrderStatus.Completed && 
-                   Items.Any(i => i.VariantId == variantId);
+            var purchasedStates = new[] { OrderStatus.Processing, OrderStatus.Completed, OrderStatus.Shipping, OrderStatus.Delivered };
+            return purchasedStates.Contains(Status) && Items.Any(i => i.VariantId == variantId);
         }
     }
 

@@ -26,8 +26,6 @@ namespace Tekno.Application.Review.DTOs
 
     public class CreateReviewDto
     {
-        [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "Product ID is required")]
         public int ProductId { get; set; }
 
         [Required]
