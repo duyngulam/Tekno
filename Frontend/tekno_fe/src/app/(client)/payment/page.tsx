@@ -168,7 +168,7 @@ export default function PaymentPage() {
         shippingAddressId,
         gateway: gatewayId,
         method,
-        returnUrl: `${window.location.origin}/payment/result?orderId=${orderId}`,
+        returnUrl: `${window.location.origin}/payment/result`,
         orderId: Number(orderId),
       };
 

@@ -5,22 +5,17 @@ import { ChevronRight } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import ProductCard from "../product/ProductCard";
 import { useRouter } from "next/navigation";
+import { Blog } from "@/type/blog";
+import BlogCard from "../blog/BlogCard";
+import { getBlogsList } from "@/services/blogs";
 
+const data = await getBlogsList();
+
+const blogs: Blog[] = data.data.data.slice(0, 4);
 export default function OurBlogs() {
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await getProductsList(1, 10, "laptop");
-        console.log(res);
-        setProducts(res.data);
-      } catch (error) {
-        console.log("error in fetching new products", error);
-      }
-    };
-    fetchProducts();
-  }, []);
+  // const [blogs, setBlogs] = useState<Blog[]>();
+
   return (
     <div className="flex flex-col gap-5">
       <div className="border-b border-gray-500 flex items-center justify-between pb-2">
@@ -32,9 +27,13 @@ export default function OurBlogs() {
           View all <ChevronRight className="w-5 h-5" />
         </button>
       </div>
-      <div className="grid grid-col-2 md:grid-cols-4">
-        {products &&
-          products.map((product) => <div key={product.id}>blog</div>)}
+      <div className="grid grid-col-2 md:grid-cols-4 gap-5">
+        {blogs &&
+          blogs
+            ?.slice(0, 4)
+            .map((blog) => (
+              <BlogCard type="vertical" blog={blog} key={blog.id}></BlogCard>
+            ))}
       </div>
     </div>
   );
