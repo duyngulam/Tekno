@@ -70,7 +70,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .AsNoTracking()
-                .Where(o => o.UserId == userId && o.Status == OrderStatus.Completed)
+                .Where(o => o.UserId == userId &&( o.Status == OrderStatus.Completed ||o.Status ==OrderStatus.Processing))
                 .SelectMany(o => o.Items)
                 .AnyAsync(item => item.ProductId == productId);
         }
