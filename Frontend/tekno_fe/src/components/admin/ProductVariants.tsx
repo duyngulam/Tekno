@@ -4,17 +4,13 @@ import { useEffect, useState } from "react";
 import { Plus, Trash2, Edit2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  getCategoryAttributes,
-  getCategoryAttributeValues,
-  type AttributeValuesResponse,
-} from "@/services/categories";
 
 type ProductVariantsProps = {
   productId?: number;
   basePrice?: number;
   initialVariants?: ProductVariant[];
   onChange: (variants: ProductVariant[]) => void;
+  categoryId?: number | string;
 };
 
 export type ProductVariant = {
@@ -32,11 +28,13 @@ type VariantAttribute = {
   value: string;
 };
 
-type GlobalAttr = {
+type Attr = {
   id: number;
   name: string;
   inputType: string;
+  isGlobal: boolean;
   availableValues: string[];
+  isCustom?: boolean; // Flag for custom attributes
 };
 
 export default function ProductVariants({
@@ -44,10 +42,11 @@ export default function ProductVariants({
   basePrice = 0,
   initialVariants = [],
   onChange,
+  categoryId,
 }: ProductVariantsProps) {
-  const [globalAttributes, setGlobalAttributes] = useState<GlobalAttr[]>([]);
-  const [variants, setVariants] = useState<ProductVariant[]>(initialVariants);
-  const [loading, setLoading] = useState(true);
+  const [allAttributes, setAllAttributes] = useState<Attr[]>([]);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [loading, setLoading] = useState(false);
   
   const [showForm, setShowForm] = useState(false);
   const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(null);
@@ -60,37 +59,56 @@ export default function ProductVariants({
     attributes: [],
   });
 
-  // Load global attributes
-  useEffect(() => {
-    loadGlobalAttributes();
-  }, []);
+  // Custom attribute form states
+  const [showCustomAttrForm, setShowCustomAttrForm] = useState(false);
+  const [customAttrName, setCustomAttrName] = useState("");
+  const [customAttrValues, setCustomAttrValues] = useState<string[]>([]);
+  const [tempCustomValue, setTempCustomValue] = useState("");
 
-  // Sync variants
+  // ✅ Sync variants when parent changes - DEEP COPY to avoid reference issues
   useEffect(() => {
-    setVariants(initialVariants);
+    setVariants(JSON.parse(JSON.stringify(initialVariants)));
   }, [initialVariants]);
 
-  const loadGlobalAttributes = async () => {
+  // Load both global and category attributes
+  useEffect(() => {
+    loadAllAttributes();
+  }, [categoryId]);
+
+  const loadAllAttributes = async () => {
     try {
       setLoading(true);
       
-      // Import from service
       const { getGlobalAttributes } = await import("@/services/categories");
+      const globalAttrs = await getGlobalAttributes();
       
-      // Get global attributes
-      const attrs = await getGlobalAttributes();
+      let categoryAttrs: any[] = [];
+      if (categoryId) {
+        try {
+          const { getCategoryAttributes } = await import("@/services/categories");
+          categoryAttrs = await getCategoryAttributes(Number(categoryId));
+        } catch (error) {
+          console.error("Failed to load category attributes:", error);
+        }
+      }
       
-      // Load values for each global attribute
+      const combinedAttrs = [
+        ...globalAttrs.map((attr: any) => ({ ...attr, isGlobal: true })),
+        ...categoryAttrs.map((attr: any) => ({ ...attr, isGlobal: false }))
+      ];
+      
+      const { getCategoryAttributeValues } = await import("@/services/categories");
       const attrsWithValues = await Promise.all(
-        attrs.map(async (attr: any) => {
+        combinedAttrs.map(async (attr: any) => {
           try {
-            const valuesResponse: AttributeValuesResponse = 
-              await getCategoryAttributeValues(attr.id);
+            const valuesResponse = await getCategoryAttributeValues(attr.id);
             return {
               id: attr.id,
               name: attr.name,
               inputType: attr.inputType || "text",
-              availableValues: valuesResponse.values.map((v) => v.value),
+              isGlobal: attr.isGlobal,
+              availableValues: valuesResponse.values.map((v: any) => v.value),
+              isCustom: false,
             };
           } catch (error) {
             console.error(`Failed to load values for attribute ${attr.id}:`, error);
@@ -98,16 +116,18 @@ export default function ProductVariants({
               id: attr.id,
               name: attr.name,
               inputType: attr.inputType || "text",
+              isGlobal: attr.isGlobal,
               availableValues: [],
+              isCustom: false,
             };
           }
         })
       );
       
-      setGlobalAttributes(attrsWithValues);
+      setAllAttributes(attrsWithValues);
     } catch (error) {
-      console.error("Failed to load global attributes:", error);
-      setGlobalAttributes([]);
+      console.error("Failed to load attributes:", error);
+      setAllAttributes([]);
     } finally {
       setLoading(false);
     }
@@ -127,12 +147,12 @@ export default function ProductVariants({
 
   const openEditForm = (variant: ProductVariant) => {
     setEditingVariant(variant);
-    setFormData({ ...variant });
+    // ✅ Deep copy to avoid modifying original
+    setFormData(JSON.parse(JSON.stringify(variant)));
     setShowForm(true);
   };
 
   const handleSave = () => {
-    // Validation
     if (!formData.sku.trim()) {
       alert("SKU is required!");
       return;
@@ -151,22 +171,23 @@ export default function ProductVariants({
     let updated: ProductVariant[];
     
     if (editingVariant) {
-      // Update existing
+      // ✅ Update existing - deep copy to avoid reference issues
       updated = variants.map((v) =>
-        v.sku === editingVariant.sku ? formData : v
+        v.sku === editingVariant.sku ? JSON.parse(JSON.stringify(formData)) : v
       );
     } else {
       // Add new
-      // Check duplicate SKU
       if (variants.some((v) => v.sku === formData.sku)) {
         alert("SKU already exists!");
         return;
       }
-      updated = [...variants, formData];
+      // ✅ Deep copy when adding
+      updated = [...variants, JSON.parse(JSON.stringify(formData))];
     }
 
     setVariants(updated);
-    onChange(updated);
+    // ✅ Pass deep copy to parent
+    onChange(JSON.parse(JSON.stringify(updated)));
     setShowForm(false);
   };
 
@@ -175,14 +196,13 @@ export default function ProductVariants({
 
     const updated = variants.filter((v) => v.sku !== sku);
     setVariants(updated);
-    onChange(updated);
+    onChange(JSON.parse(JSON.stringify(updated)));
   };
 
   const updateFormAttribute = (attributeId: number, value: string) => {
-    const attr = globalAttributes.find((a) => a.id === attributeId);
+    const attr = allAttributes.find((a) => a.id === attributeId);
     if (!attr) return;
 
-    // Check if attribute already exists in form
     const existingIndex = formData.attributes.findIndex(
       (a) => a.attributeId === attributeId
     );
@@ -190,14 +210,10 @@ export default function ProductVariants({
     let newAttributes: VariantAttribute[];
 
     if (existingIndex >= 0) {
-      // Update existing
       newAttributes = formData.attributes.map((a, idx) =>
-        idx === existingIndex
-          ? { ...a, value }
-          : a
+        idx === existingIndex ? { ...a, value } : a
       );
     } else {
-      // Add new
       newAttributes = [
         ...formData.attributes,
         {
@@ -223,10 +239,77 @@ export default function ProductVariants({
     });
   };
 
-  if (loading) {
+  // ✅ Add custom attribute to form
+  const addCustomAttributeValue = () => {
+    if (!tempCustomValue.trim()) return;
+    
+    if (customAttrValues.includes(tempCustomValue.trim())) {
+      alert("This value already exists!");
+      return;
+    }
+
+    setCustomAttrValues([...customAttrValues, tempCustomValue.trim()]);
+    setTempCustomValue("");
+  };
+
+  const removeCustomAttributeValue = (index: number) => {
+    setCustomAttrValues(customAttrValues.filter((_, idx) => idx !== index));
+  };
+
+  const saveCustomAttribute = () => {
+    if (!customAttrName.trim()) {
+      alert("Please enter attribute name!");
+      return;
+    }
+
+    if (customAttrValues.length === 0) {
+      alert("Please add at least one value!");
+      return;
+    }
+
+    // Check if already exists
+    if (allAttributes.some((a) => a.name.toLowerCase() === customAttrName.trim().toLowerCase())) {
+      alert("An attribute with this name already exists!");
+      return;
+    }
+
+    // Create custom attribute with negative ID
+    const customId = -(Date.now());
+
+    const newAttr: Attr = {
+      id: customId,
+      name: customAttrName.trim(),
+      inputType: "select",
+      isGlobal: false,
+      availableValues: [...customAttrValues],
+      isCustom: true,
+    };
+
+    setAllAttributes([...allAttributes, newAttr]);
+
+    // Reset form
+    setCustomAttrName("");
+    setCustomAttrValues([]);
+    setTempCustomValue("");
+    setShowCustomAttrForm(false);
+    
+    alert(`Custom attribute "${newAttr.name}" added! You can now use it in variants.`);
+  };
+
+  if (allAttributes.length === 0 && !loading) {
     return (
-      <div className="p-4 border rounded bg-gray-50">
-        <p className="text-center text-gray-500">Loading global attributes...</p>
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="font-semibold text-lg">Product Variants</h3>
+        </div>
+        <div className="p-8 border-2 border-dashed rounded-lg bg-yellow-50 text-center">
+          <p className="text-yellow-800 font-medium mb-2">
+            ⚠️ No global or category attributes found
+          </p>
+          <p className="text-sm text-yellow-700">
+            Please create global attributes or category-specific attributes first.
+          </p>
+        </div>
       </div>
     );
   }
@@ -235,28 +318,19 @@ export default function ProductVariants({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="font-semibold text-lg">Product Variants</h3>
-        <Button onClick={openAddForm} disabled={globalAttributes.length === 0}>
+        <Button onClick={openAddForm}>
           <Plus className="w-4 h-4 mr-2" />
           Add Variant
         </Button>
       </div>
 
-      {globalAttributes.length === 0 && (
-        <div className="p-4 border rounded bg-yellow-50">
-          <p className="text-sm text-yellow-800">
-            ⚠️ No global attributes found. Please create global attributes first to add variants.
-          </p>
-        </div>
-      )}
-
-      {/* Variants List */}
       {variants.length === 0 ? (
         <div className="p-8 border rounded bg-gray-50 text-center text-gray-500">
-          No variants added yet.
+          No variants added yet. Click "Add Variant" to create one.
         </div>
       ) : (
         <div className="space-y-3">
-          {variants.map((variant, idx) => (
+          {variants.map((variant) => (
             <div
               key={variant.id || variant.sku}
               className="border rounded p-4 bg-white hover:shadow-md transition-shadow"
@@ -278,21 +352,21 @@ export default function ProductVariants({
                     </div>
                     <div>
                       <span className="text-xs text-gray-600">Status:</span>
-                      <p className="font-medium">{variant.status || "Active"}</p>
+                      <p className="font-medium">{variant.status || "available"}</p>
                     </div>
                   </div>
 
                   <div>
                     <span className="text-xs text-gray-600">Attributes:</span>
                     <div className="flex flex-wrap gap-2 mt-1">
-{variant.attributes?.map((attr: any, idx: number) => (
-  <div key={idx} className="px-2 py-1 bg-blue-200 text-blue-800 rounded text-xs">
-    <span>
-      {attr.attributeName || attr.name || `Attr ${attr.attributeId}`} :
-    </span>
-    <span> {attr.value}</span>
-  </div>
-))}
+                      {variant.attributes?.map((attr, idx) => (
+                        <div key={idx} className="px-2 py-1 bg-blue-200 text-blue-800 rounded text-xs">
+                          <span>
+                            {attr.attributeName || `Attr ${attr.attributeId}`}:
+                          </span>
+                          <span> {attr.value}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -371,14 +445,111 @@ export default function ProductVariants({
               </div>
             </div>
 
-            {/* Global Attributes */}
+            {/* Custom Attribute Form */}
+            <div className="mb-4 p-4 border rounded bg-gray-50">
+              {!showCustomAttrForm ? (
+                <Button 
+                  onClick={() => setShowCustomAttrForm(true)}
+                  variant="outline"
+                  className="w-full"
+                  size="sm"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Custom Attribute
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <h5 className="font-medium text-sm">Create Custom Attribute</h5>
+                    <button
+                      onClick={() => {
+                        setShowCustomAttrForm(false);
+                        setCustomAttrName("");
+                        setCustomAttrValues([]);
+                        setTempCustomValue("");
+                      }}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Attribute Name *</label>
+                    <Input
+                      placeholder="e.g., Color, Size, Material..."
+                      value={customAttrName}
+                      onChange={(e) => setCustomAttrName(e.target.value)}
+                      size= {16}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Add Values *</label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter value and press Enter"
+                        value={tempCustomValue}
+                        onChange={(e) => setTempCustomValue(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addCustomAttributeValue();
+                          }
+                        }}
+                        size= {16}
+                      />
+                      <Button onClick={addCustomAttributeValue} size="sm">
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    {customAttrValues.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {customAttrValues.map((value, idx) => (
+                          <div key={idx} className="flex items-center gap-1 px-2 py-1 bg-blue-50 border rounded">
+                            <span className="text-sm">{value}</span>
+                            <button onClick={() => removeCustomAttributeValue(idx)}>
+                              <X className="w-3 h-3 text-red-600" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setShowCustomAttrForm(false);
+                        setCustomAttrName("");
+                        setCustomAttrValues([]);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={saveCustomAttribute}
+                      disabled={!customAttrName.trim() || customAttrValues.length === 0}
+                    >
+                      Add Attribute
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Attributes Selection */}
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">
-                Variant Attributes * (Select values for global attributes)
+                Variant Attributes *
               </label>
 
               <div className="space-y-3">
-                {globalAttributes.map((attr) => {
+                {allAttributes.map((attr) => {
                   const currentValue =
                     formData.attributes.find((a) => a.attributeId === attr.id)
                       ?.value || "";
@@ -387,7 +558,12 @@ export default function ProductVariants({
                     <div key={attr.id} className="flex items-center gap-3">
                       <div className="flex-1">
                         <label className="text-xs text-gray-600 block mb-1">
-                          {attr.name} ({attr.inputType})
+                          {attr.name}
+                          {attr.isCustom && (
+                            <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                              Custom
+                            </span>
+                          )}
                         </label>
                         <select
                           className="w-full border rounded p-2"
@@ -425,13 +601,23 @@ export default function ProductVariants({
               <div className="mb-4 p-3 bg-blue-50 rounded">
                 <p className="text-xs text-gray-600 mb-2">Selected attributes:</p>
                 <div className="flex flex-wrap gap-2">
-                  {formData.attributes.map((attr:any, idx) => (
-                  <div key={idx} className="px-2 py-1 bg-blue-200 text-blue-800 rounded text-xs">
-                    <span>
-                      {attr.attributeName || attr.name || `Attr ${attr.attributeId}`} : 
-                    </span>
-                    <span> {attr.value}</span>
-                  </div>
+                  {formData.attributes.map((attr, idx) => (
+                    <div 
+                      key={idx} 
+                      className="flex items-center gap-1 px-2 py-1 bg-blue-200 text-blue-800 rounded-full text-xs"
+                    >
+                      <span>
+                        {attr.attributeName || `Attr ${attr.attributeId}`}: {attr.value}
+                      </span>
+                      <button
+                        onClick={() => removeFormAttribute(attr.attributeId)}
+                        className="ml-1 hover:bg-red-200 rounded-full p-0.5"
+                        title="Remove this attribute"
+                        type="button"
+                      >
+                        <X className="w-3 h-3 text-red-600" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>

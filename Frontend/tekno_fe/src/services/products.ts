@@ -162,7 +162,11 @@ export type CreateProductVariantPayload = {
   price: number;
   stock: number;
   status?: string;
-  attributeValues: Record<string, string>;
+  attributes: Array<{  // ✅ Changed from attributeValues to attributes
+    id?: number;        // ✅ Use 'id' for existing attributes
+    name?: string;      // ✅ Use 'name' for new attributes  
+    value: string;
+  }>;
 };
 
 export async function createProductVariant(
@@ -185,7 +189,7 @@ export async function deleteProductVariant(variantId: number | string) {
   } catch (error) {
     console.error("❌ Failed to delete product variant:", error);
     throw error;
-}
+  }
 }
 
 export async function updateProductVariant(
