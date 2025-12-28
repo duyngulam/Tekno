@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import {
   Accordion,
@@ -5,22 +7,84 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import faqBanner from "./../../../../public/faq.png"; // ✅ đổi tên biến cho đúng chuẩn
+import faqBanner from "./../../../../public/faq.png";
 import Image from "next/image";
 import { Breadcrumb } from "@/components/share/breadcumbCustom";
-import { Container } from "@/components/MainLayout/Container";
+
+type TocSection = {
+  key: string;
+  label: string;
+};
+
+type FaqItem = {
+  id: string;
+  question: string;
+  answer: string;
+  section: string; // map to TocSection.key
+};
+
+const toc: TocSection[] = [
+  { key: "general", label: "General" },
+  { key: "trust", label: "Trust & Safety" },
+  { key: "services", label: "Services" },
+  { key: "billing", label: "Billing" },
+];
+
+const faqs: FaqItem[] = [
+  {
+    id: "q1",
+    section: "general",
+    question:
+      "Can I purchase products from Tech Heim using installment payments?",
+    answer:
+      "Yes, Tech Heim offers the option to purchase products using both cash and installment payments. This allows you to choose the payment method that suits your needs and budget.",
+  },
+  {
+    id: "q2",
+    section: "services",
+    question: "How can I engage with the magazine content on Tech Heim?",
+    answer:
+      "You can actively engage with the magazine content by leaving comments and participating in the question-and-answer section. Feel free to share your thoughts, ask questions, and interact with fellow tech enthusiasts in the community.",
+  },
+  {
+    id: "q3",
+    section: "services",
+    question: "Does Tech Heim offer a warranty on its products?",
+    answer:
+      "Yes, Tech Heim provides a warranty on all eligible products. The specific warranty details may vary depending on the manufacturer and product category. Please refer to the product description or contact our customer support for more information.",
+  },
+  {
+    id: "q4",
+    section: "trust",
+    question: "Is Tech Heim a secure platform for online shopping?",
+    answer:
+      "Yes, Tech Heim follows industry best practices to ensure a secure shopping experience. Your data is protected with encryption and strict access controls.",
+  },
+  {
+    id: "q5",
+    section: "billing",
+    question:
+      "How can I get assistance with my purchase or any other inquiries?",
+    answer:
+      "If you need assistance with your purchase or have any questions, our dedicated customer support team is here to help. You can reach out to us through the contact page on our website, and we'll be happy to assist you promptly.",
+  },
+];
 
 export default function Page() {
   return (
     <>
       <div className="max-w-[1200px] mx-auto grid grid-cols-12 gap-6 px-4 py-8">
         <Breadcrumb />
+
         {/* Banner */}
-        <Image
-          src={faqBanner}
-          alt="FAQ Banner"
-          className="col-span-12 rounded-lg mb-6 w-full object-cover"
-        />
+        <div className="col-span-12">
+          <Image
+            src={faqBanner}
+            alt="FAQ Banner"
+            className="rounded-lg mb-6 w-full object-cover"
+            priority
+          />
+        </div>
 
         {/* Table of contents (sidebar) */}
         <aside className="col-span-12 md:col-span-3 bg-gray-50 p-4 rounded-lg shadow-sm">
@@ -28,34 +92,31 @@ export default function Page() {
             Table of Contents
           </h3>
           <ul className="space-y-2 text-yellow-700">
-            <li className="hover:underline cursor-pointer">Payment</li>
-            <li className="hover:underline cursor-pointer">Trust & Safety</li>
-            <li className="hover:underline cursor-pointer">Services</li>
-            <li className="hover:underline cursor-pointer">Billing</li>
+            {toc.map((t) => (
+              <li key={t.key} className="hover:underline cursor-pointer">
+                {t.label}
+              </li>
+            ))}
           </ul>
         </aside>
 
         {/* FAQ content */}
-        <section className="col-span-12 md:col-span-9 space-y-6">
-          <Accordion type="multiple">
-            <AccordionItem value="item-1">
-              <AccordionTrigger className="text-primary font-medium">
-                Is it accessible?
-              </AccordionTrigger>
-              <AccordionContent className="text-gray-700">
-                Yes. It adheres to the WAI-ARIA design pattern.
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="item-2">
-              <AccordionTrigger className="text-primary font-medium">
-                How secure is my information?
-              </AccordionTrigger>
-              <AccordionContent className="text-gray-700">
-                Your data is encrypted and stored following industry best
-                practices.
-              </AccordionContent>
-            </AccordionItem>
+        <section className="col-span-12 md:col-span-9 space-y-4">
+          <Accordion type="multiple" className="space-y-2">
+            {faqs.map((f) => (
+              <AccordionItem
+                key={f.id}
+                value={f.id}
+                className="rounded-lg border bg-white px-4"
+              >
+                <AccordionTrigger className="text-primary font-medium py-3">
+                  {f.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-700 py-2">
+                  {f.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
           </Accordion>
         </section>
       </div>

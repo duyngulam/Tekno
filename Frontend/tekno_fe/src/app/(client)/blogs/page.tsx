@@ -11,15 +11,10 @@ export default async function page() {
     <Container className="flex flex-col space-y-5 my-10">
       <Breadcrumb />
 
-      <div className="w-full flex space-x-5">
-        <div className="w-3/4 gap-10 flex flex-col">
-          <NewBlogs />
-          <RecentReports />
-        </div>
-        <div className="w-1/3">Videos</div>
+      <div className=" gap-10 flex flex-col">
+        <NewBlogs />
+        <RecentReports />
       </div>
-
-      <div className=" mx-auto">panigation</div>
     </Container>
   );
 }

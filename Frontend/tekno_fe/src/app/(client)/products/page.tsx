@@ -149,7 +149,7 @@ export default function ProductPage() {
         <div className="flex">
           <div className="hidden lg:block w-3/12">
             <Filter
-              categoryId={7}
+              categorySlug={queryCategory}
               selectedBrand={selectedBrands}
               minPrice={minPrice}
               maxPrice={maxPrice}
@@ -185,7 +185,11 @@ export default function ProductPage() {
               </div>
 
               <div className="flex items-center gap-4">
-                <Select aria-label="Sort by" value={sortBy} onValueChange={setSortBy}>
+                <Select
+                  aria-label="Sort by"
+                  value={sortBy}
+                  onValueChange={setSortBy}
+                >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue />
                   </SelectTrigger>

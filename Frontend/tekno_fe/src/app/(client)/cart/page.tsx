@@ -120,12 +120,12 @@ export default function CartPage() {
                       const id = p.id;
                       const checked = selectedIds.has(id);
                       return (
-                        <div key={id} className="flex items-start gap-3">
+                        <div key={id} className="flex items-centre gap-3">
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleOne(id)}
-                            className="mt-3"
+                            className=""
                           />
                           <ProductInCart product={p} />
                         </div>

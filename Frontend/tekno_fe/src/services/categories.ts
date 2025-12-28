@@ -96,6 +96,27 @@ export async function deleteCategory(id: number) {
   }
 }
 
+export async function getCategoryAttributesForFilter(categorySlug: string): Promise<CategoryAttribute[]> {
+  try {
+    const res = await fetch(`http://localhost:5000/api/categories/${categorySlug}/attributes`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Lấy attributes thất bại!");
+    }
+
+    const result = await res.json();
+    return result.data as CategoryAttribute[];
+  } catch (error) {
+    console.error("❌ Lỗi khi gọi API attributes:", error);
+    throw error;
+  }
+}
+
 
 export async function getCategoryAttributes(categoryId: number) {
   const res = await fetch(

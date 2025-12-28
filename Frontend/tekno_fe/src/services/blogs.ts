@@ -30,14 +30,19 @@ export async function getBlogsRecent(count:number): Promise<Blog[]> {
   }
 }
 
-export async function getBlogsList() {
+export async function getBlogsList(page: number = 1, pageSize: number = 12) {
   try {
-    const res = await fetch("http://localhost:5000/api/blog", {
+    const params = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize),
+    });
+
+    const res = await fetch(`http://localhost:5000/api/blog?${params.toString()}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
-      cache: "no-store", // optional: tránh cache khi SSR
+      cache: "no-store",
     });
 
     if (!res.ok) {
@@ -45,10 +50,7 @@ export async function getBlogsList() {
       throw new Error(err.message || "Lấy danh sách blog thất bại!");
     }
 
-      console.log("fetch blog list", res);
-      
-    return await res.json();
-
+    return await res.json(); // expected: { data: Blog[], totalRecords, totalPages, ... }
   } catch (error) {
     console.error("❌ Lỗi khi gọi API:", error);
     throw error;

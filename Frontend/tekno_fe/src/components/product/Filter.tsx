@@ -12,7 +12,10 @@ import {
 import { Brand } from "@/type/brand";
 import { getBrandList } from "@/services/brand";
 import { Slider } from "../ui/slider";
-import { getCategoryAttributes } from "@/services/categories";
+import {
+  getCategoryAttributes,
+  getCategoryAttributesForFilter,
+} from "@/services/categories";
 import { CategoryAttribute } from "@/type/categories";
 
 export default function Filter({
@@ -22,7 +25,7 @@ export default function Filter({
   onBrandChange,
   onMinPriceChange,
   onMaxPriceChange,
-  categoryId, // optional: id category để load attributes
+  categorySlug, // optional: id category để load attributes
   onAttributesChange, // optional callback nhận filters hiện tại
 }: {
   selectedBrand?: string;
@@ -31,17 +34,25 @@ export default function Filter({
   onBrandChange: (value: string) => void;
   onMinPriceChange: (value: number) => void;
   onMaxPriceChange: (value: number) => void;
-  categoryId?: number;
+  categorySlug?: string;
   onAttributesChange?: (filters: Record<string, string[]>) => void;
 }) {
   const [brandList, setbrandList] = useState<Brand[]>([]);
-  const [priceRange, setPriceRange] = useState<[number, number]>([500, 2000]);
+  // priceRange hiển thị theo đơn vị "nghìn" (x1000 VNĐ)
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
 
   // DYNAMIC ATTRIBUTES
   const [attributes, setAttributes] = useState<CategoryAttribute[]>([]);
   const [selectedAttributes, setSelectedAttributes] = useState<
     Record<string, string[]>
   >({});
+
+  // Đồng bộ giá trị ban đầu từ props -> input theo đơn vị nghìn
+  useEffect(() => {
+    const minK = Math.max(0, Math.floor((minPrice ?? 0) / 1000));
+    const maxK = Math.max(0, Math.floor((maxPrice ?? 0) / 1000));
+    setPriceRange([minK, maxK]);
+  }, [minPrice, maxPrice]);
 
   useEffect(() => {
     async function fetchBrandList() {
@@ -53,14 +64,14 @@ export default function Filter({
 
   // fetch attributes khi categoryId thay đổi
   useEffect(() => {
-    if (!categoryId) {
+    if (!categorySlug) {
       setAttributes([]);
       return;
     }
     let mounted = true;
     (async () => {
       try {
-        const attrs = await getCategoryAttributes(categoryId);
+        const attrs = await getCategoryAttributesForFilter(categorySlug);
         if (mounted) setAttributes(attrs || []);
       } catch (err) {
         console.error("Failed to load category attributes", err);
@@ -70,7 +81,7 @@ export default function Filter({
     return () => {
       mounted = false;
     };
-  }, [categoryId]);
+  }, [categorySlug]);
 
   // toggle giá trị attribute
   const toggleAttributeValue = (
@@ -91,6 +102,7 @@ export default function Filter({
 
   const clearAll = () => {
     setSelectedAttributes({});
+    // reset lại giá trị ban đầu cho priceRange
     setPriceRange([0, 0]);
     onBrandChange("");
     onMinPriceChange(0);
@@ -142,43 +154,44 @@ export default function Filter({
             <AccordionItem value="price">
               <AccordionTrigger>Price</AccordionTrigger>
               <AccordionContent>
-                <div className="flex justify-center gap-2 pb-4 ">
-                  <input
-                    type="number"
-                    value={priceRange[0]}
-                    onChange={(e) => {
-                      const v = +e.target.value;
-                      setPriceRange([v, priceRange[1]]);
-                      onMinPriceChange(v);
-                    }}
-                    className="w-20 border rounded-md px-2 py-1 text-lg text-center"
-                    placeholder="min"
-                  />
-                  <input
-                    type="number"
-                    value={priceRange[1]}
-                    onChange={(e) => {
-                      const v = +e.target.value;
-                      setPriceRange([priceRange[0], v]);
-                      onMaxPriceChange(v);
-                    }}
-                    className="w-20 border rounded-md px-2 py-1 text-lg text-center"
-                    placeholder="max"
-                  />
-                </div>
+                {/* Chỉ dùng 2 ô input; mỗi giá trị nhập vào sẽ * 1000 VNĐ khi emit ra ngoài */}
+                <div className="flex flex-col items-center justify-center gap-2 pb-4">
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={priceRange[0]}
+                      onChange={(e) => {
+                        const vK = Math.max(0, Number(e.target.value) || 0);
+                        setPriceRange([vK, priceRange[1]]);
+                        onMinPriceChange(vK * 1000); // emit theo VNĐ
+                      }}
+                      className="w-24 border rounded-md px-2 py-1 text-lg text-center"
+                      placeholder="min (x1000)"
+                    />
+                    <span className="text-xs text-gray-500">.000 </span>
+                  </div>
 
-                <Slider
-                  min={0}
-                  max={10000000000}
-                  step={100}
-                  value={priceRange}
-                  onValueChange={(v) => {
-                    setPriceRange(v as [number, number]);
-                    onMinPriceChange(v[0]);
-                    onMaxPriceChange(v[1]);
-                  }}
-                  className="[&>[data-orientation=horizontal]]:bg-yellow-200"
-                />
+                  <span className="text-gray-400">—</span>
+
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={priceRange[1]}
+                      onChange={(e) => {
+                        const vK = Math.max(0, Number(e.target.value) || 0);
+                        setPriceRange([priceRange[0], vK]);
+                        onMaxPriceChange(vK * 1000); // emit theo VNĐ
+                      }}
+                      className="w-24 border rounded-md px-2 py-1 text-lg text-center"
+                      placeholder="max (x1000)"
+                    />
+                    <span className="text-xs text-gray-500">.000</span>
+                  </div>
+                </div>
               </AccordionContent>
             </AccordionItem>
 

@@ -15,7 +15,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Container } from "@/components/MainLayout/Container";
 import Stepper from "@/components/share/Stepper";
-import { CreditCard, Plus, Edit2, User } from "lucide-react";
+import {
+  CreditCard,
+  Plus,
+  Edit2,
+  User,
+  ArrowBigLeft,
+  ArrowLeftFromLine,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { PaymentGateway, PaymentPayload } from "@/type/payment";
@@ -30,6 +38,9 @@ import { useSearchParams } from "next/navigation";
 import { getOrderByOrderId } from "@/services/order";
 import { OrderItem } from "@/type/order";
 import { log } from "console";
+import FormattedPrice from "@/components/share/FormattedPriced";
+import MyAddress from "@/components/share/MyAddress";
+import AddressItem from "@/components/share/AddressItem";
 
 export default function PaymentPage() {
   const searchParams = useSearchParams();
@@ -80,7 +91,13 @@ export default function PaymentPage() {
   // address (mock default)
   const [open, setOpen] = useState(false);
   const [addresses, setAddresses] = useState<ProfileAddress[]>([]);
-  const defaultAddress = addresses.length ? addresses[0] : undefined;
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
+    null
+  );
+  const defaultAddress = useMemo(
+    () => addresses.find((a) => a.id === selectedAddressId) ?? addresses[0],
+    [addresses, selectedAddressId]
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -91,14 +108,21 @@ export default function PaymentPage() {
       return;
     }
 
-    // fetch addresses
     (async () => {
       try {
         const list = await getProfileAddresses(token);
-        setAddresses(Array.isArray(list) ? list : []);
+        const arr = Array.isArray(list) ? list : (list as any)?.data ?? [];
+        setAddresses(arr);
+        // set default selected address (prefer default flag, else first)
+        const def =
+          arr.find((a: any) => a.isDefault) ?? (arr.length ? arr[0] : null);
+        setSelectedAddressId(def?.id ?? null);
       } catch (e) {
         console.error("Fetch addresses error:", e);
         setAddresses([]);
+        setSelectedAddressId(null);
+      } finally {
+        setLoading(false);
       }
     })();
   }, []);
@@ -152,12 +176,7 @@ export default function PaymentPage() {
       if (!shippingAddressId) throw new Error("Select a shipping address");
 
       const gatewayId = Number(paymentMethod || gateways[0]?.id);
-      console.log("Selected gatewayId:", gateways);
-
-      // if (!gatewayId) throw new Error("Select a payment gateway");
-
       const gw = gateways.find((g) => Number(g.id) === gatewayId);
-      // pick a method id from gateway definition if available; fallback to 1
       const method =
         Number((gw as any)?.methods?.[0]?.id) ||
         Number((gw as any)?.defaultMethod) ||
@@ -172,11 +191,8 @@ export default function PaymentPage() {
         orderId: Number(orderId),
       };
 
-      console.log("Payment payload:", payload);
-
       const { paymentUrl } = await processPayment(token, payload);
       localStorage.setItem("Payment URL:", paymentUrl);
-
       if (!paymentUrl) throw new Error("No payment URL returned");
       window.location.href = paymentUrl;
     } catch (e: any) {
@@ -188,76 +204,124 @@ export default function PaymentPage() {
     <Container className="flex flex-col space-y-6 my-10">
       <Stepper isActive={3} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 ">
         {/* địa chỉ nhân hàng */}
-
-        {/* Left: Payment + Billing */}
-        <div className="lg:col-span-7 rounded-xl bg-blue-50 p-4 space-y-4 border border-blue-100">
-          <div>
-            <div className="rounded-md border bg-white">
-              <div className="border-b bg-gradient-to-r from-red-200 via-blue-200 to-red-200 h-2 rounded-t-md" />
-              <div className="p-4 flex items-start gap-3">
-                <span className="text-red-500 mt-1">📍</span>
-                <div className="flex-1">
-                  <div className="text-lg font-semibold text-red-600">
-                    Địa Chỉ Nhận Hàng
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-3">
-                    <span className="font-semibold">
-                      {defaultAddress?.recipientName || "Khánh Trang"}
-                    </span>
-                    <span className="text-gray-700">
-                      (
-                      {defaultAddress?.phoneNumber
-                        ? `+84 ${defaultAddress.phoneNumber}`
-                        : "(+84) 358 517 126"}
-                      )
-                    </span>
-                    <span className="text-gray-800">
-                      {defaultAddress
-                        ? `${defaultAddress.addressLine} , ${defaultAddress.wardName}, ${defaultAddress.districtName}, ${defaultAddress.provinceName}`
-                        : "Xóm 4-Trà Tri, Xã Hải Hưng, Huyện Hải Lăng, Quảng Trị"}
-                    </span>
-                  </div>
+        <div className="lg:col-span-7 space-y-5">
+          <div className="rounded-md p-4 space-y-4 border border-gray-200">
+            <div className=" flex items-start gap-3">
+              <span className="text-red-500 mt-1">📍</span>
+              <div className="flex-1">
+                <div className="text-lg font-semibold text-red-600">
+                  Địa Chỉ Nhận Hàng
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    /* open change address modal/page */
-                  }}
-                  className="text-blue-600 hover:underline whitespace-nowrap"
-                >
-                  Thay Đổi
-                </button>
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <span className="font-semibold">
+                    {defaultAddress?.recipientName || "No name"}
+                  </span>
+                  <span className="text-gray-700">
+                    (
+                    {defaultAddress?.phoneNumber
+                      ? `+84 ${defaultAddress.phoneNumber}`
+                      : "No phone number"}
+                    )
+                  </span>
+                  <span className="text-gray-800">
+                    {defaultAddress
+                      ? `${defaultAddress.addressLine} , ${defaultAddress.wardName}, ${defaultAddress.districtName}, ${defaultAddress.provinceName}`
+                      : "No address selected"}
+                  </span>
+                </div>
               </div>
+              {/* modal change address */}
+              <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="text-blue-600 hover:underline whitespace-nowrap"
+              >
+                Thay Đổi
+              </button>
             </div>
           </div>
 
-          <h2 className="font-semibold text-gray-800">Payment</h2>
+          {/* Change Address Modal */}
+          {open && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              <div
+                className="absolute inset-0 bg-black/30"
+                onClick={() => setOpen(false)}
+              />
+              <div className="relative z-10 w-full max-w-2xl rounded-2xl bg-white p-4 md:p-6 shadow-2xl">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold">Chọn địa chỉ</h3>
+                  <button
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                    onClick={() => setOpen(false)}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
 
-          <RadioGroup
-            value={paymentMethod}
-            onValueChange={(value) => setPaymentMethod(value)}
-          >
-            {gateways.map((g) => (
-              <div key={g.id} className="flex items-center gap-2">
-                <RadioGroupItem value={String(g.id)} disabled={!g.available} />
-                <span>{g.name}</span>
+                {/* List addresses to choose */}
+                {loading ? (
+                  <p className="text-sm text-gray-500">Loading addresses…</p>
+                ) : addresses.length === 0 ? (
+                  <p className="text-sm text-gray-500">No addresses found.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {addresses.map((addr) => {
+                      const selected = addr.id === selectedAddressId;
+
+                      return (
+                        <div
+                          key={addr.id}
+                          onClick={() => {
+                            setSelectedAddressId(addr.id);
+                          }}
+                          className={`cursor-pointer rounded-lg border transition
+          ${selected ? "border-yellow-400 bg-yellow-50" : "border-gray-200"}
+        `}
+                        >
+                          <AddressItem addr={addr} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            ))}
-          </RadioGroup>
+            </div>
+          )}
+
+          {/* Left: Payment + Billing */}
+          <div className="rounded-md p-4 space-y-4 border border-gray-100">
+            <h2 className="font-semibold text-gray-800">Payment</h2>
+            <RadioGroup
+              value={paymentMethod}
+              onValueChange={(value) => setPaymentMethod(value)}
+            >
+              {gateways.map((g) => (
+                <div key={g.id} className="flex items-center gap-2">
+                  <RadioGroupItem
+                    value={String(g.id)}
+                    disabled={!g.available}
+                  />
+                  <span>{g.name}</span>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
 
           <Link
             href="/checkout"
-            className="text-sm text-yellow-500 hover:underline"
+            className="text-sm hover:underline flex items-center gap-2"
           >
+            <ArrowLeftFromLine />
             Return to checkout
           </Link>
         </div>
 
         {/* Right: Order Summary */}
         <div className="lg:col-span-5">
-          <div className="rounded-xl bg-white p-4 border">
+          <div className="rounded-md bg-white p-4 border">
             <h3 className="font-semibold text-gray-800 mb-4">Your Order</h3>
 
             <div className="space-y-3 max-h-72 overflow-auto">
@@ -285,7 +349,7 @@ export default function PaymentPage() {
                       </div>
                     </div>
                     <div className="text-sm text-gray-700">
-                      ${it.price.toFixed(2)}
+                      <FormattedPrice price={it.price} />
                     </div>
                   </div>
                 ))
@@ -312,25 +376,28 @@ export default function PaymentPage() {
             <div className="mt-4 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="text-gray-800">${subtotal.toFixed(2)}</span>
+                <span className="text-gray-800">
+                  <FormattedPrice price={subtotal} />
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Discount</span>
                 <span className="text-gray-800">
-                  {appliedDiscount > 0
-                    ? `-$${appliedDiscount.toFixed(2)}`
-                    : "$0.00"}
+                  <FormattedPrice price={appliedDiscount} />
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Shipment cost</span>
                 <span className="text-gray-800">
-                  ${shipmentCost.toFixed(2)}
+                  <FormattedPrice price={shipmentCost} />
                 </span>
               </div>
               <div className="flex justify-between font-semibold pt-2 border-t">
                 <span>Grand Total</span>
-                <span>${grandTotal.toFixed(2)}</span>
+                <span>
+                  {" "}
+                  <FormattedPrice price={grandTotal} />{" "}
+                </span>
               </div>
             </div>
 

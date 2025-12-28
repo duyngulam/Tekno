@@ -9,7 +9,7 @@ export default async function RecentReports() {
   return (
     <div className="flex flex-col">
       <Title title="Recent Reports" />
-      <div className="text-2xl font-bold mb-4">Recent Reports</div>
+
       <div className="flex flex-col gap-2">
         {blogs?.map((blog) => (
           <BlogCard blog={blog} type="horizontal" key={blog.id} />
