@@ -19,3 +19,12 @@ export type Coupon = {
     applicableCategoryIds: number[];
     applicableProductIds: number[];
 }
+
+export type CouponResponse = {
+    data: Coupon[];
+    page: number;
+    pageSize: number;
+    totalRecords: number;
+    totalPages: number;
+}
+
