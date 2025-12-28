@@ -195,9 +195,25 @@ namespace Tekno.Infrastructure.Catalog
 
         public async Task<Dictionary<int, (double AverageRating, int TotalReviews)>> GetProductsRatingStatsAsync(List<int> productIds)
         {
-            // TODO: This method needs to be implemented using IReviewRepository
-            // For now, return empty dictionary to satisfy interface requirement
-            return await Task.FromResult(new Dictionary<int, (double AverageRating, int TotalReviews)>());
+            if (productIds == null || !productIds.Any())
+                return new Dictionary<int, (double, int)>();
+
+            // Query approved reviews grouped by product
+            var stats = await _context.Set<Tekno.Domain.Review.ProductReview>()
+                .AsNoTracking()
+                .Where(r => productIds.Contains(r.ProductId) && r.Status == Tekno.Domain.Review.ReviewStatus.Approved)
+                .GroupBy(r => r.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    AverageRating = g.Average(r => r.Rating),
+                    TotalReviews = g.Count()
+                })
+                .ToListAsync();
+
+            return stats.ToDictionary(
+                x => x.ProductId,
+                x => (AverageRating: x.AverageRating, TotalReviews: x.TotalReviews));
         }
 
         public async Task<List<Product>> GetProductsWithDiscountAsync(string? categorySlug, int count)

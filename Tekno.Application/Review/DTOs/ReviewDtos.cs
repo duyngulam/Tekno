@@ -26,8 +26,6 @@ namespace Tekno.Application.Review.DTOs
 
     public class CreateReviewDto
     {
-        [Required]
-        [Range(1, int.MaxValue)]
         public int ProductId { get; set; }
 
         [Required]
@@ -37,12 +35,6 @@ namespace Tekno.Application.Review.DTOs
         [Required]
         [StringLength(2000, MinimumLength = 10, ErrorMessage = "Comment must be between 10 and 2000 characters")]
         public string Comment { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Optional: Specify which order this review is for
-        /// System will auto-detect if not provided
-        /// </summary>
-        public int? OrderId { get; set; }
     }
 
     public class UpdateReviewDto

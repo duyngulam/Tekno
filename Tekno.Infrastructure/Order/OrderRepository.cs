@@ -61,7 +61,7 @@ namespace Tekno.Infrastructure.Order
                 .Include(o => o.Payment)
                 .Include(o => o.ShippingAddress)
                 .AsNoTracking()
-                .Where(o => o.UserId == userId && o.Status == OrderStatus.Completed)
+                .Where(o => o.UserId == userId && o.Status == OrderStatus.Delivered)
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
         }
@@ -70,7 +70,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .AsNoTracking()
-                .Where(o => o.UserId == userId && o.Status == OrderStatus.Completed)
+                .Where(o => o.UserId == userId &&( o.Status == OrderStatus.Delivered ||  o.Status ==OrderStatus.Processing))
                 .SelectMany(o => o.Items)
                 .AnyAsync(item => item.ProductId == productId);
         }
@@ -81,9 +81,9 @@ namespace Tekno.Infrastructure.Order
                 .Include(o => o.Items)
                 .Include(o => o.ShippingAddress)
                 .AsNoTracking()
-                .Where(o => o.UserId == userId && o.Status == OrderStatus.Completed)
+                .Where(o => o.UserId == userId && (o.Status == OrderStatus.Delivered || o.Status == OrderStatus.Processing || o.Status == OrderStatus.Shipping || o.Status == OrderStatus.Completed))
                 .Where(o => o.Items.Any(item => item.ProductId == productId))
-                .OrderByDescending(o => o.CompletedAt)
+                .OrderByDescending(o => o.CompletedAt ?? o.CreatedAt)
                 .FirstOrDefaultAsync();
         }
 

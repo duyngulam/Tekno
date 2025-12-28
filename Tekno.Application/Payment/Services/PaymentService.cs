@@ -60,7 +60,7 @@ namespace Tekno.Application.Payment.Services
         /// <summary>
         /// Process payment for an existing pending order (Step 2 of two-step checkout)
         /// Applies shipping address and coupon before initiating payment
-        /// Supports retry for failed/timed-out payments
+        /// Supports retry for failed/timed-out payments and reactivation of cancelled orders
         /// </summary>
         public async Task<PaymentResponseDto> ProcessOrderPaymentAsync(int userId, ProcessOrderPaymentRequestDto request)
         {
@@ -78,129 +78,124 @@ namespace Tekno.Application.Payment.Services
                 throw new UnauthorizedAccessException("Order does not belong to the user");
             }
 
-            if (order.Status != OrderStatus.Pending)
+            // 2. Check if order is in a valid state for payment
+            // Allow Pending (new order) or Cancelled (after timeout/failure - if retryable)
+            if (order.Status == OrderStatus.Cancelled)
             {
-                throw new InvalidOperationException($"Order is not in Pending status (current: {order.Status})");
+                // Check if order can be reactivated
+                if (!order.CanRetryPayment())
+                {
+                    throw new InvalidOperationException(
+                        $"Cannot retry payment for this order. Order is too old or in invalid state. " +
+                        $"Please create a new order. (Current status: {order.Status}, Created: {order.CreatedAt:yyyy-MM-dd HH:mm})");
+                }
+
+                _logger.LogInformation(
+                    "Reactivating cancelled order {OrderId} for payment retry (cancelled at: {CreatedAt}, age: {Age} hours)",
+                    order.Id, order.CreatedAt, (DateTime.UtcNow - order.CreatedAt).TotalHours);
+
+                // Reactivate order to Pending status
+                order.ReactivateForPaymentRetry();
+                await _orderRepository.UpdateAsync(order);
+                
+                _logger.LogInformation("Order {OrderId} reactivated to Pending status", order.Id);
+            }
+            else if (order.Status != OrderStatus.Pending)
+            {
+                throw new InvalidOperationException(
+                    $"Order is not in Pending status (current: {order.Status}). Cannot process payment.");
             }
 
-            // 2. Check if payment already exists for this order
+            // 3. Check payment state and handle accordingly
             var existingPayments = await _paymentRepository.GetByOrderIdAsync(request.OrderId);
             
-            // Check for active payments (Processing or Completed)
+            // Get the most recent payment
+            var latestPayment = existingPayments
+                .OrderByDescending(p => p.CreatedAt)
+                .FirstOrDefault();
+
+            // Check for active/completed payments
             var activePayment = existingPayments.FirstOrDefault(p => 
                 p.Status == PaymentStatus.Processing || 
                 p.Status == PaymentStatus.Completed);
 
             if (activePayment != null)
             {
-                // Active payment exists
                 if (activePayment.Status == PaymentStatus.Completed)
                 {
                     throw new InvalidOperationException(
                         $"Order already has a completed payment (TransactionId: {activePayment.TransactionId})");
                 }
 
-                // Payment is Processing - return existing payment URL for retry
-                _logger.LogInformation(
-                    "Payment already processing for order {OrderId}, returning existing payment URL for retry",
-                    request.OrderId);
-
-                // Get gateway and regenerate payment URL
-                var gateway = _gatewayFactory.GetGateway(activePayment.Gateway);
+                // Payment is Processing - check if it's actually timed out
+                var isTimedOut = _timeoutService.IsPaymentTimedOut(activePayment);
                 
-                var paymentRequest = new PaymentRequest
+                if (!isTimedOut)
                 {
-                    OrderId = order.Id,
-                    UserId = userId,
-                    OrderNumber = order.OrderNumber,
-                    Amount = order.TotalAmount,
-                    Currency = "VND",
-                    Method = activePayment.Method,
-                    ReturnUrl = request.ReturnUrl,
-                    CallbackUrl = $"{GetBaseUrl()}/api/payment/callback"
-                };
-
-                var initResult = await gateway.InitiatePaymentAsync(paymentRequest);
-
-                if (!initResult.Success)
-                {
-                    throw new InvalidOperationException($"Payment retry failed: {initResult.ErrorMessage}");
-                }
-
-                // Update transaction ID if it changed (shouldn't happen for most gateways)
-                if (initResult.TransactionId != activePayment.TransactionId)
-                {
+                    // Payment still active - return existing payment URL for retry
                     _logger.LogInformation(
-                        "Payment transaction ID changed from {OldId} to {NewId} for order {OrderId}",
-                        activePayment.TransactionId, initResult.TransactionId, request.OrderId);
-                    
-                    activePayment.MarkAsProcessing(initResult.TransactionId);
+                        "Payment still processing for order {OrderId} (age: {Age} minutes), returning existing payment URL",
+                        request.OrderId, (DateTime.UtcNow - activePayment.CreatedAt).TotalMinutes);
+
+                    return await ReturnExistingPaymentUrlAsync(activePayment, order, userId, request.ReturnUrl);
+                }
+                else
+                {
+                    // Payment timed out - mark as failed and create new payment
+                    _logger.LogWarning(
+                        "Payment {TransactionId} timed out (age: {Age} minutes), creating new payment",
+                        activePayment.TransactionId, (DateTime.UtcNow - activePayment.CreatedAt).TotalMinutes);
+
+                    activePayment.MarkAsFailed("Payment timed out - customer did not complete payment within allocated time", null);
                     await _paymentRepository.UpdateAsync(activePayment);
                 }
-
-                return new PaymentResponseDto
-                {
-                    OrderId = order.Id,
-                    OrderNumber = order.OrderNumber,
-                    PaymentId = activePayment.Id,
-                    TransactionId = activePayment.TransactionId,
-                    PaymentUrl = initResult.PaymentUrl,
-                    PaymentToken = initResult.PaymentToken,
-                    QrCodeUrl = initResult.QrCodeUrl,
-                    Status = PaymentStatus.Processing,
-                    TotalAmount = order.TotalAmount,
-                    ItemsCount = order.Items.Count,
-                    IsRetry = true
-                };
             }
 
-            // Check for failed/cancelled payments that can be retried
-            var failedPayment = existingPayments.FirstOrDefault(p => 
-                p.Status == PaymentStatus.Failed || 
-                p.Status == PaymentStatus.Cancelled);
-
-            if (failedPayment != null)
+            // 4. Log payment retry info if there were previous attempts
+            if (latestPayment != null && 
+                (latestPayment.Status == PaymentStatus.Failed || latestPayment.Status == PaymentStatus.Cancelled))
             {
                 _logger.LogInformation(
-                    "Retrying payment for order {OrderId} after previous failure. " +
-                    "Previous payment status: {Status}, Error: {Error}",
-                    request.OrderId, failedPayment.Status, failedPayment.ErrorMessage);
+                    "Retrying payment for order {OrderId} after previous failure/cancellation. " +
+                    "Previous payment: TransactionId={TransactionId}, Status={Status}, Error={Error}, " +
+                    "Previous attempts: {Count}",
+                    request.OrderId, latestPayment.TransactionId, latestPayment.Status, 
+                    latestPayment.ErrorMessage, existingPayments.Count);
             }
 
             await using var transaction = await _paymentRepository.BeginTransactionAsync();
 
             try
             {
-                // 3. Set shipping address on order (may have changed for retry)
+                // 5. Update order with latest shipping address (may have changed)
                 order.SetShippingAddress(request.ShippingAddressId);
 
-                // 4. Apply coupon if provided (may have changed for retry)
+                // 6. Apply/update coupon if provided (may have changed)
                 if (!string.IsNullOrWhiteSpace(request.CouponCode))
                 {
                     // TODO: Validate and apply coupon discount
                     // For now, just store the coupon code
-                    // You can integrate with your CouponService here
                     order.ApplyCoupon(request.CouponCode, 0); // Pass actual discount amount
                     
                     _logger.LogInformation("Coupon {CouponCode} applied to order {OrderId}", 
                         request.CouponCode, request.OrderId);
                 }
 
-                // 5. Update order with shipping and coupon info
+                // 7. Save order updates
                 await _orderRepository.UpdateAsync(order);
 
-                // 6. Create NEW payment record (don't reuse failed payment)
+                // 8. Create NEW payment record (don't reuse failed/timed-out payment)
                 var payment = new Domain.Payment.Payment(
                     order.Id,
                     userId,
                     request.Gateway,
                     request.Method,
-                    order.TotalAmount, // Use final amount after discount
+                    order.TotalAmount,
                     "VND");
 
                 var createdPayment = await _paymentRepository.CreateAsync(payment);
  
-                // 7. Get payment gateway and initiate payment
+                // 9. Get payment gateway and initiate payment
                 var gateway = _gatewayFactory.GetGateway(request.Gateway);
                 
                 var paymentRequest = new PaymentRequest
@@ -222,18 +217,19 @@ namespace Tekno.Application.Payment.Services
                     throw new InvalidOperationException($"Payment initiation failed: {initResult.ErrorMessage}");
                 }
 
-                // 8. Update payment with transaction ID
+                // 10. Update payment with transaction ID
                 createdPayment.MarkAsProcessing(initResult.TransactionId);
                 await _paymentRepository.UpdateAsync(createdPayment);
 
-                // 9. Commit transaction
+                // 11. Commit transaction
                 await transaction.CommitAsync();
 
+                var isRetry = existingPayments.Any();
                 _logger.LogInformation(
-                    "Payment initiated for order {OrderNumber}, transaction {TransactionId}, " +
-                    "shipping address {AddressId}, coupon {CouponCode}, isRetry: {IsRetry}",
-                    order.OrderNumber, initResult.TransactionId, request.ShippingAddressId, 
-                    request.CouponCode ?? "none", failedPayment != null);
+                    "Payment initiated for order {OrderNumber} (OrderId: {OrderId}), transaction {TransactionId}, " +
+                    "shipping address {AddressId}, coupon {CouponCode}, isRetry: {IsRetry}, attempt: {Attempt}",
+                    order.OrderNumber, order.Id, initResult.TransactionId, request.ShippingAddressId, 
+                    request.CouponCode ?? "none", isRetry, existingPayments.Count + 1);
 
                 return new PaymentResponseDto
                 {
@@ -247,7 +243,7 @@ namespace Tekno.Application.Payment.Services
                     Status = PaymentStatus.Processing,
                     TotalAmount = order.TotalAmount,
                     ItemsCount = order.Items.Count,
-                    IsRetry = failedPayment != null
+                    IsRetry = isRetry
                 };
             }
             catch (Exception ex)
@@ -256,6 +252,63 @@ namespace Tekno.Application.Payment.Services
                 _logger.LogError(ex, "Payment processing failed for order {OrderId}", request.OrderId);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Return existing payment URL for retry (when payment is still active/processing)
+        /// </summary>
+        private async Task<PaymentResponseDto> ReturnExistingPaymentUrlAsync(
+            Domain.Payment.Payment payment, 
+            Domain.Order.Order order, 
+            int userId, 
+            string returnUrl)
+        {
+            var gateway = _gatewayFactory.GetGateway(payment.Gateway);
+            
+            var paymentRequest = new PaymentRequest
+            {
+                OrderId = order.Id,
+                UserId = userId,
+                OrderNumber = order.OrderNumber,
+                Amount = order.TotalAmount,
+                Currency = "VND",
+                Method = payment.Method,
+                ReturnUrl = returnUrl,
+                CallbackUrl = $"{GetBaseUrl()}/api/payment/callback"
+            };
+
+            var initResult = await gateway.InitiatePaymentAsync(paymentRequest);
+
+            if (!initResult.Success)
+            {
+                throw new InvalidOperationException($"Payment retry failed: {initResult.ErrorMessage}");
+            }
+
+            // Update transaction ID if it changed (shouldn't happen for most gateways)
+            if (initResult.TransactionId != payment.TransactionId)
+            {
+                _logger.LogInformation(
+                    "Payment transaction ID changed from {OldId} to {NewId} for order {OrderId}",
+                    payment.TransactionId, initResult.TransactionId, order.Id);
+                
+                payment.MarkAsProcessing(initResult.TransactionId);
+                await _paymentRepository.UpdateAsync(payment);
+            }
+
+            return new PaymentResponseDto
+            {
+                OrderId = order.Id,
+                OrderNumber = order.OrderNumber,
+                PaymentId = payment.Id,
+                TransactionId = payment.TransactionId,
+                PaymentUrl = initResult.PaymentUrl,
+                PaymentToken = initResult.PaymentToken,
+                QrCodeUrl = initResult.QrCodeUrl,
+                Status = PaymentStatus.Processing,
+                TotalAmount = order.TotalAmount,
+                ItemsCount = order.Items.Count,
+                IsRetry = true
+            };
         }
 
         /// <summary>
@@ -796,25 +849,104 @@ namespace Tekno.Application.Payment.Services
         }
 
         /// <summary>
-        /// Get user's completed payment history (for support/verification)
-        /// Returns lightweight payment info without order details
+        /// Get order payment status with retry information
+        /// Shows if order can be retried and provides payment history
         /// </summary>
-        public async Task<PagedResult<PaymentStatusDto>> GetUserCompletedPaymentsAsync(int userId, int page = 1, int pageSize = 20)
+        public async Task<OrderPaymentStatusDto> GetOrderPaymentStatusAsync(int orderId, int userId)
         {
-            var paging = new PagingParams(page, pageSize);
-            
-            // Only get completed payments
-            var result = await _paymentRepository.GetPagedAsync(
-                userId: userId, 
-                status: PaymentStatus.Completed,
-                paging: paging);
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null)
+            {
+                throw new NotFoundException("Order", orderId);
+            }
 
-            var dtos = _mapper.Map<List<PaymentStatusDto>>(result.Data);
+            if (order.UserId != userId)
+            {
+                throw new UnauthorizedAccessException("Order does not belong to the user");
+            }
+
+            var payments = await _paymentRepository.GetByOrderIdAsync(orderId);
+            var latestPayment = payments.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
+
+            // Check if any payment is still processing (not timed out)
+            var activePayment = payments.FirstOrDefault(p => p.Status == PaymentStatus.Processing);
+            bool hasActivePayment = false;
             
-            // Don't enrich with order details - use /api/orders/history for that
-            // This keeps payment history lightweight and focused on payment verification
-            
-            return new PagedResult<PaymentStatusDto>(dtos, result.TotalRecords, result.Page, result.PageSize);
+            if (activePayment != null)
+            {
+                hasActivePayment = !_timeoutService.IsPaymentTimedOut(activePayment);
+                
+                if (!hasActivePayment)
+                {
+                    // Mark timed out payment as failed
+                    activePayment.MarkAsFailed(
+                        $"Payment timed out after {_timeoutService.GetTimeoutDuration().TotalMinutes} minutes", 
+                        null);
+                    await _paymentRepository.UpdateAsync(activePayment);
+                }
+            }
+
+            var canRetry = order.CanRetryPayment();
+            var orderAge = DateTime.UtcNow - order.CreatedAt;
+
+            return new OrderPaymentStatusDto
+            {
+                OrderId = order.Id,
+                OrderNumber = order.OrderNumber,
+                OrderStatus = order.Status,
+                OrderCreatedAt = order.CreatedAt,
+                OrderAgeHours = orderAge.TotalHours,
+                TotalAmount = order.TotalAmount,
+                
+                CanRetryPayment = canRetry,
+                RetryReason = GetRetryReason(order, hasActivePayment, orderAge),
+                
+                PaymentAttempts = payments.Count,
+                LatestPaymentStatus = latestPayment?.Status,
+                LatestPaymentTransactionId = latestPayment?.TransactionId,
+                LatestPaymentError = latestPayment?.ErrorMessage,
+                LatestPaymentCreatedAt = latestPayment?.CreatedAt,
+                
+                HasActivePayment = hasActivePayment,
+                
+                PaymentHistory = payments.OrderByDescending(p => p.CreatedAt)
+                    .Select(p => new PaymentAttemptDto
+                    {
+                        TransactionId = p.TransactionId,
+                        Status = p.Status,
+                        Gateway = p.Gateway,
+                        Amount = p.Amount,
+                        CreatedAt = p.CreatedAt,
+                        CompletedAt = p.CompletedAt,
+                        FailedAt = p.FailedAt,
+                        ErrorMessage = p.ErrorMessage
+                    }).ToList()
+            };
+        }
+
+        private string GetRetryReason(Domain.Order.Order order, bool hasActivePayment, TimeSpan orderAge)
+        {
+            if (hasActivePayment)
+            {
+                return "Payment is currently processing. Please complete the payment or wait for timeout.";
+            }
+
+            if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Processing)
+            {
+                return "Order already paid and processing.";
+            }
+
+            if (order.Status == OrderStatus.Cancelled && orderAge.TotalHours > 24)
+            {
+                return $"Order is too old ({orderAge.TotalHours:F1} hours). Please create a new order.";
+            }
+
+            if (order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Pending)
+            {
+                return "You can retry payment for this order.";
+            }
+
+            return $"Order status is {order.Status}, retry not available.";
         }
 
         private static string GenerateOrderNumber()

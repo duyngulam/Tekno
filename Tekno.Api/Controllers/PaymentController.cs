@@ -48,29 +48,29 @@ namespace Tekno.Api.Controllers
         /// 
         /// Returns only transaction info. For order details, use /api/orders/history
         /// </remarks>
-        [HttpGet("my-payments")]
-        [Authorize]
-        public async Task<IActionResult> GetMyPayments(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20)
-        {
-            try
-            {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                
-                // Only show completed payments (for payment verification/support)
-                var payments = await _paymentService.GetUserCompletedPaymentsAsync(userId, page, pageSize);
-
-                return Ok(ApiResponse<PagedResult<PaymentStatusDto>>.Ok(
-                    payments, 
-                    "Payment history retrieved. For order details, use /api/orders/history"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to get payment history for user");
-                return StatusCode(500, ApiResponse<string>.Fail($"Failed to get payment history: {ex.Message}"));
-            }
-        }
+        //[HttpGet("my-payments")]
+        //[Authorize]
+        //public async Task<IActionResult> GetMyPayments(
+        //    [FromQuery] int page = 1,
+        //    [FromQuery] int pageSize = 20)
+        //{
+        //    try
+        //    {
+        //        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        //        
+        //        // Only show completed payments (for payment verification/support)
+        //        var payments = await _paymentService.GetUserCompletedPaymentsAsync(userId, page, pageSize);
+        //
+        //        return Ok(ApiResponse<PagedResult<PaymentStatusDto>>.Ok(
+        //            payments, 
+        //            "Payment history retrieved. For order details, use /api/orders/history"));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Failed to get payment history for user");
+        //        return StatusCode(500, ApiResponse<string>.Fail($"Failed to get payment history: {ex.Message}"));
+        //    }
+        //}
 
         /// <summary>
         /// Process payment - Create order and initiate payment
@@ -506,45 +506,108 @@ namespace Tekno.Api.Controllers
         }
 
         /// <summary>
-        /// Get payment status by transaction ID (lightweight)
+        /// Get payment status by transaction ID
+        /// </summary>
+        [HttpGet("status/{transactionId}")]
+        public async Task<IActionResult> GetPaymentStatus(string transactionId)
+        {
+            var status = await _paymentService.GetPaymentStatusAsync(transactionId);
+            
+            if (status == null)
+            {
+                return NotFound(ApiResponse<PaymentStatusDto>.Fail($"Payment not found: {transactionId}"));
+            }
+
+            return Ok(ApiResponse<PaymentStatusDto>.Ok(status));
+        }
+
+        /// <summary>
+        /// Get order payment status with retry information
+        /// Shows payment history, retry capability, and sync status between order and payment
         /// </summary>
         /// <remarks>
-        /// Returns basic payment information without order details.
+        /// Returns comprehensive information about order payment status:
+        /// - Current order status (Pending, Cancelled, Processing, etc.)
+        /// - All payment attempts for this order
+        /// - Whether order can be retried (CanRetryPayment)
+        /// - Why retry is/isn't available (RetryReason)
+        /// - Order age and timeout information
         /// 
-        /// **For complete order information, use:**
-        /// - GET /api/orders/{orderNumber} - Full order details with products, delivery tracking
-        /// - GET /api/orders/history - All user orders
+        /// **Use Cases:**
         /// 
-        /// This endpoint only returns:
-        /// - Payment status (Completed, Failed, Pending, etc.)
-        /// - Transaction ID for support
-        /// - Gateway and method used
-        /// - Amount and currency
+        /// 1. **Check if order can be retried after timeout:**
+        ///    - Order in Cancelled status (payment timed out)
+        ///    - CanRetryPayment = true if within 24 hours
+        ///    - Frontend shows "Retry Payment" button
         /// 
-        /// Example:
-        ///     GET /api/payment/status/MOCK-abc123
+        /// 2. **Check payment progress:**
+        ///    - HasActivePayment = true: payment still processing
+        ///    - HasActivePayment = false: payment timed out or failed
+        /// 
+        /// 3. **Debug payment issues:**
+        ///    - View full payment history
+        ///    - See error messages from gateway
+        ///    - Check timestamps and timeout status
+        /// 
+        /// Example response (order can be retried):
+        /// 
+        ///     {
+        ///       "orderId": 123,
+        ///       "orderNumber": "ORD-20241220-ABC123",
+        ///       "orderStatus": "Cancelled",
+        ///       "orderCreatedAt": "2024-12-20T10:00:00Z",
+        ///       "orderAgeHours": 2.5,
+        ///       "totalAmount": 1500000,
+        ///       "canRetryPayment": true,
+        ///       "retryReason": "You can retry payment for this order.",
+        ///       "paymentAttempts": 2,
+        ///       "latestPaymentStatus": "Failed",
+        ///       "latestPaymentError": "Payment timed out after 15 minutes",
+        ///       "hasActivePayment": false,
+        ///       "paymentHistory": [
+        ///         {
+        ///           "transactionId": "VNPAY-20241220-001",
+        ///           "status": "Failed",
+        ///           "gateway": "VNPay",
+        ///           "amount": 1500000,
+        ///           "createdAt": "2024-12-20T10:00:00Z",
+        ///           "failedAt": "2024-12-20T10:15:00Z",
+        ///           "errorMessage": "Payment timed out after 15 minutes"
+        ///         }
+        ///       ]
+        ///     }
+        /// 
+        /// Example response (order too old):
+        /// 
+        ///     {
+        ///       "orderId": 456,
+        ///       "orderStatus": "Cancelled",
+        ///       "orderAgeHours": 30.5,
+        ///       "canRetryPayment": false,
+        ///       "retryReason": "Order is too old (30.5 hours). Please create a new order.",
+        ///       ...
+        ///     }
         /// </remarks>
-        //[HttpGet("status/{transactionId}")]
-        //[Authorize]
-        //public async Task<IActionResult> GetPaymentStatus(string transactionId)
-        //{
-        //    try
-        //    {
-        //        var result = await _paymentService.GetPaymentStatusAsync(transactionId);
-
-        //        if (result == null)
-        //        {
-        //            return NotFound(ApiResponse<string>.Fail("Payment not found"));
-        //        }
-
-        //        return Ok(ApiResponse<PaymentStatusDto>.Ok(result));
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Failed to get payment status for {TransactionId}", transactionId);
-        //        return StatusCode(500, ApiResponse<string>.Fail($"Failed to get payment status: {ex.Message}"));
-        //    }
-        //}
+        [HttpGet("order/{orderId}/status")]
+        [Authorize]
+        public async Task<IActionResult> GetOrderPaymentStatus(int orderId)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var status = await _paymentService.GetOrderPaymentStatusAsync(orderId, userId);
+                
+                return Ok(ApiResponse<OrderPaymentStatusDto>.Ok(status));
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ApiResponse<OrderPaymentStatusDto>.Fail(ex.Message));
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid();
+            }
+        }
 
         /// <summary>
         /// Get payment details by transaction ID

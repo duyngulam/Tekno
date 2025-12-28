@@ -44,10 +44,10 @@ namespace Tekno.Infrastructure.Review
                 .Where(r => r.ProductId == productId);
 
             // Filter by status
-            if (!string.IsNullOrWhiteSpace(status) && System.Enum.TryParse<ReviewStatus>(status, true, out var statusEnum))
-            {
-                query = query.Where(r => r.Status == statusEnum);
-            }
+            //if (!string.IsNullOrWhiteSpace(status) && System.Enum.TryParse<ReviewStatus>(status, true, out var statusEnum))
+            //{
+            //    query = query.Where(r => r.Status == statusEnum);
+            //}
 
             // Filter by verified purchase
             if (isVerifiedPurchase.HasValue)
