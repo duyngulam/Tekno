@@ -18,6 +18,14 @@ export interface AttributeValuesResponse {
   values: AttributeValue[];
 }
 
+export interface CreateAttributeRequest {
+  name: string;
+  inputType: string;
+  isGlobal: boolean;
+  categoryId: number;
+  initialValues: string[];
+}
+
 export async function getCategoriesList(): Promise<Category[]> {
   try {
     const res = await fetch (`${API_BASE}/admin/categories/list`, {
@@ -73,6 +81,12 @@ export async function getCategoriesTree(): Promise<Category[]> {
 }
 
 export async function createCategory(fd: FormData) {
+  try {
+    return await post(`${API_BASE}/admin/categories/create`, fd);
+  } catch (error) {
+    console.error("❌ Lỗi khi gọi API:", error);
+    throw error;
+  }
 }
 
 export async function updateCategory(fd: FormData) {
@@ -210,6 +224,38 @@ export async function updateCategoryAttributeValues(valueId: number, values: str
   try {
     const body = { ValueId: valueId, Values: values };
     return await put(`${API_BASE}/admin/categories/attributes/values/${valueId}`, body);
+  } catch (error) {
+    console.error("❌ Lỗi khi gọi API:", error);
+    throw error;
+  }
+}
+
+export async function createAttribute(data: CreateAttributeRequest) {
+  try {
+    return await post(`${API_BASE}/admin/categories/attributes`, data);
+  } catch (error) {
+    console.error("❌ Lỗi khi gọi API:", error);
+    throw error;
+  }
+}
+
+export async function getGlobalAttributes() {
+  try {
+    const res = await fetch(`${API_BASE}/admin/categories/attributes/global`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Lấy global attributes thất bại!");
+    }
+
+    const result = await res.json();
+    return result.data || [];
   } catch (error) {
     console.error("❌ Lỗi khi gọi API:", error);
     throw error;

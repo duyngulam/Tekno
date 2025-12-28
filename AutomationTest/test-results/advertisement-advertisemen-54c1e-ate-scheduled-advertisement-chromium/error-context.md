@@ -1,0 +1,67 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img "Tekno Logo" [ref=e4]
+      - generic [ref=e5]: Tekno
+    - generic [ref=e6]:
+      - button [ref=e7]:
+        - img [ref=e8]
+      - generic [ref=e11]:
+        - img [ref=e12]
+        - generic [ref=e15]: Hello, admin
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - navigation [ref=e18]:
+        - link "Dashboard" [ref=e19] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e21]
+          - generic [ref=e26]: Dashboard
+        - link "Products" [ref=e27] [cursor=pointer]:
+          - /url: /dashboard/products
+          - img [ref=e29]
+          - generic [ref=e33]: Products
+        - link "Product Catalog" [ref=e34] [cursor=pointer]:
+          - /url: /dashboard/catalog
+          - img [ref=e36]
+          - generic [ref=e39]: Product Catalog
+        - link "Orders" [ref=e40] [cursor=pointer]:
+          - /url: /dashboard/orders
+          - img [ref=e42]
+          - generic [ref=e45]: Orders
+        - link "Customer" [ref=e46] [cursor=pointer]:
+          - /url: /dashboard/customers
+          - img [ref=e48]
+          - generic [ref=e53]: Customer
+        - link "Brand" [ref=e54] [cursor=pointer]:
+          - /url: /dashboard/brand
+          - img [ref=e56]
+          - generic [ref=e59]: Brand
+        - link "Category" [ref=e60] [cursor=pointer]:
+          - /url: /dashboard/category
+          - img [ref=e62]
+          - generic [ref=e64]: Category
+        - link "Advertisement" [ref=e65] [cursor=pointer]:
+          - /url: /dashboard/advertisement
+          - img [ref=e67]
+          - generic [ref=e70]: Advertisement
+    - main [ref=e71]:
+      - generic [ref=e72]:
+        - generic [ref=e73]:
+          - heading "Advertisement" [level=2] [ref=e75]
+          - button "+ Create Advertisement" [ref=e76]
+        - generic [ref=e77]:
+          - textbox "Search by product name, position, or ID..." [ref=e78]
+          - combobox [ref=e79]:
+            - option "All Status" [selected]
+            - option "Active"
+            - option "Inactive"
+            - option "Scheduled"
+            - option "Expired"
+        - paragraph [ref=e80]: Loading...
+  - button "Open Next.js Dev Tools" [ref=e86] [cursor=pointer]:
+    - img [ref=e87]
+  - alert [ref=e90]
+```
