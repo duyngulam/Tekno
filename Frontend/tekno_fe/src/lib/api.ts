@@ -85,12 +85,25 @@ export async function del(url: string, opts?: RequestInit) {
   return request(url, { method: 'DELETE', ...opts });
 }
 
+export async function patchForm(url: string, formData: FormData, opts?: RequestInit) {
+  return request(url, { method: 'PATCH', body: formData, ...opts });
+}
+
+export async function patch(url: string, body?: any, opts?: RequestInit) {
+  const init: RequestInit = { method: 'PATCH', ...opts };
+  if (body instanceof FormData) init.body = body;
+  else if (body !== undefined) init.body = JSON.stringify(body);
+  return request(url, init);
+}
+
 export default {
   get,
   post,
   postForm,
   put,
   putForm,
+  patch,
+  patchForm,
   del,
   setAuthToken,
   getAuthToken,
