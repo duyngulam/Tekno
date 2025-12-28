@@ -331,6 +331,43 @@ namespace Tekno.Application.Order.Services
                     ShippedAt = order.ShippedAt,
                     DeliveredAt = order.DeliveredAt
                 };
+
+                // Map shipping address if available
+                if (order.ShippingAddress != null)
+                {
+                    dto.Delivery.ShippingAddress = new OrderShippingAddressDto
+                    {
+                        RecipientName = order.ShippingAddress.RecipientName,
+                        PhoneNumber = order.ShippingAddress.PhoneNumber,
+                        AddressLine = order.ShippingAddress.AddressLine,
+                        ProvinceCode = order.ShippingAddress.ProvinceCode,
+                        ProvinceName = order.ShippingAddress.ProvinceName,
+                        DistrictCode = order.ShippingAddress.DistrictCode,
+                        DistrictName = order.ShippingAddress.DistrictName,
+                        WardCode = order.ShippingAddress.WardCode,
+                        WardName = order.ShippingAddress.WardName
+                    };
+                }
+            }
+            // Even if order is still in Processing/Pending, map shipping address if it exists
+            else if (order.ShippingAddress != null)
+            {
+                dto.Delivery = new OrderDeliveryDto
+                {
+                    Status = GetDeliveryStatus(order.Status),
+                    ShippingAddress = new OrderShippingAddressDto
+                    {
+                        RecipientName = order.ShippingAddress.RecipientName,
+                        PhoneNumber = order.ShippingAddress.PhoneNumber,
+                        AddressLine = order.ShippingAddress.AddressLine,
+                        ProvinceCode = order.ShippingAddress.ProvinceCode,
+                        ProvinceName = order.ShippingAddress.ProvinceName,
+                        DistrictCode = order.ShippingAddress.DistrictCode,
+                        DistrictName = order.ShippingAddress.DistrictName,
+                        WardCode = order.ShippingAddress.WardCode,
+                        WardName = order.ShippingAddress.WardName
+                    }
+                };
             }
 
             // Enrich order items with product and variant details

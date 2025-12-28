@@ -74,7 +74,6 @@ namespace Tekno.Infrastructure.Order
                 .SelectMany(o => o.Items)
                 .AnyAsync(item => item.ProductId == productId);
         }
-
         public async Task<Domain.Order.Order?> GetUserOrderForProductAsync(int userId, int productId)
         {
             return await _context.Set<Domain.Order.Order>()
