@@ -113,16 +113,58 @@ namespace Tekno.Domain.Order
             Status = OrderStatus.Refunded;
         }
 
+        /// <summary>
+        /// Reactivate a cancelled order back to Pending state for payment retry
+        /// Only allowed if order was cancelled due to payment timeout/failure
+        /// </summary>
+        public void ReactivateForPaymentRetry()
+        {
+            if (Status != OrderStatus.Cancelled)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot reactivate order in {Status} status. Only Cancelled orders can be reactivated.");
+            }
+
+            // Additional validation: Order shouldn't be too old (e.g., within 24 hours)
+            var orderAge = DateTime.UtcNow - CreatedAt;
+            if (orderAge.TotalHours > 24)
+            {
+                throw new InvalidOperationException(
+                    $"Order is too old to reactivate ({orderAge.TotalHours:F1} hours). Maximum age is 24 hours.");
+            }
+
+            Status = OrderStatus.Pending;
+        }
+
+        /// <summary>
+        /// Check if order can be retried for payment
+        /// Order must be Pending or Cancelled (due to payment failure) and not too old
+        /// </summary>
+        public bool CanRetryPayment()
+        {
+            // Allow retry if Pending (original state) or Cancelled (after payment failure)
+            if (Status != OrderStatus.Pending && Status != OrderStatus.Cancelled)
+            {
+                return false;
+            }
+
+            // Check order age - don't allow retry for orders older than 24 hours
+            var orderAge = DateTime.UtcNow - CreatedAt;
+            return orderAge.TotalHours <= 24;
+        }
+
         public bool HasPurchasedProduct(int productId)
         {
-            return Status == OrderStatus.Completed && 
-                   Items.Any(i => i.ProductId == productId);
+            // Treat orders that have progressed past Pending (Processing, Shipping, Delivered, Completed)
+            // as purchased for the purpose of reviews and entitlement checks.
+            var purchasedStates = new[] { OrderStatus.Processing, OrderStatus.Completed, OrderStatus.Shipping, OrderStatus.Delivered };
+            return purchasedStates.Contains(Status) && Items.Any(i => i.ProductId == productId);
         }
 
         public bool HasPurchasedVariant(int variantId)
         {
-            return Status == OrderStatus.Completed && 
-                   Items.Any(i => i.VariantId == variantId);
+            var purchasedStates = new[] { OrderStatus.Processing, OrderStatus.Completed, OrderStatus.Shipping, OrderStatus.Delivered };
+            return purchasedStates.Contains(Status) && Items.Any(i => i.VariantId == variantId);
         }
     }
 

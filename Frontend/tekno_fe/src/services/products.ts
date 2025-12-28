@@ -1,6 +1,6 @@
 import { get,post, postForm, put, del, API_BASE } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/apiConfig";
 
-const API_BASE_URL = "http://localhost:5000/api"; // đổi theo API thật của bạn
 
 // services/products.ts
 export async function getProductsList(params?: {
@@ -203,6 +203,44 @@ export async function updateProductVariant(
     );
   } catch (error) {
     console.error("❌ Failed to update product variant:", error);
+    throw error;
+  }
+}
+
+//product on sale
+export async function getProductsOnSale(params?: {
+  count: number;
+  categorySlug?: string;
+}) {
+  try {
+    const query = new URLSearchParams();
+
+    // API expects PascalCase parameter names according to Swagger UI
+    if (params?.count) query.append("count", String(params.count));
+    if (params?.categorySlug) query.append("categorySlug", params.categorySlug);
+    
+
+    const url = `${API_BASE_URL}/products/on-sale${query.toString() ? `?${query.toString()}` : ""}`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch product on sale list: ${res.status}`);
+    }
+
+    const result = await res.json();
+
+    if (!result.success || !result.data) {
+      throw new Error(result.message || "Invalid API response");
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error("Error in getProductsList:", error);
     throw error;
   }
 }

@@ -26,10 +26,14 @@ namespace Tekno.Api.Controllers
         /// <summary>
         /// Get reviews for a product (public)
         /// </summary>
-        /// <param name="productId">Product ID</param>
+        /// <param name="productId">Product ID to get reviews for</param>
         /// <param name="verifiedOnly">Filter to show only verified purchase reviews</param>
         /// <param name="page">Page number</param>
         /// <param name="pageSize">Items per page</param>
+        /// <remarks>
+        /// Example:
+        ///     GET /api/products/1/reviews?verifiedOnly=true&amp;page=1&amp;pageSize=20
+        /// </remarks>
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> GetProductReviews(
@@ -45,7 +49,11 @@ namespace Tekno.Api.Controllers
         /// <summary>
         /// Get review summary for a product (public)
         /// </summary>
-        /// <param name="productId">Product ID</param>
+        /// <param name="productId">Product ID to get summary for</param>
+        /// <remarks>
+        /// Example:
+        ///     GET /api/products/1/reviews/summary
+        /// </remarks>
         [HttpGet("summary")]
         [AllowAnonymous]
         public async Task<IActionResult> GetProductSummary(int productId)
@@ -57,7 +65,14 @@ namespace Tekno.Api.Controllers
         /// <summary>
         /// Check if current user can review a product
         /// </summary>
-        /// <param name="productId">Product ID</param>
+        /// <param name="productId">Product ID to check</param>
+        /// <remarks>
+        /// Returns information about whether user has purchased the product
+        /// and if they've already submitted a review.
+        /// 
+        /// Example:
+        ///     GET /api/products/1/reviews/can-review
+        /// </remarks>
         [HttpGet("can-review")]
         [Authorize]
         public async Task<IActionResult> CanReview(int productId)
@@ -72,26 +87,40 @@ namespace Tekno.Api.Controllers
         /// </summary>
         /// <remarks>
         /// User must have purchased the product to leave a review.
+        /// The system will automatically detect which order to link the review to.
         /// 
         /// Sample request:
         /// 
         ///     POST /api/products/1/reviews
         ///     {
-        ///       "productId": 1,
         ///       "rating": 5,
         ///       "comment": "This is the best laptop I've ever owned. Fast, reliable, and great battery life."
         ///     }
         /// 
+        /// Note: ProductId is taken from the URL, not the request body.
+        /// OrderId is automatically detected from user's purchase history.
+        /// 
+        /// Requirements:
+        /// - Must be authenticated
+        /// - Must have purchased the product (verified purchase)
+        /// - Can only review each product once
+        /// - Rating must be 1-5 stars
+        /// - Comment must be 10-2000 characters
+        /// 
+        /// Response:
+        /// - Returns the created review
+        /// - Review will be pending approval by default
         /// </remarks>
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> CreateReview(int productId, [FromBody] CreateReviewDto dto)
         {
-            // Ensure productId in route matches DTO
+            // Set productId from URL route parameter
             dto.ProductId = productId;
 
             var userId = GetCurrentUserId();
             var review = await _reviewService.CreateReviewAsync(userId, dto);
+            
             return CreatedAtAction(
                 nameof(GetProductReviews),
                 new { productId = productId },
@@ -101,6 +130,19 @@ namespace Tekno.Api.Controllers
         /// <summary>
         /// Update user's own review
         /// </summary>
+        /// <param name="productId">Product ID (for route consistency)</param>
+        /// <param name="reviewId">Review ID to update</param>
+        /// <param name="dto">Updated review data (rating and comment)</param>
+        /// <remarks>
+        /// User can only update their own reviews.
+        /// 
+        /// Example:
+        ///     PUT /api/products/1/reviews/123
+        ///     {
+        ///       "rating": 4,
+        ///       "comment": "Updated my review after using it for a month..."
+        ///     }
+        /// </remarks>
         [HttpPut("{reviewId:int}")]
         [Authorize]
         public async Task<IActionResult> UpdateReview(int productId, int reviewId, [FromBody] UpdateReviewDto dto)
@@ -117,6 +159,14 @@ namespace Tekno.Api.Controllers
         /// <summary>
         /// Delete user's own review
         /// </summary>
+        /// <param name="productId">Product ID (for route consistency)</param>
+        /// <param name="reviewId">Review ID to delete</param>
+        /// <remarks>
+        /// User can only delete their own reviews.
+        /// 
+        /// Example:
+        ///     DELETE /api/products/1/reviews/123
+        /// </remarks>
         [HttpDelete("{reviewId:int}")]
         [Authorize]
         public async Task<IActionResult> DeleteReview(int productId, int reviewId)
@@ -133,9 +183,19 @@ namespace Tekno.Api.Controllers
         /// <summary>
         /// Vote on review helpfulness
         /// </summary>
-        /// <param name="productId">Product ID</param>
-        /// <param name="reviewId">Review ID</param>
+        /// <param name="productId">Product ID (for route consistency)</param>
+        /// <param name="reviewId">Review ID to vote on</param>
         /// <param name="dto">Vote data (isHelpful: true/false)</param>
+        /// <remarks>
+        /// Mark a review as helpful or not helpful.
+        /// Users can change their vote by voting again.
+        /// 
+        /// Example:
+        ///     POST /api/products/1/reviews/123/vote
+        ///     {
+        ///       "isHelpful": true
+        ///     }
+        /// </remarks>
         [HttpPost("{reviewId:int}/vote")]
         [Authorize]
         public async Task<IActionResult> VoteHelpfulness(

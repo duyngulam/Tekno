@@ -34,6 +34,10 @@
       # Environment
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
       - DOTNET_ENVIRONMENT=${DOTNET_ENVIRONMENT:-Development}
+      
+      # API Base URL for internal callbacks (Docker networking)
+      # Use service name 'api' which resolves within Docker Compose network
+      - API_BASE_URL=http://api:8080
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
@@ -95,6 +99,30 @@
       timeout: 10s
       retries: 5
       start_period: 60s
+
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:8.14.2
+  #   container_name: kibana
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   ports:
+  #     - "5601:5601"
+  #   environment:
+  #     Point Kibana to the Elasticsearch service in compose network
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #     Ensure Kibana listens on all interfaces
+  #     - SERVER_HOST=0.0.0.0
+  #     If Elasticsearch security were enabled, set credentials here
+  #     - ELASTICSEARCH_USERNAME=elastic
+  #     - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 40s
 
 volumes:
   # db_data:

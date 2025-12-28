@@ -24,6 +24,7 @@ export interface Product {
   primaryImagePath: string;
   finalPrice: number;
   overview: string;
+  rating: number;
   description: string;
   warrantyInfo: string | null;
   totalSold: number;
@@ -33,16 +34,31 @@ export interface Product {
     value: string[];
   }[];
   images: string[];
-  variants: {
-    id: number;
-    sku: string;
-    price: number;
-    stock: number; // số lượng
-    attributes: {
-      name: string;
-      value: string[]; // mảng string
-    }[];
-  }[];
+  variants: ProductVariant[];
+  // variants: {
+  //   id: number;
+  //   sku: string;
+  //   price: number;
+  //   stock: number; // số lượng
+  //   attributes: VariantAttribute[];
+  //   // attributes: {
+  //   //   name: string;
+  //   //   value: string[]; // mảng string
+  //   // }[];
+  // }[];
 }
 
+export type ProductVariant = {
+  id: number;
+  sku: string;
+  price: number;
+  stock: number;
+  attributes: VariantAttribute[];
+};
 
+
+export type VariantAttribute = {
+  id: number;
+  name: string;
+  value: string[];
+};

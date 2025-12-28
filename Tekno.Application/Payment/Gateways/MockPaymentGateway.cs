@@ -78,8 +78,11 @@ namespace Tekno.Application.Payment.Gateways
                         }
                     };
 
-                    // Try to post callback - use absolute URL from request.CallbackUrl
-                    var response = await httpClient.PostAsJsonAsync(request.CallbackUrl, callbackDto);
+                    // Resolve callback URL for Docker compatibility
+                    var callbackUrlToUse = ResolveCallbackUrl(request.CallbackUrl, request.ReturnUrl);
+                    
+                    _logger.LogInformation("Mock gateway: Posting callback to {CallbackUrl}", callbackUrlToUse);
+                    var response = await httpClient.PostAsJsonAsync(callbackUrlToUse, callbackDto);
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -126,6 +129,85 @@ namespace Tekno.Application.Payment.Gateways
                            "If callback fails, you can manually call POST /api/payment/callback"
                 }
             });
+        }
+
+        /// <summary>
+        /// Resolve callback URL for Docker/Kubernetes/local environments
+        /// Handles localhost, relative paths, and container networking
+        /// </summary>
+        private string ResolveCallbackUrl(string? callbackUrl, string? returnUrl)
+        {
+            var originalUrl = callbackUrl ?? string.Empty;
+            
+            // If already absolute and not localhost, use as-is
+            if (Uri.TryCreate(originalUrl, UriKind.Absolute, out var absoluteUri))
+            {
+                // If it's localhost or 127.0.0.1, we need to resolve it for Docker
+                if (absoluteUri.Host == "localhost" || absoluteUri.Host == "127.0.0.1")
+                {
+                    _logger.LogInformation("Mock gateway: Detected localhost URL, resolving for Docker environment");
+                    
+                    // Try to get from environment first
+                    var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL");
+                    if (!string.IsNullOrWhiteSpace(apiBaseUrl))
+                    {
+                        var path = absoluteUri.PathAndQuery;
+                        var resolved = $"{apiBaseUrl.TrimEnd('/')}{path}";
+                        _logger.LogInformation("Mock gateway: Resolved using API_BASE_URL: {Original} ? {Resolved}", 
+                            originalUrl, resolved);
+                        return resolved;
+                    }
+                    
+                    // Fallback to host.docker.internal (Docker Desktop)
+                    var dockerHost = $"http://host.docker.internal:{absoluteUri.Port}{absoluteUri.PathAndQuery}";
+                    _logger.LogInformation("Mock gateway: Resolved using host.docker.internal: {Original} ? {Resolved}", 
+                        originalUrl, dockerHost);
+                    return dockerHost;
+                }
+                
+                // Not localhost, use as-is
+                return originalUrl;
+            }
+            
+            // Relative path - need to build full URL
+            _logger.LogInformation("Mock gateway: Detected relative callback URL: {Url}", originalUrl);
+            
+            // 1. Try API_BASE_URL environment variable (recommended for Docker)
+            var envBase = Environment.GetEnvironmentVariable("API_BASE_URL");
+            if (!string.IsNullOrWhiteSpace(envBase) && Uri.TryCreate(envBase, UriKind.Absolute, out var baseUri))
+            {
+                var resolved = new Uri(baseUri, originalUrl).ToString();
+                _logger.LogInformation("Mock gateway: Resolved using API_BASE_URL: {Relative} ? {Resolved}", 
+                    originalUrl, resolved);
+                return resolved;
+            }
+            
+            // 2. Try to derive from ReturnUrl (if provided)
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Uri.TryCreate(returnUrl, UriKind.Absolute, out var returnUri))
+            {
+                // Check if returnUrl is also localhost
+                if (returnUri.Host == "localhost" || returnUri.Host == "127.0.0.1")
+                {
+                    // Both are localhost - try host.docker.internal
+                    var dockerHost = $"http://host.docker.internal:8080{(originalUrl.StartsWith("/") ? "" : "/")}{originalUrl}";
+                    _logger.LogInformation("Mock gateway: Both callback and return are localhost, using host.docker.internal: {Resolved}", 
+                        dockerHost);
+                    return dockerHost;
+                }
+                
+                // Use returnUrl's origin
+                var origin = returnUri.GetLeftPart(UriPartial.Authority);
+                var resolved = new Uri(new Uri(origin), originalUrl).ToString();
+                _logger.LogInformation("Mock gateway: Resolved using ReturnUrl origin: {Relative} ? {Resolved}", 
+                    originalUrl, resolved);
+                return resolved;
+            }
+            
+            // 3. Last resort: assume we're in Docker Compose, use service name
+            var dockerCompose = $"http://api:8080{(originalUrl.StartsWith("/") ? "" : "/")}{originalUrl}";
+            _logger.LogInformation("Mock gateway: Using Docker Compose service name as last resort: {Resolved}", 
+                dockerCompose);
+            return dockerCompose;
         }
 
         public Task<PaymentVerificationResult> VerifyPaymentAsync(string transactionId, object callbackData)

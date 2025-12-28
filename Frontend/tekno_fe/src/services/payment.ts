@@ -2,12 +2,13 @@
 
 import { API_BASE_URL } from "@/lib/apiConfig";
 import {
-  ApiResponse,
   MyPaymentsResponse,
   PaymentGateway,
   PaymentHistory,
+  PaymentPayload,
   PaymentStatus,
 } from "@/type/payment";
+import { ApiResponse } from "@/type/share";
 
 export async function getPaymentGateways(
   token?: string
@@ -84,4 +85,28 @@ export async function getPaymentStatus(
   }
 
   return json.data;
+}
+
+export async function processPayment(
+  token: string,
+  payload: PaymentPayload
+): Promise<{
+  paymentUrl: string;
+}> {
+  const res = await fetch(`${API_BASE_URL}/payment/process`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw new Error(json?.message || "Payment failed");
+  }
+
+  return json.data; // backend trả về paymentUrl
 }

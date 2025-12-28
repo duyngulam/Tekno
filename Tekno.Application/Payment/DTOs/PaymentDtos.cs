@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Tekno.Application.Cart.DTOs;
+using Tekno.Domain.Order;
 using Tekno.Domain.Payment;
 
 namespace Tekno.Application.Payment.DTOs
@@ -106,5 +107,79 @@ namespace Tekno.Application.Payment.DTOs
         public decimal Tax { get; set; }
         public decimal Total { get; set; }
         public int TotalItems { get; set; }
+    }
+
+    /// <summary>
+    /// Order payment status with retry information
+    /// Shows payment history and retry capability
+    /// </summary>
+    public class OrderPaymentStatusDto
+    {
+        public int OrderId { get; set; }
+        public string OrderNumber { get; set; } = string.Empty;
+        public OrderStatus OrderStatus { get; set; }
+        public DateTime OrderCreatedAt { get; set; }
+        public double OrderAgeHours { get; set; }
+        public decimal TotalAmount { get; set; }
+        
+        /// <summary>
+        /// Can this order be retried for payment?
+        /// </summary>
+        public bool CanRetryPayment { get; set; }
+        
+        /// <summary>
+        /// Reason why retry is/isn't available
+        /// </summary>
+        public string RetryReason { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Number of payment attempts made
+        /// </summary>
+        public int PaymentAttempts { get; set; }
+        
+        /// <summary>
+        /// Latest payment status
+        /// </summary>
+        public PaymentStatus? LatestPaymentStatus { get; set; }
+        
+        /// <summary>
+        /// Latest payment transaction ID
+        /// </summary>
+        public string? LatestPaymentTransactionId { get; set; }
+        
+        /// <summary>
+        /// Latest payment error message
+        /// </summary>
+        public string? LatestPaymentError { get; set; }
+        
+        /// <summary>
+        /// When the latest payment was created
+        /// </summary>
+        public DateTime? LatestPaymentCreatedAt { get; set; }
+        
+        /// <summary>
+        /// Is there an active payment in progress (not timed out)?
+        /// </summary>
+        public bool HasActivePayment { get; set; }
+        
+        /// <summary>
+        /// Full payment history for this order
+        /// </summary>
+        public List<PaymentAttemptDto> PaymentHistory { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Payment attempt information (lightweight)
+    /// </summary>
+    public class PaymentAttemptDto
+    {
+        public string TransactionId { get; set; } = string.Empty;
+        public PaymentStatus Status { get; set; }
+        public PaymentGateway Gateway { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? CompletedAt { get; set; }
+        public DateTime? FailedAt { get; set; }
+        public string? ErrorMessage { get; set; }
     }
 }
