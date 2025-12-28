@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "@/lib/apiConfig";
-import { ProductReviewsResponse } from "@/type/review";
+import { CanReviewData, ProductReviewsResponse, SubmitReviewPayload, SubmitReviewResponse } from "@/type/review";
 import { ApiResponse } from "@/type/share";
 
 
@@ -41,4 +41,109 @@ export async function getProductReviews({
   }
 
   return res.json();
+}
+
+// POST /api/products/{productId}/reviews
+export async function createReview(
+  token: string,
+  productId: number,
+  payload: SubmitReviewPayload
+): Promise<ApiResponse<SubmitReviewResponse>> {
+  const res = await fetch(
+    `${API_BASE_URL}/products/${productId}/reviews`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw json;
+  }
+
+  return json as ApiResponse<SubmitReviewResponse>;
+}
+
+// PUT /api/products/{productId}/reviews/{reviewId}
+export async function updateReview(
+  token: string,
+  productId: number,
+  reviewId: number,
+  payload: SubmitReviewPayload
+): Promise<ApiResponse<SubmitReviewResponse>> {
+  const res = await fetch(
+    `${API_BASE_URL}/products/${productId}/reviews/${reviewId}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw json;
+  }
+
+  return json as ApiResponse<SubmitReviewResponse>;
+}
+// DELETE /api/products/{productId}/reviews/{reviewId}
+export async function deleteReview(
+  token: string,
+  productId: number,
+  reviewId: number
+): Promise<ApiResponse<boolean>> {
+  const res = await fetch(
+    `${API_BASE_URL}/products/${productId}/reviews/${reviewId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw json;
+  }
+
+  return json as ApiResponse<boolean>;
+}
+
+// GET /api/products/{productId}/reviews/can-review
+export async function canReviewProduct(
+  token: string,
+  productId: number
+): Promise<ApiResponse<CanReviewData>> {
+  const res = await fetch(
+    `${API_BASE_URL}/products/${productId}/reviews/can-review`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw json;
+  }
+
+  return json as ApiResponse<CanReviewData>;
 }

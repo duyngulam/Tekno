@@ -72,7 +72,8 @@ export async function getCategoriesTree(): Promise<Category[]> {
   }
 }
 
-
+export async function createCategory(fd: FormData) {
+}
 
 export async function updateCategory(fd: FormData) {
   try {

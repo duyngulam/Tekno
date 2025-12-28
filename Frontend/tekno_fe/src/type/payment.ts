@@ -33,8 +33,7 @@ export type PaymentStatus = {
   gatewayName: string;
   method: number;
   methodName: string;
-  status: number;
-  statusName: string;
+  status: string;
   amount: number;
   currency: string;
   createdAt: string;
