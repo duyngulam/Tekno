@@ -7,6 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -16,6 +23,15 @@ export default function AdvertisementPage() {
   const [advertisements, setAdvertisements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [openCreate, setOpenCreate] = useState(false);
+
+  const POSITIONS = [
+  { value: "HomeTop" },
+  { value: "HomeMiddle" },
+  { value: "HomeBottom" },
+  { value: "CategoryTop" },
+  { value: "ProductSidebar" },
+]
+
 
   // Search + Filter
   const [search, setSearch] = useState("");
@@ -233,14 +249,31 @@ export default function AdvertisementPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Position *</label>
-              <Input
-                placeholder="e.g., Homepage Banner, Sidebar"
-                value={form.position}
-                onChange={(e) => setForm({ ...form, position: e.target.value })}
-              />
-            </div>
+<div>
+  <label className="block text-sm font-medium mb-1">
+    Position <span className="text-red-500">*</span>
+  </label>
+
+  <Select
+    value={form.position}
+    onValueChange={(value) =>
+      setForm({ ...form, position: value })
+    }
+  >
+    <SelectTrigger>
+      <SelectValue placeholder="Select position" />
+    </SelectTrigger>
+
+    <SelectContent>
+{POSITIONS.map((item) => (
+  <SelectItem key={item.value} value={item.value}>
+    {item.value}
+  </SelectItem>
+))}
+    </SelectContent>
+  </Select>
+</div>
+
 
             <div>
               <label className="block text-sm font-medium mb-1">Priority</label>
@@ -251,6 +284,7 @@ export default function AdvertisementPage() {
                 onChange={(e) => setForm({ ...form, priority: Number(e.target.value) })}
               />
               <p className="text-xs text-gray-500 mt-1">Higher priority shows first</p>
+              <p className="text-xs text-gray-500 mt-1">Priority must be between 0 and 100</p>
             </div>
 
             <div>

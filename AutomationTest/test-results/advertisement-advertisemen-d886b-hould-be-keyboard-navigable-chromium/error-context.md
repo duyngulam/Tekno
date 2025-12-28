@@ -1,0 +1,482 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img "Tekno Logo" [ref=e4]
+      - generic [ref=e5]: Tekno
+    - generic [ref=e6]:
+      - button [ref=e7]:
+        - img [ref=e8]
+      - generic [ref=e11]:
+        - img [ref=e12]
+        - generic [ref=e15]: Hello, admin
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - navigation [ref=e18]:
+        - link "Dashboard" [ref=e19] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e21]
+          - generic [ref=e26]: Dashboard
+        - link "Products" [active] [ref=e27] [cursor=pointer]:
+          - /url: /dashboard/products
+          - img [ref=e29]
+          - generic [ref=e33]: Products
+        - link "Product Catalog" [ref=e34] [cursor=pointer]:
+          - /url: /dashboard/catalog
+          - img [ref=e36]
+          - generic [ref=e39]: Product Catalog
+        - link "Orders" [ref=e40] [cursor=pointer]:
+          - /url: /dashboard/orders
+          - img [ref=e42]
+          - generic [ref=e45]: Orders
+        - link "Customer" [ref=e46] [cursor=pointer]:
+          - /url: /dashboard/customers
+          - img [ref=e48]
+          - generic [ref=e53]: Customer
+        - link "Brand" [ref=e54] [cursor=pointer]:
+          - /url: /dashboard/brand
+          - img [ref=e56]
+          - generic [ref=e59]: Brand
+        - link "Category" [ref=e60] [cursor=pointer]:
+          - /url: /dashboard/category
+          - img [ref=e62]
+          - generic [ref=e64]: Category
+        - link "Advertisement" [ref=e65] [cursor=pointer]:
+          - /url: /dashboard/advertisement
+          - img [ref=e67]
+          - generic [ref=e70]: Advertisement
+    - main [ref=e71]:
+      - generic [ref=e72]:
+        - generic [ref=e73]:
+          - heading "Products" [level=2] [ref=e74]
+          - button "+ Create Product" [ref=e75]
+        - table [ref=e77]:
+          - rowgroup [ref=e78]:
+            - row "ID Brand Category Name BasePrice Discount% FinalPrice Sold Rating Reviews Image" [ref=e79]:
+              - columnheader "ID" [ref=e80]
+              - columnheader "Brand" [ref=e81]
+              - columnheader "Category" [ref=e82]
+              - columnheader "Name" [ref=e83]
+              - columnheader "BasePrice" [ref=e84]
+              - columnheader "Discount%" [ref=e85]
+              - columnheader "FinalPrice" [ref=e86]
+              - columnheader "Sold" [ref=e87]
+              - columnheader "Rating" [ref=e88]
+              - columnheader "Reviews" [ref=e89]
+              - columnheader "Image" [ref=e90]
+              - columnheader [ref=e91]
+          - rowgroup [ref=e92]:
+            - row "83 Logitech Camera SBTC 200000 0 200000 0 0 0 No image" [ref=e93] [cursor=pointer]:
+              - cell "83" [ref=e94]
+              - cell "Logitech" [ref=e95]
+              - cell "Camera" [ref=e96]
+              - cell "SBTC" [ref=e97]
+              - cell "200000" [ref=e98]
+              - cell "0" [ref=e99]
+              - cell "200000" [ref=e100]
+              - cell "0" [ref=e101]
+              - cell "0" [ref=e102]
+              - cell "0" [ref=e103]
+              - cell "No image" [ref=e104]:
+                - generic [ref=e105]: No image
+              - cell [ref=e106]:
+                - generic [ref=e108]:
+                  - button [ref=e109]:
+                    - img
+                  - button [ref=e110]:
+                    - img
+            - row "82 Samsung Tablet Sting 7990000 0 7990000 0 0 0 Sting 3" [ref=e111] [cursor=pointer]:
+              - cell "82" [ref=e112]
+              - cell "Samsung" [ref=e113]
+              - cell "Tablet" [ref=e114]
+              - cell "Sting" [ref=e115]
+              - cell "7990000" [ref=e116]
+              - cell "0" [ref=e117]
+              - cell "7990000" [ref=e118]
+              - cell "0" [ref=e119]
+              - cell "0" [ref=e120]
+              - cell "0" [ref=e121]
+              - cell "Sting 3" [ref=e122]:
+                - generic [ref=e123]:
+                  - img "Sting" [ref=e124]
+                  - generic [ref=e125]: "3"
+              - cell [ref=e126]:
+                - generic [ref=e128]:
+                  - button [ref=e129]:
+                    - img
+                  - button [ref=e130]:
+                    - img
+            - row "1 Dell Laptop Dell XPS 13 25990000 0 25990000 0 0 0 Dell XPS 13 2" [ref=e131] [cursor=pointer]:
+              - cell "1" [ref=e132]
+              - cell "Dell" [ref=e133]
+              - cell "Laptop" [ref=e134]
+              - cell "Dell XPS 13" [ref=e135]
+              - cell "25990000" [ref=e136]
+              - cell "0" [ref=e137]
+              - cell "25990000" [ref=e138]
+              - cell "0" [ref=e139]
+              - cell "0" [ref=e140]
+              - cell "0" [ref=e141]
+              - cell "Dell XPS 13 2" [ref=e142]:
+                - generic [ref=e143]:
+                  - img "Dell XPS 13" [ref=e144]
+                  - generic [ref=e145]: "2"
+              - cell [ref=e146]:
+                - generic [ref=e148]:
+                  - button [ref=e149]:
+                    - img
+                  - button [ref=e150]:
+                    - img
+            - row "3 Asus Laptop Asus ZenBook 14 OLED 22490000 0 22490000 0 0 0 Asus ZenBook 14 OLED 2" [ref=e151] [cursor=pointer]:
+              - cell "3" [ref=e152]
+              - cell "Asus" [ref=e153]
+              - cell "Laptop" [ref=e154]
+              - cell "Asus ZenBook 14 OLED" [ref=e155]
+              - cell "22490000" [ref=e156]
+              - cell "0" [ref=e157]
+              - cell "22490000" [ref=e158]
+              - cell "0" [ref=e159]
+              - cell "0" [ref=e160]
+              - cell "0" [ref=e161]
+              - cell "Asus ZenBook 14 OLED 2" [ref=e162]:
+                - generic [ref=e163]:
+                  - img "Asus ZenBook 14 OLED" [ref=e164]
+                  - generic [ref=e165]: "2"
+              - cell [ref=e166]:
+                - generic [ref=e168]:
+                  - button [ref=e169]:
+                    - img
+                  - button [ref=e170]:
+                    - img
+            - row "5 Lenovo Laptop Lenovo ThinkPad X1 Carbon Gen 11 48990000 0 48990000 0 0 0 Lenovo ThinkPad X1 Carbon Gen 11 2" [ref=e171] [cursor=pointer]:
+              - cell "5" [ref=e172]
+              - cell "Lenovo" [ref=e173]
+              - cell "Laptop" [ref=e174]
+              - cell "Lenovo ThinkPad X1 Carbon Gen 11" [ref=e175]
+              - cell "48990000" [ref=e176]
+              - cell "0" [ref=e177]
+              - cell "48990000" [ref=e178]
+              - cell "0" [ref=e179]
+              - cell "0" [ref=e180]
+              - cell "0" [ref=e181]
+              - cell "Lenovo ThinkPad X1 Carbon Gen 11 2" [ref=e182]:
+                - generic [ref=e183]:
+                  - img "Lenovo ThinkPad X1 Carbon Gen 11" [ref=e184]
+                  - generic [ref=e185]: "2"
+              - cell [ref=e186]:
+                - generic [ref=e188]:
+                  - button [ref=e189]:
+                    - img
+                  - button [ref=e190]:
+                    - img
+            - row "10 Apple Smartphone iPhone 15 Pro Max 33990000 0 33990000 0 0 0 iPhone 15 Pro Max 2" [ref=e191] [cursor=pointer]:
+              - cell "10" [ref=e192]
+              - cell "Apple" [ref=e193]
+              - cell "Smartphone" [ref=e194]
+              - cell "iPhone 15 Pro Max" [ref=e195]
+              - cell "33990000" [ref=e196]
+              - cell "0" [ref=e197]
+              - cell "33990000" [ref=e198]
+              - cell "0" [ref=e199]
+              - cell "0" [ref=e200]
+              - cell "0" [ref=e201]
+              - cell "iPhone 15 Pro Max 2" [ref=e202]:
+                - generic [ref=e203]:
+                  - img "iPhone 15 Pro Max" [ref=e204]
+                  - generic [ref=e205]: "2"
+              - cell [ref=e206]:
+                - generic [ref=e208]:
+                  - button [ref=e209]:
+                    - img
+                  - button [ref=e210]:
+                    - img
+            - row "11 Samsung Smartphone Samsung Galaxy S24 Ultra 29990000 0 29990000 0 0 0 Samsung Galaxy S24 Ultra 2" [ref=e211] [cursor=pointer]:
+              - cell "11" [ref=e212]
+              - cell "Samsung" [ref=e213]
+              - cell "Smartphone" [ref=e214]
+              - cell "Samsung Galaxy S24 Ultra" [ref=e215]
+              - cell "29990000" [ref=e216]
+              - cell "0" [ref=e217]
+              - cell "29990000" [ref=e218]
+              - cell "0" [ref=e219]
+              - cell "0" [ref=e220]
+              - cell "0" [ref=e221]
+              - cell "Samsung Galaxy S24 Ultra 2" [ref=e222]:
+                - generic [ref=e223]:
+                  - img "Samsung Galaxy S24 Ultra" [ref=e224]
+                  - generic [ref=e225]: "2"
+              - cell [ref=e226]:
+                - generic [ref=e228]:
+                  - button [ref=e229]:
+                    - img
+                  - button [ref=e230]:
+                    - img
+            - row "12 Google Smartphone Google Pixel 8 Pro 24990000 0 24990000 0 0 0 Google Pixel 8 Pro 2" [ref=e231] [cursor=pointer]:
+              - cell "12" [ref=e232]
+              - cell "Google" [ref=e233]
+              - cell "Smartphone" [ref=e234]
+              - cell "Google Pixel 8 Pro" [ref=e235]
+              - cell "24990000" [ref=e236]
+              - cell "0" [ref=e237]
+              - cell "24990000" [ref=e238]
+              - cell "0" [ref=e239]
+              - cell "0" [ref=e240]
+              - cell "0" [ref=e241]
+              - cell "Google Pixel 8 Pro 2" [ref=e242]:
+                - generic [ref=e243]:
+                  - img "Google Pixel 8 Pro" [ref=e244]
+                  - generic [ref=e245]: "2"
+              - cell [ref=e246]:
+                - generic [ref=e248]:
+                  - button [ref=e249]:
+                    - img
+                  - button [ref=e250]:
+                    - img
+            - row "13 Xiaomi Smartphone Xiaomi 14 18990000 0 18990000 0 0 0 Xiaomi 14 2" [ref=e251] [cursor=pointer]:
+              - cell "13" [ref=e252]
+              - cell "Xiaomi" [ref=e253]
+              - cell "Smartphone" [ref=e254]
+              - cell "Xiaomi 14" [ref=e255]
+              - cell "18990000" [ref=e256]
+              - cell "0" [ref=e257]
+              - cell "18990000" [ref=e258]
+              - cell "0" [ref=e259]
+              - cell "0" [ref=e260]
+              - cell "0" [ref=e261]
+              - cell "Xiaomi 14 2" [ref=e262]:
+                - generic [ref=e263]:
+                  - img "Xiaomi 14" [ref=e264]
+                  - generic [ref=e265]: "2"
+              - cell [ref=e266]:
+                - generic [ref=e268]:
+                  - button [ref=e269]:
+                    - img
+                  - button [ref=e270]:
+                    - img
+            - row "14 OnePlus Smartphone OnePlus 12 19990000 0 19990000 0 0 0 OnePlus 12 2" [ref=e271] [cursor=pointer]:
+              - cell "14" [ref=e272]
+              - cell "OnePlus" [ref=e273]
+              - cell "Smartphone" [ref=e274]
+              - cell "OnePlus 12" [ref=e275]
+              - cell "19990000" [ref=e276]
+              - cell "0" [ref=e277]
+              - cell "19990000" [ref=e278]
+              - cell "0" [ref=e279]
+              - cell "0" [ref=e280]
+              - cell "0" [ref=e281]
+              - cell "OnePlus 12 2" [ref=e282]:
+                - generic [ref=e283]:
+                  - img "OnePlus 12" [ref=e284]
+                  - generic [ref=e285]: "2"
+              - cell [ref=e286]:
+                - generic [ref=e288]:
+                  - button [ref=e289]:
+                    - img
+                  - button [ref=e290]:
+                    - img
+            - row "20 Apple Tablet iPad Pro M2 11 inch 24990000 0 24990000 0 0 0 iPad Pro M2 11 inch 2" [ref=e291] [cursor=pointer]:
+              - cell "20" [ref=e292]
+              - cell "Apple" [ref=e293]
+              - cell "Tablet" [ref=e294]
+              - cell "iPad Pro M2 11 inch" [ref=e295]
+              - cell "24990000" [ref=e296]
+              - cell "0" [ref=e297]
+              - cell "24990000" [ref=e298]
+              - cell "0" [ref=e299]
+              - cell "0" [ref=e300]
+              - cell "0" [ref=e301]
+              - cell "iPad Pro M2 11 inch 2" [ref=e302]:
+                - generic [ref=e303]:
+                  - img "iPad Pro M2 11 inch" [ref=e304]
+                  - generic [ref=e305]: "2"
+              - cell [ref=e306]:
+                - generic [ref=e308]:
+                  - button [ref=e309]:
+                    - img
+                  - button [ref=e310]:
+                    - img
+            - row "21 Samsung Tablet Samsung Galaxy Tab S9 19990000 0 19990000 0 0 0 Samsung Galaxy Tab S9 2" [ref=e311] [cursor=pointer]:
+              - cell "21" [ref=e312]
+              - cell "Samsung" [ref=e313]
+              - cell "Tablet" [ref=e314]
+              - cell "Samsung Galaxy Tab S9" [ref=e315]
+              - cell "19990000" [ref=e316]
+              - cell "0" [ref=e317]
+              - cell "19990000" [ref=e318]
+              - cell "0" [ref=e319]
+              - cell "0" [ref=e320]
+              - cell "0" [ref=e321]
+              - cell "Samsung Galaxy Tab S9 2" [ref=e322]:
+                - generic [ref=e323]:
+                  - img "Samsung Galaxy Tab S9" [ref=e324]
+                  - generic [ref=e325]: "2"
+              - cell [ref=e326]:
+                - generic [ref=e328]:
+                  - button [ref=e329]:
+                    - img
+                  - button [ref=e330]:
+                    - img
+            - row "22 Xiaomi Tablet Xiaomi Pad 6 8990000 0 8990000 0 0 0 Xiaomi Pad 6 2" [ref=e331] [cursor=pointer]:
+              - cell "22" [ref=e332]
+              - cell "Xiaomi" [ref=e333]
+              - cell "Tablet" [ref=e334]
+              - cell "Xiaomi Pad 6" [ref=e335]
+              - cell "8990000" [ref=e336]
+              - cell "0" [ref=e337]
+              - cell "8990000" [ref=e338]
+              - cell "0" [ref=e339]
+              - cell "0" [ref=e340]
+              - cell "0" [ref=e341]
+              - cell "Xiaomi Pad 6 2" [ref=e342]:
+                - generic [ref=e343]:
+                  - img "Xiaomi Pad 6" [ref=e344]
+                  - generic [ref=e345]: "2"
+              - cell [ref=e346]:
+                - generic [ref=e348]:
+                  - button [ref=e349]:
+                    - img
+                  - button [ref=e350]:
+                    - img
+            - row "30 Dell Monitor Dell UltraSharp U2723DE 17990000 0 17990000 0 0 0 Dell UltraSharp U2723DE" [ref=e351] [cursor=pointer]:
+              - cell "30" [ref=e352]
+              - cell "Dell" [ref=e353]
+              - cell "Monitor" [ref=e354]
+              - cell "Dell UltraSharp U2723DE" [ref=e355]
+              - cell "17990000" [ref=e356]
+              - cell "0" [ref=e357]
+              - cell "17990000" [ref=e358]
+              - cell "0" [ref=e359]
+              - cell "0" [ref=e360]
+              - cell "0" [ref=e361]
+              - cell "Dell UltraSharp U2723DE" [ref=e362]:
+                - img "Dell UltraSharp U2723DE" [ref=e364]
+              - cell [ref=e365]:
+                - generic [ref=e367]:
+                  - button [ref=e368]:
+                    - img
+                  - button [ref=e369]:
+                    - img
+            - row "40 Logitech Keyboard Logitech MX Keys 2990000 0 2990000 0 0 0 Logitech MX Keys 2" [ref=e370] [cursor=pointer]:
+              - cell "40" [ref=e371]
+              - cell "Logitech" [ref=e372]
+              - cell "Keyboard" [ref=e373]
+              - cell "Logitech MX Keys" [ref=e374]
+              - cell "2990000" [ref=e375]
+              - cell "0" [ref=e376]
+              - cell "2990000" [ref=e377]
+              - cell "0" [ref=e378]
+              - cell "0" [ref=e379]
+              - cell "0" [ref=e380]
+              - cell "Logitech MX Keys 2" [ref=e381]:
+                - generic [ref=e382]:
+                  - img "Logitech MX Keys" [ref=e383]
+                  - generic [ref=e384]: "2"
+              - cell [ref=e385]:
+                - generic [ref=e387]:
+                  - button [ref=e388]:
+                    - img
+                  - button [ref=e389]:
+                    - img
+            - row "41 Razer Keyboard Razer BlackWidow V4 Pro 5990000 0 5990000 0 0 0 Razer BlackWidow V4 Pro" [ref=e390] [cursor=pointer]:
+              - cell "41" [ref=e391]
+              - cell "Razer" [ref=e392]
+              - cell "Keyboard" [ref=e393]
+              - cell "Razer BlackWidow V4 Pro" [ref=e394]
+              - cell "5990000" [ref=e395]
+              - cell "0" [ref=e396]
+              - cell "5990000" [ref=e397]
+              - cell "0" [ref=e398]
+              - cell "0" [ref=e399]
+              - cell "0" [ref=e400]
+              - cell "Razer BlackWidow V4 Pro" [ref=e401]:
+                - img "Razer BlackWidow V4 Pro" [ref=e403]
+              - cell [ref=e404]:
+                - generic [ref=e406]:
+                  - button [ref=e407]:
+                    - img
+                  - button [ref=e408]:
+                    - img
+            - row "50 Logitech Mouse Logitech MX Master 3S 2490000 0 2490000 0 0 0 Logitech MX Master 3S 2" [ref=e409] [cursor=pointer]:
+              - cell "50" [ref=e410]
+              - cell "Logitech" [ref=e411]
+              - cell "Mouse" [ref=e412]
+              - cell "Logitech MX Master 3S" [ref=e413]
+              - cell "2490000" [ref=e414]
+              - cell "0" [ref=e415]
+              - cell "2490000" [ref=e416]
+              - cell "0" [ref=e417]
+              - cell "0" [ref=e418]
+              - cell "0" [ref=e419]
+              - cell "Logitech MX Master 3S 2" [ref=e420]:
+                - generic [ref=e421]:
+                  - img "Logitech MX Master 3S" [ref=e422]
+                  - generic [ref=e423]: "2"
+              - cell [ref=e424]:
+                - generic [ref=e426]:
+                  - button [ref=e427]:
+                    - img
+                  - button [ref=e428]:
+                    - img
+            - row "51 Razer Mouse Razer Viper V2 Pro 3990000 0 3990000 0 0 0 Razer Viper V2 Pro" [ref=e429] [cursor=pointer]:
+              - cell "51" [ref=e430]
+              - cell "Razer" [ref=e431]
+              - cell "Mouse" [ref=e432]
+              - cell "Razer Viper V2 Pro" [ref=e433]
+              - cell "3990000" [ref=e434]
+              - cell "0" [ref=e435]
+              - cell "3990000" [ref=e436]
+              - cell "0" [ref=e437]
+              - cell "0" [ref=e438]
+              - cell "0" [ref=e439]
+              - cell "Razer Viper V2 Pro" [ref=e440]:
+                - img "Razer Viper V2 Pro" [ref=e442]
+              - cell [ref=e443]:
+                - generic [ref=e445]:
+                  - button [ref=e446]:
+                    - img
+                  - button [ref=e447]:
+                    - img
+            - row "61 Apple Headphone / Headset Apple AirPods Pro 2 6490000 0 6490000 0 0 0 Apple AirPods Pro 2" [ref=e448] [cursor=pointer]:
+              - cell "61" [ref=e449]
+              - cell "Apple" [ref=e450]
+              - cell "Headphone / Headset" [ref=e451]
+              - cell "Apple AirPods Pro 2" [ref=e452]
+              - cell "6490000" [ref=e453]
+              - cell "0" [ref=e454]
+              - cell "6490000" [ref=e455]
+              - cell "0" [ref=e456]
+              - cell "0" [ref=e457]
+              - cell "0" [ref=e458]
+              - cell "Apple AirPods Pro 2" [ref=e459]:
+                - img "Apple AirPods Pro 2" [ref=e461]
+              - cell [ref=e462]:
+                - generic [ref=e464]:
+                  - button [ref=e465]:
+                    - img
+                  - button [ref=e466]:
+                    - img
+            - row "70 Anker Charger & Cable Anker 747 GaNPrime 150W 2490000 0 2490000 0 0 0 Anker 747 GaNPrime 150W" [ref=e467] [cursor=pointer]:
+              - cell "70" [ref=e468]
+              - cell "Anker" [ref=e469]
+              - cell "Charger & Cable" [ref=e470]
+              - cell "Anker 747 GaNPrime 150W" [ref=e471]
+              - cell "2490000" [ref=e472]
+              - cell "0" [ref=e473]
+              - cell "2490000" [ref=e474]
+              - cell "0" [ref=e475]
+              - cell "0" [ref=e476]
+              - cell "0" [ref=e477]
+              - cell "Anker 747 GaNPrime 150W" [ref=e478]:
+                - img "Anker 747 GaNPrime 150W" [ref=e480]
+              - cell [ref=e481]:
+                - generic [ref=e483]:
+                  - button [ref=e484]:
+                    - img
+                  - button [ref=e485]:
+                    - img
+  - button "Open Next.js Dev Tools" [ref=e491] [cursor=pointer]:
+    - img [ref=e492]
+  - alert [ref=e495]
+```

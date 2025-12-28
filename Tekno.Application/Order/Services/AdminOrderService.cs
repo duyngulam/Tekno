@@ -149,6 +149,20 @@ namespace Tekno.Application.Order.Services
                 Items = new List<OrderItemDto>()
             };
 
+            // Map shipping address if available
+            if (order.ShippingAddress != null)
+            {
+                orderDto.ShippingAddress = new OrderAddressDto
+                {
+                    FullName = order.ShippingAddress.RecipientName,
+                    Phone = order.ShippingAddress.PhoneNumber,
+                    AddressLine = order.ShippingAddress.AddressLine,
+                    Ward = order.ShippingAddress.WardName,
+                    District = order.ShippingAddress.DistrictName,
+                    Province = order.ShippingAddress.ProvinceName
+                };
+            }
+
             // Add payment info
             if (order.Payment != null)
             {

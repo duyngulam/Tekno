@@ -10,7 +10,8 @@
     "typeRoots": ["./node_modules/@types"],
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "types": ["node"],
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
