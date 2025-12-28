@@ -7,7 +7,7 @@ const API_BASE_URL = "http://localhost:5000/api";
 export type Profile = {
   id: string;
   email: string;
-  fullname: string;
+  fullName: string;
   phoneNumber: string;
   role: string;
   createdAt: string;

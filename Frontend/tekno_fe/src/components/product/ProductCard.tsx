@@ -39,14 +39,14 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="absolute top-2 right-2 z-10"
           productId={product.id}
         />
-        {/* {product?.discountPercent && product.discountPercent > 0 && (
-            <p className="absolute z-10 top-2 left-0 bg-blue-100 text-blue-600 text-sm font-semibold px-2 py-1 rounded-r-lg border border-blue-500/50 group-hover:border-blue-700 hoverEffect">
-              {product?.discountPercent}
-            </p>
-          )} */}
-        <p className="absolute z-10 top-2 left-0 bg-blue-100 text-blue-600 text-sm font-semibold px-2 py-1 rounded-r-lg ">
+        {product?.discountPercent && product.discountPercent > 0 && (
+          <p className="absolute z-10 top-2 left-0 bg-blue-100 text-blue-600 text-sm font-semibold px-2 py-1 rounded-r-lg border border-blue-500/50 group-hover:border-blue-700 hoverEffect">
+            {product?.discountPercent}
+          </p>
+        )}
+        {/* <p className="absolute z-10 top-2 left-0 bg-blue-100 text-blue-600 text-sm font-semibold px-2 py-1 rounded-r-lg ">
           15
-        </p>
+        </p> */}
 
         {/* --- Tên sản phẩm --- */}
         <div className="p-3 flex flex-col gap-2">
@@ -105,9 +105,9 @@ export function ProductCardInSearch({ product }: ProductCardProps) {
             {product?.discountPercent}
           </p>
         )}
-        <p className="absolute z-10 top-2 left-0 bg-blue-100 text-blue-600 text-sm font-semibold px-2 py-1 rounded-r-lg ">
+        {/* <p className="absolute z-10 top-2 left-0 bg-blue-100 text-blue-600 text-sm font-semibold px-2 py-1 rounded-r-lg ">
           15
-        </p>
+        </p> */}
 
         {/* --- Tên sản phẩm --- */}
         <div className="p-3 flex flex-col gap-2">

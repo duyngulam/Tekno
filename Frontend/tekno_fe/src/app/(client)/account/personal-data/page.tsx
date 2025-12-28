@@ -46,12 +46,18 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [open, setOpen] = useState(false);
+  const [openAddressSheet, setOpenAddressSheet] = useState(false);
   const [addresses, setAddresses] = useState<ProfileAddress[]>([]);
 
   // Local state để edit
   const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+
+  // Password modal state
+  const [openPasswordModal, setOpenPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -64,7 +70,7 @@ export default function Page() {
     getProfile(token)
       .then((res) => {
         setProfile(res);
-        setFullname(res.fullname);
+        setFullname(res.fullName);
         setEmail(res.email);
         setPhoneNumber(res.phoneNumber);
       })
@@ -90,21 +96,33 @@ export default function Page() {
   if (loading) return <p>Loading...</p>;
 
   const handleSave = async () => {
+    // mở modal yêu cầu nhập password trước khi lưu
+    setOpenPasswordModal(true);
+  };
+
+  const confirmSave = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
+    if (!currentPassword.trim()) return;
 
     try {
+      setSaving(true);
       const payload = {
         fullname,
         newEmail: email,
         phoneNumber,
+        currentPassword, // truyền password vào payload
       };
 
       await updateProfileAll(token, payload);
 
       setEditing(false);
+      setOpenPasswordModal(false);
+      setCurrentPassword("");
     } catch (err) {
       console.error("Update failed:", err);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -220,6 +238,55 @@ export default function Page() {
           </button>
         )}
       </div>
+
+      {/* Modal nhỏ yêu cầu nhập password trước khi lưu */}
+      <Dialog open={openPasswordModal} onOpenChange={setOpenPasswordModal}>
+        <DialogContent className="sm:max-w-[360px]">
+          <DialogHeader>
+            <DialogTitle>Confirm changes</DialogTitle>
+            <DialogDescription>
+              Enter your current password to save profile changes.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid w-full items-center gap-3">
+            <Label htmlFor="currentPassword">Current password</Label>
+            <InputGroup>
+              <InputGroupInput
+                id="currentPassword"
+                type="password"
+                placeholder="Enter password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+              <InputGroupAddon>
+                <Plug />
+              </InputGroupAddon>
+            </InputGroup>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-4">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => {
+                setOpenPasswordModal(false);
+                setCurrentPassword("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmSave}
+              disabled={saving || !currentPassword.trim()}
+            >
+              {saving ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Addresses list */}
       <div className="mt-2">
         <div className="flex items-center justify-between mb-3">
@@ -261,7 +328,10 @@ export default function Page() {
                         Default
                       </span>
                     )}
-                    <Sheet>
+                    <Sheet
+                      open={openAddressSheet}
+                      onOpenChange={setOpenAddressSheet}
+                    >
                       <SheetTrigger className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
                         Edit
                       </SheetTrigger>
@@ -273,7 +343,10 @@ export default function Page() {
                             you&apos;re done.
                           </SheetDescription>
                         </SheetHeader>
-                        <EditAddress address={addr} />
+                        <EditAddress
+                          address={addr}
+                          onClose={() => setOpenAddressSheet(false)}
+                        />
                       </SheetContent>
                     </Sheet>
                   </div>
