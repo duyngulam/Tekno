@@ -22,7 +22,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
-                .Include(o => o.Payment)
+                .Include(o => o.Payments)
                 .Include(o => o.ShippingAddress)
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
@@ -31,7 +31,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
-                .Include(o => o.Payment)
+                .Include(o => o.Payments)
                 .Include(o => o.ShippingAddress)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
@@ -41,7 +41,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
-                .Include(o => o.Payment)
+                .Include(o => o.Payments)
                 .Include(o => o.ShippingAddress)
                 .AsNoTracking()
                 .Where(o => o.UserId == userId)
@@ -58,7 +58,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
-                .Include(o => o.Payment)
+                .Include(o => o.Payments)
                 .Include(o => o.ShippingAddress)
                 .AsNoTracking()
                 .Where(o => o.UserId == userId && o.Status == OrderStatus.Delivered)
@@ -107,7 +107,7 @@ namespace Tekno.Infrastructure.Order
         {
             var query = _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
-                .Include(o => o.Payment)
+                .Include(o => o.Payments)
                 .Include(o => o.ShippingAddress)
                 .AsNoTracking()
                 .AsQueryable();
@@ -118,16 +118,21 @@ namespace Tekno.Infrastructure.Order
                 query = query.Where(o => o.UserId == userId.Value);
             }
 
-            // Filter by status
-            if (status.HasValue)
+            // If no explicit status filter provided, exclude Cancelled orders by default
+            if (!status.HasValue)
             {
+                query = query.Where(o => o.Status != OrderStatus.Cancelled);
+            }
+            else
+            {
+                // Filter by specific status when provided
                 query = query.Where(o => o.Status == status.Value);
             }
 
             // Order by most recent first
             query = query.OrderByDescending(o => o.CreatedAt);
 
-            // Get total count
+            // Get total count after filters
             var totalRecords = await query.CountAsync();
 
             // Apply pagination

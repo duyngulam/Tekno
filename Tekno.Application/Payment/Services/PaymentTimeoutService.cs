@@ -170,7 +170,7 @@ namespace Tekno.Application.Payment.Services
             
             try
             {
-                var errorMessage = $"Payment timed out after {_paymentTimeout.TotalMinutes} minutes without receiving callback from gateway. " +
+                var errorMessage = $"Payment timed out after {_paymentTimeout.TotalMinutes} minutes withoutReceiving callback from gateway. " +
                                    "Customer may have closed the payment window or abandoned the transaction.";
                 
                 // 1. Mark payment as failed
@@ -185,30 +185,33 @@ namespace Tekno.Application.Payment.Services
 
                 // 2. Cancel the order (but preserve items for potential retry)
                 var order = await _orderRepository.GetByIdAsync(payment.OrderId);
-                if (order != null && order.Status == OrderStatus.Pending)
+                if (order != null)
                 {
-                    order.Cancel("Payment timeout - customer did not complete payment within allocated time");
-                    await _orderRepository.UpdateAsync(order);
-                    
-                    _logger.LogInformation(
-                        "Order {OrderId} cancelled due to payment timeout for transaction {TransactionId}. " +
-                        "Order can be reactivated for retry if customer acts within 24 hours.",
-                        order.Id, payment.TransactionId);
+                    // If order is not in a final state (Delivered/Shipping/Completed), cancel it due to payment timeout
+                    if (order.Status != OrderStatus.Delivered && order.Status != OrderStatus.Shipping && order.Status != OrderStatus.Completed)
+                    {
+                        order.Cancel("Payment timeout - customer did not complete payment within allocated time");
+                        await _orderRepository.UpdateAsync(order);
+                        
+                        _logger.LogInformation(
+                            "Order {OrderId} cancelled due to payment timeout for transaction {TransactionId}. " +
+                            "Order can be reactivated for retry if customer acts within 24 hours.",
+                            order.Id, payment.TransactionId);
 
-                    // 3. Restore cart items
-                    await RestoreCartItemsAsync(payment.UserId, order);
-                    
-                    _logger.LogInformation(
-                        "Cart items restored for user {UserId} after payment timeout for transaction {TransactionId}. " +
-                        "Customer can retry payment for this order within 24 hours.",
-                        payment.UserId, payment.TransactionId);
-                }
-                else if (order != null)
-                {
-                    _logger.LogWarning(
-                        "Order {OrderId} is in status {Status}, not Pending. Cannot cancel or restore cart. " +
-                        "Payment timeout handling skipped.",
-                        order.Id, order.Status);
+                        // 3. Restore cart items
+                        await RestoreCartItemsAsync(payment.UserId, order);
+
+                        _logger.LogInformation(
+                            "Cart items restored for user {UserId} after payment timeout for transaction {TransactionId}. " +
+                            "Customer can retry payment for this order within 24 hours.",
+                            payment.UserId, payment.TransactionId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning(
+                            "Order {OrderId} is in final status {Status}; skipping cancel for timed out payment {TransactionId}.",
+                            order.Id, order.Status, payment.TransactionId);
+                    }
                 }
 
                 await transaction.CommitAsync();

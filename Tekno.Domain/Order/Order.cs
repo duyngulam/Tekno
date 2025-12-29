@@ -37,8 +37,12 @@ namespace Tekno.Domain.Order
         private readonly List<OrderItem> _items = new();
         public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
         
-        // Navigation property to Payment
-        public Payment.Payment? Payment { get; private set; }
+        // Navigation property to Payments (multiple attempts)
+        private readonly List<Payment.Payment> _payments = new();
+        public IReadOnlyCollection<Payment.Payment> Payments => _payments.AsReadOnly();
+
+        // Backwards-compatible single Payment property that returns the latest payment attempt
+        public Payment.Payment? Payment => _payments.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
 
         public Order() { }
 
@@ -166,6 +170,18 @@ namespace Tekno.Domain.Order
             var purchasedStates = new[] { OrderStatus.Processing, OrderStatus.Completed, OrderStatus.Shipping, OrderStatus.Delivered };
             return purchasedStates.Contains(Status) && Items.Any(i => i.VariantId == variantId);
         }
+
+        /// <summary>
+        /// Update order number. Use this when creating a new payment/transaction for the same order
+        /// to ensure external gateways (VNPay) receive a fresh transaction reference.
+        /// </summary>
+        public void UpdateOrderNumber(string newOrderNumber)
+        {
+            if (string.IsNullOrWhiteSpace(newOrderNumber))
+                throw new ArgumentException("Order number cannot be empty", nameof(newOrderNumber));
+
+            OrderNumber = newOrderNumber;
+        }
     }
 
     public class OrderItem
@@ -196,7 +212,7 @@ namespace Tekno.Domain.Order
     {
         Pending = 1,           // Order created, awaiting payment
         Processing = 2,        // Payment received, preparing order
-        Completed = 3,         // Legacy - use Shipping/Delivered instead
+        Completed = 3,         // k dung nua
         Shipping = 4,          // Order shipped, on the way
         Delivered = 5,         // Order delivered to customer
         Cancelled = 6,         // Order cancelled

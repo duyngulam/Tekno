@@ -98,11 +98,12 @@ namespace Tekno.Application.Order.Services
                 };
 
                 // Add payment info if available
-                if (order.Payment != null)
+                var latestPayment = order.Payments?.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
+                if (latestPayment != null)
                 {
-                    orderDto.PaymentGateway = GetPaymentGatewayName(order.Payment.Gateway);
-                    orderDto.PaymentStatus = GetPaymentStatusName(order.Payment.Status);
-                    orderDto.PaymentMethod = GetPaymentMethodName(order.Payment.Method);
+                    orderDto.PaymentGateway = GetPaymentGatewayName(latestPayment.Gateway);
+                    orderDto.PaymentStatus = GetPaymentStatusName(latestPayment.Status);
+                    orderDto.PaymentMethod = GetPaymentMethodName(latestPayment.Method);
                 }
 
                 orderDtos.Add(orderDto);
@@ -164,20 +165,21 @@ namespace Tekno.Application.Order.Services
             }
 
             // Add payment info
-            if (order.Payment != null)
+            var latestPaymentDetail = order.Payments?.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
+            if (latestPaymentDetail != null)
             {
                 orderDto.Payment = new OrderPaymentDto
                 {
-                    PaymentId = order.Payment.Id,
-                    TransactionId = order.Payment.TransactionId,
-                    Gateway = GetPaymentGatewayName(order.Payment.Gateway),
-                    Method = GetPaymentMethodName(order.Payment.Method),
-                    Status = GetPaymentStatusName(order.Payment.Status),
-                    Amount = order.Payment.Amount,
-                    Currency = order.Payment.Currency,
-                    CreatedAt = order.Payment.CreatedAt,
-                    CompletedAt = order.Payment.CompletedAt,
-                    ErrorMessage = order.Payment.ErrorMessage
+                    PaymentId = latestPaymentDetail.Id,
+                    TransactionId = latestPaymentDetail.TransactionId,
+                    Gateway = GetPaymentGatewayName(latestPaymentDetail.Gateway),
+                    Method = GetPaymentMethodName(latestPaymentDetail.Method),
+                    Status = GetPaymentStatusName(latestPaymentDetail.Status),
+                    Amount = latestPaymentDetail.Amount,
+                    Currency = latestPaymentDetail.Currency,
+                    CreatedAt = latestPaymentDetail.CreatedAt,
+                    CompletedAt = latestPaymentDetail.CompletedAt,
+                    ErrorMessage = latestPaymentDetail.ErrorMessage
                 };
             }
 

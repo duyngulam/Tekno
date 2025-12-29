@@ -50,11 +50,12 @@ namespace Tekno.Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasDefaultValueSql("NOW()");
 
-            // Relationship with Order (One-to-One)
+            // Relationship with Order (Many payments per Order)
             builder.HasOne(p => p.Order)
-                .WithOne(o => o.Payment)
-                .HasForeignKey<PaymentEntity>(p => p.OrderId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .WithMany(o => o.Payments)
+                .HasForeignKey(p => p.OrderId)
+                // allow cascade delete so dependent payments are removed when order is removed
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Indexes for common queries
             builder.HasIndex(p => p.OrderId);
