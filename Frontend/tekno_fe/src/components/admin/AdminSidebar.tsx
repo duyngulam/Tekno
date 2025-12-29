@@ -12,6 +12,7 @@ import {
   TicketSlash,
   Megaphone,
   Star,
+  MessageCircle,
 } from "lucide-react";
 
 const menuItems = [
@@ -23,6 +24,7 @@ const menuItems = [
   { href: "/dashboard/brand", label: "Brand", icon: <Star size={22} /> },
   { href: "/dashboard/category", label: "Category", icon: <ClipboardList size={22} /> },
   { href: "/dashboard/advertisement", label: "Advertisement", icon: <Megaphone size={22} /> },
+  { href: "/dashboard/reviews", label: "Reviews", icon: <MessageCircle size={22} /> },
 ];
 
 const AdminSidebar = () => {

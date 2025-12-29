@@ -147,3 +147,124 @@ export async function canReviewProduct(
 
   return json as ApiResponse<CanReviewData>;
 }
+
+// ============ ADMIN REVIEWS ============
+
+export interface AdminReview {
+  id: number;
+  productId: number;
+  productName: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  rating: number;
+  comment: string;
+  status: "Pending" | "Approved" | "Rejected";
+  isVerifiedPurchase: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface ReviewSummary {
+  productId: number;
+  totalReviews: number;
+  averageRating: number;
+  ratingDistribution: {
+    "1": number;
+    "2": number;
+    "3": number;
+    "4": number;
+    "5": number;
+  };
+  verifiedPurchaseCount: number;
+}
+
+export interface AdminReviewsResponse {
+  reviews: AdminReview[];
+  summary: ReviewSummary;
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
+// PATCH /api/admin/reviews/{reviewId}/approve
+export async function approveReview(
+  token: string,
+  reviewId: number
+): Promise<ApiResponse<boolean>> {
+  const res = await fetch(
+    `${API_BASE_URL}/admin/reviews/${reviewId}/approve`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw json;
+  }
+
+  return json as ApiResponse<boolean>;
+}
+
+// PATCH /api/admin/reviews/{reviewId}/reject
+export async function rejectReview(
+  token: string,
+  reviewId: number
+): Promise<ApiResponse<boolean>> {
+  const res = await fetch(
+    `${API_BASE_URL}/admin/reviews/${reviewId}/reject`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw json;
+  }
+
+  return json as ApiResponse<boolean>;
+}
+
+// GET /api/admin/reviews/product/{productId}
+export async function getAdminProductReviews(
+  token: string,
+  productId: number,
+  page: number = 1,
+  pageSize: number = 20
+): Promise<ApiResponse<AdminReviewsResponse>> {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("pageSize", pageSize.toString());
+
+  const res = await fetch(
+    `${API_BASE_URL}/admin/reviews/product/${productId}?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    }
+  );
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw json;
+  }
+
+  return json as ApiResponse<AdminReviewsResponse>;
+}

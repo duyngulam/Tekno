@@ -10,7 +10,7 @@ import {
 import { voucherApi } from "@/services/voucherApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, Trash2, Edit2, Power, PowerOff, X } from "lucide-react";
+import { Eye, Trash2, Edit2, Power, PowerOff, BarChart3, History } from "lucide-react";
 
 export default function VoucherPage() {
   const [vouchers, setVouchers] = useState<any[]>([]);
@@ -18,7 +18,13 @@ export default function VoucherPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
+  const [openStatistics, setOpenStatistics] = useState(false);
+  const [openUsage, setOpenUsage] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
+  const [statistics, setStatistics] = useState<any>(null);
+  const [usage, setUsage] = useState<any[]>([]);
+  const [loadingStats, setLoadingStats] = useState(false);
+  const [loadingUsage, setLoadingUsage] = useState(false);
 
   // Search + Filter
   const [search, setSearch] = useState("");
@@ -54,6 +60,49 @@ export default function VoucherPage() {
       setVouchers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle Statistics
+  const handleViewStatistics = async (voucher: any) => {
+    try {
+      setLoadingStats(true);
+      setSelectedVoucher(voucher);
+      setOpenStatistics(true);
+      
+      const statsData = await voucherApi.getStatistics(voucher.id.toString());
+      setStatistics(statsData?.data || statsData);
+    } catch (err) {
+      console.error("Failed to load statistics:", err);
+      alert("Failed to load statistics");
+      setOpenStatistics(false);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  // Handle Usage History
+  const handleViewUsage = async (voucher: any) => {
+    try {
+      setLoadingUsage(true);
+      setSelectedVoucher(voucher);
+      setOpenUsage(true);
+      
+      const usageData = await voucherApi.getUsage(voucher.id.toString());
+      const usageList = Array.isArray(usageData?.data?.data)
+        ? usageData.data.data
+        : Array.isArray(usageData?.data)
+        ? usageData.data
+        : Array.isArray(usageData)
+        ? usageData
+        : [];
+      setUsage(usageList);
+    } catch (err) {
+      console.error("Failed to load usage:", err);
+      alert("Failed to load usage history");
+      setOpenUsage(false);
+    } finally {
+      setLoadingUsage(false);
     }
   };
 
@@ -340,6 +389,22 @@ export default function VoucherPage() {
                         title="View Details"
                       >
                         <Eye size={16} />
+                      </button>
+
+                      <button
+                        onClick={() => handleViewStatistics(v)}
+                        className="p-1 text-purple-600 hover:bg-purple-50 rounded"
+                        title="View Statistics"
+                      >
+                        <BarChart3 size={16} />
+                      </button>
+
+                      <button
+                        onClick={() => handleViewUsage(v)}
+                        className="p-1 text-indigo-600 hover:bg-indigo-50 rounded"
+                        title="View Usage History"
+                      >
+                        <History size={16} />
                       </button>
 
                       <button
@@ -717,6 +782,175 @@ export default function VoucherPage() {
                 </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Statistics Modal */}
+      {openStatistics && selectedVoucher && (
+        <Dialog open={openStatistics} onOpenChange={setOpenStatistics}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Voucher Statistics - {selectedVoucher.code}</DialogTitle>
+            </DialogHeader>
+
+            {loadingStats ? (
+              <div className="flex justify-center items-center py-12">
+                <p className="text-gray-500">Loading statistics...</p>
+              </div>
+            ) : statistics ? (
+              <div className="space-y-6 mt-4">
+                {/* Key Metrics Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-xs text-blue-600 font-medium mb-1">Total Used</p>
+                    <p className="text-2xl font-bold text-blue-700">
+                      {statistics.totalUsed || 0}
+                    </p>
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p className="text-xs text-green-600 font-medium mb-1">Total Discount</p>
+                    <p className="text-2xl font-bold text-green-700">
+                      {(statistics.totalDiscount || 0).toLocaleString()}đ
+                    </p>
+                  </div>
+
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <p className="text-xs text-purple-600 font-medium mb-1">Remaining</p>
+                    <p className="text-2xl font-bold text-purple-700">
+                      {(statistics.remaining || selectedVoucher.quantity)}
+                    </p>
+                  </div>
+
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <p className="text-xs text-orange-600 font-medium mb-1">Usage Rate</p>
+                    <p className="text-2xl font-bold text-orange-700">
+                      {statistics.usageRate || '0%'}
+                    </p>
+                  </div>
+
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-xs text-red-600 font-medium mb-1">Days Remaining</p>
+                    <p className="text-2xl font-bold text-red-700">
+                      {statistics.daysRemaining || 0} days
+                    </p>
+                  </div>
+                </div>
+
+                {/* Additional Stats */}
+                {statistics.avgOrderValue && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Average Order Value</p>
+                    <p className="text-xl font-bold text-gray-900">
+                      {statistics.avgOrderValue.toLocaleString()}đ
+                    </p>
+                  </div>
+                )}
+
+                {statistics.topUsers && statistics.topUsers.length > 0 && (
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <p className="text-sm font-medium text-gray-700 mb-3">Top Users</p>
+                    <div className="space-y-2">
+                      {statistics.topUsers.map((user: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center py-2 border-b last:border-0">
+                          <span className="text-sm">{user.email || user.name}</span>
+                          <span className="text-sm font-medium">{user.count} times</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end pt-4 border-t">
+                  <Button variant="outline" onClick={() => setOpenStatistics(false)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                No statistics available
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Usage History Modal */}
+      {openUsage && selectedVoucher && (
+        <Dialog open={openUsage} onOpenChange={setOpenUsage}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Usage History - {selectedVoucher.code}</DialogTitle>
+            </DialogHeader>
+
+            {loadingUsage ? (
+              <div className="flex justify-center items-center py-12">
+                <p className="text-gray-500">Loading usage history...</p>
+              </div>
+            ) : usage.length > 0 ? (
+              <div className="mt-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-100 text-left">
+                        <th className="p-3 font-medium">Date</th>
+                        <th className="p-3 font-medium">Order ID</th>
+                        <th className="p-3 font-medium">Customer</th>
+                        <th className="p-3 font-medium">Discount</th>
+                        <th className="p-3 font-medium">Order Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {usage.map((item: any, idx: number) => (
+                        <tr key={idx} className="border-b hover:bg-gray-50">
+                          <td className="p-3 text-xs">
+                            {new Date(item.usedAt || item.createdAt).toLocaleString("vi-VN")}
+                          </td>
+                          <td className="p-3 font-mono text-blue-600">
+                            #{item.orderId || item.id}
+                          </td>
+                          <td className="p-3">
+                            <div>
+                              <p className="font-medium">{item.customerName || item.userName}</p>
+                              <p className="text-xs text-gray-500">{item.customerEmail || item.userEmail}</p>
+                            </div>
+                          </td>
+                          <td className="p-3 font-medium text-green-600">
+                            -{(item.discountAmount || selectedVoucher.value).toLocaleString()}đ
+                          </td>
+                          <td className="p-3 font-medium">
+                            {(item.orderTotal || item.totalAmount || 0).toLocaleString()}đ
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">
+                      Total Usage Records:
+                    </span>
+                    <span className="text-lg font-bold text-gray-900">
+                      {usage.length}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end mt-4 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setOpenUsage(false)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                No usage history found
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       )}
