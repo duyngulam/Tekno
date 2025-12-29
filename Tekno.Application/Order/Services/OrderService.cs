@@ -303,20 +303,21 @@ namespace Tekno.Application.Order.Services
             };
 
             // Map payment info if available
-            if (order.Payment != null)
+            var latestOrderPayment = order.Payments?.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
+            if (latestOrderPayment != null)
             {
                 dto.Payment = new OrderPaymentDto
                 {
-                    PaymentId = order.Payment.Id,
-                    TransactionId = order.Payment.TransactionId,
-                    Gateway = GetPaymentGatewayName(order.Payment.Gateway),
-                    Method = GetPaymentMethodName(order.Payment.Method),
-                    Status = GetPaymentStatusName(order.Payment.Status),
-                    Amount = order.Payment.Amount,
-                    Currency = order.Payment.Currency,
-                    CreatedAt = order.Payment.CreatedAt,
-                    CompletedAt = order.Payment.CompletedAt,
-                    ErrorMessage = order.Payment.ErrorMessage
+                    PaymentId = latestOrderPayment.Id,
+                    TransactionId = latestOrderPayment.TransactionId,
+                    Gateway = GetPaymentGatewayName(latestOrderPayment.Gateway),
+                    Method = GetPaymentMethodName(latestOrderPayment.Method),
+                    Status = GetPaymentStatusName(latestOrderPayment.Status),
+                    Amount = latestOrderPayment.Amount,
+                    Currency = latestOrderPayment.Currency,
+                    CreatedAt = latestOrderPayment.CreatedAt,
+                    CompletedAt = latestOrderPayment.CompletedAt,
+                    ErrorMessage = latestOrderPayment.ErrorMessage
                 };
             }
 

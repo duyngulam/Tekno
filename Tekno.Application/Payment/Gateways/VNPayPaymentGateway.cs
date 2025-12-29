@@ -35,7 +35,7 @@ namespace Tekno.Application.Payment.Gateways
             // Validate settings on construction
             _settings.Validate();
 
-            _logger.LogInformation("VNPay gateway initialized with TmnCode: {TmnCode}", _settings.TmnCode);
+            _logger.LogInformation("VNPay gateway initialized with TmnCode: {TmnCode}, ExpireMinutes: {ExpireMinutes}", _settings.TmnCode, _settings.ExpireMinutes);
         }
 
         public async Task<PaymentInitResult> InitiatePaymentAsync(PaymentRequest request)
@@ -48,11 +48,25 @@ namespace Tekno.Application.Payment.Gateways
                 // VNPay requires amount * 100 (no decimal point)
                 var vnpAmount = ((long)(request.Amount * 100)).ToString();
 
+                // Use Vietnam timezone (Asia/Ho_Chi_Minh) for CreateDate and ExpireDate
+                DateTime nowVn;
+                try
+                {
+                    var tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
+                    nowVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
+                }
+                catch (TimeZoneNotFoundException)
+                {
+                    // Fallback for Windows machines where the ID differs
+                    var tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                    nowVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
+                }
+
                 // Create date in VNPay format: yyyyMMddHHmmss (GMT+7)
-                var vnpCreateDate = DateTime.Now.ToString("yyyyMMddHHmmss");
+                var vnpCreateDate = nowVn.ToString("yyyyMMddHHmmss");
                 
-                // Expire date (15 minutes from now)
-                var vnpExpireDate = DateTime.Now.AddMinutes(15).ToString("yyyyMMddHHmmss");
+                // Expire date (configured minutes from now)
+                var vnpExpireDate = nowVn.AddMinutes(_settings.ExpireMinutes).ToString("yyyyMMddHHmmss");
 
                 // Get client IP (use request IP or default)
                 var vnpIpAddr = request.IpAddress ?? "127.0.0.1";
@@ -107,7 +121,7 @@ namespace Tekno.Application.Payment.Gateways
                 // Build payment URL
                 var paymentUrl = BuildPaymentUrl(_settings.PaymentUrl, vnpParams);
 
-                _logger.LogInformation("VNPay payment URL generated for order {OrderNumber}", request.OrderNumber);
+                _logger.LogInformation("VNPay payment URL generated for order {OrderNumber}. CreateDate={CreateDate}, ExpireDate={ExpireDate}, TxnRef={TxnRef}", request.OrderNumber, vnpCreateDate, vnpExpireDate, request.OrderNumber);
                 _logger.LogInformation("VNPay secure hash: {Hash}", secureHash);
 
                 return await Task.FromResult(new PaymentInitResult
@@ -129,7 +143,7 @@ namespace Tekno.Application.Payment.Gateways
                         orderInfo = vnpParams["vnp_OrderInfo"],
                         paymentUrl = paymentUrl,
                         returnUrl = backendReturnUrl,
-                        note = "Redirect customer to paymentUrl to complete payment. Payment expires in 15 minutes."
+                        note = $"Redirect customer to paymentUrl to complete payment. Payment expires in {_settings.ExpireMinutes} minutes."
                     }
                 });
             }

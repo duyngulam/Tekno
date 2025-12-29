@@ -12,6 +12,12 @@ namespace Tekno.Application.Payment.Configuration
         public string ReturnUrl { get; set; } = string.Empty;
         public string IpnUrl { get; set; } = string.Empty;
         public string ApiUrl { get; set; } = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction";
+
+        /// <summary>
+        /// Number of minutes the VNPay payment link should be valid (vnp_ExpireDate)
+        /// Default is 15 minutes.
+        /// </summary>
+        public int ExpireMinutes { get; set; } = 15;
         
         /// <summary>
         /// Validate that required settings are configured
@@ -26,6 +32,9 @@ namespace Tekno.Application.Payment.Configuration
             
             if (string.IsNullOrWhiteSpace(ReturnUrl))
                 throw new InvalidOperationException("VNPay ReturnUrl is not configured");
+
+            if (ExpireMinutes <= 0)
+                throw new InvalidOperationException("VNPay ExpireMinutes must be a positive integer");
         }
     }
 }

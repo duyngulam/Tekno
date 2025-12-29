@@ -22,7 +22,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
-                .Include(o => o.Payment)
+                .Include(o => o.Payments)
                 .Include(o => o.ShippingAddress)
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
@@ -31,7 +31,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
-                .Include(o => o.Payment)
+                .Include(o => o.Payments)
                 .Include(o => o.ShippingAddress)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
@@ -41,7 +41,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
-                .Include(o => o.Payment)
+                .Include(o => o.Payments)
                 .Include(o => o.ShippingAddress)
                 .AsNoTracking()
                 .Where(o => o.UserId == userId)
@@ -58,7 +58,7 @@ namespace Tekno.Infrastructure.Order
         {
             return await _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
-                .Include(o => o.Payment)
+                .Include(o => o.Payments)
                 .Include(o => o.ShippingAddress)
                 .AsNoTracking()
                 .Where(o => o.UserId == userId && o.Status == OrderStatus.Delivered)
@@ -107,7 +107,7 @@ namespace Tekno.Infrastructure.Order
         {
             var query = _context.Set<Domain.Order.Order>()
                 .Include(o => o.Items)
-                .Include(o => o.Payment)
+                .Include(o => o.Payments)
                 .Include(o => o.ShippingAddress)
                 .AsNoTracking()
                 .AsQueryable();

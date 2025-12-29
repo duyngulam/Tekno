@@ -127,40 +127,32 @@ namespace Tekno.Application.Payment.Services
                         $"Order already has a completed payment (TransactionId: {activePayment.TransactionId})");
                 }
 
-                // Payment is Processing - check if it's actually timed out
-                var isTimedOut = _timeoutService.IsPaymentTimedOut(activePayment);
-                
-                if (!isTimedOut)
+                // Previously we returned existing payment URL for retry. Remove retry: always create a new payment attempt.
+                // Mark the existing processing payment as failed/superseded so it won't block creating a new one.
+                try
                 {
-                    // Payment still active - return existing payment URL for retry
-                    _logger.LogInformation(
-                        "Payment still processing for order {OrderId} (age: {Age} minutes), returning existing payment URL",
-                        request.OrderId, (DateTime.UtcNow - activePayment.CreatedAt).TotalMinutes);
-
-                    return await ReturnExistingPaymentUrlAsync(activePayment, order, userId, request.ReturnUrl);
-                }
-                else
-                {
-                    // Payment timed out - mark as failed and create new payment
-                    _logger.LogWarning(
-                        "Payment {TransactionId} timed out (age: {Age} minutes), creating new payment",
-                        activePayment.TransactionId, (DateTime.UtcNow - activePayment.CreatedAt).TotalMinutes);
-
-                    activePayment.MarkAsFailed("Payment timed out - customer did not complete payment within allocated time", null);
+                    activePayment.MarkAsFailed("Superseded by a new payment attempt", null);
                     await _paymentRepository.UpdateAsync(activePayment);
+
+                    _logger.LogInformation(
+                        "Marked existing processing payment as superseded: TransactionId={TransactionId}, OrderId={OrderId}",
+                        activePayment.TransactionId, activePayment.OrderId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to mark existing processing payment as superseded for OrderId={OrderId}", request.OrderId);
+                    // Continue - we still attempt to create a new payment
                 }
             }
 
             // 4. Log payment retry info if there were previous attempts
             if (latestPayment != null && 
-                (latestPayment.Status == PaymentStatus.Failed || latestPayment.Status == PaymentStatus.Cancelled))
+                (latestPayment.Status == PaymentStatus.Failed || latestPayment.Status == PaymentStatus.Cancelled || latestPayment.Status == PaymentStatus.Processing))
             {
                 _logger.LogInformation(
-                    "Retrying payment for order {OrderId} after previous failure/cancellation. " +
-                    "Previous payment: TransactionId={TransactionId}, Status={Status}, Error={Error}, " +
-                    "Previous attempts: {Count}",
-                    request.OrderId, latestPayment.TransactionId, latestPayment.Status, 
-                    latestPayment.ErrorMessage, existingPayments.Count);
+                    "Creating new payment for order {OrderId} after previous attempts. " +
+                    "Previous payment: TransactionId={TransactionId}, Status={Status}, Error={Error}, Previous attempts: {Count}",
+                    request.OrderId, latestPayment.TransactionId, latestPayment.Status, latestPayment.ErrorMessage, existingPayments.Count);
             }
 
             await using var transaction = await _paymentRepository.BeginTransactionAsync();
@@ -183,6 +175,14 @@ namespace Tekno.Application.Payment.Services
 
                 // 7. Save order updates
                 await _orderRepository.UpdateAsync(order);
+
+                // 7.1 Refresh order number for this payment attempt to ensure external gateways
+                // (like VNPay) receive a fresh transaction reference. This avoids collisions when
+                // previous payment attempts timed out but the order remained with the old order number.
+                var newOrderNumber = GenerateOrderNumber();
+                order.UpdateOrderNumber(newOrderNumber);
+                await _orderRepository.UpdateAsync(order);
+                _logger.LogInformation("Order number refreshed for payment attempt: {OrderId} -> {OrderNumber}", order.Id, newOrderNumber);
 
                 // 8. Create NEW payment record (don't reuse failed/timed-out payment)
                 var payment = new Domain.Payment.Payment(
@@ -252,63 +252,6 @@ namespace Tekno.Application.Payment.Services
                 _logger.LogError(ex, "Payment processing failed for order {OrderId}", request.OrderId);
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Return existing payment URL for retry (when payment is still active/processing)
-        /// </summary>
-        private async Task<PaymentResponseDto> ReturnExistingPaymentUrlAsync(
-            Domain.Payment.Payment payment, 
-            Domain.Order.Order order, 
-            int userId, 
-            string returnUrl)
-        {
-            var gateway = _gatewayFactory.GetGateway(payment.Gateway);
-            
-            var paymentRequest = new PaymentRequest
-            {
-                OrderId = order.Id,
-                UserId = userId,
-                OrderNumber = order.OrderNumber,
-                Amount = order.TotalAmount,
-                Currency = "VND",
-                Method = payment.Method,
-                ReturnUrl = returnUrl,
-                CallbackUrl = $"{GetBaseUrl()}/api/payment/callback"
-            };
-
-            var initResult = await gateway.InitiatePaymentAsync(paymentRequest);
-
-            if (!initResult.Success)
-            {
-                throw new InvalidOperationException($"Payment retry failed: {initResult.ErrorMessage}");
-            }
-
-            // Update transaction ID if it changed (shouldn't happen for most gateways)
-            if (initResult.TransactionId != payment.TransactionId)
-            {
-                _logger.LogInformation(
-                    "Payment transaction ID changed from {OldId} to {NewId} for order {OrderId}",
-                    payment.TransactionId, initResult.TransactionId, order.Id);
-                
-                payment.MarkAsProcessing(initResult.TransactionId);
-                await _paymentRepository.UpdateAsync(payment);
-            }
-
-            return new PaymentResponseDto
-            {
-                OrderId = order.Id,
-                OrderNumber = order.OrderNumber,
-                PaymentId = payment.Id,
-                TransactionId = payment.TransactionId,
-                PaymentUrl = initResult.PaymentUrl,
-                PaymentToken = initResult.PaymentToken,
-                QrCodeUrl = initResult.QrCodeUrl,
-                Status = PaymentStatus.Processing,
-                TotalAmount = order.TotalAmount,
-                ItemsCount = order.Items.Count,
-                IsRetry = true
-            };
         }
 
         /// <summary>
