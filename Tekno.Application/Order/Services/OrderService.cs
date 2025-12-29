@@ -171,9 +171,16 @@ namespace Tekno.Application.Order.Services
             var paging = new PagingParams(page, pageSize);
             var result = await _orderRepository.GetPagedAsync(userId, status, paging);
 
+            // If no status filter specified, exclude Cancelled orders by default
+            var ordersToMap = result.Data.AsEnumerable();
+            if (!status.HasValue)
+            {
+                ordersToMap = ordersToMap.Where(o => o.Status != OrderStatus.Cancelled);
+            }
+            
             // Map to DTOs and enrich with product details
             var orderDtos = new List<OrderHistoryDto>();
-            foreach (var order in result.Data)
+            foreach (var order in ordersToMap)
             {
                 var orderDto = await MapOrderToHistoryDtoAsync(order);
                 orderDtos.Add(orderDto);
@@ -302,22 +309,24 @@ namespace Tekno.Application.Order.Services
                 Items = new List<OrderItemDto>()
             };
 
-            // Map payment info if available
-            var latestOrderPayment = order.Payments?.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
-            if (latestOrderPayment != null)
+            // Map only successful (Completed) payment if available
+            var successfulPayment = order.Payments?.OrderByDescending(p => p.CompletedAt ?? p.CreatedAt)
+                .FirstOrDefault(p => p.Status == Tekno.Domain.Payment.PaymentStatus.Completed);
+
+            if (successfulPayment != null)
             {
                 dto.Payment = new OrderPaymentDto
                 {
-                    PaymentId = latestOrderPayment.Id,
-                    TransactionId = latestOrderPayment.TransactionId,
-                    Gateway = GetPaymentGatewayName(latestOrderPayment.Gateway),
-                    Method = GetPaymentMethodName(latestOrderPayment.Method),
-                    Status = GetPaymentStatusName(latestOrderPayment.Status),
-                    Amount = latestOrderPayment.Amount,
-                    Currency = latestOrderPayment.Currency,
-                    CreatedAt = latestOrderPayment.CreatedAt,
-                    CompletedAt = latestOrderPayment.CompletedAt,
-                    ErrorMessage = latestOrderPayment.ErrorMessage
+                    PaymentId = successfulPayment.Id,
+                    TransactionId = successfulPayment.TransactionId,
+                    Gateway = GetPaymentGatewayName(successfulPayment.Gateway),
+                    Method = GetPaymentMethodName(successfulPayment.Method),
+                    Status = GetPaymentStatusName(successfulPayment.Status),
+                    Amount = successfulPayment.Amount,
+                    Currency = successfulPayment.Currency,
+                    CreatedAt = successfulPayment.CreatedAt,
+                    CompletedAt = successfulPayment.CompletedAt,
+                    ErrorMessage = successfulPayment.ErrorMessage
                 };
             }
 

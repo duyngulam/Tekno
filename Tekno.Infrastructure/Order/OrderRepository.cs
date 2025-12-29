@@ -118,16 +118,21 @@ namespace Tekno.Infrastructure.Order
                 query = query.Where(o => o.UserId == userId.Value);
             }
 
-            // Filter by status
-            if (status.HasValue)
+            // If no explicit status filter provided, exclude Cancelled orders by default
+            if (!status.HasValue)
             {
+                query = query.Where(o => o.Status != OrderStatus.Cancelled);
+            }
+            else
+            {
+                // Filter by specific status when provided
                 query = query.Where(o => o.Status == status.Value);
             }
 
             // Order by most recent first
             query = query.OrderByDescending(o => o.CreatedAt);
 
-            // Get total count
+            // Get total count after filters
             var totalRecords = await query.CountAsync();
 
             // Apply pagination
