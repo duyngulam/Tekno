@@ -9,6 +9,7 @@ import { Order } from "@/type/order";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
+import FormattedPrice from "@/components/share/FormattedPriced";
 
 type TabKey =
   | "all"
@@ -45,6 +46,8 @@ export default function OrderHistoryPage() {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : "";
     setLoading(true);
+    console.log("Fetching orders with status:", statusMap[tab]);
+
     fetchOrderHistory(statusMap[tab], page, pageSize, token)
       .then((res) => setOrders(res.data))
       .catch((err) => console.error("Order history error:", err))
@@ -58,7 +61,7 @@ export default function OrderHistoryPage() {
     // Optionally prefetch counts per status; for simplicity show current array length
     return {
       all: tab === "all" ? orders.length : 0,
-      pending: tab === "Pending" ? orders.length : 0,
+      processing: tab === "Processing" ? orders.length : 0,
       delivered: tab === "Delivered" ? orders.length : 0,
       canceled: tab === "Cancelled" ? orders.length : 0,
       returned: tab === "Refunded" ? orders.length : 0,
@@ -77,30 +80,36 @@ export default function OrderHistoryPage() {
         onValueChange={(v) => setTab(v as TabKey)}
         className="w-full"
       >
-        <TabsList className="flex gap-2">
-          <TabsTrigger value="current">
+        <TabsList className="flex items-start gap-2">
+          <TabsTrigger value="all">
             All orders{" "}
-            <Badge variant="outline" className="ml-2">
+            {/* <Badge variant="outline" className="ml-2">
               {counts.all}
-            </Badge>
+            </Badge> */}
           </TabsTrigger>
-          <TabsTrigger value="delivered">
+          <TabsTrigger value="Processing">
+            Processing{" "}
+            {/* <Badge variant="outline" className="ml-2">
+              {counts.processing}
+            </Badge> */}
+          </TabsTrigger>
+          <TabsTrigger value="Delivered">
             Delivered{" "}
-            <Badge variant="outline" className="ml-2">
+            {/* <Badge variant="outline" className="ml-2">
               {counts.delivered}
-            </Badge>
+            </Badge> */}
           </TabsTrigger>
-          <TabsTrigger value="canceled">
+          <TabsTrigger value="Canceled">
             Canceled{" "}
-            <Badge variant="outline" className="ml-2">
+            {/* <Badge variant="outline" className="ml-2">
               {counts.canceled}
-            </Badge>
+            </Badge> */}
           </TabsTrigger>
-          <TabsTrigger value="returned">
+          <TabsTrigger value="Returned">
             Returned{" "}
-            <Badge variant="outline" className="ml-2">
+            {/* <Badge variant="outline" className="ml-2">
               {counts.returned}
-            </Badge>
+            </Badge> */}
           </TabsTrigger>
         </TabsList>
 
@@ -120,13 +129,13 @@ export default function OrderHistoryPage() {
                   href={`/account/orders/order-status/${encodeURIComponent(
                     order.orderNumber
                   )}`}
-                  key={order.id}
+                  key={order.orderNumber}
                   className="border rounded-xl overflow-hidden"
                 >
                   {/* header row */}
-                  <div className="grid grid-cols-5 gap-4 bg-gray-50 px-4 py-3 text-sm">
+                  <div className="grid grid-cols-5 items-start gap-4 bg-gray-50 px-4 py-3 text-sm">
                     <div>
-                      <div className="text-gray-500">order code</div>
+                      <div className="text-gray-500">Order code</div>
                       <div className="font-medium">
                         #{order.orderNumber ?? order.id}
                       </div>
@@ -142,22 +151,22 @@ export default function OrderHistoryPage() {
                     <div>
                       <div className="text-gray-500">Total</div>
                       <div className="font-medium">
-                        {typeof order.totalAmount === "number"
-                          ? `$${order.totalAmount.toFixed(2)}`
-                          : order.totalAmount ?? "-"}
+                        {typeof order.totalAmount === "number" ? (
+                          <FormattedPrice price={order.totalAmount} />
+                        ) : (
+                          "-"
+                        )}
                       </div>
                     </div>
                     <div>
                       <div className="text-gray-500">Delivered</div>
                       <div className="font-medium">
-                        {order.completedAt
-                          ? new Date(order.completedAt).toLocaleDateString()
-                          : "-"}
+                        {order.delivery?.status ? order.delivery?.status : "-"}
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-gray-500">Sent to</div>
+                        <div className="text-gray-500">Status</div>
                         <div className="font-medium">
                           {order.statusName ?? order.payment ?? "—"}
                         </div>

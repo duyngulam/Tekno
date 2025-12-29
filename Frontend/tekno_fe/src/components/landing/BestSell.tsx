@@ -13,7 +13,7 @@ export default function BestSell() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await getProductsList();
+        const res = await getProductsList({ sortBy: "best_selling" });
         console.log(res);
         setProducts(res.data);
       } catch (error) {
@@ -28,10 +28,10 @@ export default function BestSell() {
         <div className="font-semibold text-2xl">Best Sellers</div>
         <ViewAllButton />
       </div>
-      <div className="grid grid-col-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-col-2 md:grid-cols-5 gap-4">
         {products &&
           products
-            ?.slice(1, 4)
+            ?.slice(0, 5)
             .map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

@@ -14,7 +14,7 @@ export default function NewProducts() {
     let mounted = true;
     (async () => {
       try {
-        const res = await getProductsList();
+        const res = await getProductsList({ sortBy: "created_desc" });
         if (mounted) setProducts(res.data ?? []);
       } catch (e) {
         console.error("error in fetching new products", e);
@@ -32,8 +32,8 @@ export default function NewProducts() {
         <div className="font-semibold text-2xl">New Products</div>
         <ViewAllButton />
       </div>
-      <div className="grid grid-col-2 md:grid-cols-4 gap-4">
-        {products?.slice(0, 4).map((product) => (
+      <div className="grid grid-col-3 md:grid-cols-5 gap-4">
+        {products?.slice(0, 5).map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>

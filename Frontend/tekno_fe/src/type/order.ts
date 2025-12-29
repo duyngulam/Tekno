@@ -8,6 +8,25 @@ export type OrderHistoryResponse = {
   totalRecords: number;
   totalPages: number;
 };
+export type Delivery = {
+  status: string;
+  trackingNumber: string | null;
+  carrier: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  estimatedDeliveryDate: string | null;
+  shippingAddress: {
+    recipientName: string;
+    phoneNumber: string;
+    addressLine: string;
+    provinceCode: number;
+    provinceName: string;
+    districtCode: number;
+    districtName: string;
+    wardCode: number;
+    wardName: string;
+  }
+}
 export type Order = {
   id: number;
   orderNumber: string;
@@ -18,7 +37,7 @@ export type Order = {
   completedAt: string | null;
   payment: PaymentStatus | null;
   items: OrderItem[];
-  delivery: string | null; // need fix
+  delivery: Delivery | null; // need fix
 };
 export type OrderItem = {
   id: number;

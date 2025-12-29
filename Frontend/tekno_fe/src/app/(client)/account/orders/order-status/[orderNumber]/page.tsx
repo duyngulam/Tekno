@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { getOrderByOrderNumber } from "@/services/order";
 import { Order, OrderItem } from "@/type/order";
+import FormattedPrice from "@/components/share/FormattedPriced";
 
 export default function OrderStatusPage() {
   const params = useParams();
@@ -99,6 +100,11 @@ export default function OrderStatusPage() {
   if (!order) return <div className="p-6">No data</div>;
 
   const items: OrderItem[] = order.items || [];
+  const shippingAddress = order.delivery?.shippingAddress;
+
+  const fullAddress = shippingAddress
+    ? `${shippingAddress.addressLine}, ${shippingAddress.wardName}, ${shippingAddress.districtName}, ${shippingAddress.provinceName}`
+    : "-";
 
   /* ---------- RENDER ---------- */
   return (
@@ -151,19 +157,19 @@ export default function OrderStatusPage() {
             value={`#${order.orderNumber || order.id}`}
           />
 
-          <InfoRow label="Sent to" value={order.delivery || "-"} />
+          <InfoRow label="Sent to" value={fullAddress} />
 
-          <InfoRow
-            label="Payment type"
-            value={order.payment?.methodName || "-"}
-          />
+          <InfoRow label="Payment type" value={order.payment?.method || "-"} />
 
           <InfoRow
             label="Transaction id"
             value={order.payment?.transactionId || "-"}
           />
 
-          <InfoRow label="Amount Paid" value={formatPrice(order.totalAmount)} />
+          <InfoRow
+            label="Amount Paid"
+            value={<FormattedPrice price={order.totalAmount} />}
+          />
         </div>
       </div>
 
@@ -203,7 +209,7 @@ export default function OrderStatusPage() {
 
               <div className="text-right">
                 <div className="text-sm font-semibold">
-                  {formatPrice(it.totalPrice)}
+                  <FormattedPrice price={it.totalPrice} />
                 </div>
               </div>
             </div>

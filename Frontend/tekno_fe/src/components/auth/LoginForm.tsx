@@ -13,7 +13,7 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "../ui/input-group";
-import { EyeClosed, Key, MailIcon } from "lucide-react";
+import { EyeClosed, Eye, Key, MailIcon } from "lucide-react";
 import { toast } from "sonner";
 
 type LoginFormProps = {
@@ -26,6 +26,7 @@ export default function LoginForm({ switchToRegister }: LoginFormProps) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -63,6 +64,7 @@ export default function LoginForm({ switchToRegister }: LoginFormProps) {
         </FieldLegend>
         <FieldDescription>This appears on Create your account</FieldDescription> */}
         <FieldGroup>
+          {/* email */}
           <Field>
             <InputGroup>
               <InputGroupInput
@@ -77,10 +79,11 @@ export default function LoginForm({ switchToRegister }: LoginFormProps) {
               </InputGroupAddon>
             </InputGroup>
           </Field>
+          {/* password */}
           <Field>
             <InputGroup>
               <InputGroupInput
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
                 autoComplete="off"
@@ -91,13 +94,13 @@ export default function LoginForm({ switchToRegister }: LoginFormProps) {
               </InputGroupAddon>
               <InputGroupAddon align="inline-end">
                 <InputGroupButton
-                  aria-label="Copy"
-                  title="Copy"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide" : "Show"}
                   size="icon-xs"
-                  onClick={() => {}}
+                  onClick={() => setShowPassword((v) => !v)}
+                  type="button"
                 >
-                  {/* {isCopied ? <IconCheck /> : <IconCopy />} */}
-                  <EyeClosed />
+                  {showPassword ? <Eye /> : <EyeClosed />}
                 </InputGroupButton>
               </InputGroupAddon>
             </InputGroup>
@@ -106,7 +109,7 @@ export default function LoginForm({ switchToRegister }: LoginFormProps) {
         <FieldError>{error}</FieldError>
       </FieldSet>
       <p className="text-end">
-        forgot your password?{" "}
+        Forgot your password?{" "}
         <span className="text-primary cursor-pointer hover:underline">
           Reset here
         </span>

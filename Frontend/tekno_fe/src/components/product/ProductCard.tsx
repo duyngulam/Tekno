@@ -19,7 +19,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className="relative text-sm bg-white border-[1px] border-secondary/20 rounded-md group shadow">
         {/* --- Ảnh sản phẩm --- */}
         <motion.div
-          className="w-fix h-80 flex items-center overflow-hidden bg-gray-50 m-2 pb-1 border-b border-secondary/50"
+          className="w-fix max-h-80 flex items-center overflow-hidden bg-gray-50 m-2 pb-1 border-b border-secondary/50"
           whileHover={{ scale: 1.05 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
         >
@@ -30,7 +30,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               loading="lazy"
               width={500}
               height={500}
-              className="object-center"
+              className="object-contain h-70 "
             />
           )}
         </motion.div>
@@ -39,11 +39,12 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="absolute top-2 right-2 z-10"
           productId={product.id}
         />
-        {product?.discountPercent && product.discountPercent > 0 && (
+        {product?.discountPercent !== null && product.discountPercent > 0 && (
           <p className="absolute z-10 top-2 left-0 bg-blue-100 text-blue-600 text-sm font-semibold px-2 py-1 rounded-r-lg border border-blue-500/50 group-hover:border-blue-700 hoverEffect">
-            {product?.discountPercent}
+            {product.discountPercent}%
           </p>
         )}
+
         {/* <p className="absolute z-10 top-2 left-0 bg-blue-100 text-blue-600 text-sm font-semibold px-2 py-1 rounded-r-lg ">
           15
         </p> */}
@@ -100,8 +101,8 @@ export function ProductCardInSearch({ product }: ProductCardProps) {
           )}
         </motion.div>
 
-        {product?.discountPercent && product.discountPercent > 0 && (
-          <p className="absolute z-10 top-2 left-0 bg-blue-100 text-blue-600 text-sm font-semibold px-2 py-1 rounded-r-lg border border-blue-500/50 group-hover:border-blue-700 hoverEffect">
+        {product?.discountPercent !== null && product.discountPercent > 0 && (
+          <p className="absolute z-10 top-2 left-0 bg-blue-100 text-blue-600 text-sm font-semibold px-2 py-1 rounded-r-lg">
             {product?.discountPercent}
           </p>
         )}
