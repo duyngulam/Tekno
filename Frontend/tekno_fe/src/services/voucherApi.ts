@@ -47,4 +47,16 @@ export const voucherApi = {
   async deactivate(id: string) {
     return fetch(`${API_BASE}/${id}/deactivate`, { method: "PATCH" });
   },
+
+  // GET STATISTICS
+  async getStatistics(id: string) {
+    const res = await fetch(`${API_BASE}/${id}/statistics`, { cache: "no-store" });
+    return res.json();
+  },
+
+  // GET USAGE
+  async getUsage(id: string) {
+    const res = await fetch(`${API_BASE}/${id}/usage`, { cache: "no-store" });
+    return res.json();
+  },
 };
