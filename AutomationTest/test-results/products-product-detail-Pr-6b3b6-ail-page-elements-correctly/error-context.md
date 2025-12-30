@@ -1,0 +1,492 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e6] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e7]:
+      - img [ref=e8]
+    - generic [ref=e11]:
+      - button "Open issues overlay" [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e14]: "0"
+          - generic [ref=e15]: "1"
+        - generic [ref=e16]: Issue
+      - button "Collapse issues badge" [ref=e17]:
+        - img [ref=e18]
+  - generic [ref=e20]:
+    - banner [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - button
+          - link "Logo" [ref=e24] [cursor=pointer]:
+            - /url: /
+            - img "Logo" [ref=e25]
+        - generic [ref=e26]:
+          - link "Home" [ref=e28] [cursor=pointer]:
+            - /url: /
+            - text: Home
+          - link "Products" [ref=e30] [cursor=pointer]:
+            - /url: /products?category=smartphone
+            - text: Products
+          - link "Blogs" [ref=e34] [cursor=pointer]:
+            - /url: /blogs
+            - text: Blogs
+          - link "FAQ" [ref=e36] [cursor=pointer]:
+            - /url: /faq
+            - text: FAQ
+          - link "Contact us" [ref=e38] [cursor=pointer]:
+            - /url: /contact-us
+            - text: Contact us
+        - generic [ref=e39]:
+          - img [ref=e41]
+          - link "0" [ref=e45] [cursor=pointer]:
+            - /url: /cart
+            - img [ref=e46]
+            - generic [ref=e49]: "0"
+          - generic [ref=e51]:
+            - button "Đăng nhập" [ref=e52]
+            - button "Đăng ký" [ref=e54]
+    - main [ref=e55]:
+      - generic [ref=e56]:
+        - navigation [ref=e57]:
+          - link "Home" [ref=e58] [cursor=pointer]:
+            - /url: /
+          - generic [ref=e59]:
+            - img [ref=e60]
+            - link "products" [ref=e62] [cursor=pointer]:
+              - /url: /products
+          - generic [ref=e63]:
+            - img [ref=e64]
+            - generic [ref=e66]: logitech mx keys
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - img "productImage" [ref=e70]
+            - generic [ref=e71]:
+              - button "image" [ref=e72]:
+                - img "image" [ref=e73]
+              - button "image" [ref=e74]:
+                - img "image" [ref=e75]
+          - generic [ref=e76]:
+            - heading "Logitech MX Keys" [level=2] [ref=e77]
+            - paragraph [ref=e78]: Logitech MX Keys với phím Perfect Stroke, kết nối multi-device, pin 10 ngày.
+            - generic [ref=e79]:
+              - generic [ref=e80]:
+                - img [ref=e81]
+                - generic [ref=e83]: "0"
+              - generic [ref=e84]:
+                - text: sold
+                - generic [ref=e85]: "0"
+            - generic [ref=e86]:
+              - generic [ref=e87]:
+                - img [ref=e88]
+                - generic [ref=e91]: In stock
+              - generic [ref=e92]:
+                - img [ref=e93]
+                - generic [ref=e96]: Guaranteed
+              - generic [ref=e97]:
+                - img [ref=e98]
+                - generic [ref=e101]: Free Delivery
+            - generic [ref=e102]:
+              - heading "Chọn phiên bản" [level=3] [ref=e103]
+              - generic [ref=e104]:
+                - generic [ref=e105]: "SKU: MXKEYS-GRAY"
+                - generic [ref=e106]:
+                  - text: "Giá:"
+                  - generic [ref=e107]: 2,990,000 đ
+                - generic [ref=e108]:
+                  - text: "Kho:"
+                  - generic [ref=e109]: Còn 35 sp
+              - generic [ref=e110]:
+                - button "Add to cart" [ref=e112]
+                - button [ref=e114]:
+                  - img [ref=e115]
+        - generic [ref=e117]:
+          - generic [ref=e118]: Technical Details
+          - table [ref=e120]:
+            - rowgroup [ref=e121]:
+              - row "Kiểu kết nối Bluetooth, USB Receiver" [ref=e122]:
+                - cell "Kiểu kết nối" [ref=e123]
+                - cell "Bluetooth, USB Receiver" [ref=e124]
+              - row "Layout Full-size" [ref=e125]:
+                - cell "Layout" [ref=e126]
+                - cell "Full-size" [ref=e127]
+              - row "Đèn nền Có - Tự động điều chỉnh" [ref=e128]:
+                - cell "Đèn nền" [ref=e129]
+                - cell "Có - Tự động điều chỉnh" [ref=e130]
+              - row "Pin Sạc USB-C - 10 ngày với đèn" [ref=e131]:
+                - cell "Pin" [ref=e132]
+                - cell "Sạc USB-C - 10 ngày với đèn" [ref=e133]
+              - row "Multi-device 3 thiết bị" [ref=e134]:
+                - cell "Multi-device" [ref=e135]
+                - cell "3 thiết bị" [ref=e136]
+        - generic [ref=e137]:
+          - generic [ref=e138]: Similar Products
+          - region [ref=e140]:
+            - generic [ref=e142]:
+              - group [ref=e143]:
+                - link "Laptop Dell 15 DC15250 - CPH99 (i5-1334U/ 16GB/ 512GB/ Windows 11 + Office) Laptop Dell 15 DC15250 - CPH99 (i5-1334U/ 16GB/ 512GB/ Windows 11 + Office) 20.990.000đ 20.990.000đ 0" [ref=e144] [cursor=pointer]:
+                  - /url: /products/laptop-dell-15-dc15250-cph99
+                  - generic [ref=e145]:
+                    - img "Laptop Dell 15 DC15250 - CPH99 (i5-1334U/ 16GB/ 512GB/ Windows 11 + Office)" [ref=e147]
+                    - button [ref=e149]:
+                      - img [ref=e150]
+                    - generic [ref=e152]:
+                      - paragraph [ref=e153]: Laptop Dell 15 DC15250 - CPH99 (i5-1334U/ 16GB/ 512GB/ Windows 11 + Office)
+                      - generic [ref=e154]:
+                        - generic [ref=e155]:
+                          - generic [ref=e156]: 20.990.000đ
+                          - generic [ref=e157]: 20.990.000đ
+                        - generic [ref=e158]:
+                          - img [ref=e159]
+                          - generic [ref=e161]: "0"
+              - group [ref=e162]:
+                - link "Laptop HP Victus 15 fa2731TX (B85LNPA) (i5-13420H/ GeForce RTX™ 3050/ 16GB/ 512GB/ Windows 11) Laptop HP Victus 15 fa2731TX (B85LNPA) (i5-13420H/ GeForce RTX™ 3050/ 16GB/ 512GB/ Windows 11) 25.990.000đ 25.990.000đ 0" [ref=e163] [cursor=pointer]:
+                  - /url: /products/laptop-hp-victus-15-fa2731tx-b85lnpa
+                  - generic [ref=e164]:
+                    - img "Laptop HP Victus 15 fa2731TX (B85LNPA) (i5-13420H/ GeForce RTX™ 3050/ 16GB/ 512GB/ Windows 11)" [ref=e166]
+                    - button [ref=e168]:
+                      - img [ref=e169]
+                    - generic [ref=e171]:
+                      - paragraph [ref=e172]: Laptop HP Victus 15 fa2731TX (B85LNPA) (i5-13420H/ GeForce RTX™ 3050/ 16GB/ 512GB/ Windows 11)
+                      - generic [ref=e173]:
+                        - generic [ref=e174]:
+                          - generic [ref=e175]: 25.990.000đ
+                          - generic [ref=e176]: 25.990.000đ
+                        - generic [ref=e177]:
+                          - img [ref=e178]
+                          - generic [ref=e180]: "0"
+              - group [ref=e181]:
+                - link "Laptop Asus Vivobook 14 X1404VA-EB509W (i3-1315U/ 8GB/ 512GB/ Windows 11) Laptop Asus Vivobook 14 X1404VA-EB509W (i3-1315U/ 8GB/ 512GB/ Windows 11) 15.990.000đ 15.990.000đ 0" [ref=e182] [cursor=pointer]:
+                  - /url: /products/laptop-asus-vivobook-14-x1404va-eb509w
+                  - generic [ref=e183]:
+                    - img "Laptop Asus Vivobook 14 X1404VA-EB509W (i3-1315U/ 8GB/ 512GB/ Windows 11)" [ref=e185]
+                    - button [ref=e187]:
+                      - img [ref=e188]
+                    - generic [ref=e190]:
+                      - paragraph [ref=e191]: Laptop Asus Vivobook 14 X1404VA-EB509W (i3-1315U/ 8GB/ 512GB/ Windows 11)
+                      - generic [ref=e192]:
+                        - generic [ref=e193]:
+                          - generic [ref=e194]: 15.990.000đ
+                          - generic [ref=e195]: 15.990.000đ
+                        - generic [ref=e196]:
+                          - img [ref=e197]
+                          - generic [ref=e199]: "0"
+              - group [ref=e200]:
+                - link "Laptop HP 15-fd0823TU - C81NMPA (i7-1355U/ 16GB/ 512GB/ Windows 11) Laptop HP 15-fd0823TU - C81NMPA (i7-1355U/ 16GB/ 512GB/ Windows 11) 24.990.000đ 24.990.000đ 0" [ref=e201] [cursor=pointer]:
+                  - /url: /products/laptop-hp-15-fd0823tu-c81nmpa
+                  - generic [ref=e202]:
+                    - img "Laptop HP 15-fd0823TU - C81NMPA (i7-1355U/ 16GB/ 512GB/ Windows 11)" [ref=e204]
+                    - button [ref=e206]:
+                      - img [ref=e207]
+                    - generic [ref=e209]:
+                      - paragraph [ref=e210]: Laptop HP 15-fd0823TU - C81NMPA (i7-1355U/ 16GB/ 512GB/ Windows 11)
+                      - generic [ref=e211]:
+                        - generic [ref=e212]:
+                          - generic [ref=e213]: 24.990.000đ
+                          - generic [ref=e214]: 24.990.000đ
+                        - generic [ref=e215]:
+                          - img [ref=e216]
+                          - generic [ref=e218]: "0"
+              - group [ref=e219]:
+                - link "Laptop Msi Modern 15 F13MG-667VN_16G (i5-1334U/ 16GB/ 512GB/ Windows 11) Laptop Msi Modern 15 F13MG-667VN_16G (i5-1334U/ 16GB/ 512GB/ Windows 11) 19.990.000đ 19.990.000đ 0" [ref=e220] [cursor=pointer]:
+                  - /url: /products/laptop-msi-modern-15-f13mg-667vn-16g
+                  - generic [ref=e221]:
+                    - img "Laptop Msi Modern 15 F13MG-667VN_16G (i5-1334U/ 16GB/ 512GB/ Windows 11)" [ref=e223]
+                    - button [ref=e225]:
+                      - img [ref=e226]
+                    - generic [ref=e228]:
+                      - paragraph [ref=e229]: Laptop Msi Modern 15 F13MG-667VN_16G (i5-1334U/ 16GB/ 512GB/ Windows 11)
+                      - generic [ref=e230]:
+                        - generic [ref=e231]:
+                          - generic [ref=e232]: 19.990.000đ
+                          - generic [ref=e233]: 19.990.000đ
+                        - generic [ref=e234]:
+                          - img [ref=e235]
+                          - generic [ref=e237]: "0"
+              - group [ref=e238]:
+                - link "Laptop HP Victus 15-fb3116AX - BX8U4PA (Ryzen 7 7445HS/ GeForce RTX™ 3050/ 16GB/ 512GB/ Windows 11) Laptop HP Victus 15-fb3116AX - BX8U4PA (Ryzen 7 7445HS/ GeForce RTX™ 3050/ 16GB/ 512GB/ Windows 11) 26.990.000đ 26.990.000đ 0" [ref=e239] [cursor=pointer]:
+                  - /url: /products/laptop-hp-victus-15-fb3116ax-bx8u4pa
+                  - generic [ref=e240]:
+                    - img "Laptop HP Victus 15-fb3116AX - BX8U4PA (Ryzen 7 7445HS/ GeForce RTX™ 3050/ 16GB/ 512GB/ Windows 11)" [ref=e242]
+                    - button [ref=e244]:
+                      - img [ref=e245]
+                    - generic [ref=e247]:
+                      - paragraph [ref=e248]: Laptop HP Victus 15-fb3116AX - BX8U4PA (Ryzen 7 7445HS/ GeForce RTX™ 3050/ 16GB/ 512GB/ Windows 11)
+                      - generic [ref=e249]:
+                        - generic [ref=e250]:
+                          - generic [ref=e251]: 26.990.000đ
+                          - generic [ref=e252]: 26.990.000đ
+                        - generic [ref=e253]:
+                          - img [ref=e254]
+                          - generic [ref=e256]: "0"
+              - group [ref=e257]:
+                - link "Laptop Aspire Lite 15 AL15-41P-R3U5 (Ryzen 7 5700U/ 16GB/ 512GB/ Windows 11) Laptop Aspire Lite 15 AL15-41P-R3U5 (Ryzen 7 5700U/ 16GB/ 512GB/ Windows 11) 15.990.000đ 15.990.000đ 0" [ref=e258] [cursor=pointer]:
+                  - /url: /products/laptop-aspire-lite-15-al15-41p-r3u5
+                  - generic [ref=e259]:
+                    - img "Laptop Aspire Lite 15 AL15-41P-R3U5 (Ryzen 7 5700U/ 16GB/ 512GB/ Windows 11)" [ref=e261]
+                    - button [ref=e263]:
+                      - img [ref=e264]
+                    - generic [ref=e266]:
+                      - paragraph [ref=e267]: Laptop Aspire Lite 15 AL15-41P-R3U5 (Ryzen 7 5700U/ 16GB/ 512GB/ Windows 11)
+                      - generic [ref=e268]:
+                        - generic [ref=e269]:
+                          - generic [ref=e270]: 15.990.000đ
+                          - generic [ref=e271]: 15.990.000đ
+                        - generic [ref=e272]:
+                          - img [ref=e273]
+                          - generic [ref=e275]: "0"
+              - group [ref=e276]:
+                - link "Laptop HP 15-fd0304TU - A2NL5PA (i3-1315U/ 8GB/ 512GB/ Windows 11) Laptop HP 15-fd0304TU - A2NL5PA (i3-1315U/ 8GB/ 512GB/ Windows 11) 13.500.000đ 13.500.000đ 0" [ref=e277] [cursor=pointer]:
+                  - /url: /products/laptop-hp-15-fd0304tu-a2nl5pa
+                  - generic [ref=e278]:
+                    - img "Laptop HP 15-fd0304TU - A2NL5PA (i3-1315U/ 8GB/ 512GB/ Windows 11)" [ref=e280]
+                    - button [ref=e282]:
+                      - img [ref=e283]
+                    - generic [ref=e285]:
+                      - paragraph [ref=e286]: Laptop HP 15-fd0304TU - A2NL5PA (i3-1315U/ 8GB/ 512GB/ Windows 11)
+                      - generic [ref=e287]:
+                        - generic [ref=e288]:
+                          - generic [ref=e289]: 13.500.000đ
+                          - generic [ref=e290]: 13.500.000đ
+                        - generic [ref=e291]:
+                          - img [ref=e292]
+                          - generic [ref=e294]: "0"
+              - group [ref=e295]:
+                - link "Laptop Asus Vivobook 15 X1502VA-BQ886W (i7-13620H/ 16GB/ 512GB/ Windows 11) Laptop Asus Vivobook 15 X1502VA-BQ886W (i7-13620H/ 16GB/ 512GB/ Windows 11) 27.990.000đ 27.990.000đ 0" [ref=e296] [cursor=pointer]:
+                  - /url: /products/laptop-asus-vivobook-15-x1502va-bq886w
+                  - generic [ref=e297]:
+                    - img "Laptop Asus Vivobook 15 X1502VA-BQ886W (i7-13620H/ 16GB/ 512GB/ Windows 11)" [ref=e299]
+                    - button [ref=e301]:
+                      - img [ref=e302]
+                    - generic [ref=e304]:
+                      - paragraph [ref=e305]: Laptop Asus Vivobook 15 X1502VA-BQ886W (i7-13620H/ 16GB/ 512GB/ Windows 11)
+                      - generic [ref=e306]:
+                        - generic [ref=e307]:
+                          - generic [ref=e308]: 27.990.000đ
+                          - generic [ref=e309]: 27.990.000đ
+                        - generic [ref=e310]:
+                          - img [ref=e311]
+                          - generic [ref=e313]: "0"
+              - group [ref=e314]:
+                - link "Laptop HP 250 G10 - A06FFPT (i7-1355U/ 16GB/ 512GB/ Windows 11) Laptop HP 250 G10 - A06FFPT (i7-1355U/ 16GB/ 512GB/ Windows 11) 18.990.000đ 18.990.000đ 0" [ref=e315] [cursor=pointer]:
+                  - /url: /products/laptop-hp-250-g10-a06ffpt
+                  - generic [ref=e316]:
+                    - img "Laptop HP 250 G10 - A06FFPT (i7-1355U/ 16GB/ 512GB/ Windows 11)" [ref=e318]
+                    - button [ref=e320]:
+                      - img [ref=e321]
+                    - generic [ref=e323]:
+                      - paragraph [ref=e324]: Laptop HP 250 G10 - A06FFPT (i7-1355U/ 16GB/ 512GB/ Windows 11)
+                      - generic [ref=e325]:
+                        - generic [ref=e326]:
+                          - generic [ref=e327]: 18.990.000đ
+                          - generic [ref=e328]: 18.990.000đ
+                        - generic [ref=e329]:
+                          - img [ref=e330]
+                          - generic [ref=e332]: "0"
+              - group [ref=e333]:
+                - link "Laptop Acer Aspire 5 A515-58P-702Q (i7-13620H/ 16GB/ 512GB/ Windows 11) Laptop Acer Aspire 5 A515-58P-702Q (i7-13620H/ 16GB/ 512GB/ Windows 11) 19.990.000đ 19.990.000đ 0" [ref=e334] [cursor=pointer]:
+                  - /url: /products/laptop-acer-aspire-5-a515-58p-702q
+                  - generic [ref=e335]:
+                    - img "Laptop Acer Aspire 5 A515-58P-702Q (i7-13620H/ 16GB/ 512GB/ Windows 11)" [ref=e337]
+                    - button [ref=e339]:
+                      - img [ref=e340]
+                    - generic [ref=e342]:
+                      - paragraph [ref=e343]: Laptop Acer Aspire 5 A515-58P-702Q (i7-13620H/ 16GB/ 512GB/ Windows 11)
+                      - generic [ref=e344]:
+                        - generic [ref=e345]:
+                          - generic [ref=e346]: 19.990.000đ
+                          - generic [ref=e347]: 19.990.000đ
+                        - generic [ref=e348]:
+                          - img [ref=e349]
+                          - generic [ref=e351]: "0"
+              - group [ref=e352]:
+                - link "Laptop Acer Aspire Lite AL15-42P-R08M (Ryzen 7 7730U/ 16GB/ 512GB/ Windows 11 + Office) Laptop Acer Aspire Lite AL15-42P-R08M (Ryzen 7 7730U/ 16GB/ 512GB/ Windows 11 + Office) 17.990.000đ 17.990.000đ 0" [ref=e353] [cursor=pointer]:
+                  - /url: /products/laptop-acer-aspire-lite-al15-42p-r08m
+                  - generic [ref=e354]:
+                    - img "Laptop Acer Aspire Lite AL15-42P-R08M (Ryzen 7 7730U/ 16GB/ 512GB/ Windows 11 + Office)" [ref=e356]
+                    - button [ref=e358]:
+                      - img [ref=e359]
+                    - generic [ref=e361]:
+                      - paragraph [ref=e362]: Laptop Acer Aspire Lite AL15-42P-R08M (Ryzen 7 7730U/ 16GB/ 512GB/ Windows 11 + Office)
+                      - generic [ref=e363]:
+                        - generic [ref=e364]:
+                          - generic [ref=e365]: 17.990.000đ
+                          - generic [ref=e366]: 17.990.000đ
+                        - generic [ref=e367]:
+                          - img [ref=e368]
+                          - generic [ref=e370]: "0"
+            - button "Previous slide" [disabled]:
+              - img
+              - generic: Previous slide
+            - button "Next slide" [ref=e371]:
+              - img
+              - generic [ref=e372]: Next slide
+        - generic [ref=e373]:
+          - generic [ref=e374]:
+            - generic [ref=e375]: Comments
+            - paragraph [ref=e376]: Leave your comments here for other customers
+            - generic [ref=e377]:
+              - button "Chọn 1 sao" [disabled] [ref=e378]:
+                - img [ref=e379]
+              - button "Chọn 2 sao" [disabled] [ref=e381]:
+                - img [ref=e382]
+              - button "Chọn 3 sao" [disabled] [ref=e384]:
+                - img [ref=e385]
+              - button "Chọn 4 sao" [disabled] [ref=e387]:
+                - img [ref=e388]
+              - button "Chọn 5 sao" [disabled] [ref=e390]:
+                - img [ref=e391]
+              - generic [ref=e393]: 5/5
+            - textbox "Share your thoughts about this product here" [disabled] [ref=e394]
+            - button "Comment" [disabled] [ref=e395]
+          - generic [ref=e397]: No comments yet
+        - generic [ref=e398]:
+          - generic [ref=e399]: Frequently Bought Together
+          - region [ref=e401]:
+            - generic [ref=e403]:
+              - group [ref=e404]:
+                - link "Sting Sting 7.990.000đ 7.990.000đ 0" [ref=e405] [cursor=pointer]:
+                  - /url: /products/string
+                  - generic [ref=e406]:
+                    - img "Sting" [ref=e408]
+                    - button [ref=e410]:
+                      - img [ref=e411]
+                    - generic [ref=e413]:
+                      - paragraph [ref=e414]: Sting
+                      - generic [ref=e415]:
+                        - generic [ref=e416]:
+                          - generic [ref=e417]: 7.990.000đ
+                          - generic [ref=e418]: 7.990.000đ
+                        - generic [ref=e419]:
+                          - img [ref=e420]
+                          - generic [ref=e422]: "0"
+              - group [ref=e423]:
+                - link "iPad Pro M2 11 inch iPad Pro M2 11 inch 24.990.000đ 24.990.000đ 0" [ref=e424] [cursor=pointer]:
+                  - /url: /products/ipad-pro-m2-11
+                  - generic [ref=e425]:
+                    - img "iPad Pro M2 11 inch" [ref=e427]
+                    - button [ref=e429]:
+                      - img [ref=e430]
+                    - generic [ref=e432]:
+                      - paragraph [ref=e433]: iPad Pro M2 11 inch
+                      - generic [ref=e434]:
+                        - generic [ref=e435]:
+                          - generic [ref=e436]: 24.990.000đ
+                          - generic [ref=e437]: 24.990.000đ
+                        - generic [ref=e438]:
+                          - img [ref=e439]
+                          - generic [ref=e441]: "0"
+              - group [ref=e442]:
+                - link "Samsung Galaxy Tab S9 Samsung Galaxy Tab S9 19.990.000đ 19.990.000đ 0" [ref=e443] [cursor=pointer]:
+                  - /url: /products/samsung-galaxy-tab-s9
+                  - generic [ref=e444]:
+                    - img "Samsung Galaxy Tab S9" [ref=e446]
+                    - button [ref=e448]:
+                      - img [ref=e449]
+                    - generic [ref=e451]:
+                      - paragraph [ref=e452]: Samsung Galaxy Tab S9
+                      - generic [ref=e453]:
+                        - generic [ref=e454]:
+                          - generic [ref=e455]: 19.990.000đ
+                          - generic [ref=e456]: 19.990.000đ
+                        - generic [ref=e457]:
+                          - img [ref=e458]
+                          - generic [ref=e460]: "0"
+              - group [ref=e461]:
+                - link "Xiaomi Pad 6 Xiaomi Pad 6 8.990.000đ 8.990.000đ 0" [ref=e462] [cursor=pointer]:
+                  - /url: /products/xiaomi-pad-6
+                  - generic [ref=e463]:
+                    - img "Xiaomi Pad 6" [ref=e465]
+                    - button [ref=e467]:
+                      - img [ref=e468]
+                    - generic [ref=e470]:
+                      - paragraph [ref=e471]: Xiaomi Pad 6
+                      - generic [ref=e472]:
+                        - generic [ref=e473]:
+                          - generic [ref=e474]: 8.990.000đ
+                          - generic [ref=e475]: 8.990.000đ
+                        - generic [ref=e476]:
+                          - img [ref=e477]
+                          - generic [ref=e479]: "0"
+            - button "Previous slide" [disabled]:
+              - img
+              - generic: Previous slide
+            - button "Next slide" [disabled]:
+              - img
+              - generic: Next slide
+    - contentinfo [ref=e480]:
+      - generic [ref=e481]:
+        - generic [ref=e482]:
+          - generic [ref=e483]:
+            - heading "Services" [level=3] [ref=e484]
+            - list [ref=e485]:
+              - listitem [ref=e486]:
+                - link "Bonus program" [ref=e487] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e488]:
+                - link "Gift cards" [ref=e489] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e490]:
+                - link "Credit and payment" [ref=e491] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e492]:
+                - link "Service contracts" [ref=e493] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e494]:
+                - link "Non-cash account" [ref=e495] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e496]:
+                - link "Payment" [ref=e497] [cursor=pointer]:
+                  - /url: "#"
+          - generic [ref=e498]:
+            - heading "Help" [level=3] [ref=e499]
+            - list [ref=e500]:
+              - listitem [ref=e501]:
+                - link "Find an order" [ref=e502] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e503]:
+                - link "Terms of delivery" [ref=e504] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e505]:
+                - link "Exchange and return of goods" [ref=e506] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e507]:
+                - link "Guarantee" [ref=e508] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e509]:
+                - link "Frequently asked questions" [ref=e510] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e511]:
+                - link "Terms of use of the site" [ref=e512] [cursor=pointer]:
+                  - /url: "#"
+          - generic [ref=e513]:
+            - heading "Contact us" [level=3] [ref=e514]
+            - generic [ref=e515]:
+              - paragraph [ref=e516]: 600 Seventh Street, Suite 204
+              - paragraph [ref=e517]: Fort Worth, TX 76104
+              - paragraph [ref=e518]: "Monday - Friday: 9am - 5pm"
+              - paragraph [ref=e519]: "Saturday: 10am - 3pm"
+              - paragraph [ref=e520]: "Email: shop@email.com"
+          - generic [ref=e521]:
+            - heading "Sign up to e-mail and updates" [level=3] [ref=e522]
+            - generic [ref=e523]:
+              - textbox "Email Address" [ref=e524]
+              - button [ref=e525]:
+                - img [ref=e526]
+            - generic [ref=e529]:
+              - link [ref=e530] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e531]
+              - link [ref=e533] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e534]
+              - link [ref=e536] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e537]
+              - link [ref=e540] [cursor=pointer]:
+                - /url: "#"
+                - img [ref=e541]
+        - generic [ref=e544]: footer bottom
+    - region "Notifications alt+T"
+  - alert [ref=e545]
+```

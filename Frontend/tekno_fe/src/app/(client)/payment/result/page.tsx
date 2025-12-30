@@ -48,6 +48,26 @@ export default function page() {
 
   console.log("status order", status);
 
+  // Show loading state
+  if (loadingOrder) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="relative z-10 w-full max-w-md rounded-2xl bg-white p-6 md:p-8 shadow-2xl">
+          <div className="flex flex-col gap-4 items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <h3 className="text-lg font-medium text-gray-700">
+              Processing payment...
+            </h3>
+            <p className="text-sm text-gray-500 text-center">
+              Please wait while we verify your payment
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (status === "Completed") {
     //return success page
     return (
@@ -95,7 +115,9 @@ export default function page() {
             </div>
 
             <button
-              // onClick={onViewStatus}
+              onClick={() => {
+                window.location.href = `/account/orders/order-status/${orderDetails?.orderNumber}`;
+              }}
               className="mt-3 w-full rounded-lg bg-yellow-400 px-4 py-2 font-medium text-white hover:bg-yellow-500"
             >
               Order Status
@@ -105,6 +127,7 @@ export default function page() {
       </div>
     );
   } else {
+    // Show failure page for any other status or if status is empty/failed
     return <False />;
   }
 }

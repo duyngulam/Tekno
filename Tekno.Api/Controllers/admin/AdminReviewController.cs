@@ -13,7 +13,7 @@ namespace Tekno.Api.Controllers.Admin
     /// </summary>
     [ApiController]
     [Route("api/admin/reviews")]
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class AdminReviewController : ControllerBase
     {
         private readonly ReviewService _reviewService;

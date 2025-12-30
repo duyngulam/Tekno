@@ -9,7 +9,7 @@ import FormattedPriced from "../share/FormattedPriced";
 
 export default function ProductInCart({ product }: { product: CartItem }) {
   return (
-    <div className="flex border p-2.5 items-center justify-between gap-5">
+    <div className="flex p-2.5 items-center justify-between gap-5 w-full">
       <div className="flex flex-1 items-start gap-2 h-26 md:h-44 max-w-60">
         {product?.primaryImage && (
           <Link
@@ -32,9 +32,12 @@ export default function ProductInCart({ product }: { product: CartItem }) {
           <h2 className="text-base font-semibold line-clamp-2">
             {product?.productName}
           </h2>
-          <p className="text-sm capitalize">
-            Color: <span className="font-semibold">Black</span>
-          </p>
+          {/* product variant */}
+          {product.attributes?.map((attr) => (
+            <p key={attr.name} className="text-sm capitalize">
+              {attr.name}: <span className="font-normal">{attr.value}</span>
+            </p>
+          ))}
         </div>
         {/* <p>{product?.productName}</p>
         <p>variant</p>
@@ -49,8 +52,8 @@ export default function ProductInCart({ product }: { product: CartItem }) {
           </div>
         </div> */}
 
-        <div className="mt-3 flex items-center justify-between">
-          <div className="flex items-baseline gap-3">
+        <div className=" flex items-end justify-between">
+          <div className="flex flex-col items-baseline gap-1">
             {product.price ? (
               <div className="text-sm text-gray-400 line-through">
                 <FormattedPriced price={product.price} />
@@ -58,7 +61,7 @@ export default function ProductInCart({ product }: { product: CartItem }) {
               </div>
             ) : null}
             <div className="text-xl font-bold text-primary">
-              {product.totalPrice.toLocaleString()} đ
+              <FormattedPriced price={product.totalPrice} />
             </div>
           </div>
 

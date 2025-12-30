@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 type Props = {
   onCreated?: () => void;
-  onClose?: () => void; // ✅ đóng modal
+  onClose?: () => void;
 };
 
 type FieldErrors = Partial<
@@ -152,10 +152,10 @@ export default function NewAddress({ onCreated, onClose }: Props) {
 
       await createProfileAddress(token, payload);
 
-      toast.success("Address created successfully ✅");
+      toast.success("Address created successfully");
 
-      onCreated?.(); // reload list
-      onClose?.(); // ✅ đóng modal luôn
+      onCreated?.();
+      onClose?.();
     } catch (err: any) {
       if (err?.errors) {
         const mapped: FieldErrors = {};

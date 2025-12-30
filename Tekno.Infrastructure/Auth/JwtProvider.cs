@@ -25,12 +25,24 @@ namespace Tekno.Infrastructure.Auth
 
         public (string Token, DateTime ExpiresAt) GenerateToken(User user)
         {
-            var claims = new[]
+            // Build claims safely - Role navigation may be null if not loaded
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.UniqueName, user.Email),
-                new Claim(ClaimTypes.Role, user.Role.Name)
+                new Claim(JwtRegisteredClaimNames.UniqueName, user.Email ?? string.Empty)
             };
+
+            var roleName = user.Role?.Name;
+            if (string.IsNullOrWhiteSpace(roleName))
+            {
+                // fallback to a generic role label or use role id as hint
+                roleName = user.RoleId > 0 ? $"role_{user.RoleId}" : "User";
+            }
+
+            if (!string.IsNullOrWhiteSpace(roleName))
+            {
+                claims.Add(new Claim(ClaimTypes.Role, roleName));
+            }
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

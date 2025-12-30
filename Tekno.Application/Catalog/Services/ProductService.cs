@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,7 +26,41 @@ namespace Tekno.Application.Catalog.Services
         private readonly MediaService _mediaService;
         private readonly IAppLogger<ProductService> _logger;
         private readonly ICacheService _cacheService;
+        private readonly bool _useDbTriggerForSpecs;
 
+        public ProductService(
+            IProductRepository productRepository,
+            IElasticProductService elasticService,
+            IMapper mapper,
+            MediaService mediaService,
+            IAppLogger<ProductService> logger,
+            ICacheService cacheService,
+            IConfiguration configuration)
+        {
+            _productRepository = productRepository;
+            _elasticService = elasticService;
+            _mapper = mapper;
+            _mediaService = mediaService;
+            _logger = logger;
+            _cacheService = cacheService;
+
+            // Default false: app will manage product specs rebuild. Set Database:UseTriggerForProductSpecs = true to let DB trigger handle specs.
+            _useDbTriggerForSpecs = false;
+            try
+            {
+                var cfg = configuration["Database:UseTriggerForProductSpecs"];
+                if (!string.IsNullOrEmpty(cfg) && bool.TryParse(cfg, out var parsed))
+                {
+                    _useDbTriggerForSpecs = parsed;
+                }
+            }
+            catch
+            {
+                // ignore and use default
+            }
+        }
+
+        // Backwards-compatible constructor (no IConfiguration) - assumes DB trigger is used
         public ProductService(
             IProductRepository productRepository,
             IElasticProductService elasticService,
@@ -40,6 +75,9 @@ namespace Tekno.Application.Catalog.Services
             _mediaService = mediaService;
             _logger = logger;
             _cacheService = cacheService;
+
+            // Default false: app will manage product specs rebuild. Set Database:UseTriggerForProductSpecs = true to let DB trigger handle specs.
+            _useDbTriggerForSpecs = false;
         }
 
         public async Task<PagedResult<ProductSummaryDto>> GetPagedProductAsync(ProductSearchRequestDto request)
@@ -738,19 +776,36 @@ namespace Tekno.Application.Catalog.Services
 
                 var created = await _productRepository.AddProductVariantAsync(variant);
 
+                if (_useDbTriggerForSpecs)
+                {
+                    // Commit so DB trigger runs and writes specs; then re-query and index
+                    await transaction.CommitAsync();
+
+                    var updatedProduct = await _productRepository.GetProductByIdAsync(dto.ProductId);
+                    var summary = _mapper.Map<ProductSummaryDto>(updatedProduct);
+                    await _elasticService.IndexProductAsync(summary);
+
+                    _logger.LogInformation("Added variant {Sku} to product {ProductId} with {AttributeCount} attributes (DB trigger used)", 
+                        dto.Sku, dto.ProductId, attributeValueIds.Count);
+
+                    var variantWithDetails = await _productRepository.GetProductVariantByIdAsync(created.Id);
+                    return _mapper.Map<ProductVariantDetailDto>(variantWithDetails);
+                }
+
+                // App-side rebuild
                 await UpdateProductSpecsFromVariantsAsync(dto.ProductId);
 
-                var updatedProduct = await _productRepository.GetProductByIdAsync(dto.ProductId);
-                var summary = _mapper.Map<ProductSummaryDto>(updatedProduct);
-                await _elasticService.IndexProductAsync(summary);
+                var updatedProductApp = await _productRepository.GetProductByIdAsync(dto.ProductId);
+                var summaryApp = _mapper.Map<ProductSummaryDto>(updatedProductApp);
+                await _elasticService.IndexProductAsync(summaryApp);
 
                 await transaction.CommitAsync();
 
                 _logger.LogInformation("Added variant {Sku} to product {ProductId} with {AttributeCount} attributes", 
                     dto.Sku, dto.ProductId, attributeValueIds.Count);
                 
-                var variantWithDetails = await _productRepository.GetProductVariantByIdAsync(created.Id);
-                return _mapper.Map<ProductVariantDetailDto>(variantWithDetails);
+                var variantWithDetailsApp = await _productRepository.GetProductVariantByIdAsync(created.Id);
+                return _mapper.Map<ProductVariantDetailDto>(variantWithDetailsApp);
             }
             catch (Exception ex)
             {
@@ -805,8 +860,6 @@ namespace Tekno.Application.Catalog.Services
                 variant.UpdateStatus(dto.Status);
 
                 // Clear existing variant attributes
-                // We'll remove existing and re-add based on provided attributes
-                // Ensure repository will persist changes (we rely on EF change tracking)
                 variant.VariantAttributes.Clear();
 
                 var attributeValueIds = new Dictionary<int, int>();
@@ -871,18 +924,32 @@ namespace Tekno.Application.Catalog.Services
                 // Persist variant update (repository should handle update)
                 var updatedVariant = await _productRepository.UpdateProductVariantAsync(variant);
 
-                // Refresh product specs and index
+                if (_useDbTriggerForSpecs)
+                {
+                    await transaction.CommitAsync();
+
+                    var updatedProduct = await _productRepository.GetProductByIdAsync(variant.ProductId);
+                    var summary = _mapper.Map<ProductSummaryDto>(updatedProduct);
+                    await _elasticService.IndexProductAsync(summary);
+
+                    _logger.LogInformation("Updated variant {VariantId} for product {ProductId} (DB trigger used)", variantId, variant.ProductId);
+
+                    var variantWithDetails = await _productRepository.GetProductVariantByIdAsync(updatedVariant.Id);
+                    return _mapper.Map<ProductVariantDetailDto>(variantWithDetails);
+                }
+
+                // App-side rebuild and index
                 await UpdateProductSpecsFromVariantsAsync(variant.ProductId);
-                var updatedProduct = await _productRepository.GetProductByIdAsync(variant.ProductId);
-                var summary = _mapper.Map<ProductSummaryDto>(updatedProduct);
-                await _elasticService.IndexProductAsync(summary);
+                var updatedProductApp = await _productRepository.GetProductByIdAsync(variant.ProductId);
+                var summaryApp = _mapper.Map<ProductSummaryDto>(updatedProductApp);
+                await _elasticService.IndexProductAsync(summaryApp);
 
                 await transaction.CommitAsync();
 
                 _logger.LogInformation("Updated variant {VariantId} for product {ProductId}", variantId, variant.ProductId);
 
-                var variantWithDetails = await _productRepository.GetProductVariantByIdAsync(updatedVariant.Id);
-                return _mapper.Map<ProductVariantDetailDto>(variantWithDetails);
+                var variantWithDetailsApp = await _productRepository.GetProductVariantByIdAsync(updatedVariant.Id);
+                return _mapper.Map<ProductVariantDetailDto>(variantWithDetailsApp);
             }
             catch (Exception ex)
             {
@@ -891,6 +958,7 @@ namespace Tekno.Application.Catalog.Services
                 throw;
             }
         }
+
         public async Task<bool> DeleteProductVariantAsync(int variantId)
         {
             var variant = await _productRepository.GetProductVariantByIdAsync(variantId);
@@ -913,10 +981,22 @@ namespace Tekno.Application.Catalog.Services
                     return false;
                 }
 
+                if (_useDbTriggerForSpecs)
+                {
+                    await transaction.CommitAsync();
+
+                    var product = await _productRepository.GetProductByIdAsync(productId);
+                    var summary = _mapper.Map<ProductSummaryDto>(product);
+                    await _elasticService.IndexProductAsync(summary);
+
+                    _logger.LogInformation("Deleted variant {VariantId} (DB trigger used)", variantId);
+                    return true;
+                }
+
                 await UpdateProductSpecsFromVariantsAsync(productId);
-                var product = await _productRepository.GetProductByIdAsync(productId);
-                var summary = _mapper.Map<ProductSummaryDto>(product);
-                await _elasticService.IndexProductAsync(summary);
+                var productApp = await _productRepository.GetProductByIdAsync(productId);
+                var summaryApp = _mapper.Map<ProductSummaryDto>(productApp);
+                await _elasticService.IndexProductAsync(summaryApp);
 
                 await transaction.CommitAsync();
 
@@ -1036,6 +1116,12 @@ namespace Tekno.Application.Catalog.Services
 
         private async Task UpdateProductSpecsFromVariantsAsync(int productId)
         {
+            if (_useDbTriggerForSpecs)
+            {
+                _logger.LogInformation("Skipping UpdateProductSpecsFromVariantsAsync because DB trigger handles specs");
+                return;
+            }
+
             var product = await _productRepository.GetProductByIdAsync(productId);
             if (product == null) return;
 
@@ -1064,6 +1150,7 @@ namespace Tekno.Application.Catalog.Services
             }).ToList();
 
             var specsJson = System.Text.Json.JsonSerializer.Serialize(specsList);
+            // reuse the already fetched product instance
             product.UpdateSpecs(specsJson);
 
             await _productRepository.UpdateProductAsync(product);

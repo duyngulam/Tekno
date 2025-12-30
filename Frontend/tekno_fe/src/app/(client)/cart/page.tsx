@@ -85,6 +85,14 @@ export default function CartPage() {
     }
   };
 
+  // Subtotal theo item được chọn
+  const selectedSubtotal = useMemo(() => {
+    if (!items?.length || selectedIds.size === 0) return 0;
+    return items
+      .filter((p) => selectedIds.has(p.id))
+      .reduce((sum, it) => sum + (Number(it.totalPrice) || 0), 0);
+  }, [items, selectedIds]);
+
   return (
     <div>
       {isAuthenticated ? (
@@ -115,19 +123,23 @@ export default function CartPage() {
                     <h1>Your shopping cart</h1>
                   </div>
 
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 ">
                     {ProductsInCart?.map((p) => {
                       const id = p.id;
                       const checked = selectedIds.has(id);
                       return (
-                        <div key={id} className="flex items-centre gap-3">
+                        <div
+                          key={id}
+                          className="flex justify-between items-centre gap-3 border border-gray-300 rounded-md"
+                        >
+                          <ProductInCart product={p} />
+
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleOne(id)}
-                            className=""
+                            className="h-5 w-5 mt-5 mr-7 rounded-md text-gray-100 items-center"
                           />
-                          <ProductInCart product={p} />
                         </div>
                       );
                     })}
@@ -141,12 +153,8 @@ export default function CartPage() {
                   <div className="p-1 flex flex-col">
                     <div className="flex justify-between">
                       <p className="text-start">Subtotal</p>
-                      <FormattedPriced price={SubTotalPrice} />
-                    </div>
-                    <hr />
-                    <div className="flex justify-between">
-                      <p className="text-start">Grand total</p>
-                      <p className="text-end">$519.52</p>
+                      {/* đổi sang subtotal theo item được chọn */}
+                      <FormattedPriced price={selectedSubtotal} />
                     </div>
                   </div>
 

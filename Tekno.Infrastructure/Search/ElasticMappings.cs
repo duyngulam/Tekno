@@ -11,7 +11,8 @@ namespace Tekno.Infrastructure.Search
                 .Settings(s => s
                     .Analysis(a => a
                         .Normalizers(n => n
-                            .Custom("lowercase_normalizer", cn => cn.Filters("lowercase"))
+                            // lowercase + asciifolding so keyword comparisons ignore case and diacritics
+                            .Custom("lowercase_normalizer", cn => cn.Filters("lowercase", "asciifolding"))
                         )
                         .Analyzers(an => an
                             // N-gram analyzer for partial matching (e.g., "mac" → "macbook")
@@ -31,6 +32,8 @@ namespace Tekno.Infrastructure.Search
                                 .MinGram(3)
                                 .MaxGram(10)
                             )
+                            // ascii folding filter to normalize diacritics
+                            .AsciiFolding("asciifolding", af => af.PreserveOriginal(false))
                             // Edge n-gram filter for prefix matching
                             .EdgeNGram("edge_ngram_filter", eng => eng
                                 .MinGram(2)

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Nest;
 using Tekno.Application.Catalog.DTOs.Products;
 using Tekno.Application.Catalog.Interface;
@@ -15,12 +17,16 @@ namespace Tekno.Infrastructure.Search
     {
         private readonly IElasticClient _client;
         private readonly IProductRepository _productRepository;
+        private readonly ILogger<ElasticProductService> _logger;
         private const string IndexName = "products";
+        // cache mapping check result to avoid repeated mapping lookups
+        private static bool? _specsIsNestedCache = null;
 
-        public ElasticProductService(IElasticClient client, IProductRepository productRepository)
+        public ElasticProductService(IElasticClient client, IProductRepository productRepository, ILogger<ElasticProductService> logger)
         {
             _client = client;
             _productRepository = productRepository;
+            _logger = logger;
         }
 
         public async Task IndexProductAsync(ProductSummaryDto product)
@@ -182,7 +188,17 @@ namespace Tekno.Infrastructure.Search
                 // ignore DB errors here (optionally log)
             }
 
-            var indexResp = await _client.IndexAsync(doc, i => i.Index(IndexName).Id(doc.Id));
+            // log what we are indexing for troubleshooting spec filters
+            try
+            {
+                if (doc.Specs != null && doc.Specs.Any())
+                    _logger.LogDebug("Indexing product {ProductId} specs: {Specs}", doc.Id, string.Join(',', doc.Specs.Select(s => s.Name + ":" + string.Join('|', s.Value))));
+                else
+                    _logger.LogDebug("Indexing product {ProductId} with no specs", doc.Id);
+            }
+            catch { }
+
+            var indexResp = await _client.IndexAsync(doc, i => i.Index(IndexName).Id(doc.Id).Refresh(Elasticsearch.Net.Refresh.True));
             if (!indexResp.IsValid)
             {
                 throw new Exception($"Elasticsearch index error: {indexResp.ServerError?.ToString() ?? indexResp.OriginalException?.Message}");
@@ -191,7 +207,7 @@ namespace Tekno.Infrastructure.Search
 
         public async Task DeleteProductAsync(int id)
         {
-            var resp = await _client.DeleteAsync<ProductSearchDocument>(id, d => d.Index(IndexName));
+            var resp = await _client.DeleteAsync<ProductSearchDocument>(id, d => d.Index(IndexName).Refresh(Elasticsearch.Net.Refresh.True));
             if (!resp.IsValid && resp.Result != Result.NotFound)
             {
                 throw new Exception($"Elasticsearch delete error: {resp.ServerError?.ToString() ?? resp.OriginalException?.Message}");
@@ -231,235 +247,394 @@ namespace Tekno.Infrastructure.Search
             int page,
             int pageSize)
         {
-            page = Math.Max(1, page);
-            var from = (page - 1) * pageSize;
-
-            var mustQueries = new List<QueryContainer>();
-            var filterQueries = new List<QueryContainer>();
-
-            // Enhanced keyword search with partial matching support
-            if (!string.IsNullOrWhiteSpace(keyword))
+            try
             {
-                var trimmedKeyword = keyword.Trim();
-                
-                // Multi-field search with different strategies for better matching
-                mustQueries.Add(new BoolQuery
+                page = Math.Max(1, page);
+                var from = (page - 1) * pageSize;
+
+                var mustQueries = new List<QueryContainer>();
+                var filterQueries = new List<QueryContainer>();
+
+                // Enhanced keyword search with partial matching support
+                if (!string.IsNullOrWhiteSpace(keyword))
                 {
-                    Should = new List<QueryContainer>
+                    var trimmedKeyword = keyword.Trim();
+                    
+                    // Multi-field search with different strategies for better matching
+                    mustQueries.Add(new BoolQuery
                     {
-                        // 1. Exact phrase match (highest priority)
-                        new MatchPhraseQuery
+                        Should = new List<QueryContainer>
                         {
-                            Field = Infer.Field<ProductSearchDocument>(p => p.Name),
-                            Query = trimmedKeyword,
-                            Boost = 5.0
-                        },
-                        // 2. Standard match with fuzziness (handles typos)
-                        new MatchQuery
-                        {
-                            Field = Infer.Field<ProductSearchDocument>(p => p.Name),
-                            Query = trimmedKeyword,
-                            Fuzziness = Fuzziness.Auto,
-                            Boost = 3.0
-                        },
-                        // 3. N-gram match for partial matching (e.g., "mac" matches "macbook")
-                        new MatchQuery
-                        {
-                            Field = "name.ngram",
-                            Query = trimmedKeyword,
-                            Boost = 2.0
-                        },
-                        // 4. Edge n-gram for prefix matching (autocomplete-style)
-                        new MatchQuery
-                        {
-                            Field = "name.edge",
-                            Query = trimmedKeyword,
-                            Boost = 1.5
-                        },
-                        // 5. Wildcard search as fallback
-                        new WildcardQuery
-                        {
-                            Field = Infer.Field<ProductSearchDocument>(p => p.Name),
-                            Value = $"*{trimmedKeyword.ToLowerInvariant()}*",
-                            Boost = 1.0
-                        }
-                    },
-                    MinimumShouldMatch = 1
-                });
-            }
-
-            if (!string.IsNullOrWhiteSpace(categorySlug))
-                // Use multi-value 'Categories' field which contains the product's category plus ancestor slugs
-                filterQueries.Add(new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Categories), Value = categorySlug.ToLowerInvariant() });
-
-            if (!string.IsNullOrWhiteSpace(brandSlug))
-                filterQueries.Add(new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Brand), Value = brandSlug.ToLowerInvariant() });
-
-            if (minPrice.HasValue || maxPrice.HasValue)
-            {
-                filterQueries.Add(new NumericRangeQuery
-                {
-                    Field = Infer.Field<ProductSearchDocument>(p => p.Price),
-                    GreaterThanOrEqualTo = minPrice.HasValue ? (double?)minPrice.Value : null,
-                    LessThanOrEqualTo = maxPrice.HasValue ? (double?)maxPrice.Value : null
-                });
-            }
-
-            // Enhanced nested spec filters with multi-value support (UNION/OR logic)
-            // Example: filters[ram]=8gb,16gb will match products with RAM 8GB OR 16GB
-            if (filters != null && filters.Any())
-            {
-                foreach (var kv in filters)
-                {
-                    var specName = (kv.Key ?? string.Empty).Trim().ToLowerInvariant();
-                    var specValueRaw = (kv.Value ?? string.Empty).Trim();
-
-                    if (string.IsNullOrEmpty(specName) || string.IsNullOrEmpty(specValueRaw))
-                        continue;
-
-                    // Split by comma to support multiple values: "8gb,16gb"
-                    var specValues = specValueRaw.Split(new[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries)
-                                                  .Select(v => v.Trim().ToLowerInvariant())
-                                                  .Where(v => !string.IsNullOrEmpty(v))
-                                                  .Distinct()
-                                                  .ToList();
-
-                    if (!specValues.Any())
-                        continue;
-
-                    if (specValues.Count == 1)
-                    {
-                        // Single value: use simple term query
-                        var nestedSpec = new NestedQuery
-                        {
-                            Path = "specs",
-                            Query = new BoolQuery
+                            // 1. Exact phrase match (highest priority)
+                            new MatchPhraseQuery
                             {
-                                Must = new QueryContainer[]
-                                {
-                                    new TermQuery { Field = "specs.name", Value = specName },
-                                    new TermQuery { Field = "specs.value", Value = specValues[0] }
-                                }
+                                Field = Infer.Field<ProductSearchDocument>(p => p.Name),
+                                Query = trimmedKeyword,
+                                Boost = 5.0
+                            },
+                            // 2. Standard match with fuzziness (handles typos)
+                            new MatchQuery
+                            {
+                                Field = Infer.Field<ProductSearchDocument>(p => p.Name),
+                                Query = trimmedKeyword,
+                                Fuzziness = Fuzziness.Auto,
+                                Boost = 3.0
+                            },
+                            // 3. N-gram match for partial matching (e.g., "mac" matches "macbook")
+                            new MatchQuery
+                            {
+                                Field = "name.ngram",
+                                Query = trimmedKeyword,
+                                Boost = 2.0
+                            },
+                            // 4. Edge n-gram for prefix matching (autocomplete-style)
+                            new MatchQuery
+                            {
+                                Field = "name.edge",
+                                Query = trimmedKeyword,
+                                Boost = 1.5
+                            },
+                            // 5. Wildcard search as fallback
+                            new WildcardQuery
+                            {
+                                Field = Infer.Field<ProductSearchDocument>(p => p.Name),
+                                Value = $"*{trimmedKeyword.ToLowerInvariant()}*",
+                                Boost = 1.0
                             }
-                        };
-                        filterQueries.Add(nestedSpec);
+                        },
+                        MinimumShouldMatch = 1
+                    });
+                }
+
+                if (!string.IsNullOrWhiteSpace(categorySlug))
+                    // Use multi-value 'Categories' field which contains the product's category plus ancestor slugs
+                    // use keyword field for exact term match
+                    filterQueries.Add(new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Categories), Value = categorySlug.ToLowerInvariant() });
+
+                if (!string.IsNullOrWhiteSpace(brandSlug))
+                    filterQueries.Add(new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Brand), Value = brandSlug.ToLowerInvariant() });
+
+                if (minPrice.HasValue || maxPrice.HasValue)
+                {
+                    filterQueries.Add(new NumericRangeQuery
+                    {
+                        Field = Infer.Field<ProductSearchDocument>(p => p.Price),
+                        GreaterThanOrEqualTo = minPrice.HasValue ? (double?)minPrice.Value : null,
+                        LessThanOrEqualTo = maxPrice.HasValue ? (double?)maxPrice.Value : null
+                    });
+                }
+
+                if (filters != null && filters.Any())
+                {
+                    // determine if 'specs' is mapped as nested in the index
+                    bool useNested = await IsSpecsMappedAsNestedAsync();
+                    if (useNested)
+                    {
+                        _logger.LogDebug("Specs field is mapped as nested; building nested queries");
                     }
                     else
                     {
-                        // Multiple values: use OR logic (UNION)
-                        // Product must have this spec name AND at least one of the specified values
-                        var valueQueries = specValues.Select(specValue => 
-                            (QueryContainer)new TermQuery { Field = "specs.value", Value = specValue }
-                        ).ToList();
-
-                        var nestedSpec = new NestedQuery
-                        {
-                            Path = "specs",
-                            Query = new BoolQuery
-                            {
-                                Must = new QueryContainer[]
-                                {
-                                    new TermQuery { Field = "specs.name", Value = specName }
-                                },
-                                Should = valueQueries,
-                                MinimumShouldMatch = 1
-                            }
-                        };
-                        filterQueries.Add(nestedSpec);
+                        _logger.LogDebug("Specs field is NOT nested; building non-nested queries");
                     }
+
+                    foreach (var kv in filters)
+                    {
+                        // Normalize filter name and values to match indexed keywords (lowercase + ascii folding)
+                        var specName = NormalizeTerm(kv.Key ?? string.Empty);
+                        var specValueRaw = (kv.Value ?? string.Empty).Trim();
+
+                        if (string.IsNullOrEmpty(specName) || string.IsNullOrEmpty(specValueRaw))
+                            continue;
+
+                        List<string> specValues;
+                        // Frontend may send JSON array string (e.g. ["RTX 4060"]). Try to parse it first.
+                        if (specValueRaw.StartsWith("[") && specValueRaw.EndsWith("]"))
+                        {
+                            try
+                            {
+                                var arr = JsonSerializer.Deserialize<string[]>(specValueRaw);
+                                specValues = (arr ?? Array.Empty<string>()).Select(v => v?.Trim() ?? string.Empty)
+                                                           .Where(v => !string.IsNullOrEmpty(v))
+                                                           .Select(v => v.ToLowerInvariant())
+                                                           .Distinct()
+                                                           .ToList();
+                            }
+                            catch
+                            {
+                                // fallback to splitting
+                                specValues = specValueRaw.Split(new[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                                                           .Select(v => v.Trim().ToLowerInvariant())
+                                                           .Where(v => !string.IsNullOrEmpty(v))
+                                                           .Distinct()
+                                                           .ToList();
+                            }
+                        }
+                        else
+                        {
+                            specValues = specValueRaw.Split(new[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                                                       .Select(v => v.Trim().ToLowerInvariant())
+                                                       .Where(v => !string.IsNullOrEmpty(v))
+                                                       .Distinct()
+                                                       .ToList();
+                        }
+
+                        if (!specValues.Any())
+                            continue;
+
+                        if (useNested)
+                        {
+                            // Build nested query using TermQuery on keyword fields and IgnoreUnmapped to avoid shard failures
+                            var nestedShould = new List<QueryContainer>();
+
+                            foreach (var value in specValues)
+                            {
+                                var nested = new NestedQuery
+                                {
+                                    Path = Infer.Field<ProductSearchDocument>(p => p.Specs),
+                                    IgnoreUnmapped = true,
+                                    Query = new BoolQuery
+                                    {
+                                        Must = new QueryContainer[]
+                                        {
+                                            // match attribute name exactly (keyword)
+                                            new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Specs.First().Name), Value = specName },
+                                            // match attribute value exactly (keyword)
+                                            new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Specs.First().Value.First()), Value = value }
+                                        }
+                                    }
+                                };
+
+                                nestedShould.Add(nested);
+                            }
+
+                            if (nestedShould.Count == 1)
+                            {
+                                filterQueries.Add(nestedShould[0]);
+                            }
+                            else if (nestedShould.Count > 1)
+                            {
+                                filterQueries.Add(new BoolQuery
+                                {
+                                    Should = nestedShould,
+                                    MinimumShouldMatch = 1
+                                });
+                            }
+                        }
+                        else
+                        {
+                            // Non-nested mapping: build term queries against specs.name.keyword and specs.value.keyword
+                            var nonNestedShould = new List<QueryContainer>();
+                            foreach (var value in specValues)
+                            {
+                                var bq = new BoolQuery
+                                {
+                                    Must = new QueryContainer[]
+                                    {
+                                        new TermQuery { Field = "specs.name.keyword", Value = specName },
+                                        new TermQuery { Field = "specs.value.keyword", Value = value }
+                                    }
+                                };
+
+                                nonNestedShould.Add(bq);
+                            }
+
+                            if (nonNestedShould.Count == 1)
+                                filterQueries.Add(nonNestedShould[0]);
+                            else if (nonNestedShould.Count > 1)
+                                filterQueries.Add(new BoolQuery { Should = nonNestedShould, MinimumShouldMatch = 1 });
+                        }
+
+                        _logger.LogDebug("Applying spec filter '{SpecName}' -> values: {Values}", specName, string.Join(',', specValues));
+                     }
+                 }
+
+                QueryContainer finalQuery;
+                if (mustQueries.Count == 0 && filterQueries.Count == 0)
+                    finalQuery = new MatchAllQuery();
+                else
+                    finalQuery = new BoolQuery
+                    {
+                        Must = mustQueries,
+                        Filter = filterQueries
+                    };
+
+                var sortField = "date";
+                var sortDir = "desc";
+                if (!string.IsNullOrWhiteSpace(sort))
+                {
+                    var parts = sort.ToLowerInvariant().Split(new[] { '_', ':' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length > 0) sortField = parts[0];
+                    if (parts.Length > 1) sortDir = parts[1] == "asc" ? "asc" : "desc";
+                }
+
+                // Execute search with try/catch around client call to capture server errors
+                ISearchResponse<ProductSearchDocument> resp;
+                try
+                {
+                    resp = await _client.SearchAsync<ProductSearchDocument>(s => s
+                        .Index(IndexName)
+                        .From(from)
+                        .Size(pageSize)
+                        .TrackTotalHits()
+                        .Query(q => finalQuery)
+                        .Sort(sd =>
+                        {
+                            if (string.IsNullOrWhiteSpace(sort))
+                            {
+                                if (!string.IsNullOrWhiteSpace(keyword))
+                                    return sd.Descending(SortSpecialField.Score);
+                                return sd;
+                            }
+
+                            switch (sortField)
+                            {
+                                case "price":
+                                    return sortDir == "asc"
+                                        ? sd.Field(f => f.Field(p => p.Price).Order(SortOrder.Ascending))
+                                        : sd.Field(f => f.Field(p => p.Price).Order(SortOrder.Descending));
+                                case "date":
+                                case "created":
+                                case "createdat":
+                                    return sortDir == "asc"
+                                        ? sd.Field(f => f.Field(p => p.CreatedAt).Order(SortOrder.Ascending))
+                                        : sd.Field(f => f.Field(p => p.CreatedAt).Order(SortOrder.Descending));
+                                case "discount":
+                                case "discountpercent":
+                                    return sortDir == "asc"
+                                        ? sd.Field(f => f.Field(p => p.DiscountPercent).Order(SortOrder.Ascending))
+                                        : sd.Field(f => f.Field(p => p.DiscountPercent).Order(SortOrder.Descending));
+                                case "rating":
+                                    return sortDir == "asc"
+                                        ? sd.Field(f => f.Field(p => p.Rating).Order(SortOrder.Ascending))
+                                        : sd.Field(f => f.Field(p => p.Rating).Order(SortOrder.Descending));
+                                default:
+                                    if (!string.IsNullOrWhiteSpace(keyword))
+                                        return sd.Descending(SortSpecialField.Score);
+                                    return sd;
+                            }
+                        })
+                    );
+                }
+                catch (Exception ex)
+                {
+                    // convert client exceptions into a controlled exception to be handled by outer catch
+                    _logger.LogError(ex, "Elasticsearch client threw during SearchAsync");
+                    throw new Exception("Elasticsearch client error during search", ex);
+                }
+
+                if (!resp.IsValid)
+                    throw new Exception($"Elasticsearch search error: {resp.ServerError?.ToString() ?? resp.OriginalException?.Message}");
+
+                _logger.LogDebug("Elasticsearch returned {TotalHits} hits (took {Took}ms)", resp.Total, resp.Took);
+
+                var docs = resp.Hits.Select(h => h.Source!).ToList();
+
+                var mapped = docs.Select(d => new ProductSummaryDto
+                {
+                    Id = d.Id,
+                    Name = d.Name,
+                    Slug = d.Slug,
+                    BrandName = d.Brand,
+                    CategoryName = d.Category,
+                    BasePrice = d.Price,
+                    DiscountPercent = d.DiscountPercent,
+                    CreatedAt = d.CreatedAt,
+                    PrimaryImagePath = d.ImageUrl
+                }).ToList();
+
+                var total = resp.Total > 0 ? (int)resp.Total : mapped.Count;
+                return new PagedResult<ProductSummaryDto>(mapped, total, page, pageSize);
+            }
+            catch (Exception ex)
+            {
+                // Log and fallback to DB query to keep API robust
+                _logger.LogError(ex, "Elasticsearch query failed, falling back to database search");
+
+                // Fallback: use repository DB search (note: DB search does not support nested spec filters)
+                try
+                {
+                    var paging = new PagingParams(page, pageSize);
+                    var dbResult = await _productRepository.GetPagedProductAsync(
+                        categorySlug,
+                        brandSlug,
+                        keyword,
+                        sort,
+                        minPrice?.ToString(),
+                        maxPrice?.ToString(),
+                        paging);
+
+                    var mapped = dbResult.Data.Select(p => new ProductSummaryDto
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Slug = p.Slug,
+                        BrandName = p.Brand?.Name,
+                        CategoryName = p.Category?.Name,
+                        BasePrice = p.BasePrice,
+                        DiscountPercent = p.DiscountPercent.HasValue ? (int?)Math.Round(p.DiscountPercent.Value) : null,
+                        CreatedAt = p.CreatedAt,
+                        PrimaryImagePath = p.Images?.FirstOrDefault()?.ImageUrl
+                    }).ToList();
+
+                    return new PagedResult<ProductSummaryDto>(mapped, dbResult.TotalRecords, page, pageSize);
+                }
+                catch (Exception dbEx)
+                {
+                    _logger.LogError(dbEx, "Database fallback search also failed");
+                    throw; // rethrow original exception flow
                 }
             }
+        }
 
-            QueryContainer finalQuery;
-            if (mustQueries.Count == 0 && filterQueries.Count == 0)
-                finalQuery = new MatchAllQuery();
-            else
-                finalQuery = new BoolQuery
-                {
-                    Must = mustQueries,
-                    Filter = filterQueries
-                };
-
-            // capture sort parts
-            var sortField = "date";
-            var sortDir = "desc";
-            if (!string.IsNullOrWhiteSpace(sort))
+        private static string NormalizeTerm(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+            var s = input.Trim().ToLowerInvariant();
+            // remove diacritics
+            var normalized = s.Normalize(System.Text.NormalizationForm.FormD);
+            var sb = new System.Text.StringBuilder();
+            foreach (var ch in normalized)
             {
-                var parts = sort.ToLowerInvariant().Split(new[] { '_', ':' }, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length > 0) sortField = parts[0];
-                if (parts.Length > 1) sortDir = parts[1] == "asc" ? "asc" : "desc";
+                var uc = CharUnicodeInfo.GetUnicodeCategory(ch);
+                if (uc != UnicodeCategory.NonSpacingMark)
+                    sb.Append(ch);
+            }
+            return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
+        }
+
+        private async Task<bool> IsSpecsMappedAsNestedAsync()
+        {
+            if (_specsIsNestedCache.HasValue) return _specsIsNestedCache.Value;
+
+            try
+            {
+                var mapping = await _client.Indices.GetMappingAsync(new GetMappingRequest(IndexName));
+                if (!mapping.IsValid) return false;
+
+                var indexMap = mapping.Indices.FirstOrDefault().Value;
+                if (indexMap == null) return false;
+
+                // attempt to locate 'specs' property and check its 'type'
+                var props = indexMap.Mappings.Properties;
+                if (props != null && props.TryGetValue("specs", out var specProp))
+                {
+                    try
+                    {
+                        // Try to infer nested from the property type string
+                        var typeStr = specProp.Type?.ToString() ?? string.Empty;
+                        _specsIsNestedCache = typeStr.Equals("Nested", StringComparison.OrdinalIgnoreCase) || typeStr.Equals("nested", StringComparison.OrdinalIgnoreCase);
+                        return _specsIsNestedCache.Value;
+                    }
+                    catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to get index mapping for {Index}", IndexName);
             }
 
-            var resp = await _client.SearchAsync<ProductSearchDocument>(s => s
-                .Index(IndexName)
-                .From(from)
-                .Size(pageSize)
-                .TrackTotalHits()
-                .Query(q => finalQuery)
-                .Sort(sd =>
-                {
-                    // If no explicit sort and keyword exists, sort by relevance (_score)
-                    if (string.IsNullOrWhiteSpace(sort))
-                    {
-                        if (!string.IsNullOrWhiteSpace(keyword))
-                            return sd.Descending(SortSpecialField.Score);
-                        // default: no sort (or you can choose price/created default)
-                        return sd;
-                    }
-
-                    // map supported sort fields (price or date)
-                    switch (sortField)
-                    {
-                        case "price":
-                            return sortDir == "asc"
-                                ? sd.Field(f => f.Field(p => p.Price).Order(SortOrder.Ascending))
-                                : sd.Field(f => f.Field(p => p.Price).Order(SortOrder.Descending));
-                        case "date":
-                        case "created":
-                        case "createdat":
-                            return sortDir == "asc"
-                                ? sd.Field(f => f.Field(p => p.CreatedAt).Order(SortOrder.Ascending))
-                                : sd.Field(f => f.Field(p => p.CreatedAt).Order(SortOrder.Descending));
-                        // keep other cases if needed
-                        case "discount":
-                        case "discountpercent":
-                            return sortDir == "asc"
-                                ? sd.Field(f => f.Field(p => p.DiscountPercent).Order(SortOrder.Ascending))
-                                : sd.Field(f => f.Field(p => p.DiscountPercent).Order(SortOrder.Descending));
-                        case "rating":
-                            return sortDir == "asc"
-                                ? sd.Field(f => f.Field(p => p.Rating).Order(SortOrder.Ascending))
-                                : sd.Field(f => f.Field(p => p.Rating).Order(SortOrder.Descending));
-                        default:
-                            // unknown sort field -> fallback to score if keyword present
-                            if (!string.IsNullOrWhiteSpace(keyword))
-                                return sd.Descending(SortSpecialField.Score);
-                            return sd;
-                    }
-                })
-            );
-
-            if (!resp.IsValid)
-                throw new Exception($"Elasticsearch search error: {resp.ServerError?.ToString() ?? resp.OriginalException?.Message}");
-
-            var docs = resp.Hits.Select(h => h.Source!).ToList();
-
-            // when mapping search results back to DTOs, assign CreatedAt
-            var mapped = docs.Select(d => new ProductSummaryDto
-            {
-                Id = d.Id,
-                Name = d.Name,
-                Slug = d.Slug,
-                BrandName = d.Brand,
-                CategoryName = d.Category,
-                BasePrice = d.Price,
-                DiscountPercent = d.DiscountPercent,
-                CreatedAt = d.CreatedAt,
-                PrimaryImagePath = d.ImageUrl
-            }).ToList();
-
-            var total = resp.Total > 0 ? (int)resp.Total : mapped.Count;
-            return new PagedResult<ProductSummaryDto>(mapped, total, page, pageSize);
+            _specsIsNestedCache = false;
+            return false;
         }
     }
 }

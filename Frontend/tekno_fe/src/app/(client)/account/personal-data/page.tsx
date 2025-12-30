@@ -26,6 +26,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -35,11 +46,12 @@ import {
 } from "@/components/ui/sheet";
 import TitleAccount from "@/components/account/TitleAccount";
 import { getProfile, getProfileAddresses, Profile } from "@/services/profile";
-import { updateProfileAll } from "@/services/profile";
+import { updateProfileAll, deleteProfileAddress } from "@/services/profile";
 import { ProfileAddress } from "@/type/address";
 import { Button } from "@/components/ui/button";
 import EditAddress from "@/components/account/EditAddress";
 import NewAddress from "@/components/account/NewAddress";
+import { toast } from "sonner";
 
 export default function Page() {
   const [profile, setProfile] = useState<Profile>();
@@ -58,6 +70,29 @@ export default function Page() {
   const [openPasswordModal, setOpenPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAddress = async (addressId: number) => {
+    try {
+      setDeleting(true);
+      const token = localStorage.getItem("token") || "";
+      if (!token) throw new Error("Missing token");
+
+      await deleteProfileAddress(token, addressId);
+
+      // Refresh addresses list
+      const updatedAddresses = addresses.filter(
+        (addr) => addr.id !== addressId
+      );
+      setAddresses(updatedAddresses);
+
+      toast.success("Đã xóa địa chỉ thành công");
+    } catch (e: any) {
+      toast.error(e?.message || "Xóa địa chỉ thất bại");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -349,6 +384,39 @@ export default function Page() {
                         />
                       </SheetContent>
                     </Sheet>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          Xóa
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Xác nhận xóa địa chỉ
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Bạn có chắc chắn muốn xóa địa chỉ "
+                            {addr.addressLine}, {addr.wardName},{" "}
+                            {addr.districtName}, {addr.provinceName}" không?
+                            Hành động này không thể hoàn tác.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={deleting}>
+                            Hủy
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteAddress(addr.id)}
+                            disabled={deleting}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            {deleting ? "Đang xóa..." : "Xóa"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
                 <div className="text-sm text-gray-700">{addr.addressLine}</div>

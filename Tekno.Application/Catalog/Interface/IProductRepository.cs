@@ -82,5 +82,9 @@ namespace Tekno.Application.Catalog.Interface
         // Transaction support
         IDbContextTransaction BeginTransaction();
         Task<IDbContextTransaction> BeginTransactionAsync();
+        
+        // Specs management
+        Task RebuildProductSpecsAsync(int productId);
+        Task RebuildAllProductSpecsAsync();
     }
 }

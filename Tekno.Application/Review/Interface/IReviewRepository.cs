@@ -16,6 +16,8 @@ namespace Tekno.Application.Review.Interface
             bool? isVerifiedPurchase,
             PagingParams paging);
         Task<List<ProductReview>> GetAllProductReviewsAsync(int productId);
+        Task<List<ProductReview>> GetAllReviewsByStatusAsync(int productId);
+        Task<List<ProductReview>> GetAllReviewsAsync();
         Task<ProductReview> CreateAsync(ProductReview review);
         Task<ProductReview> UpdateAsync(ProductReview review);
         Task<bool> DeleteAsync(int id);

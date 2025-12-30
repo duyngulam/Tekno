@@ -37,7 +37,7 @@ export default async function SingleProductPage({
 }) {
   const { slug } = await params;
   const product = await getProductDetail(slug);
-  const isStock = product?.variants[0].stock > 0 || false;
+  const isStock = product?.variants[0]?.stock > 0 || false;
 
   console.log("Product detail fetched:", product);
 
