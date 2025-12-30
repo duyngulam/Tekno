@@ -32,6 +32,7 @@ using Tekno.Infrastructure.Search;
 using Tekno.Infrastructure.Services;
 using Tekno.Application.Location.Interface;
 using Tekno.Infrastructure.Location;
+using Tekno.Application.Statistics.Services;
 
 namespace Tekno.Infrastructure
 {
@@ -149,7 +150,8 @@ namespace Tekno.Infrastructure
             
             // Blog
             services.AddScoped<BlogPostService>();
-            
+            //statistic
+            services.AddScoped<StatisticsService>();
             // Payment Services
             services.AddScoped<Application.Payment.Services.PaymentService>();
             services.AddScoped<Application.Payment.Services.AdminPaymentService>();
