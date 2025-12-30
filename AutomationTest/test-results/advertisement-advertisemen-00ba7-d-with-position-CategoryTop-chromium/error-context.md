@@ -1,0 +1,143 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img "Tekno Logo" [ref=e4]
+      - generic [ref=e5]: Tekno
+    - generic [ref=e6]:
+      - button [ref=e7]:
+        - img [ref=e8]
+      - generic [ref=e11]:
+        - img [ref=e12]
+        - generic [ref=e15]: Hello, admin
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - navigation [ref=e18]:
+        - link "Dashboard" [ref=e19] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e21]
+          - generic [ref=e26]: Dashboard
+        - link "Products" [ref=e27] [cursor=pointer]:
+          - /url: /dashboard/products
+          - img [ref=e29]
+          - generic [ref=e33]: Products
+        - link "Vouchers" [ref=e34] [cursor=pointer]:
+          - /url: /dashboard/catalog
+          - img [ref=e36]
+          - generic [ref=e39]: Vouchers
+        - link "Orders" [ref=e40] [cursor=pointer]:
+          - /url: /dashboard/orders
+          - img [ref=e42]
+          - generic [ref=e45]: Orders
+        - link "Blog" [ref=e46] [cursor=pointer]:
+          - /url: /dashboard/blog
+          - img [ref=e48]
+          - generic [ref=e50]: Blog
+        - link "Brand" [ref=e51] [cursor=pointer]:
+          - /url: /dashboard/brand
+          - img [ref=e53]
+          - generic [ref=e55]: Brand
+        - link "Category" [ref=e56] [cursor=pointer]:
+          - /url: /dashboard/category
+          - img [ref=e58]
+          - generic [ref=e61]: Category
+        - link "Advertisement" [ref=e62] [cursor=pointer]:
+          - /url: /dashboard/advertisement
+          - img [ref=e64]
+          - generic [ref=e67]: Advertisement
+        - link "Reviews" [ref=e68] [cursor=pointer]:
+          - /url: /dashboard/reviews
+          - img [ref=e70]
+          - generic [ref=e72]: Reviews
+    - main [ref=e73]:
+      - generic [ref=e74]:
+        - generic [ref=e75]:
+          - heading "Advertisement Management" [level=2] [ref=e77]
+          - button "+ Create Advertisement" [ref=e78]
+        - generic [ref=e79]:
+          - textbox "Search by product name, position, or ID..." [active] [ref=e80]: CategoryTop
+          - combobox [ref=e81]:
+            - option "All Status" [selected]
+            - option "Active"
+            - option "Inactive"
+            - option "Scheduled"
+            - option "Expired"
+        - table [ref=e83]:
+          - rowgroup [ref=e84]:
+            - row "ID Image Product Position Priority Start End Status Actions" [ref=e85]:
+              - columnheader "ID" [ref=e86]
+              - columnheader "Image" [ref=e87]
+              - columnheader "Product" [ref=e88]
+              - columnheader "Position" [ref=e89]
+              - columnheader "Priority" [ref=e90]
+              - columnheader "Start" [ref=e91]
+              - columnheader "End" [ref=e92]
+              - columnheader "Status" [ref=e93]
+              - columnheader "Actions" [ref=e94]
+          - rowgroup [ref=e95]:
+            - 'row "8 Dell XPS 13 Dell XPS 13 ID: 1 CategoryTop 90 1/1/2025 1/7/2025 Expired" [ref=e96]':
+              - cell "8" [ref=e97]
+              - cell "Dell XPS 13" [ref=e98]:
+                - img "Dell XPS 13" [ref=e99]
+              - 'cell "Dell XPS 13 ID: 1" [ref=e100]':
+                - generic [ref=e101]: Dell XPS 13
+                - generic [ref=e102]: "ID: 1"
+              - cell "CategoryTop" [ref=e103]
+              - cell "90" [ref=e104]
+              - cell "1/1/2025" [ref=e105]
+              - cell "1/7/2025" [ref=e106]
+              - cell "Expired" [ref=e107]
+              - cell [ref=e108]:
+                - generic [ref=e109]:
+                  - button "View Details" [ref=e110]:
+                    - img [ref=e111]
+                  - button "Deactivate" [ref=e114]:
+                    - img [ref=e115]
+                  - button "Delete" [ref=e119]:
+                    - img [ref=e120]
+            - 'row "18 HP Spectre x360 14 HP Spectre x360 14 ID: 4 CategoryTop 88 1/11/2024 1/1/2025 Expired" [ref=e123]':
+              - cell "18" [ref=e124]
+              - cell "HP Spectre x360 14" [ref=e125]:
+                - img "HP Spectre x360 14" [ref=e126]
+              - 'cell "HP Spectre x360 14 ID: 4" [ref=e127]':
+                - generic [ref=e128]: HP Spectre x360 14
+                - generic [ref=e129]: "ID: 4"
+              - cell "CategoryTop" [ref=e130]
+              - cell "88" [ref=e131]
+              - cell "1/11/2024" [ref=e132]
+              - cell "1/1/2025" [ref=e133]
+              - cell "Expired" [ref=e134]
+              - cell [ref=e135]:
+                - generic [ref=e136]:
+                  - button "View Details" [ref=e137]:
+                    - img [ref=e138]
+                  - button "Deactivate" [ref=e141]:
+                    - img [ref=e142]
+                  - button "Delete" [ref=e146]:
+                    - img [ref=e147]
+            - 'row "9 Asus ZenBook 14 OLED Asus ZenBook 14 OLED ID: 3 CategoryTop 85 1/1/2025 1/7/2025 Expired" [ref=e150]':
+              - cell "9" [ref=e151]
+              - cell "Asus ZenBook 14 OLED" [ref=e152]:
+                - img "Asus ZenBook 14 OLED" [ref=e153]
+              - 'cell "Asus ZenBook 14 OLED ID: 3" [ref=e154]':
+                - generic [ref=e155]: Asus ZenBook 14 OLED
+                - generic [ref=e156]: "ID: 3"
+              - cell "CategoryTop" [ref=e157]
+              - cell "85" [ref=e158]
+              - cell "1/1/2025" [ref=e159]
+              - cell "1/7/2025" [ref=e160]
+              - cell "Expired" [ref=e161]
+              - cell [ref=e162]:
+                - generic [ref=e163]:
+                  - button "View Details" [ref=e164]:
+                    - img [ref=e165]
+                  - button "Deactivate" [ref=e168]:
+                    - img [ref=e169]
+                  - button "Delete" [ref=e173]:
+                    - img [ref=e174]
+  - button "Open Next.js Dev Tools" [ref=e182] [cursor=pointer]:
+    - img [ref=e183]
+  - alert [ref=e186]
+```

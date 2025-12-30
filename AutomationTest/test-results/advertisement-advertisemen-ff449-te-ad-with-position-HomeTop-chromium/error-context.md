@@ -1,0 +1,283 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img "Tekno Logo" [ref=e4]
+      - generic [ref=e5]: Tekno
+    - generic [ref=e6]:
+      - button [ref=e7]:
+        - img [ref=e8]
+      - generic [ref=e11]:
+        - img [ref=e12]
+        - generic [ref=e15]: Hello, admin
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - navigation [ref=e18]:
+        - link "Dashboard" [ref=e19] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e21]
+          - generic [ref=e26]: Dashboard
+        - link "Products" [ref=e27] [cursor=pointer]:
+          - /url: /dashboard/products
+          - img [ref=e29]
+          - generic [ref=e33]: Products
+        - link "Vouchers" [ref=e34] [cursor=pointer]:
+          - /url: /dashboard/catalog
+          - img [ref=e36]
+          - generic [ref=e39]: Vouchers
+        - link "Orders" [ref=e40] [cursor=pointer]:
+          - /url: /dashboard/orders
+          - img [ref=e42]
+          - generic [ref=e45]: Orders
+        - link "Blog" [ref=e46] [cursor=pointer]:
+          - /url: /dashboard/blog
+          - img [ref=e48]
+          - generic [ref=e50]: Blog
+        - link "Brand" [ref=e51] [cursor=pointer]:
+          - /url: /dashboard/brand
+          - img [ref=e53]
+          - generic [ref=e55]: Brand
+        - link "Category" [ref=e56] [cursor=pointer]:
+          - /url: /dashboard/category
+          - img [ref=e58]
+          - generic [ref=e61]: Category
+        - link "Advertisement" [ref=e62] [cursor=pointer]:
+          - /url: /dashboard/advertisement
+          - img [ref=e64]
+          - generic [ref=e67]: Advertisement
+        - link "Reviews" [ref=e68] [cursor=pointer]:
+          - /url: /dashboard/reviews
+          - img [ref=e70]
+          - generic [ref=e72]: Reviews
+    - main [ref=e73]:
+      - generic [ref=e74]:
+        - generic [ref=e75]:
+          - heading "Advertisement Management" [level=2] [ref=e77]
+          - button "+ Create Advertisement" [ref=e78]
+        - generic [ref=e79]:
+          - textbox "Search by product name, position, or ID..." [active] [ref=e80]: HomeTop
+          - combobox [ref=e81]:
+            - option "All Status" [selected]
+            - option "Active"
+            - option "Inactive"
+            - option "Scheduled"
+            - option "Expired"
+        - table [ref=e83]:
+          - rowgroup [ref=e84]:
+            - row "ID Image Product Position Priority Start End Status Actions" [ref=e85]:
+              - columnheader "ID" [ref=e86]
+              - columnheader "Image" [ref=e87]
+              - columnheader "Product" [ref=e88]
+              - columnheader "Position" [ref=e89]
+              - columnheader "Priority" [ref=e90]
+              - columnheader "Start" [ref=e91]
+              - columnheader "End" [ref=e92]
+              - columnheader "Status" [ref=e93]
+              - columnheader "Actions" [ref=e94]
+          - rowgroup [ref=e95]:
+            - 'row "1 iPhone 15 Pro Max iPhone 15 Pro Max ID: 10 HomeTop 100 1/1/2025 1/4/2025 Expired" [ref=e96]':
+              - cell "1" [ref=e97]
+              - cell "iPhone 15 Pro Max" [ref=e98]:
+                - img "iPhone 15 Pro Max" [ref=e99]
+              - 'cell "iPhone 15 Pro Max ID: 10" [ref=e100]':
+                - generic [ref=e101]: iPhone 15 Pro Max
+                - generic [ref=e102]: "ID: 10"
+              - cell "HomeTop" [ref=e103]
+              - cell "100" [ref=e104]
+              - cell "1/1/2025" [ref=e105]
+              - cell "1/4/2025" [ref=e106]
+              - cell "Expired" [ref=e107]
+              - cell [ref=e108]:
+                - generic [ref=e109]:
+                  - button "View Details" [ref=e110]:
+                    - img [ref=e111]
+                  - button "Deactivate" [ref=e114]:
+                    - img [ref=e115]
+                  - button "Delete" [ref=e119]:
+                    - img [ref=e120]
+            - 'row "35 iPhone 15 Pro Max iPhone 15 Pro Max ID: 10 HomeTop 95 15/1/2025 31/12/2025 Active" [ref=e123]':
+              - cell "35" [ref=e124]
+              - cell "iPhone 15 Pro Max" [ref=e125]:
+                - img "iPhone 15 Pro Max" [ref=e126]
+              - 'cell "iPhone 15 Pro Max ID: 10" [ref=e127]':
+                - generic [ref=e128]: iPhone 15 Pro Max
+                - generic [ref=e129]: "ID: 10"
+              - cell "HomeTop" [ref=e130]
+              - cell "95" [ref=e131]
+              - cell "15/1/2025" [ref=e132]
+              - cell "31/12/2025" [ref=e133]
+              - cell "Active" [ref=e134]
+              - cell [ref=e135]:
+                - generic [ref=e136]:
+                  - button "View Details" [ref=e137]:
+                    - img [ref=e138]
+                  - button "Deactivate" [ref=e141]:
+                    - img [ref=e142]
+                  - button "Delete" [ref=e146]:
+                    - img [ref=e147]
+            - 'row "25 iPhone 15 Pro Max iPhone 15 Pro Max ID: 10 HomeTop 95 15/1/2025 31/12/2025 Active" [ref=e150]':
+              - cell "25" [ref=e151]
+              - cell "iPhone 15 Pro Max" [ref=e152]:
+                - img "iPhone 15 Pro Max" [ref=e153]
+              - 'cell "iPhone 15 Pro Max ID: 10" [ref=e154]':
+                - generic [ref=e155]: iPhone 15 Pro Max
+                - generic [ref=e156]: "ID: 10"
+              - cell "HomeTop" [ref=e157]
+              - cell "95" [ref=e158]
+              - cell "15/1/2025" [ref=e159]
+              - cell "31/12/2025" [ref=e160]
+              - cell "Active" [ref=e161]
+              - cell [ref=e162]:
+                - generic [ref=e163]:
+                  - button "View Details" [ref=e164]:
+                    - img [ref=e165]
+                  - button "Deactivate" [ref=e168]:
+                    - img [ref=e169]
+                  - button "Delete" [ref=e173]:
+                    - img [ref=e174]
+            - 'row "23 iPhone 15 Pro Max iPhone 15 Pro Max ID: 10 HomeTop 95 15/1/2025 31/12/2025 Active" [ref=e177]':
+              - cell "23" [ref=e178]
+              - cell "iPhone 15 Pro Max" [ref=e179]:
+                - img "iPhone 15 Pro Max" [ref=e180]
+              - 'cell "iPhone 15 Pro Max ID: 10" [ref=e181]':
+                - generic [ref=e182]: iPhone 15 Pro Max
+                - generic [ref=e183]: "ID: 10"
+              - cell "HomeTop" [ref=e184]
+              - cell "95" [ref=e185]
+              - cell "15/1/2025" [ref=e186]
+              - cell "31/12/2025" [ref=e187]
+              - cell "Active" [ref=e188]
+              - cell [ref=e189]:
+                - generic [ref=e190]:
+                  - button "View Details" [ref=e191]:
+                    - img [ref=e192]
+                  - button "Deactivate" [ref=e195]:
+                    - img [ref=e196]
+                  - button "Delete" [ref=e200]:
+                    - img [ref=e201]
+            - 'row "22 iPhone 15 Pro Max iPhone 15 Pro Max ID: 10 HomeTop 95 15/1/2025 31/12/2025 Active" [ref=e204]':
+              - cell "22" [ref=e205]
+              - cell "iPhone 15 Pro Max" [ref=e206]:
+                - img "iPhone 15 Pro Max" [ref=e207]
+              - 'cell "iPhone 15 Pro Max ID: 10" [ref=e208]':
+                - generic [ref=e209]: iPhone 15 Pro Max
+                - generic [ref=e210]: "ID: 10"
+              - cell "HomeTop" [ref=e211]
+              - cell "95" [ref=e212]
+              - cell "15/1/2025" [ref=e213]
+              - cell "31/12/2025" [ref=e214]
+              - cell "Active" [ref=e215]
+              - cell [ref=e216]:
+                - generic [ref=e217]:
+                  - button "View Details" [ref=e218]:
+                    - img [ref=e219]
+                  - button "Deactivate" [ref=e222]:
+                    - img [ref=e223]
+                  - button "Delete" [ref=e227]:
+                    - img [ref=e228]
+            - 'row "21 iPhone 15 Pro Max iPhone 15 Pro Max ID: 10 HomeTop 95 15/1/2025 31/12/2025 Active" [ref=e231]':
+              - cell "21" [ref=e232]
+              - cell "iPhone 15 Pro Max" [ref=e233]:
+                - img "iPhone 15 Pro Max" [ref=e234]
+              - 'cell "iPhone 15 Pro Max ID: 10" [ref=e235]':
+                - generic [ref=e236]: iPhone 15 Pro Max
+                - generic [ref=e237]: "ID: 10"
+              - cell "HomeTop" [ref=e238]
+              - cell "95" [ref=e239]
+              - cell "15/1/2025" [ref=e240]
+              - cell "31/12/2025" [ref=e241]
+              - cell "Active" [ref=e242]
+              - cell [ref=e243]:
+                - generic [ref=e244]:
+                  - button "View Details" [ref=e245]:
+                    - img [ref=e246]
+                  - button "Deactivate" [ref=e249]:
+                    - img [ref=e250]
+                  - button "Delete" [ref=e254]:
+                    - img [ref=e255]
+            - 'row "17 Google Pixel 8 Pro Google Pixel 8 Pro ID: 12 HomeTop 95 1/12/2024 1/1/2025 Expired" [ref=e258]':
+              - cell "17" [ref=e259]
+              - cell "Google Pixel 8 Pro" [ref=e260]:
+                - img "Google Pixel 8 Pro" [ref=e261]
+              - 'cell "Google Pixel 8 Pro ID: 12" [ref=e262]':
+                - generic [ref=e263]: Google Pixel 8 Pro
+                - generic [ref=e264]: "ID: 12"
+              - cell "HomeTop" [ref=e265]
+              - cell "95" [ref=e266]
+              - cell "1/12/2024" [ref=e267]
+              - cell "1/1/2025" [ref=e268]
+              - cell "Expired" [ref=e269]
+              - cell [ref=e270]:
+                - generic [ref=e271]:
+                  - button "View Details" [ref=e272]:
+                    - img [ref=e273]
+                  - button "Deactivate" [ref=e276]:
+                    - img [ref=e277]
+                  - button "Delete" [ref=e281]:
+                    - img [ref=e282]
+            - 'row "26 Dell XPS 13 Dell XPS 13 ID: 1 HomeTop 90 1/2/2025 31/12/2025 Active" [ref=e285]':
+              - cell "26" [ref=e286]
+              - cell "Dell XPS 13" [ref=e287]:
+                - img "Dell XPS 13" [ref=e288]
+              - 'cell "Dell XPS 13 ID: 1" [ref=e289]':
+                - generic [ref=e290]: Dell XPS 13
+                - generic [ref=e291]: "ID: 1"
+              - cell "HomeTop" [ref=e292]
+              - cell "90" [ref=e293]
+              - cell "1/2/2025" [ref=e294]
+              - cell "31/12/2025" [ref=e295]
+              - cell "Active" [ref=e296]
+              - cell [ref=e297]:
+                - generic [ref=e298]:
+                  - button "View Details" [ref=e299]:
+                    - img [ref=e300]
+                  - button "Deactivate" [ref=e303]:
+                    - img [ref=e304]
+                  - button "Delete" [ref=e308]:
+                    - img [ref=e309]
+            - 'row "2 Samsung Galaxy S24 Ultra Samsung Galaxy S24 Ultra ID: 11 HomeTop 90 1/1/2025 1/4/2025 Expired" [ref=e312]':
+              - cell "2" [ref=e313]
+              - cell "Samsung Galaxy S24 Ultra" [ref=e314]:
+                - img "Samsung Galaxy S24 Ultra" [ref=e315]
+              - 'cell "Samsung Galaxy S24 Ultra ID: 11" [ref=e316]':
+                - generic [ref=e317]: Samsung Galaxy S24 Ultra
+                - generic [ref=e318]: "ID: 11"
+              - cell "HomeTop" [ref=e319]
+              - cell "90" [ref=e320]
+              - cell "1/1/2025" [ref=e321]
+              - cell "1/4/2025" [ref=e322]
+              - cell "Expired" [ref=e323]
+              - cell [ref=e324]:
+                - generic [ref=e325]:
+                  - button "View Details" [ref=e326]:
+                    - img [ref=e327]
+                  - button "Deactivate" [ref=e330]:
+                    - img [ref=e331]
+                  - button "Delete" [ref=e335]:
+                    - img [ref=e336]
+            - 'row "3 MacBook Air M2 MacBook Air M2 ID: 2 HomeTop 85 1/1/2025 1/7/2025 Expired" [ref=e339]':
+              - cell "3" [ref=e340]
+              - cell "MacBook Air M2" [ref=e341]:
+                - img "MacBook Air M2" [ref=e342]
+              - 'cell "MacBook Air M2 ID: 2" [ref=e343]':
+                - generic [ref=e344]: MacBook Air M2
+                - generic [ref=e345]: "ID: 2"
+              - cell "HomeTop" [ref=e346]
+              - cell "85" [ref=e347]
+              - cell "1/1/2025" [ref=e348]
+              - cell "1/7/2025" [ref=e349]
+              - cell "Expired" [ref=e350]
+              - cell [ref=e351]:
+                - generic [ref=e352]:
+                  - button "View Details" [ref=e353]:
+                    - img [ref=e354]
+                  - button "Deactivate" [ref=e357]:
+                    - img [ref=e358]
+                  - button "Delete" [ref=e362]:
+                    - img [ref=e363]
+  - button "Open Next.js Dev Tools" [ref=e371] [cursor=pointer]:
+    - img [ref=e372]
+  - alert [ref=e375]
+```

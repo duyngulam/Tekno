@@ -1,0 +1,143 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img "Tekno Logo" [ref=e4]
+      - generic [ref=e5]: Tekno
+    - generic [ref=e6]:
+      - button [ref=e7]:
+        - img [ref=e8]
+      - generic [ref=e11]:
+        - img [ref=e12]
+        - generic [ref=e15]: Hello, admin
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - navigation [ref=e18]:
+        - link "Dashboard" [ref=e19] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e21]
+          - generic [ref=e26]: Dashboard
+        - link "Products" [ref=e27] [cursor=pointer]:
+          - /url: /dashboard/products
+          - img [ref=e29]
+          - generic [ref=e33]: Products
+        - link "Vouchers" [ref=e34] [cursor=pointer]:
+          - /url: /dashboard/catalog
+          - img [ref=e36]
+          - generic [ref=e39]: Vouchers
+        - link "Orders" [ref=e40] [cursor=pointer]:
+          - /url: /dashboard/orders
+          - img [ref=e42]
+          - generic [ref=e45]: Orders
+        - link "Blog" [ref=e46] [cursor=pointer]:
+          - /url: /dashboard/blog
+          - img [ref=e48]
+          - generic [ref=e50]: Blog
+        - link "Brand" [ref=e51] [cursor=pointer]:
+          - /url: /dashboard/brand
+          - img [ref=e53]
+          - generic [ref=e55]: Brand
+        - link "Category" [ref=e56] [cursor=pointer]:
+          - /url: /dashboard/category
+          - img [ref=e58]
+          - generic [ref=e61]: Category
+        - link "Advertisement" [ref=e62] [cursor=pointer]:
+          - /url: /dashboard/advertisement
+          - img [ref=e64]
+          - generic [ref=e67]: Advertisement
+        - link "Reviews" [ref=e68] [cursor=pointer]:
+          - /url: /dashboard/reviews
+          - img [ref=e70]
+          - generic [ref=e72]: Reviews
+    - main [ref=e73]:
+      - generic [ref=e74]:
+        - generic [ref=e75]:
+          - heading "Advertisement Management" [level=2] [ref=e77]
+          - button "+ Create Advertisement" [ref=e78]
+        - generic [ref=e79]:
+          - textbox "Search by product name, position, or ID..." [active] [ref=e80]: HomeMiddle
+          - combobox [ref=e81]:
+            - option "All Status" [selected]
+            - option "Active"
+            - option "Inactive"
+            - option "Scheduled"
+            - option "Expired"
+        - table [ref=e83]:
+          - rowgroup [ref=e84]:
+            - row "ID Image Product Position Priority Start End Status Actions" [ref=e85]:
+              - columnheader "ID" [ref=e86]
+              - columnheader "Image" [ref=e87]
+              - columnheader "Product" [ref=e88]
+              - columnheader "Position" [ref=e89]
+              - columnheader "Priority" [ref=e90]
+              - columnheader "Start" [ref=e91]
+              - columnheader "End" [ref=e92]
+              - columnheader "Status" [ref=e93]
+              - columnheader "Actions" [ref=e94]
+          - rowgroup [ref=e95]:
+            - 'row "27 MacBook Air M2 MacBook Air M2 ID: 2 HomeMiddle 85 1/2/2025 31/12/2025 Active" [ref=e96]':
+              - cell "27" [ref=e97]
+              - cell "MacBook Air M2" [ref=e98]:
+                - img "MacBook Air M2" [ref=e99]
+              - 'cell "MacBook Air M2 ID: 2" [ref=e100]':
+                - generic [ref=e101]: MacBook Air M2
+                - generic [ref=e102]: "ID: 2"
+              - cell "HomeMiddle" [ref=e103]
+              - cell "85" [ref=e104]
+              - cell "1/2/2025" [ref=e105]
+              - cell "31/12/2025" [ref=e106]
+              - cell "Active" [ref=e107]
+              - cell [ref=e108]:
+                - generic [ref=e109]:
+                  - button "View Details" [ref=e110]:
+                    - img [ref=e111]
+                  - button "Deactivate" [ref=e114]:
+                    - img [ref=e115]
+                  - button "Delete" [ref=e119]:
+                    - img [ref=e120]
+            - 'row "24 Asus ZenBook 14 OLED Asus ZenBook 14 OLED ID: 3 HomeMiddle 80 6/1/2026 26/1/2026 Inactive" [ref=e123]':
+              - cell "24" [ref=e124]
+              - cell "Asus ZenBook 14 OLED" [ref=e125]:
+                - img "Asus ZenBook 14 OLED" [ref=e126]
+              - 'cell "Asus ZenBook 14 OLED ID: 3" [ref=e127]':
+                - generic [ref=e128]: Asus ZenBook 14 OLED
+                - generic [ref=e129]: "ID: 3"
+              - cell "HomeMiddle" [ref=e130]
+              - cell "80" [ref=e131]
+              - cell "6/1/2026" [ref=e132]
+              - cell "26/1/2026" [ref=e133]
+              - cell "Inactive" [ref=e134]
+              - cell [ref=e135]:
+                - generic [ref=e136]:
+                  - button "View Details" [ref=e137]:
+                    - img [ref=e138]
+                  - button "Activate" [ref=e141]:
+                    - img [ref=e142]
+                  - button "Delete" [ref=e144]:
+                    - img [ref=e145]
+            - 'row "4 iPad Pro M2 11 inch iPad Pro M2 11 inch ID: 20 HomeMiddle 80 1/1/2025 1/5/2025 Expired" [ref=e148]':
+              - cell "4" [ref=e149]
+              - cell "iPad Pro M2 11 inch" [ref=e150]:
+                - img "iPad Pro M2 11 inch" [ref=e151]
+              - 'cell "iPad Pro M2 11 inch ID: 20" [ref=e152]':
+                - generic [ref=e153]: iPad Pro M2 11 inch
+                - generic [ref=e154]: "ID: 20"
+              - cell "HomeMiddle" [ref=e155]
+              - cell "80" [ref=e156]
+              - cell "1/1/2025" [ref=e157]
+              - cell "1/5/2025" [ref=e158]
+              - cell "Expired" [ref=e159]
+              - cell [ref=e160]:
+                - generic [ref=e161]:
+                  - button "View Details" [ref=e162]:
+                    - img [ref=e163]
+                  - button "Deactivate" [ref=e166]:
+                    - img [ref=e167]
+                  - button "Delete" [ref=e171]:
+                    - img [ref=e172]
+  - button "Open Next.js Dev Tools" [ref=e180] [cursor=pointer]:
+    - img [ref=e181]
+  - alert [ref=e184]
+```
