@@ -9,7 +9,8 @@
     "pw:install": "npx playwright install",
     "pw:test": "npx playwright test",
     "pw:report": "npx playwright show-report",
-    "pw:test:advertisement": "npx playwright test --grep \"advertisement\" --reporter=html"
+    "pw:test:advertisement": "npx playwright test --grep \"advertisement\" --reporter=html",
+    "pw:test:admin-product": "npx playwright test admin-product --reporter=html"
     },
   "devDependencies": {
     "@playwright/test": "^1.39.0",
