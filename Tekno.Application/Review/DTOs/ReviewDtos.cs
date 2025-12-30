@@ -70,6 +70,24 @@ namespace Tekno.Application.Review.DTOs
         public int TotalCount { get; set; }
         public int Page { get; set; }
         public int PageSize { get; set; }
+        public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
+    }
+
+    /// <summary>
+    /// Admin-specific review list with status statistics
+    /// </summary>
+    public class AdminReviewListDto
+    {
+        public List<ProductReviewDto> Reviews { get; set; } = new();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
+        
+        // Admin-specific statistics
+        public int PendingCount { get; set; }
+        public int ApprovedCount { get; set; }
+        public int RejectedCount { get; set; }
     }
 
     public class CanReviewResultDto

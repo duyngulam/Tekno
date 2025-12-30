@@ -20,6 +20,8 @@ namespace Tekno.Domain.Catalog
         public string? Overview { get; set; }
         public string? Specs { get; set; } = "{}"; // JSONB
         public int TotalSold { get; set; } = 0; // Track total units sold
+        public double AverageRating { get; set; } = 0; // Average rating from reviews
+        public int TotalReviews { get; set; } = 0; // Total number of approved reviews
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
@@ -40,11 +42,68 @@ namespace Tekno.Domain.Catalog
         }
 
         /// <summary>
+        /// Update product rating based on approved reviews
+        /// </summary>
+        public void UpdateRating(double averageRating, int totalReviews)
+        {
+            AverageRating = averageRating;
+            TotalReviews = totalReviews;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        /// <summary>
         /// Update product specifications JSON
         /// </summary>
         public void UpdateSpecs(string specsJson)
         {
             Specs = specsJson;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Build specs JSON from product variants
+        /// </summary>
+        public void BuildSpecsFromVariants()
+        {
+            if (Variants == null || !Variants.Any())
+            {
+                Specs = "[]";
+                UpdatedAt = DateTime.UtcNow;
+                return;
+            }
+
+            var specsDict = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var variant in Variants)
+            {
+                if (variant.VariantAttributes == null || !variant.VariantAttributes.Any())
+                    continue;
+
+                foreach (var va in variant.VariantAttributes)
+                {
+                    var attrName = va.Attribute?.Name?.Trim();
+                    var attrValue = va.Value?.Value?.Trim();
+
+                    if (string.IsNullOrEmpty(attrName) || string.IsNullOrEmpty(attrValue))
+                        continue;
+
+                    if (!specsDict.ContainsKey(attrName))
+                    {
+                        specsDict[attrName] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    }
+
+                    specsDict[attrName].Add(attrValue);
+                }
+            }
+
+            // Convert to JSON
+            var specsList = specsDict.Select(kv => new
+            {
+                Name = kv.Key,
+                Value = kv.Value.ToList()
+            }).ToList();
+
+            Specs = System.Text.Json.JsonSerializer.Serialize(specsList);
             UpdatedAt = DateTime.UtcNow;
         }
 

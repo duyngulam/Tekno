@@ -16,22 +16,24 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import Link from "next/link";
-import { get, postForm } from "@/lib/api";
+import { Eye, Trash2, Power, PowerOff } from "lucide-react";
+import { advertisementApi } from "@/services/advertisementApi";
+import { postForm } from "@/lib/api";
 
 export default function AdvertisementPage() {
   const [advertisements, setAdvertisements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [openCreate, setOpenCreate] = useState(false);
+  const [openDetail, setOpenDetail] = useState(false);
+  const [selectedAd, setSelectedAd] = useState<any>(null);
 
   const POSITIONS = [
-  { value: "HomeTop" },
-  { value: "HomeMiddle" },
-  { value: "HomeBottom" },
-  { value: "CategoryTop" },
-  { value: "ProductSidebar" },
-]
-
+    { value: "HomeTop" },
+    { value: "HomeMiddle" },
+    { value: "HomeBottom" },
+    { value: "CategoryTop" },
+    { value: "ProductSidebar" },
+  ];
 
   // Search + Filter
   const [search, setSearch] = useState("");
@@ -49,34 +51,45 @@ export default function AdvertisementPage() {
 
   // Fetch advertisements
   useEffect(() => {
-    const fetchAdvertisements = async () => {
-      try {
-        const json = await get("http://localhost:5000/api/admin/advertisements", { cache: "no-store" });
-        console.log("API Response:", json);
-
-        const list = Array.isArray(json?.data?.data)
-          ? json.data.data
-          : Array.isArray(json?.data)
-          ? json.data
-          : [];
-
-        setAdvertisements(list);
-      } catch (err) {
-        console.error("Fetch error:", err);
-        setAdvertisements([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAdvertisements();
+    loadAdvertisements();
   }, []);
+
+  const loadAdvertisements = async () => {
+    try {
+      setLoading(true);
+      const json = await advertisementApi.getAll();
+      console.log("API Response:", json);
+
+      const list = Array.isArray(json?.data?.data)
+        ? json.data.data
+        : Array.isArray(json?.data)
+        ? json.data
+        : [];
+
+      setAdvertisements(list);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setAdvertisements([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle Create with FormData (for image upload)
   const handleCreate = async () => {
     try {
+      if (!form.productId || !form.position || !form.startDate || !form.endDate) {
+        alert("Please fill all required fields");
+        return;
+      }
+
       if (!form.image) {
         alert("Please select an image");
+        return;
+      }
+
+      if (form.priority < 0 || form.priority > 100) {
+        alert("Priority must be between 0 and 100");
         return;
       }
 
@@ -89,13 +102,10 @@ export default function AdvertisementPage() {
       formData.append("EndDate", new Date(form.endDate).toISOString());
       formData.append("IsActive", String(form.isActive));
 
-      // Use helper that automatically attaches Authorization header when token present
-      const createJson = await postForm("http://localhost:5000/api/admin/advertisements", formData);
+      await postForm("http://localhost:5000/api/admin/advertisements", formData);
 
       // Refresh list
-      const refreshJson = await get("http://localhost:5000/api/admin/advertisements");
-      const list = Array.isArray(refreshJson?.data?.data) ? refreshJson.data.data : [];
-      setAdvertisements(list);
+      await loadAdvertisements();
 
       setOpenCreate(false);
       setForm({
@@ -112,6 +122,58 @@ export default function AdvertisementPage() {
     } catch (e) {
       console.error("Create error", e);
       alert("Failed to create advertisement");
+    }
+  };
+
+  // Handle Delete
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this advertisement?")) return;
+
+    try {
+      await advertisementApi.delete(id);
+      alert("Advertisement deleted successfully!");
+      await loadAdvertisements();
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete advertisement");
+    }
+  };
+
+  // Handle Activate
+  const handleActivate = async (id: string) => {
+    try {
+      await advertisementApi.activate(id);
+      alert("Advertisement activated successfully!");
+      await loadAdvertisements();
+    } catch (err) {
+      console.error("Activate error:", err);
+      alert("Failed to activate advertisement");
+    }
+  };
+
+  // Handle Deactivate
+  const handleDeactivate = async (id: string) => {
+    try {
+      await advertisementApi.deactivate(id);
+      alert("Advertisement deactivated successfully!");
+      await loadAdvertisements();
+    } catch (err) {
+      console.error("Deactivate error:", err);
+      alert("Failed to deactivate advertisement");
+    }
+  };
+
+  // View Detail
+  const handleViewDetail = async (ad: any) => {
+    try {
+      const detail = await advertisementApi.getById(ad.id.toString());
+      const data = detail?.data || detail;
+      setSelectedAd(data);
+      setOpenDetail(true);
+    } catch (err) {
+      console.error("Failed to load detail:", err);
+      setSelectedAd(ad);
+      setOpenDetail(true);
     }
   };
 
@@ -148,7 +210,7 @@ export default function AdvertisementPage() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-5">
-          <h2 className="text-xl font-semibold">Advertisement</h2>
+          <h2 className="text-xl font-semibold">Advertisement Management</h2>
         </div>
         <Button onClick={() => setOpenCreate(true)}>+ Create Advertisement</Button>
       </div>
@@ -159,11 +221,13 @@ export default function AdvertisementPage() {
           type="text"
           placeholder="Search by product name, position, or ID..."
           className="border p-2 rounded w-80"
+          value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
 
         <select
           className="border p-2 rounded"
+          value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
           <option value="All">All Status</option>
@@ -175,7 +239,9 @@ export default function AdvertisementPage() {
       </div>
 
       {loading ? (
-        <p>Loading...</p>
+        <div className="flex justify-center items-center py-12">
+          <p className="text-gray-500">Loading advertisements...</p>
+        </div>
       ) : advertisements.length === 0 ? (
         <p className="text-gray-500">No advertisements found.</p>
       ) : (
@@ -191,6 +257,7 @@ export default function AdvertisementPage() {
                 <th>Start</th>
                 <th>End</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -199,30 +266,78 @@ export default function AdvertisementPage() {
                   <td className="p-2">{ad.id}</td>
                   <td>
                     {ad.imageUrl && (
-                      <img 
-                        src={ad.imageUrl} 
-                        alt={ad.productName || "Ad"} 
+                      <img
+                        src={ad.imageUrl}
+                        alt={ad.productName || "Ad"}
                         className="w-20 h-12 object-cover rounded"
                       />
                     )}
                   </td>
                   <td>
-                    <div className="font-medium">{ad.productName || `Product #${ad.productId}`}</div>
+                    <div className="font-medium">
+                      {ad.productName || `Product #${ad.productId}`}
+                    </div>
                     <div className="text-xs text-gray-500">ID: {ad.productId}</div>
                   </td>
                   <td>{ad.position}</td>
                   <td>{ad.priority}</td>
-                  <td>{new Date(ad.startDate).toLocaleDateString()}</td>
-                  <td>{new Date(ad.endDate).toLocaleDateString()}</td>
+                  <td className="text-xs">
+                    {new Date(ad.startDate).toLocaleDateString("vi-VN")}
+                  </td>
+                  <td className="text-xs">
+                    {new Date(ad.endDate).toLocaleDateString("vi-VN")}
+                  </td>
                   <td>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      ad.status === 'Active' ? 'bg-green-100 text-green-700' :
-                      ad.status === 'Scheduled' ? 'bg-blue-100 text-blue-700' :
-                      ad.status === 'Expired' ? 'bg-gray-100 text-gray-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-medium ${
+                        ad.status === "Active"
+                          ? "bg-green-100 text-green-700"
+                          : ad.status === "Scheduled"
+                          ? "bg-blue-100 text-blue-700"
+                          : ad.status === "Expired"
+                          ? "bg-gray-100 text-gray-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
                       {ad.status}
                     </span>
+                  </td>
+                  <td className="p-2">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleViewDetail(ad)}
+                        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                        title="View Details"
+                      >
+                        <Eye size={16} />
+                      </button>
+
+                      {ad.isActive ? (
+                        <button
+                          onClick={() => handleDeactivate(ad.id.toString())}
+                          className="p-1 text-orange-600 hover:bg-orange-50 rounded"
+                          title="Deactivate"
+                        >
+                          <PowerOff size={16} />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleActivate(ad.id.toString())}
+                          className="p-1 text-green-600 hover:bg-green-50 rounded"
+                          title="Activate"
+                        >
+                          <Power size={16} />
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleDelete(ad.id.toString())}
+                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -240,7 +355,9 @@ export default function AdvertisementPage() {
 
           <div className="grid gap-3 mt-2">
             <div>
-              <label className="block text-sm font-medium mb-1">Product ID *</label>
+              <label className="block text-sm font-medium mb-1">
+                Product ID <span className="text-red-500">*</span>
+              </label>
               <Input
                 placeholder="Enter product ID"
                 type="number"
@@ -249,46 +366,50 @@ export default function AdvertisementPage() {
               />
             </div>
 
-<div>
-  <label className="block text-sm font-medium mb-1">
-    Position <span className="text-red-500">*</span>
-  </label>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Position <span className="text-red-500">*</span>
+              </label>
 
-  <Select
-    value={form.position}
-    onValueChange={(value) =>
-      setForm({ ...form, position: value })
-    }
-  >
-    <SelectTrigger>
-      <SelectValue placeholder="Select position" />
-    </SelectTrigger>
+              <Select
+                value={form.position}
+                onValueChange={(value) => setForm({ ...form, position: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select position" />
+                </SelectTrigger>
 
-    <SelectContent>
-{POSITIONS.map((item) => (
-  <SelectItem key={item.value} value={item.value}>
-    {item.value}
-  </SelectItem>
-))}
-    </SelectContent>
-  </Select>
-</div>
-
+                <SelectContent>
+                  {POSITIONS.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Priority</label>
               <Input
                 placeholder="Priority (higher = more important)"
                 type="number"
+                min={0}
+                max={100}
                 value={form.priority}
-                onChange={(e) => setForm({ ...form, priority: Number(e.target.value) })}
+                onChange={(e) =>
+                  setForm({ ...form, priority: Number(e.target.value) })
+                }
               />
-              <p className="text-xs text-gray-500 mt-1">Higher priority shows first</p>
-              <p className="text-xs text-gray-500 mt-1">Priority must be between 0 and 100</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Priority must be between 0 and 100
+              </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Image *</label>
+              <label className="block text-sm font-medium mb-1">
+                Image <span className="text-red-500">*</span>
+              </label>
               <Input
                 type="file"
                 accept="image/*"
@@ -298,12 +419,23 @@ export default function AdvertisementPage() {
                 }}
               />
               {form.image && (
-                <p className="text-xs text-gray-600 mt-1">Selected: {form.image.name}</p>
+                <div className="mt-2">
+                  <p className="text-xs text-gray-600 mb-1">
+                    Selected: {form.image.name}
+                  </p>
+                  <img
+                    src={URL.createObjectURL(form.image)}
+                    alt="Preview"
+                    className="w-full h-32 object-cover rounded border"
+                  />
+                </div>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Start Date *</label>
+              <label className="block text-sm font-medium mb-1">
+                Start Date <span className="text-red-500">*</span>
+              </label>
               <Input
                 type="datetime-local"
                 value={form.startDate}
@@ -312,7 +444,9 @@ export default function AdvertisementPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">End Date *</label>
+              <label className="block text-sm font-medium mb-1">
+                End Date <span className="text-red-500">*</span>
+              </label>
               <Input
                 type="datetime-local"
                 value={form.endDate}
@@ -339,6 +473,140 @@ export default function AdvertisementPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Detail Modal */}
+      {openDetail && selectedAd && (
+        <Dialog open={openDetail} onOpenChange={setOpenDetail}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Advertisement Details</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 mt-4">
+              {/* Image */}
+              {selectedAd.imageUrl && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Image</label>
+                  <img
+                    src={selectedAd.imageUrl}
+                    alt={selectedAd.productName || "Advertisement"}
+                    className="w-full h-64 object-cover rounded border"
+                  />
+                </div>
+              )}
+
+              {/* Info Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600">
+                    ID
+                  </label>
+                  <p className="text-sm">{selectedAd.id}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-600">
+                    Product
+                  </label>
+                  <p className="text-sm font-medium">
+                    {selectedAd.productName || `Product #${selectedAd.productId}`}
+                  </p>
+                  <p className="text-xs text-gray-500">ID: {selectedAd.productId}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-600">
+                    Position
+                  </label>
+                  <p className="text-sm">{selectedAd.position}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-600">
+                    Priority
+                  </label>
+                  <p className="text-sm">{selectedAd.priority}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-600">
+                    Start Date
+                  </label>
+                  <p className="text-sm">
+                    {new Date(selectedAd.startDate).toLocaleString("vi-VN")}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-600">
+                    End Date
+                  </label>
+                  <p className="text-sm">
+                    {new Date(selectedAd.endDate).toLocaleString("vi-VN")}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-600">
+                    Status
+                  </label>
+                  <span
+                    className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                      selectedAd.isActive
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {selectedAd.isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button variant="outline" onClick={() => setOpenDetail(false)}>
+                  Close
+                </Button>
+                {selectedAd.isActive ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      handleDeactivate(selectedAd.id.toString());
+                      setOpenDetail(false);
+                    }}
+                    className="text-orange-600 border-orange-600"
+                  >
+                    <PowerOff className="w-4 h-4 mr-2" />
+                    Deactivate
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      handleActivate(selectedAd.id.toString());
+                      setOpenDetail(false);
+                    }}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Power className="w-4 h-4 mr-2" />
+                    Activate
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    handleDelete(selectedAd.id.toString());
+                    setOpenDetail(false);
+                  }}
+                  className="text-red-600 border-red-600"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

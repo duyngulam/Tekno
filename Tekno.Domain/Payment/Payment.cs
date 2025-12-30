@@ -11,7 +11,7 @@ namespace Tekno.Domain.Payment
         public int OrderId { get; private set; }
         public int UserId { get; private set; }
         
-        public string TransactionId { get; private set; } = string.Empty; // Gateway transaction ID
+        public string? TransactionId { get; private set; } = null; // Gateway transaction ID
         public PaymentGateway Gateway { get; private set; }
         public PaymentMethod Method { get; private set; }
         public PaymentStatus Status { get; private set; }
@@ -47,6 +47,8 @@ namespace Tekno.Domain.Payment
             Currency = currency;
             Status = PaymentStatus.Pending;
             CreatedAt = DateTime.UtcNow;
+            // assign a temporary unique transaction id so DB NOT NULL + unique constraints are satisfied
+            TransactionId = $"temp-{Guid.NewGuid():N}";
         }
 
         public void MarkAsProcessing(string transactionId)

@@ -8,21 +8,23 @@ import {
   Package,
   ClipboardList,
   ShoppingBag,
-  Users,
-  Bell,
-  Mail,
+  Pen,
+  TicketSlash,
+  Megaphone,
   Star,
+  MessageCircle,
 } from "lucide-react";
 
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard size={22} /> },
   { href: "/dashboard/products", label: "Products", icon: <Package size={22} /> },
-  { href: "/dashboard/catalog", label: "Product Catalog", icon: <ClipboardList size={22} /> },
+  { href: "/dashboard/catalog", label: "Vouchers", icon: <TicketSlash size={22} /> },
   { href: "/dashboard/orders", label: "Orders", icon: <ShoppingBag size={22} /> },
-  { href: "/dashboard/customers", label: "Customer", icon: <Users size={22} /> },
-  { href: "/dashboard/brand", label: "Brand", icon: <Bell size={22} /> },
-  { href: "/dashboard/category", label: "Category", icon: <Star size={22} /> },
-  { href: "/dashboard/advertisement", label: "Advertisement", icon: <Mail size={22} /> },
+  { href: "/dashboard/blog", label: "Blog", icon: <Pen size={22} /> },
+  { href: "/dashboard/brand", label: "Brand", icon: <Star size={22} /> },
+  { href: "/dashboard/category", label: "Category", icon: <ClipboardList size={22} /> },
+  { href: "/dashboard/advertisement", label: "Advertisement", icon: <Megaphone size={22} /> },
+  { href: "/dashboard/reviews", label: "Reviews", icon: <MessageCircle size={22} /> },
 ];
 
 const AdminSidebar = () => {

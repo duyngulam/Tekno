@@ -1,8 +1,8 @@
 import { API_BASE_URL } from "@/lib/apiConfig";
 import { Blog, BlogDetail } from "@/type/blog";
+import { get,post, postForm, put, patch, del, API_BASE } from "@/lib/api";
 
-
-
+// client side
 export async function getBlogsRecent(count:number): Promise<Blog[]> {
   try {
     const res = await fetch(`${API_BASE_URL}/blog/recent?count=${count}`, {
@@ -78,6 +78,78 @@ export async function getBlogDetail(slug: string): Promise<BlogDetail> {
     return result.data as BlogDetail;
   } catch (error) {
     console.error("Error in getProductDetail:", error);
+    throw error;
+  }
+}
+
+// Admin side
+
+// Get all blogs
+export async function getAdminBlogs() {
+  try {
+    return await get(`${API_BASE}/admin/blog`, { cache: "no-store" });
+  } catch (error) {
+    console.error("❌ Failed to load admin blogs:", error);
+    throw error;
+  }
+}
+
+// Get blog by ID
+export async function getAdminBlog(id: number | string) {
+  try {
+    return await get(`${API_BASE}/admin/blog/${id}`, { cache: "no-store" });
+  } catch (error) {
+    console.error("❌ Failed to load admin blog:", error);
+    throw error;
+  }
+}
+
+// Create blog
+export async function createAdminBlog(fd: FormData) {
+  try {
+    return await postForm(`${API_BASE}/admin/blog`, fd);
+  } catch (error) {
+    console.error("❌ Failed to create blog:", error);
+    throw error;
+  }
+}
+
+// Update blog
+export async function updateAdminBlog(id: number | string, fd: FormData) {
+  try {
+    return await put(`${API_BASE}/admin/blog/${id}`, fd);
+  } catch (error) {
+    console.error("❌ Failed to update blog:", error);
+    throw error;
+  }
+}
+
+// Delete blog
+export async function deleteAdminBlog(id: number | string) {
+  try {
+    return await del(`${API_BASE}/admin/blog/${id}`);
+  } catch (error) {
+    console.error("❌ Failed to delete blog:", error);
+    throw error;
+  }
+}
+
+// Publish blog
+export async function publishBlog(id: number | string) {
+  try {
+    return await patch(`${API_BASE}/admin/blog/${id}/publish`, {});
+  } catch (error) {
+    console.error("❌ Failed to publish blog:", error);
+    throw error;
+  }
+}
+
+// Unpublish blog (set to draft)
+export async function unpublishBlog(id: number | string) {
+  try {
+    return await patch(`${API_BASE}/admin/blog/${id}/unpublish`, {});
+  } catch (error) {
+    console.error("❌ Failed to unpublish blog:", error);
     throw error;
   }
 }

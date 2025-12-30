@@ -71,6 +71,8 @@ export default function ProductPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
 
@@ -101,6 +103,25 @@ export default function ProductPage() {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
 
   const [openAddVariant, setOpenAddVariant] = useState(false);
+
+    // ✅ Thêm useMemo để filter products theo search query
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return products;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    
+    return products.filter((p) => {
+      // Tìm theo ID hoặc Name
+      const matchId = String(p.id).includes(query);
+      const matchName = p.name.toLowerCase().includes(query);
+      const matchBrand = p.brandName?.toLowerCase().includes(query) || false;
+      const matchCategory = p.categoryName?.toLowerCase().includes(query) || false;
+      
+      return matchId || matchName || matchBrand || matchCategory;
+    });
+  }, [products, searchQuery]);
 
   // load products, categories, brands
   useEffect(() => {
@@ -771,6 +792,20 @@ setVariants(variantsWithNames);
         <h2 className="text-xl font-semibold">Products</h2>
         <Button onClick={() => setOpenCreate(true)}>+ Create Product</Button>
       </div>
+              <div className="flex items-center gap-4 mb-4">
+          <input
+            type="text"
+            placeholder="🔍 Search by ID, Name, Brand, or Category..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-128 border rounded px-3 py-2 text-sm"
+          />
+          {searchQuery && (
+            <p className="text-xs text-gray-600 mt-1">
+              Found {filteredProducts.length} product(s)
+            </p>
+          )}
+        </div>
 
       {loading ? (
         <p>Loading...</p>
@@ -793,7 +828,7 @@ setVariants(variantsWithNames);
             </thead>
 
 <tbody>
-  {products.map((p) => (
+  {filteredProducts.map((p) => (
     <tr
       key={p.id}
       className="cursor-pointer hover:bg-gray-100"
@@ -862,6 +897,14 @@ setVariants(variantsWithNames);
               ))}
             </tbody>
           </table>
+
+          {/* ✅ Thông báo khi không tìm thấy kết quả */}
+          {filteredProducts.length === 0 && searchQuery && (
+            <div className="text-center py-6 text-gray-500">
+              No products found matching "{searchQuery}"
+            </div>
+          )}
+          
         </div>
       )}
 

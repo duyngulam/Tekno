@@ -17,8 +17,8 @@ namespace Tekno.Application.Statistics.Services
         private readonly IAppLogger<StatisticsService> _logger;
 
         // Cache TTL for statistics (shorter for real-time data)
-        private static readonly TimeSpan StatsCacheTtl = TimeSpan.FromMinutes(5);
-        private static readonly TimeSpan OverviewCacheTtl = TimeSpan.FromMinutes(2); // More frequent updates for overview
+        private static readonly TimeSpan StatsCacheTtl = TimeSpan.FromSeconds(30);
+        private static readonly TimeSpan OverviewCacheTtl = TimeSpan.FromSeconds(15); // More frequent updates for overview
 
         public StatisticsService(
             IStatisticsRepository statisticsRepository,
