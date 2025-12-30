@@ -202,7 +202,7 @@ export default function PaymentPage() {
 
   return (
     <Container className="flex flex-col space-y-6 my-10">
-      <Stepper isActive={3} />
+      <Stepper isActive={2} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 ">
         {/* địa chỉ nhân hàng */}
@@ -380,6 +380,7 @@ export default function PaymentPage() {
                   <FormattedPrice price={subtotal} />
                 </span>
               </div>
+              {/* // Delete */}
               <div className="flex justify-between">
                 <span className="text-gray-600">Discount</span>
                 <span className="text-gray-800">

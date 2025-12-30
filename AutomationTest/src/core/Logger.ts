@@ -1,1 +1,0 @@
-export const log = (...args: any[]) => console.log('[AUTO]', ...args);
