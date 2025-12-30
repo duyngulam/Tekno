@@ -296,10 +296,57 @@ namespace Tekno.Application.Review.Services
 
         // Admin methods
 
+        /// <summary>
+        /// Get reviews for admin (supports all statuses and pagination)
+        /// </summary>
+        public async Task<AdminReviewListDto> GetAdminProductReviewsAsync(
+            int? productId = null,
+            string? status = null,
+            int page = 1,
+            int pageSize = 20)
+        {
+            var paging = new PagingParams(page, pageSize);
+
+            // Get paginated reviews
+            var result = await _reviewRepository.GetProductReviewsAsync(
+                productId ?? 0, // 0 means all products
+                status,
+                null, // isVerifiedPurchase filter
+                paging);
+
+            var reviewDtos = new List<ProductReviewDto>();
+            foreach (var review in result.Data)
+            {
+                reviewDtos.Add(await MapToReviewDtoAsync(review));
+            }
+
+            // Get status counts for all products if productId is null
+            var allReviews = productId.HasValue
+                ? await _reviewRepository.GetAllReviewsByStatusAsync(productId.Value)
+                : await _reviewRepository.GetAllReviewsAsync();
+
+            var pendingCount = allReviews.Count(r => r.Status == ReviewStatus.Pending);
+            var approvedCount = allReviews.Count(r => r.Status == ReviewStatus.Approved);
+            var rejectedCount = allReviews.Count(r => r.Status == ReviewStatus.Rejected);
+
+            return new AdminReviewListDto
+            {
+                Reviews = reviewDtos,
+                TotalCount = result.TotalRecords,
+                Page = page,
+                PageSize = pageSize,
+                PendingCount = pendingCount,
+                ApprovedCount = approvedCount,
+                RejectedCount = rejectedCount
+            };
+        }
+
         public async Task<ProductReviewDto?> ApproveReviewAsync(int reviewId, int adminUserId)
         {
             var review = await _reviewRepository.GetByIdAsync(reviewId);
             if (review == null) return null;
+
+            var wasApproved = review.Status == ReviewStatus.Approved;
 
             review.Approve(adminUserId);
             review = await _reviewRepository.UpdateAsync(review);
@@ -307,6 +354,12 @@ namespace Tekno.Application.Review.Services
             _logger.LogInformation(
                 "Admin {AdminId} approved review {ReviewId}",
                 adminUserId, reviewId);
+
+            // Update product rating in database (not just Elasticsearch)
+            if (!wasApproved)
+            {
+                await UpdateProductRatingAsync(review.ProductId);
+            }
 
             // Re-index product to include this approved review in rating
             await TryIndexProductAsync(review.ProductId);
@@ -319,12 +372,20 @@ namespace Tekno.Application.Review.Services
             var review = await _reviewRepository.GetByIdAsync(reviewId);
             if (review == null) return null;
 
+            var wasApproved = review.Status == ReviewStatus.Approved;
+
             review.Reject(adminUserId);
             review = await _reviewRepository.UpdateAsync(review);
 
             _logger.LogInformation(
                 "Admin {AdminId} rejected review {ReviewId}",
                 adminUserId, reviewId);
+
+            // Update product rating in database if previously approved
+            if (wasApproved)
+            {
+                await UpdateProductRatingAsync(review.ProductId);
+            }
 
             // Re-index product to remove this review from rating if it was approved before
             await TryIndexProductAsync(review.ProductId);
@@ -407,6 +468,43 @@ namespace Tekno.Application.Review.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to index product {ProductId} after review change", productId);
+            }
+        }
+
+        /// <summary>
+        /// Update product's AverageRating and TotalReviews based on approved reviews
+        /// </summary>
+        private async Task UpdateProductRatingAsync(int productId)
+        {
+            try
+            {
+                // Get all approved reviews for this product
+                var approvedReviews = await _reviewRepository.GetAllProductReviewsAsync(productId);
+
+                var product = await _productRepository.GetProductByIdAsync(productId);
+                if (product == null)
+                {
+                    _logger.LogWarning("Product {ProductId} not found when updating rating", productId);
+                    return;
+                }
+
+                // Calculate new rating
+                var totalReviews = approvedReviews.Count;
+                var averageRating = totalReviews > 0 
+                    ? Math.Round(approvedReviews.Average(r => r.Rating), 1) 
+                    : 0;
+
+                // Update product rating
+                product.UpdateRating(averageRating, totalReviews);
+                await _productRepository.UpdateProductAsync(product);
+
+                _logger.LogInformation(
+                    "Updated product {ProductId} rating to {Rating} ({Count} reviews)",
+                    productId, averageRating, totalReviews);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update product {ProductId} rating", productId);
             }
         }
     }

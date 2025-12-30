@@ -20,6 +20,8 @@ namespace Tekno.Domain.Catalog
         public string? Overview { get; set; }
         public string? Specs { get; set; } = "{}"; // JSONB
         public int TotalSold { get; set; } = 0; // Track total units sold
+        public double AverageRating { get; set; } = 0; // Average rating from reviews
+        public int TotalReviews { get; set; } = 0; // Total number of approved reviews
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
@@ -36,6 +38,16 @@ namespace Tekno.Domain.Catalog
         public void IncrementSoldCount(int quantity)
         {
             TotalSold += quantity;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Update product rating based on approved reviews
+        /// </summary>
+        public void UpdateRating(double averageRating, int totalReviews)
+        {
+            AverageRating = averageRating;
+            TotalReviews = totalReviews;
             UpdatedAt = DateTime.UtcNow;
         }
 

@@ -78,6 +78,23 @@ namespace Tekno.Infrastructure.Review
                 .ToListAsync();
         }
 
+        public async Task<List<ProductReview>> GetAllReviewsByStatusAsync(int productId)
+        {
+            return await _context.Set<ProductReview>()
+                .AsNoTracking()
+                .Where(r => r.ProductId == productId)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<List<ProductReview>> GetAllReviewsAsync()
+        {
+            return await _context.Set<ProductReview>()
+                .AsNoTracking()
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+        }
+
         public async Task<ProductReview> CreateAsync(ProductReview review)
         {
             _context.Set<ProductReview>().Add(review);
