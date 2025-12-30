@@ -58,14 +58,14 @@ export class BrandAPIHelper {
         name: 'Apple',
         slug: 'apple',
         country: 'USA',
-        logoPath: 'https://via.placeholder.com/100',
+        logoPath: 'C:\\Users\\NAT\\Tekno\\AutomationTest\\playwright\\fixtures\\test-brand-logo.jpg',
       },
       {
         id: '2',
         name: 'Samsung',
         slug: 'samsung',
         country: 'South Korea',
-        logoPath: 'https://via.placeholder.com/100',
+        logoPath: 'C:\\Users\\NAT\\Tekno\\AutomationTest\\playwright\\fixtures\\test-brand-logo.jpg',
       },
       {
         id: '3',

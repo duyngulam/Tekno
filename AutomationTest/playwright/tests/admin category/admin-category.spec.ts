@@ -463,28 +463,39 @@ test.describe('Category Management', () => {
       expect(deletedIndex).toBe(-1);
     });
 
-    test('should decrease total count after deletion', async () => {
-      const uniqueId = Date.now();
-      const tempCategory = {
-        name: `Temp Category ${uniqueId}`,
-        slug: `temp-category-${uniqueId}`,
-      };
+test('should decrease total count after deletion', async () => {
+  const uniqueId = Date.now();
+  const tempCategory = {
+    name: `Temp Category ${uniqueId}`,
+    slug: `temp-category-${uniqueId}`,
+  };
 
-      await categoryPage.createCategory(tempCategory);
-      await categoryPage.page.waitForTimeout(1000);
-      await categoryPage.waitForDataLoad();
+  await categoryPage.createCategory(tempCategory);
+  await categoryPage.page.waitForTimeout(1000);
+  await categoryPage.waitForDataLoad();
 
-      const beforeCount = await categoryPage.getTotalCategoriesCount();
-      
-      const categoryIndex = await categoryPage.findCategoryByName(tempCategory.name);
-      await categoryPage.deleteCategory(categoryIndex);
-      
-      await categoryPage.page.waitForTimeout(1000);
-      await categoryPage.waitForDataLoad();
+  const beforeCount = await categoryPage.getTotalCategoriesCount();
+  
+  // Search for the category to bring it to page 1
+  await categoryPage.search(tempCategory.name);
+  await categoryPage.page.waitForTimeout(500);
+  
+  // Now find it on the current page
+  const categoryIndex = await categoryPage.findCategoryByName(tempCategory.name);
+  expect(categoryIndex).toBeGreaterThanOrEqual(0);
+  
+  await categoryPage.deleteCategory(categoryIndex);
+  
+  await categoryPage.page.waitForTimeout(1000);
+  await categoryPage.waitForDataLoad();
 
-      const afterCount = await categoryPage.getTotalCategoriesCount();
-      expect(afterCount).toBe(beforeCount - 1);
-    });
+  // Clear search to see total count
+  await categoryPage.clearSearch();
+  await categoryPage.page.waitForTimeout(500);
+  
+  const afterCount = await categoryPage.getTotalCategoriesCount();
+  expect(afterCount).toBe(beforeCount - 1);
+});
   });
 
   test.describe('Attributes Management', () => {

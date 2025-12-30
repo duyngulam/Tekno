@@ -297,6 +297,22 @@ async getRowData(index: number) {
   }
 
   // Delete operations
+
+async search(searchTerm: string): Promise<void> {
+  const searchInput = this.page.locator('input[placeholder*="Tìm theo"]');
+  await searchInput.waitFor({ state: 'visible', timeout: 5000 });
+  await searchInput.fill(searchTerm);
+  await searchInput.press('Enter');
+  await this.page.waitForLoadState('networkidle');
+}
+
+async clearSearch(): Promise<void> {
+  const searchInput = this.page.locator('input[placeholder*="Tìm theo"]');
+  await searchInput.clear();
+  await searchInput.press('Enter');
+  await this.page.waitForLoadState('networkidle');
+}
+
   async deleteCategory(rowIndex: number) {
     const row = this.tableRows.nth(rowIndex);
     const actionsCell = row.locator('td').last();

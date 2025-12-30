@@ -413,33 +413,33 @@ test.describe('Brand Management', () => {
       expect(afterCount).toBe(0);
     });
 
-    test('should decrease total count after deletion', async () => {
-      // Create a brand first
-      const uniqueId = Date.now();
-      const brandToDelete = {
-        name: `Temp Brand ${uniqueId}`,
-        slug: `temp-brand-${uniqueId}`,
-        country: 'Temporary',
-      };
+test('should decrease total count after deletion', async () => {
+  const uniqueId = Date.now();
+  const brandToDelete = {
+    name: `Temp Brand ${uniqueId}`,
+    slug: `temp-brand-${uniqueId}`,
+    country: 'Temporary',
+  };
 
-      await brandPage.createBrand(brandToDelete);
-      
-      // Wait and get count
-      await brandPage.page.waitForTimeout(1000);
-      await brandPage.clearSearch();
-      await brandPage.page.waitForTimeout(500);
+  await brandPage.createBrand(brandToDelete);
+  await brandPage.page.waitForTimeout(1000);
 
-      const beforeCount = await brandPage.getRowCount();
-      
-      // Delete first brand
-      await brandPage.deleteBrand(0);
-      
-      // Wait for table to update
-      await brandPage.page.waitForTimeout(1000);
+  const beforeCount = await brandPage.getTotalBrandCount();
+  
+  // Search for the brand we just created before deleting
+  await brandPage.search(brandToDelete.name);
+  await brandPage.page.waitForTimeout(500);
+  
+  await brandPage.deleteBrand(0);
+  await brandPage.page.waitForTimeout(1000);
 
-      const afterCount = await brandPage.getRowCount();
-      expect(afterCount).toBe(beforeCount - 1);
-    });
+  // Clear search to see total count
+  await brandPage.clearSearch();
+  await brandPage.page.waitForTimeout(500);
+  
+  const afterCount = await brandPage.getTotalBrandCount();
+  expect(afterCount).toBe(beforeCount - 1);
+});
   });
 
   test.describe('Error Handling', () => {

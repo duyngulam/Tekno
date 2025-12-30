@@ -67,6 +67,12 @@ export class AdminBrandPage {
     this.editUpdateButton = this.editModal.locator('button:has-text("Update Brand")');
   }
 
+  async getTotalBrandCount(): Promise<number> {
+    const totalText = await this.page.locator('text=/Tổng số:\\s+\\d+\\s+brands/').innerText();
+    const match = totalText.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  }
+
   async goto() {
     await this.page.goto('/dashboard/brand');
     await this.page.waitForLoadState('networkidle');
@@ -237,7 +243,7 @@ export class AdminBrandPage {
     await this.page.waitForTimeout(1000);
   }
 
-  // Delete operations
+// Delete operations
 async deleteBrand(rowIndex: number) {
   const row = this.tableRows.nth(rowIndex);
   const deleteButton = row.locator('button').nth(1);
@@ -249,10 +255,10 @@ async deleteBrand(rowIndex: number) {
   await deleteButton.click();
   await dialogPromise;
 
+  // Wait for API response and table refresh
   await this.page.waitForLoadState('networkidle');
-  await expect(row).toHaveCount(0);
+  await this.page.waitForTimeout(500);
 }
-
 
 
   // Validation

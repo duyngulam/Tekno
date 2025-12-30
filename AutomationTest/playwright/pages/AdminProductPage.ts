@@ -1,6 +1,6 @@
 // playwright/pages/AdminProductPage.ts
 
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, Dialog } from '@playwright/test';
 
 export class AdminProductPage {
   readonly page: Page;
@@ -269,27 +269,31 @@ async saveEdit() {
   await this.page.waitForLoadState('networkidle');
 }
 
-  // Delete operations
+// Delete operations
 async deleteProduct(rowIndex: number) {
-  this.page.once('dialog', dialog => {
-    console.log('Confirm dialog:', dialog.message());
-    dialog.accept();
-  });
+  const dialogHandler = async (dialog: Dialog) => {
+    console.log('Dialog:', dialog.message());
+    await dialog.accept();
+  };
   
-  this.page.once('dialog', dialog => {
-    console.log('Success dialog:', dialog.message());
-    dialog.accept();
-  });
+  this.page.on('dialog', dialogHandler);
   
-  const row = this.tableRows.nth(rowIndex);
-  
-  // ✅ Use data-testid
-  const deleteButton = row.locator('[data-testid="delete-button"]');
-  
-  await deleteButton.click();
-  
-  await this.page.waitForLoadState('networkidle');
-  await this.page.waitForTimeout(1000);
+  try {
+    const row = this.tableRows.nth(rowIndex);
+    const deleteButton = row.locator('[data-testid="delete-button"]');
+    
+    await deleteButton.click();
+    
+    // Give time for dialog to be handled
+    await this.page.waitForTimeout(500);
+    
+    // Wait for API to complete
+    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForTimeout(1000);
+  } finally {
+    // Always cleanup handler
+    this.page.off('dialog', dialogHandler);
+  }
 }
 
   // Detail view
