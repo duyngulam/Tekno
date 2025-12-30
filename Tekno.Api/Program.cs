@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Tekno.Api.Services;
 using Nest;
 using System.Reflection;
 using System.Text;
@@ -86,6 +87,14 @@ namespace Tekno.Api
 
             builder.Services.AddEndpointsApiExplorer();
             
+            // Register RecommendationClient and configure base address from env
+            builder.Services.AddHttpClient<RecommendationClient>((sp, client) =>
+            {
+                var cfg = sp.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+                var baseUrl = cfg["TRAINING_API_URL"] ?? "http://trainning_api:8000";
+                client.BaseAddress = new Uri(baseUrl);
+            });
+
             // Swagger configuration with JWT support
             builder.Services.AddSwaggerGen(c =>
             {

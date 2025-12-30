@@ -6,7 +6,8 @@ using System.Linq;
 namespace Tekno.Api.Filters
 {
     /// <summary>
-    /// Enhances Swagger for GET /api/products with examples and a filtersJson query parameter.
+    /// Enhances Swagger for GET /api/products with examples and a filters query parameter.
+    /// Ensures only a single 'filters' query parameter is shown.
     /// </summary>
     public class ProductSearchOperationFilter : IOperationFilter
     {
@@ -14,58 +15,44 @@ namespace Tekno.Api.Filters
         {
             if (operation == null || context == null) return;
 
-            // Only target the product listing GET operation path
             var relativePath = context.ApiDescription.RelativePath?.Trim().ToLowerInvariant();
             var httpMethod = context.ApiDescription.HttpMethod?.ToUpperInvariant();
 
             if (relativePath == "api/products" && httpMethod == "GET")
             {
-                // Short summary for FE
                 operation.Summary = "Search and browse products — supports keyword, category, brand, price and spec filters.";
 
-                // Append detailed usage to description (keeps existing XML comments)
+                // Clear any existing explanation then append a concise guidance
                 var extra = "\n\nSwagger examples and usage:\n" +
-                            "- Query filters as query params: `filters[RAM]=16GB,32GB` or repeated `filters[Color]=Black&filters[Color]=White`.\n" +
-                            "- JSON filters (URL-encoded) via `filtersJson`: `?filtersJson={\"RAM\":[\"16GB\",\"32GB\"]}` (URL-encode in browser).\n" +
-                            "- Example curl (comma filters):\n``n``curl \"/api/products?keyword=iPhone&filters[Color]=Black,White&sort=-price&page=1&pageSize=12\"``n``\n" +
-                            "- Example curl (filtersJson encoded):\n``n``curl \"/api/products?filtersJson=%7B%22RAM%22%3A%5B%2216GB%22%2C%2232GB%22%5D%7D\"``n``\n" +
-                            "Notes:\n- In Swagger UI you may need to edit the request URL to add `filters[...]` keys because the form doesn't support dynamic keys.\n";
+                            "- Use single JSON 'filters' parameter: `filters={\\\"GPU\\\":[\\\"RTX 4070\\\"] ,\\\"RAM\\\":[\\\"16GB\\\"]}` (URL-encode when sending).\n" +
+                            "- Enter JSON into the 'filters' field in Swagger UI because dynamic keys cannot be rendered by the form.\n" +
+                            "- Example curl (JSON filters): curl \"/api/products?filters=%7B%5C%22GPU%5C%22%3A%5B%5C%22RTX%204070%5C%22%5D%7D\"\n";
 
                 if (string.IsNullOrEmpty(operation.Description))
                     operation.Description = extra;
                 else if (!operation.Description.Contains("Swagger examples and usage"))
                     operation.Description += extra;
 
-                // Add filtersJson explicit parameter so FE sees it in UI
-                if (!operation.Parameters.Any(p => p.Name == "filtersJson"))
+                // Remove any existing parameters that contain 'filters' (case-insensitive)
+                var toRemove = operation.Parameters.Where(p => p.Name?.IndexOf("filters", System.StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+                foreach (var p in toRemove)
                 {
-                    operation.Parameters.Add(new OpenApiParameter
-                    {
-                        Name = "filtersJson",
-                        In = ParameterLocation.Query,
-                        Description = "URL-encoded JSON filters, e.g. { \"RAM\": [\"16GB\",\"32GB\"] }",
-                        Required = false,
-                        Schema = new OpenApiSchema
-                        {
-                            Type = "string",
-                            Example = new OpenApiString("{\"RAM\":[\"16GB\",\"32GB\"]}")
-                        }
-                    });
+                    operation.Parameters.Remove(p);
                 }
 
-                // Add example for filters[...] parameter to aid FE (note: Swagger cannot enumerate dynamic keys)
-                if (!operation.Parameters.Any(p => p.Name == "filters[Color]"))
+                // Ensure only a single 'filters' parameter is presented in UI
+                if (!operation.Parameters.Any(p => string.Equals(p.Name, "filters", System.StringComparison.OrdinalIgnoreCase)))
                 {
                     operation.Parameters.Add(new OpenApiParameter
                     {
-                        Name = "filters[Color]",
+                        Name = "filters",
                         In = ParameterLocation.Query,
-                        Description = "Example filter parameter for specs. Use comma-separated values or repeat the key for multiple values.",
+                        Description = "JSON encoded filters object. Example: {\"GPU\":[\"RTX 4070\"],\"RAM\":[\"16GB\"]} (URL-encode when sending)",
                         Required = false,
                         Schema = new OpenApiSchema
                         {
                             Type = "string",
-                            Example = new OpenApiString("Black,White")
+                            Example = new OpenApiString("{\"GPU\":[\"RTX 4070\"]}")
                         }
                     });
                 }

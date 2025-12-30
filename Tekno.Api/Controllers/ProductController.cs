@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Tekno.Api.Commons.Responses;
 using Tekno.Api.Models.Catalog;
 using Tekno.Application.Catalog.DTOs.Products;
@@ -16,10 +17,12 @@ namespace Tekno.Api.Controllers
     public class ProductController : ControllerBase
     {
         private readonly ProductService _productService;
+        private readonly ILogger<ProductController> _logger;
 
-        public ProductController(ProductService productService)
+        public ProductController(ProductService productService, ILogger<ProductController> logger)
         {
             _productService = productService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -28,19 +31,20 @@ namespace Tekno.Api.Controllers
         /// Summary for frontend developers:
         /// - Use query parameters for paging and sorting: `page`, `pageSize`, `sort`.
         /// - Use `category` and `brand` to filter by slug.
-        /// - Use `filters[AttributeName]=value` OR `filters.AttributeName=value` to filter by product specifications.
-        ///   - To filter by multiple values for the same attribute (OR): use comma-separated values or repeat the parameter.
-        ///     - Example: `filters[Color]=Black,White` or `filters[Color]=Black&filters[Color]=White`.
-        ///   - The backend normalizes and trim values.
+        /// - Use `filters` parameter with JSON object to filter by product specifications.
+        ///   - Format: `filters={"AttributeName":["value1","value2"]}`
+        ///   - Multiple values for the same attribute use OR logic
+        ///   - The backend normalizes and trims values.
         /// - Examples:
         ///   - `GET /api/products?keyword=iPhone&page=1&pageSize=20`
         ///   - `GET /api/products?category=smartphones&minPrice=10000000&maxPrice=25000000`
-        ///   - `GET /api/products?filters[RAM]=16GB&filters[Storage]=512GB`
-        ///   - `GET /api/products?filters[Color]=Black,White&sort=-price&page=1&pageSize=12`
+        ///   - `GET /api/products?filters={"RAM":["16GB"],"Storage":["512GB"]}`
+        ///   - `GET /api/products?filters={"GPU":["RTX 4070"],"monitor":["15.6 inch"]}&sort=-price&page=1&pageSize=12`
         /// 
         /// Notes:
-        /// - When testing in Swagger UI, append `filters[...]` in the URL bar after clicking Try it out because Swagger form does not provide dynamic filter keys.
-        /// - For clients that URL-encode brackets, `filters%5BColor%5D=Black` is equivalent to `filters[Color]=Black`.
+        /// - The filters parameter must be a valid JSON object with array values
+        /// - URL-encode the JSON when sending: `filters=%7B%22GPU%22%3A%5B%22RTX%204070%22%5D%7D`
+        /// - For testing in Swagger UI, you can use the raw JSON format in the filters field
         /// </summary>
         /// <remarks>
         /// ## Description
@@ -62,15 +66,16 @@ namespace Tekno.Api.Controllers
         /// - `rating` - Highest rated first
         /// 
         /// ## Filters Parameter
-        /// Use query parameter format: `filters[AttributeName]=Value`
+        /// Use JSON format: `filters={"AttributeName":["Value1","Value2"]}`
         /// 
         /// Examples:
-        /// - `filters[Color]=Black` - Products with Black color
-        /// - `filters[Size]=XL` - Products with XL size
-        /// - `filters[RAM]=16GB` - Products with 16GB RAM
-        /// - `filters[Storage]=512GB` - Products with 512GB storage
-        ///Enhanced nested spec filters with multi-value support (UNION/OR logic)
-        /// Example: filters[ram]=8gb,16gb will match products with RAM 8GB OR 16GB
+        /// - `filters={"Color":["Black"]}` - Products with Black color
+        /// - `filters={"Size":["XL"]}` - Products with XL size
+        /// - `filters={"RAM":["16GB"]}` - Products with 16GB RAM
+        /// - `filters={"GPU":["RTX 4070"],"monitor":["15.6 inch"]}` - Multiple filters
+        /// - `filters={"Color":["Black","White"]}` - Products with Black OR White color
+        /// Enhanced nested spec filters with multi-value support (UNION/OR logic)
+        /// Example: filters={"RAM":["8GB","16GB"]} will match products with RAM 8GB OR 16GB
         /// 
         /// ## Price Format
         /// Prices are in VND (Vietnamese Dong):
@@ -95,52 +100,108 @@ namespace Tekno.Api.Controllers
         /// </remarks>
         /// <param name="request">Search and filter parameters</param>
         /// <response code="200">Returns paginated list of products</response>
-        /// <response code="400">Invalid parameters (e.g., negative page number)</response>
+        /// <response code="400">Invalid parameters (e.g., negative page number, invalid JSON format)</response>
+        /// <response code="500">Internal server error</response>
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<PagedResult<ProductSummaryDto>>), 200)]
         [ProducesResponseType(typeof(ApiResponse<string>), 400)]
-        public async Task<IActionResult> GetPaged([FromQuery] Tekno.Api.Models.Catalog.ProductSearchRequestDto request)
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
+        public async Task<IActionResult> GetPaged([FromQuery] Models.Catalog.ProductSearchRequestDto request)
         {
-            // If FiltersJson provided, parse and merge into Filters dictionary
-            if (!string.IsNullOrWhiteSpace(request.FiltersJson))
+            // Validate model state
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage));
+                return BadRequest(ApiResponse<string>.Fail($"Validation failed: {errors}"));
+            }
+
+            Dictionary<string, string>? filtersDictionary = null;
+
+            // Parse and validate JSON filters if provided
+            if (!string.IsNullOrWhiteSpace(request.Filters))
             {
                 try
                 {
-                    var parsed = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string[]>>(request.FiltersJson);
-                    if (parsed != null)
+                    var parsed = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string[]>>(
+                        request.Filters,
+                        new System.Text.Json.JsonSerializerOptions 
+                        { 
+                            PropertyNameCaseInsensitive = true,
+                            AllowTrailingCommas = true
+                        });
+
+                    if (parsed != null && parsed.Any())
                     {
-                        request.Filters ??= new Dictionary<string, string>();
+                        filtersDictionary = new Dictionary<string, string>();
+                        
                         foreach (var kv in parsed)
                         {
-                            var joined = string.Join(',', kv.Value.Select(v => v?.Trim()).Where(v => !string.IsNullOrEmpty(v)));
-                            if (!string.IsNullOrEmpty(joined))
-                                request.Filters[kv.Key] = joined;
+                            var key = kv.Key?.Trim();
+                            if (string.IsNullOrEmpty(key))
+                            {
+                                _logger.LogWarning("Skipping filter with empty key");
+                                continue;
+                            }
+
+                            // Filter out null/empty values and join with comma
+                            var values = kv.Value?
+                                .Where(v => !string.IsNullOrWhiteSpace(v))
+                                .Select(v => v.Trim())
+                                .Distinct()
+                                .ToArray();
+
+                            if (values != null && values.Length > 0)
+                            {
+                                filtersDictionary[key] = string.Join(',', values);
+                                _logger.LogDebug("Added filter: {Key} = {Values}", key, string.Join(',', values));
+                            }
                         }
                     }
                 }
-                catch (System.Text.Json.JsonException)
+                catch (System.Text.Json.JsonException ex)
                 {
-                    return BadRequest(ApiResponse<string>.Fail("Invalid filtersJson format. Expected JSON object: { \"RAM\": [\"16GB\", \"32GB\"] }"));
+                    _logger.LogWarning(ex, "Invalid filters JSON format: {Filters}", request.Filters);
+                    return BadRequest(ApiResponse<string>.Fail(
+                        $"Invalid filters JSON format. Expected: {{\"GPU\":[\"RTX 4070\"],\"RAM\":[\"16GB\"]}}. Error: {ex.Message}"));
                 }
             }
 
-            // Map API DTO to Application DTO
-            var appRequest = new Tekno.Application.Catalog.DTOs.Products.ProductSearchRequestDto
+            // Map to Application DTO
+            var appRequest = new Application.Catalog.DTOs.Products.ProductSearchRequestDto
             {
-                Keyword = request.Keyword,
-                Category = request.Category,
-                Brand = request.Brand,
-                Sort = request.Sort,
+                Keyword = request.Keyword?.Trim(),
+                Category = request.Category?.Trim(),
+                Brand = request.Brand?.Trim(),
+                Sort = request.Sort?.Trim(),
                 MinPrice = request.MinPrice,
                 MaxPrice = request.MaxPrice,
-                Filters = request.Filters,
+                Filters = filtersDictionary,
                 Page = request.Page,
                 PageSize = request.PageSize,
                 Suggest = request.Suggest
             };
 
-            var result = await _productService.GetPagedProductAsync(appRequest);
-            return Ok(ApiResponse<PagedResult<ProductSummaryDto>>.Ok(result));
+            try
+            {
+                _logger.LogInformation(
+                    "Searching products: Keyword={Keyword}, Category={Category}, Brand={Brand}, Filters={FilterCount}, Page={Page}",
+                    appRequest.Keyword, appRequest.Category, appRequest.Brand, filtersDictionary?.Count ?? 0, appRequest.Page);
+
+                var result = await _productService.GetPagedProductAsync(appRequest);
+                
+                _logger.LogInformation(
+                    "Search completed: Found {TotalRecords} products, returned {ItemCount} items",
+                    result.TotalRecords, result.Data.Count());
+
+                return Ok(ApiResponse<PagedResult<ProductSummaryDto>>.Ok(result));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to search products with request: {@Request}", appRequest);
+                return StatusCode(500, ApiResponse<string>.Fail("Failed to search products. Please try again later."));
+            }
         }
 
         /// <summary>

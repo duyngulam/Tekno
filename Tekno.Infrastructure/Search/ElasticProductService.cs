@@ -185,7 +185,17 @@ namespace Tekno.Infrastructure.Search
                 // ignore DB errors here (optionally log)
             }
 
-            var indexResp = await _client.IndexAsync(doc, i => i.Index(IndexName).Id(doc.Id));
+            // log what we are indexing for troubleshooting spec filters
+            try
+            {
+                if (doc.Specs != null && doc.Specs.Any())
+                    _logger.LogDebug("Indexing product {ProductId} specs: {Specs}", doc.Id, string.Join(',', doc.Specs.Select(s => s.Name + ":" + string.Join('|', s.Value))));
+                else
+                    _logger.LogDebug("Indexing product {ProductId} with no specs", doc.Id);
+            }
+            catch { }
+
+            var indexResp = await _client.IndexAsync(doc, i => i.Index(IndexName).Id(doc.Id).Refresh(Elasticsearch.Net.Refresh.True));
             if (!indexResp.IsValid)
             {
                 throw new Exception($"Elasticsearch index error: {indexResp.ServerError?.ToString() ?? indexResp.OriginalException?.Message}");
@@ -194,7 +204,7 @@ namespace Tekno.Infrastructure.Search
 
         public async Task DeleteProductAsync(int id)
         {
-            var resp = await _client.DeleteAsync<ProductSearchDocument>(id, d => d.Index(IndexName));
+            var resp = await _client.DeleteAsync<ProductSearchDocument>(id, d => d.Index(IndexName).Refresh(Elasticsearch.Net.Refresh.True));
             if (!resp.IsValid && resp.Result != Result.NotFound)
             {
                 throw new Exception($"Elasticsearch delete error: {resp.ServerError?.ToString() ?? resp.OriginalException?.Message}");
@@ -295,11 +305,11 @@ namespace Tekno.Infrastructure.Search
 
                 if (!string.IsNullOrWhiteSpace(categorySlug))
                     // Use multi-value 'Categories' field which contains the product's category plus ancestor slugs
-                    // use keyword subfield for exact term match
-                    filterQueries.Add(new TermQuery { Field = "categories.keyword", Value = categorySlug.ToLowerInvariant() });
+                    // use keyword field for exact term match
+                    filterQueries.Add(new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Categories), Value = categorySlug.ToLowerInvariant() });
 
                 if (!string.IsNullOrWhiteSpace(brandSlug))
-                    filterQueries.Add(new TermQuery { Field = "brand.keyword", Value = brandSlug.ToLowerInvariant() });
+                    filterQueries.Add(new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Brand), Value = brandSlug.ToLowerInvariant() });
 
                 if (minPrice.HasValue || maxPrice.HasValue)
                 {
@@ -313,8 +323,9 @@ namespace Tekno.Infrastructure.Search
 
                 if (filters != null && filters.Any())
                 {
-                    foreach (var kv in filters)
-                    {
+                    try { _logger.LogDebug("Applying spec filters: {Filters}", string.Join(',', filters.Select(kv => kv.Key + "=" + kv.Value))); } catch { }
+                     foreach (var kv in filters)
+                     {
                         var specName = (kv.Key ?? string.Empty).Trim().ToLowerInvariant();
                         var specValueRaw = (kv.Value ?? string.Empty).Trim();
 
@@ -330,41 +341,45 @@ namespace Tekno.Infrastructure.Search
                         if (!specValues.Any())
                             continue;
 
-                        if (specValues.Count == 1)
+                        // Build nested query using TermQuery on keyword fields and IgnoreUnmapped to avoid shard failures
+                        var nestedShould = new List<QueryContainer>();
+
+                        foreach (var value in specValues)
                         {
-                            // Use keyword subfields for nested term match
-                            var nestedSpec = new NestedQuery
+                            var nested = new NestedQuery
                             {
-                                Path = "specs",
+                                Path = Infer.Field<ProductSearchDocument>(p => p.Specs),
+                                IgnoreUnmapped = true,
                                 Query = new BoolQuery
                                 {
                                     Must = new QueryContainer[]
                                     {
-                                        new TermQuery { Field = "specs.name.keyword", Value = specName },
-                                        new TermQuery { Field = "specs.value.keyword", Value = specValues[0] }
+                                        // match attribute name exactly (keyword)
+                                        new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Specs.First().Name), Value = specName },
+                                        // match attribute value exactly (keyword)
+                                        new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Specs.First().Value.First()), Value = value }
                                     }
                                 }
                             };
-                            filterQueries.Add(nestedSpec);
-                        }
-                        else
-                        {
-                            var valueQueries = specValues.Select(specValue => (QueryContainer)new TermQuery { Field = "specs.value.keyword", Value = specValue }).ToList();
 
-                            var nestedSpec = new NestedQuery
-                            {
-                                Path = "specs",
-                                Query = new BoolQuery
-                                {
-                                    Must = new QueryContainer[] { new TermQuery { Field = "specs.name.keyword", Value = specName } },
-                                    Should = valueQueries,
-                                    MinimumShouldMatch = 1
-                                }
-                            };
-                            filterQueries.Add(nestedSpec);
+                            nestedShould.Add(nested);
                         }
-                    }
-                }
+
+                        if (nestedShould.Count == 1)
+                        {
+                            filterQueries.Add(nestedShould[0]);
+                        }
+                        else if (nestedShould.Count > 1)
+                        {
+                            filterQueries.Add(new BoolQuery
+                            {
+                                Should = nestedShould,
+                                MinimumShouldMatch = 1
+                            });
+                        }
+                        _logger.LogDebug("Built nested spec query for {SpecName} with {OptionCount} options", specName, nestedShould.Count);
+                     }
+                 }
 
                 QueryContainer finalQuery;
                 if (mustQueries.Count == 0 && filterQueries.Count == 0)
@@ -442,6 +457,8 @@ namespace Tekno.Infrastructure.Search
 
                 if (!resp.IsValid)
                     throw new Exception($"Elasticsearch search error: {resp.ServerError?.ToString() ?? resp.OriginalException?.Message}");
+
+                _logger.LogDebug("Elasticsearch returned {TotalHits} hits (took {Took}ms)", resp.Total, resp.Took);
 
                 var docs = resp.Hits.Select(h => h.Source!).ToList();
 

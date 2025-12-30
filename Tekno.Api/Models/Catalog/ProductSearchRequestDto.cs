@@ -1,54 +1,66 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Tekno.Api.Models.Catalog
 {
     /// <summary>
     /// Product search and filter request for API endpoints.
-    /// Filters should be passed using `filters[AttributeName]=value` or `filters.AttributeName=value`.
-    /// Use comma-separated values for OR semantics: `filters[Color]=Black,White`
-    /// Repeated parameters are also supported:
-    /// `filters[Color]=Black&filters[Color]=White` -> treated as Black,White
-    /// You can also pass a JSON encoded filters object in the query string using `filtersJson`.
-    /// Example (URL-encoded): ?filtersJson={"RAM":["16GB","32GB"],"Color":["Black"]}
+    /// Use 'filters' parameter with JSON format: {"AttributeName":["value1","value2"]}
     /// </summary>
     public class ProductSearchRequestDto
     {
+        /// <summary>
+        /// Search keyword for product name
+        /// </summary>
         public string? Keyword { get; set; }
+
+        /// <summary>
+        /// Category slug filter (e.g., "laptops", "smartphones")
+        /// </summary>
         public string? Category { get; set; }
+
+        /// <summary>
+        /// Brand slug filter (e.g., "apple", "samsung")
+        /// </summary>
         public string? Brand { get; set; }
+
+        /// <summary>
+        /// Sort order. Options: price, -price, name, -name, created, -created, popular, rating
+        /// </summary>
         public string? Sort { get; set; }
 
         /// <summary>
-        /// Minimum price (VND)
+        /// Minimum price in VND (e.g., 10000000 = 10 million VND)
         /// </summary>
         public decimal? MinPrice { get; set; }
 
         /// <summary>
-        /// Maximum price (VND)
+        /// Maximum price in VND (e.g., 50000000 = 50 million VND)
         /// </summary>
         public decimal? MaxPrice { get; set; }
 
         /// <summary>
-        /// Specification filters bound from query: ?filters[Color]=Black&filters[Size]=XL
+        /// JSON encoded filters object. 
+        /// Format: {"AttributeName":["value1","value2"]}
+        /// Example: {"GPU":["RTX 4070"],"RAM":["16GB","32GB"]}
+        /// Must be URL-encoded when sent as query parameter.
         /// </summary>
-        [ModelBinder(BinderType = typeof(ProductFiltersModelBinder))]
-        public Dictionary<string, string>? Filters { get; set; }
+        public string? Filters { get; set; }
 
         /// <summary>
-        /// Alternative: JSON encoded filters object. Example: {"RAM":["16GB","32GB"]}
-        /// This value must be URL-encoded when sent as a query parameter.
+        /// Page number (starts from 1)
         /// </summary>
-        public string? FiltersJson { get; set; }
-
-        [Range(1, int.MaxValue)]
+        [Range(1, int.MaxValue, ErrorMessage = "Page must be at least 1")]
         public int Page { get; set; } = 1;
 
-        [Range(1, 100)]
+        /// <summary>
+        /// Number of items per page (1-100)
+        /// </summary>
+        [Range(1, 100, ErrorMessage = "PageSize must be between 1 and 100")]
         public int PageSize { get; set; } = 20;
 
+        /// <summary>
+        /// Enable search suggestions (experimental feature)
+        /// </summary>
         public bool Suggest { get; set; } = false;
     }
 }
