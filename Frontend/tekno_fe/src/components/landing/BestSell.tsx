@@ -13,7 +13,7 @@ export default function BestSell() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await getProductsList({ sortBy: "best_selling" });
+        const res = await getProductsList({ sortBy: "sold" });
         console.log(res);
         setProducts(res.data);
       } catch (error) {

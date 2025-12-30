@@ -10,6 +10,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import EditAddress from "../account/EditAddress";
+import DeleteAddress from "../account/DeleteAddress";
 
 export default function AddressItem({
   addr,
@@ -35,7 +36,7 @@ export default function AddressItem({
             </span>
           )}
           <Sheet>
-            <SheetTrigger className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
+            <SheetTrigger className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200">
               Edit
             </SheetTrigger>
             <SheetContent>
@@ -47,6 +48,22 @@ export default function AddressItem({
                 </SheetDescription>
               </SheetHeader>
               <EditAddress address={addr} />
+            </SheetContent>
+          </Sheet>
+
+          <Sheet>
+            <SheetTrigger className="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">
+              Delete
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Delete address</SheetTitle>
+                <SheetDescription>
+                  Are you sure you want to delete this address? This action
+                  cannot be undone.
+                </SheetDescription>
+              </SheetHeader>
+              <DeleteAddress address={addr} />
             </SheetContent>
           </Sheet>
         </div>
