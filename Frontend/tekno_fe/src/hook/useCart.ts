@@ -10,8 +10,10 @@ export interface CartItem {
   quantity: number;
   price: number;
   availableStock: number;
-
-  attributes: string[];
+  attributes: {
+    name: string;
+    value: string;
+  }[];
   brandName: string;
   primaryImage: string;
   productName: string;
