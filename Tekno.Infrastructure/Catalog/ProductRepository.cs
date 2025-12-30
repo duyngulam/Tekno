@@ -595,6 +595,46 @@ namespace Tekno.Infrastructure.Catalog
                 .Take(count)
                 .ToListAsync();
         }
+
+        public async Task RebuildProductSpecsAsync(int productId)
+        {
+            var product = await _context.Products
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.VariantAttributes)
+                        .ThenInclude(va => va.Attribute)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.VariantAttributes)
+                        .ThenInclude(va => va.Value)
+                .FirstOrDefaultAsync(p => p.Id == productId);
+
+            if (product == null) return;
+
+            // Build specs JSON from variants using domain method
+            product.BuildSpecsFromVariants();
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RebuildAllProductSpecsAsync()
+        {
+            var products = await _context.Products
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.VariantAttributes)
+                        .ThenInclude(va => va.Attribute)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.VariantAttributes)
+                        .ThenInclude(va => va.Value)
+                .ToListAsync();
+
+            if (products == null || products.Count == 0) return;
+
+            foreach (var product in products)
+            {
+                product.BuildSpecsFromVariants();
+            }
+
+            await _context.SaveChangesAsync();
+        }
     }
 }
 

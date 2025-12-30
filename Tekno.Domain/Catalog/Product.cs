@@ -61,6 +61,53 @@ namespace Tekno.Domain.Catalog
         }
 
         /// <summary>
+        /// Build specs JSON from product variants
+        /// </summary>
+        public void BuildSpecsFromVariants()
+        {
+            if (Variants == null || !Variants.Any())
+            {
+                Specs = "[]";
+                UpdatedAt = DateTime.UtcNow;
+                return;
+            }
+
+            var specsDict = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var variant in Variants)
+            {
+                if (variant.VariantAttributes == null || !variant.VariantAttributes.Any())
+                    continue;
+
+                foreach (var va in variant.VariantAttributes)
+                {
+                    var attrName = va.Attribute?.Name?.Trim();
+                    var attrValue = va.Value?.Value?.Trim();
+
+                    if (string.IsNullOrEmpty(attrName) || string.IsNullOrEmpty(attrValue))
+                        continue;
+
+                    if (!specsDict.ContainsKey(attrName))
+                    {
+                        specsDict[attrName] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    }
+
+                    specsDict[attrName].Add(attrValue);
+                }
+            }
+
+            // Convert to JSON
+            var specsList = specsDict.Select(kv => new
+            {
+                Name = kv.Key,
+                Value = kv.Value.ToList()
+            }).ToList();
+
+            Specs = System.Text.Json.JsonSerializer.Serialize(specsList);
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        /// <summary>
         /// Check if product has an active discount
         /// </summary>
         public bool HasActiveDiscount()

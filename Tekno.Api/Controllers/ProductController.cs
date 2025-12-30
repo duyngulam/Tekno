@@ -24,6 +24,23 @@ namespace Tekno.Api.Controllers
 
         /// <summary>
         /// Get paginated list of products with optional filtering and sorting
+        /// 
+        /// Summary for frontend developers:
+        /// - Use query parameters for paging and sorting: `page`, `pageSize`, `sort`.
+        /// - Use `category` and `brand` to filter by slug.
+        /// - Use `filters[AttributeName]=value` OR `filters.AttributeName=value` to filter by product specifications.
+        ///   - To filter by multiple values for the same attribute (OR): use comma-separated values or repeat the parameter.
+        ///     - Example: `filters[Color]=Black,White` or `filters[Color]=Black&filters[Color]=White`.
+        ///   - The backend normalizes and trim values.
+        /// - Examples:
+        ///   - `GET /api/products?keyword=iPhone&page=1&pageSize=20`
+        ///   - `GET /api/products?category=smartphones&minPrice=10000000&maxPrice=25000000`
+        ///   - `GET /api/products?filters[RAM]=16GB&filters[Storage]=512GB`
+        ///   - `GET /api/products?filters[Color]=Black,White&sort=-price&page=1&pageSize=12`
+        /// 
+        /// Notes:
+        /// - When testing in Swagger UI, append `filters[...]` in the URL bar after clicking Try it out because Swagger form does not provide dynamic filter keys.
+        /// - For clients that URL-encode brackets, `filters%5BColor%5D=Black` is equivalent to `filters[Color]=Black`.
         /// </summary>
         /// <remarks>
         /// ## Description
@@ -82,9 +99,47 @@ namespace Tekno.Api.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<PagedResult<ProductSummaryDto>>), 200)]
         [ProducesResponseType(typeof(ApiResponse<string>), 400)]
-        public async Task<IActionResult> GetPaged([FromQuery] ProductSearchRequestDto request)
+        public async Task<IActionResult> GetPaged([FromQuery] Tekno.Api.Models.Catalog.ProductSearchRequestDto request)
         {
-            var result = await _productService.GetPagedProductAsync(request);
+            // If FiltersJson provided, parse and merge into Filters dictionary
+            if (!string.IsNullOrWhiteSpace(request.FiltersJson))
+            {
+                try
+                {
+                    var parsed = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string[]>>(request.FiltersJson);
+                    if (parsed != null)
+                    {
+                        request.Filters ??= new Dictionary<string, string>();
+                        foreach (var kv in parsed)
+                        {
+                            var joined = string.Join(',', kv.Value.Select(v => v?.Trim()).Where(v => !string.IsNullOrEmpty(v)));
+                            if (!string.IsNullOrEmpty(joined))
+                                request.Filters[kv.Key] = joined;
+                        }
+                    }
+                }
+                catch (System.Text.Json.JsonException)
+                {
+                    return BadRequest(ApiResponse<string>.Fail("Invalid filtersJson format. Expected JSON object: { \"RAM\": [\"16GB\", \"32GB\"] }"));
+                }
+            }
+
+            // Map API DTO to Application DTO
+            var appRequest = new Tekno.Application.Catalog.DTOs.Products.ProductSearchRequestDto
+            {
+                Keyword = request.Keyword,
+                Category = request.Category,
+                Brand = request.Brand,
+                Sort = request.Sort,
+                MinPrice = request.MinPrice,
+                MaxPrice = request.MaxPrice,
+                Filters = request.Filters,
+                Page = request.Page,
+                PageSize = request.PageSize,
+                Suggest = request.Suggest
+            };
+
+            var result = await _productService.GetPagedProductAsync(appRequest);
             return Ok(ApiResponse<PagedResult<ProductSummaryDto>>.Ok(result));
         }
 

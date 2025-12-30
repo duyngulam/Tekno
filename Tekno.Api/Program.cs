@@ -225,6 +225,7 @@ Example: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
 
                 // Add operation filters for better documentation
                 c.OperationFilter<SwaggerDefaultValues>();
+                c.OperationFilter<ProductSearchOperationFilter>();
                 c.DocumentFilter<SwaggerTagDescriptions>();
             });
 
