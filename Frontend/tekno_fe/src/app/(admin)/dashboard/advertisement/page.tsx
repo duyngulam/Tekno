@@ -57,26 +57,44 @@ export default function AdvertisementPage() {
     loadAdvertisements();
   }, []);
 
-  const loadAdvertisements = async () => {
-    try {
-      setLoading(true);
-      const json = await advertisementApi.getAll();
-      console.log("API Response:", json);
+const loadAdvertisements = async () => {
+  try {
+    setLoading(true);
+    
+    const allAds: any[] = [];
+    let page = 1;
+    const pageSize = 20;
+    let hasMore = true;
 
+    // ✅ Loop load all pages
+    while (hasMore) {
+      const json = await advertisementApi.getAll({ page, pageSize });
+      
       const list = Array.isArray(json?.data?.data)
         ? json.data.data
         : Array.isArray(json?.data)
         ? json.data
         : [];
 
-      setAdvertisements(list);
-    } catch (err) {
-      console.error("Fetch error:", err);
-      setAdvertisements([]);
-    } finally {
-      setLoading(false);
+      if (list.length === 0) {
+        hasMore = false;
+      } else {
+        allAds.push(...list);
+        console.log(`📄 Loaded page ${page} (${list.length} items)`);
+        page++;
+      }
     }
-  };
+
+    console.log(`✅ Total loaded: ${allAds.length} advertisements`);
+    setAdvertisements(allAds);
+    setCurrentPage(1);
+  } catch (err) {
+    console.error("Fetch error:", err);
+    setAdvertisements([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Handle Create with FormData (for image upload)
   const handleCreate = async () => {

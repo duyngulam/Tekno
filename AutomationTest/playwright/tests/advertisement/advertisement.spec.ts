@@ -494,35 +494,69 @@ test.describe('Advertisement Management', () => {
   const testImagePath = path.join(__dirname, '../../fixtures/test-ad-image.jpg');
 
   for (const position of VALID_POSITIONS) {
-    test(`should create ad with position: ${position}`, async () => {
-      const newAd = {
-        productId: '4',
-        position: position,
-        priority: 75,
-        imageURL: testImagePath,
-        startDate: '2025-02-01T08:00',
-        endDate: '2025-12-31T23:59',
-        isActive: true,
-      };
+test(`should create ad with position: ${position}`, async ({ page }) => {
+  const newAd = {
+    productId: '4',
+    position: position,
+    priority: 75,
+    imageURL: testImagePath,
+    startDate: '2025-02-01T08:00',
+    endDate: '2025-12-31T23:59',
+    isActive: true,
+  };
 
-      await adPage.createAdvertisement(newAd);
+  await adPage.createAdvertisement(newAd);
 
-      // Verify creation
-      await adPage.search(position);
-      const searchCount = await adPage.getRowCount();
-      expect(searchCount).toBeGreaterThan(0);
+  // ✅ Reload page với network idle wait
+  await adPage.goto();
+  await adPage.page.waitForLoadState('networkidle'); // ✅ Wait for API response
+  await adPage.waitForDataLoad();
+  
+  // ✅ Extra wait để data được set vào state
+  await adPage.page.waitForTimeout(1000);
+  
+  // Clear any filters
+  await adPage.filterByStatus('All');
+  await adPage.clearSearch();
+  await adPage.page.waitForTimeout(800);
 
-      // Verify the ad exists in results
-      let found = false;
-      for (let i = 0; i < searchCount; i++) {
-        const rowData = await adPage.getRowData(i);
-        if (rowData.position === position && rowData.priority === '75') {
-          found = true;
-          break;
-        }
-      }
-      expect(found).toBe(true);
-    });
+  // Search for the new ad
+  await adPage.search(position);
+  await adPage.page.waitForTimeout(800); // Wait for filter apply
+
+  const searchCount = await adPage.getRowCount();
+  console.log(`🔍 Found ${searchCount} ads with position "${position}"`);
+  
+  if (searchCount === 0) {
+    // ✅ Fallback: log data để debug
+    console.error(`❌ No ads found for ${position}. This might be a timing issue.`);
+    // Reload again
+    await adPage.page.reload();
+    await adPage.page.waitForLoadState('networkidle');
+    await adPage.waitForDataLoad();
+    await adPage.page.waitForTimeout(1000);
+    await adPage.search(position);
+  }
+
+  expect(searchCount).toBeGreaterThan(0);
+
+  let found = false;
+  for (let i = 0; i < searchCount; i++) {
+    const rowData = await adPage.getRowData(i);
+    console.log(`Row ${i}: position=${rowData.position}, priority=${rowData.priority}`);
+    
+    if (
+      rowData.position === position && 
+      rowData.priority === '75'
+    ) {
+      found = true;
+      console.log(`✅ Found newly created ad: ${position} (priority: 75)`);
+      break;
+    }
+  }
+
+  expect(found).toBe(true);
+});
   }
   });
 
