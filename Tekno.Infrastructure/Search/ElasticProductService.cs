@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -18,6 +19,8 @@ namespace Tekno.Infrastructure.Search
         private readonly IProductRepository _productRepository;
         private readonly ILogger<ElasticProductService> _logger;
         private const string IndexName = "products";
+        // cache mapping check result to avoid repeated mapping lookups
+        private static bool? _specsIsNestedCache = null;
 
         public ElasticProductService(IElasticClient client, IProductRepository productRepository, ILogger<ElasticProductService> logger)
         {
@@ -323,61 +326,125 @@ namespace Tekno.Infrastructure.Search
 
                 if (filters != null && filters.Any())
                 {
-                    try { _logger.LogDebug("Applying spec filters: {Filters}", string.Join(',', filters.Select(kv => kv.Key + "=" + kv.Value))); } catch { }
-                     foreach (var kv in filters)
-                     {
-                        var specName = (kv.Key ?? string.Empty).Trim().ToLowerInvariant();
+                    // determine if 'specs' is mapped as nested in the index
+                    bool useNested = await IsSpecsMappedAsNestedAsync();
+                    if (useNested)
+                    {
+                        _logger.LogDebug("Specs field is mapped as nested; building nested queries");
+                    }
+                    else
+                    {
+                        _logger.LogDebug("Specs field is NOT nested; building non-nested queries");
+                    }
+
+                    foreach (var kv in filters)
+                    {
+                        // Normalize filter name and values to match indexed keywords (lowercase + ascii folding)
+                        var specName = NormalizeTerm(kv.Key ?? string.Empty);
                         var specValueRaw = (kv.Value ?? string.Empty).Trim();
 
                         if (string.IsNullOrEmpty(specName) || string.IsNullOrEmpty(specValueRaw))
                             continue;
 
-                        var specValues = specValueRaw.Split(new[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries)
-                                                      .Select(v => v.Trim().ToLowerInvariant())
-                                                      .Where(v => !string.IsNullOrEmpty(v))
-                                                      .Distinct()
-                                                      .ToList();
+                        List<string> specValues;
+                        // Frontend may send JSON array string (e.g. ["RTX 4060"]). Try to parse it first.
+                        if (specValueRaw.StartsWith("[") && specValueRaw.EndsWith("]"))
+                        {
+                            try
+                            {
+                                var arr = JsonSerializer.Deserialize<string[]>(specValueRaw);
+                                specValues = (arr ?? Array.Empty<string>()).Select(v => v?.Trim() ?? string.Empty)
+                                                           .Where(v => !string.IsNullOrEmpty(v))
+                                                           .Select(v => v.ToLowerInvariant())
+                                                           .Distinct()
+                                                           .ToList();
+                            }
+                            catch
+                            {
+                                // fallback to splitting
+                                specValues = specValueRaw.Split(new[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                                                           .Select(v => v.Trim().ToLowerInvariant())
+                                                           .Where(v => !string.IsNullOrEmpty(v))
+                                                           .Distinct()
+                                                           .ToList();
+                            }
+                        }
+                        else
+                        {
+                            specValues = specValueRaw.Split(new[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                                                       .Select(v => v.Trim().ToLowerInvariant())
+                                                       .Where(v => !string.IsNullOrEmpty(v))
+                                                       .Distinct()
+                                                       .ToList();
+                        }
 
                         if (!specValues.Any())
                             continue;
 
-                        // Build nested query using TermQuery on keyword fields and IgnoreUnmapped to avoid shard failures
-                        var nestedShould = new List<QueryContainer>();
-
-                        foreach (var value in specValues)
+                        if (useNested)
                         {
-                            var nested = new NestedQuery
+                            // Build nested query using TermQuery on keyword fields and IgnoreUnmapped to avoid shard failures
+                            var nestedShould = new List<QueryContainer>();
+
+                            foreach (var value in specValues)
                             {
-                                Path = Infer.Field<ProductSearchDocument>(p => p.Specs),
-                                IgnoreUnmapped = true,
-                                Query = new BoolQuery
+                                var nested = new NestedQuery
+                                {
+                                    Path = Infer.Field<ProductSearchDocument>(p => p.Specs),
+                                    IgnoreUnmapped = true,
+                                    Query = new BoolQuery
+                                    {
+                                        Must = new QueryContainer[]
+                                        {
+                                            // match attribute name exactly (keyword)
+                                            new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Specs.First().Name), Value = specName },
+                                            // match attribute value exactly (keyword)
+                                            new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Specs.First().Value.First()), Value = value }
+                                        }
+                                    }
+                                };
+
+                                nestedShould.Add(nested);
+                            }
+
+                            if (nestedShould.Count == 1)
+                            {
+                                filterQueries.Add(nestedShould[0]);
+                            }
+                            else if (nestedShould.Count > 1)
+                            {
+                                filterQueries.Add(new BoolQuery
+                                {
+                                    Should = nestedShould,
+                                    MinimumShouldMatch = 1
+                                });
+                            }
+                        }
+                        else
+                        {
+                            // Non-nested mapping: build term queries against specs.name.keyword and specs.value.keyword
+                            var nonNestedShould = new List<QueryContainer>();
+                            foreach (var value in specValues)
+                            {
+                                var bq = new BoolQuery
                                 {
                                     Must = new QueryContainer[]
                                     {
-                                        // match attribute name exactly (keyword)
-                                        new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Specs.First().Name), Value = specName },
-                                        // match attribute value exactly (keyword)
-                                        new TermQuery { Field = Infer.Field<ProductSearchDocument>(p => p.Specs.First().Value.First()), Value = value }
+                                        new TermQuery { Field = "specs.name.keyword", Value = specName },
+                                        new TermQuery { Field = "specs.value.keyword", Value = value }
                                     }
-                                }
-                            };
+                                };
 
-                            nestedShould.Add(nested);
+                                nonNestedShould.Add(bq);
+                            }
+
+                            if (nonNestedShould.Count == 1)
+                                filterQueries.Add(nonNestedShould[0]);
+                            else if (nonNestedShould.Count > 1)
+                                filterQueries.Add(new BoolQuery { Should = nonNestedShould, MinimumShouldMatch = 1 });
                         }
 
-                        if (nestedShould.Count == 1)
-                        {
-                            filterQueries.Add(nestedShould[0]);
-                        }
-                        else if (nestedShould.Count > 1)
-                        {
-                            filterQueries.Add(new BoolQuery
-                            {
-                                Should = nestedShould,
-                                MinimumShouldMatch = 1
-                            });
-                        }
-                        _logger.LogDebug("Built nested spec query for {SpecName} with {OptionCount} options", specName, nestedShould.Count);
+                        _logger.LogDebug("Applying spec filter '{SpecName}' -> values: {Values}", specName, string.Join(',', specValues));
                      }
                  }
 
@@ -517,6 +584,57 @@ namespace Tekno.Infrastructure.Search
                     throw; // rethrow original exception flow
                 }
             }
+        }
+
+        private static string NormalizeTerm(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+            var s = input.Trim().ToLowerInvariant();
+            // remove diacritics
+            var normalized = s.Normalize(System.Text.NormalizationForm.FormD);
+            var sb = new System.Text.StringBuilder();
+            foreach (var ch in normalized)
+            {
+                var uc = CharUnicodeInfo.GetUnicodeCategory(ch);
+                if (uc != UnicodeCategory.NonSpacingMark)
+                    sb.Append(ch);
+            }
+            return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
+        }
+
+        private async Task<bool> IsSpecsMappedAsNestedAsync()
+        {
+            if (_specsIsNestedCache.HasValue) return _specsIsNestedCache.Value;
+
+            try
+            {
+                var mapping = await _client.Indices.GetMappingAsync(new GetMappingRequest(IndexName));
+                if (!mapping.IsValid) return false;
+
+                var indexMap = mapping.Indices.FirstOrDefault().Value;
+                if (indexMap == null) return false;
+
+                // attempt to locate 'specs' property and check its 'type'
+                var props = indexMap.Mappings.Properties;
+                if (props != null && props.TryGetValue("specs", out var specProp))
+                {
+                    try
+                    {
+                        // Try to infer nested from the property type string
+                        var typeStr = specProp.Type?.ToString() ?? string.Empty;
+                        _specsIsNestedCache = typeStr.Equals("Nested", StringComparison.OrdinalIgnoreCase) || typeStr.Equals("nested", StringComparison.OrdinalIgnoreCase);
+                        return _specsIsNestedCache.Value;
+                    }
+                    catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to get index mapping for {Index}", IndexName);
+            }
+
+            _specsIsNestedCache = false;
+            return false;
         }
     }
 }
