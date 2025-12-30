@@ -33,59 +33,65 @@ namespace Tekno.Application.Statistics.Services
         /// <summary>
         /// Get complete admin statistics dashboard
         /// </summary>
-        public async Task<AdminStatisticsDto> GetAdminStatisticsAsync(StatisticsFilterDto filter)
+/// <summary>
+/// Get complete admin statistics dashboard
+/// </summary>
+public async Task<AdminStatisticsDto> GetAdminStatisticsAsync(StatisticsFilterDto filter)
+{
+    // Validate filter
+    filter ??= new StatisticsFilterDto();
+    if (filter.TopCount < 5) filter.TopCount = 10;
+    if (filter.TopCount > 50) filter.TopCount = 50;
+
+    var (startDate, endDate) = GetDateRange(filter);
+    var cacheKey = $"admin:stats:{filter.Period}:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}:{filter.TopCount}";
+
+    // Check cache first
+    var cached = await _cacheService.GetAsync<AdminStatisticsDto>(cacheKey);
+    if (cached != null)
+    {
+        _logger.LogInformation("Retrieved admin statistics from cache for period {Period}", filter.Period);
+        return cached;
+    }
+
+    _logger.LogInformation("Generating admin statistics for period {StartDate} to {EndDate}", startDate, endDate);
+
+    try
+    {
+        // FIX: Don't use Task.WhenAll with DbContext - chạy tuần tự để tránh DbContext threading issue
+        // DbContext không thread-safe khi nhiều async operation chạy đồng thời
+        var overview = await _statisticsRepository.GetOverviewStatisticsAsync(startDate, endDate);
+        var topProducts = await _statisticsRepository.GetTopSoldProductsAsync(startDate, endDate, filter.TopCount);
+        var categoryRevenue = await _statisticsRepository.GetCategoryRevenueAsync(startDate, endDate);
+        var topCustomers = await _statisticsRepository.GetTopCustomersAsync(startDate, endDate, filter.TopCount);
+        var recentOrders = await _statisticsRepository.GetRecentOrdersAsync(10);
+        var productPerformance = await _statisticsRepository.GetProductPerformanceAsync();
+        var revenueChart = await GetRevenueChartDataAsync(startDate, endDate);
+
+        var statistics = new AdminStatisticsDto
         {
-            var (startDate, endDate) = GetDateRange(filter);
-            var cacheKey = $"admin:stats:{filter.Period}:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}:{filter.TopCount}";
+            Overview = overview,
+            TopSoldProducts = topProducts,
+            CategoryRevenue = categoryRevenue,
+            TopCustomers = topCustomers,
+            RevenueChart = revenueChart,
+            RecentOrders = recentOrders,
+            ProductPerformance = productPerformance
+        };
 
-            // Check cache first
-            var cached = await _cacheService.GetAsync<AdminStatisticsDto>(cacheKey);
-            if (cached != null)
-            {
-                _logger.LogInformation("Retrieved admin statistics from cache for period {Period}", filter.Period);
-                return cached;
-            }
+        // Cache the results
+        await _cacheService.SetAsync(cacheKey, statistics, StatsCacheTtl);
 
-            _logger.LogInformation("Generating admin statistics for period {StartDate} to {EndDate}", startDate, endDate);
+        _logger.LogInformation("Admin statistics generated and cached successfully");
 
-            // Fetch all statistics in parallel for better performance
-            var overviewTask = _statisticsRepository.GetOverviewStatisticsAsync(startDate, endDate);
-            var topProductsTask = _statisticsRepository.GetTopSoldProductsAsync(startDate, endDate, filter.TopCount);
-            var categoryRevenueTask = _statisticsRepository.GetCategoryRevenueAsync(startDate, endDate);
-            var topCustomersTask = _statisticsRepository.GetTopCustomersAsync(startDate, endDate, filter.TopCount);
-            var recentOrdersTask = _statisticsRepository.GetRecentOrdersAsync(10);
-            var productPerformanceTask = _statisticsRepository.GetProductPerformanceAsync();
-
-            await Task.WhenAll(
-                overviewTask,
-                topProductsTask,
-                categoryRevenueTask,
-                topCustomersTask,
-                recentOrdersTask,
-                productPerformanceTask
-            );
-
-            // Fetch revenue chart data
-            var revenueChart = await GetRevenueChartDataAsync(startDate, endDate);
-
-            var statistics = new AdminStatisticsDto
-            {
-                Overview = overviewTask.Result,
-                TopSoldProducts = topProductsTask.Result,
-                CategoryRevenue = categoryRevenueTask.Result,
-                TopCustomers = topCustomersTask.Result,
-                RevenueChart = revenueChart,
-                RecentOrders = recentOrdersTask.Result,
-                ProductPerformance = productPerformanceTask.Result
-            };
-
-            // Cache the results
-            await _cacheService.SetAsync(cacheKey, statistics, StatsCacheTtl);
-
-            _logger.LogInformation("Admin statistics generated and cached successfully");
-
-            return statistics;
-        }
+        return statistics;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error generating admin statistics");
+        throw;
+    }
+}
 
         /// <summary>
         /// Get only overview statistics (for real-time updates)
@@ -106,63 +112,74 @@ namespace Tekno.Application.Statistics.Services
         /// Get revenue chart data
         /// </summary>
         private async Task<RevenueChartDto> GetRevenueChartDataAsync(DateTime startDate, DateTime endDate)
-        {
-            var dailyTask = _statisticsRepository.GetDailyRevenueAsync(startDate, endDate);
-            var weeklyTask = _statisticsRepository.GetWeeklyRevenueAsync(startDate, endDate);
-            var monthlyTask = _statisticsRepository.GetMonthlyRevenueAsync(startDate, endDate);
+{
+    // FIX: Chạy tuần tự thay vì Task.WhenAll để tránh DbContext threading issue
+    var daily = await _statisticsRepository.GetDailyRevenueAsync(startDate, endDate);
+    var weekly = await _statisticsRepository.GetWeeklyRevenueAsync(startDate, endDate);
+    var monthly = await _statisticsRepository.GetMonthlyRevenueAsync(startDate, endDate);
 
-            await Task.WhenAll(dailyTask, weeklyTask, monthlyTask);
-
-            return new RevenueChartDto
-            {
-                Daily = dailyTask.Result,
-                Weekly = weeklyTask.Result,
-                Monthly = monthlyTask.Result
-            };
-        }
+    return new RevenueChartDto
+    {
+        Daily = daily,
+        Weekly = weekly,
+        Monthly = monthly
+    };
+}
 
         /// <summary>
         /// Calculate date range from filter
         /// </summary>
-        private (DateTime startDate, DateTime endDate) GetDateRange(StatisticsFilterDto filter)
-        {
-            var now = DateTime.UtcNow;
-            var today = now.Date;
+private (DateTime startDate, DateTime endDate) GetDateRange(StatisticsFilterDto filter)
+{
+    var now = DateTime.UtcNow;
+    var today = now.Date; // This will be Unspecified, need to fix
+    today = DateTime.SpecifyKind(today, DateTimeKind.Utc); // FIX: Specify as UTC
 
-            if (filter.Period == DateRangeFilter.Custom && filter.StartDate.HasValue && filter.EndDate.HasValue)
-            {
-                return (filter.StartDate.Value.Date, filter.EndDate.Value.Date.AddDays(1).AddSeconds(-1));
-            }
+    if (filter.Period == DateRangeFilter.Custom && filter.StartDate.HasValue && filter.EndDate.HasValue)
+    {
+        var startDate = filter.StartDate.Value;
+        var endDate = filter.EndDate.Value;
+        
+        // Ensure both are UTC
+        if (startDate.Kind == DateTimeKind.Unspecified)
+            startDate = DateTime.SpecifyKind(startDate, DateTimeKind.Utc);
+        if (endDate.Kind == DateTimeKind.Unspecified)
+            endDate = DateTime.SpecifyKind(endDate, DateTimeKind.Utc);
+            
+        return (startDate.Date, endDate.Date.AddDays(1).AddSeconds(-1));
+    }
 
-            return filter.Period switch
-            {
-                DateRangeFilter.Today => (today, now),
-                DateRangeFilter.Yesterday => (today.AddDays(-1), today.AddSeconds(-1)),
-                DateRangeFilter.Last7Days => (today.AddDays(-7), now),
-                DateRangeFilter.Last30Days => (today.AddDays(-30), now),
-                DateRangeFilter.ThisWeek => (GetStartOfWeek(today), now),
-                DateRangeFilter.LastWeek => (GetStartOfWeek(today.AddDays(-7)), GetStartOfWeek(today).AddSeconds(-1)),
-                DateRangeFilter.ThisMonth => (new DateTime(now.Year, now.Month, 1), now),
-                DateRangeFilter.LastMonth => (new DateTime(now.Year, now.Month, 1).AddMonths(-1), new DateTime(now.Year, now.Month, 1).AddSeconds(-1)),
-                DateRangeFilter.ThisQuarter => (GetStartOfQuarter(now), now),
-                DateRangeFilter.LastQuarter => (GetStartOfQuarter(now).AddMonths(-3), GetStartOfQuarter(now).AddSeconds(-1)),
-                DateRangeFilter.ThisYear => (new DateTime(now.Year, 1, 1), now),
-                DateRangeFilter.LastYear => (new DateTime(now.Year - 1, 1, 1), new DateTime(now.Year, 1, 1).AddSeconds(-1)),
-                _ => (today.AddDays(-7), now)
-            };
-        }
+    return filter.Period switch
+    {
+        DateRangeFilter.Today => (today, now),
+        DateRangeFilter.Yesterday => (today.AddDays(-1), today.AddSeconds(-1)),
+        DateRangeFilter.Last7Days => (today.AddDays(-7), now),
+        DateRangeFilter.Last30Days => (today.AddDays(-30), now),
+        DateRangeFilter.ThisWeek => (GetStartOfWeek(today), now),
+        DateRangeFilter.LastWeek => (GetStartOfWeek(today.AddDays(-7)), GetStartOfWeek(today).AddSeconds(-1)),
+        DateRangeFilter.ThisMonth => (new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc), now),
+        DateRangeFilter.LastMonth => (new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(-1), new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(-1)),
+        DateRangeFilter.ThisQuarter => (GetStartOfQuarter(now), now),
+        DateRangeFilter.LastQuarter => (GetStartOfQuarter(now).AddMonths(-3), GetStartOfQuarter(now).AddSeconds(-1)),
+        DateRangeFilter.ThisYear => (new DateTime(now.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc), now),
+        DateRangeFilter.LastYear => (new DateTime(now.Year - 1, 1, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(now.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(-1)),
+        _ => (today.AddDays(-7), now)
+    };
+}
 
-        private DateTime GetStartOfWeek(DateTime date)
-        {
-            var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
-            return date.AddDays(-1 * diff).Date;
-        }
+private DateTime GetStartOfWeek(DateTime date)
+{
+    var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
+    var startOfWeek = date.AddDays(-1 * diff).Date;
+    return DateTime.SpecifyKind(startOfWeek, DateTimeKind.Utc);
+}
 
-        private DateTime GetStartOfQuarter(DateTime date)
-        {
-            var quarterMonth = ((date.Month - 1) / 3) * 3 + 1;
-            return new DateTime(date.Year, quarterMonth, 1);
-        }
+private DateTime GetStartOfQuarter(DateTime date)
+{
+    var quarterMonth = ((date.Month - 1) / 3) * 3 + 1;
+    var startOfQuarter = new DateTime(date.Year, quarterMonth, 1);
+    return DateTime.SpecifyKind(startOfQuarter, DateTimeKind.Utc);
+}
 
         /// <summary>
         /// Invalidate statistics cache (call when orders are updated)

@@ -91,11 +91,19 @@ namespace Tekno.Api.Controllers.admin
                 }
             }
 
+    // FIX: Ensure all DateTimes are UTC to avoid PostgreSQL Kind=Unspecified error
+    var utcStartDate = startDate.HasValue 
+        ? DateTime.SpecifyKind(startDate.Value, DateTimeKind.Utc)
+        : (DateTime?)null;
+    var utcEndDate = endDate.HasValue 
+        ? DateTime.SpecifyKind(endDate.Value, DateTimeKind.Utc)
+        : (DateTime?)null;
+
             var filter = new StatisticsFilterDto
             {
                 Period = period,
-                StartDate = startDate,
-                EndDate = endDate,
+                StartDate = utcStartDate,
+                EndDate = utcEndDate,
                 TopCount = topCount
             };
 
@@ -197,7 +205,7 @@ namespace Tekno.Api.Controllers.admin
         public async Task<IActionResult> InvalidateCache()
         {
             await _statisticsService.InvalidateStatisticsCacheAsync();
-            return Ok(ApiResponse<object>.Ok(null, "Statistics cache invalidation initiated"));
+            return Ok(ApiResponse<object>.Ok(new { }, "Statistics cache invalidation initiated"));
         }
 
         /// <summary>

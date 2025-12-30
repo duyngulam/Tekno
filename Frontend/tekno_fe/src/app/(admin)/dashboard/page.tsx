@@ -55,7 +55,7 @@ export default function AdminStatisticsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<DatePeriod>("Last30Days");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
-  const [topCount, setTopCount] = useState(10);
+  const [topCount, setTopCount] = useState(10); // Đảm bảo giá trị khởi tạo hợp lệ
 
   // Get token (adjust based on your auth implementation)
   const getToken = () => {
@@ -69,44 +69,45 @@ export default function AdminStatisticsPage() {
     loadStatistics();
   }, [selectedPeriod, customStartDate, customEndDate, topCount]);
 
-  const loadStatistics = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const token = getToken();
+const loadStatistics = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+    const token = getToken();
 
-      if (!token) {
-        setError("No authentication token found. Please log in.");
-        return;
-      }
-
-      const params: any = {
-        period: selectedPeriod,
-        topCount,
-      };
-
-      if (selectedPeriod === "Custom") {
-        if (customStartDate) params.startDate = customStartDate;
-        if (customEndDate) params.endDate = customEndDate;
-      }
-
-      console.log("[Dashboard] Loading statistics with params:", params);
-      const response = await getAdminStatistics(token, params);
-      setStatistics(response.data);
-    } catch (err: any) {
-      const errorMessage =
-        err instanceof StatisticsError
-          ? `${err.message} (Status: ${err.status})`
-          : err instanceof Error
-          ? err.message
-          : "Failed to load statistics. Please try again.";
-
-      console.error("[Dashboard] Error details:", err);
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
+    if (!token) {
+      setError("No authentication token found. Please log in.");
+      return;
     }
-  };
+
+    // Validate và xây dựng params một cách an toàn
+    const params: any = {
+      period: selectedPeriod || "Last30Days", // Fallback giá trị mặc định
+      topCount: Math.max(5, Math.min(50, topCount)), // Đảm bảo trong range 5-50
+    };
+
+    if (selectedPeriod === "Custom") {
+      if (customStartDate) params.startDate = customStartDate;
+      if (customEndDate) params.endDate = customEndDate;
+    }
+
+    console.log("[Dashboard] Loading statistics with params:", params);
+    const response = await getAdminStatistics(token, params);
+    setStatistics(response.data);
+  } catch (err: any) {
+    const errorMessage =
+      err instanceof StatisticsError
+        ? `${err.message} (Status: ${err.status})`
+        : err instanceof Error
+        ? err.message
+        : "Failed to load statistics. Please try again.";
+
+    console.error("[Dashboard] Error details:", err);
+    setError(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleInvalidateCache = async () => {
     try {

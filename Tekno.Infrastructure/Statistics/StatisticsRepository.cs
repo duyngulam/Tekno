@@ -258,28 +258,30 @@ namespace Tekno.Infrastructure.Statistics
         }
 
         public async Task<List<ChartDataPointDto>> GetDailyRevenueAsync(DateTime startDate, DateTime endDate)
+{
+    // FIX: Load data first, then format on client
+    var dailyData = await _context.Set<OrderEntity>()
+        .Where(o => o.Status == OrderStatus.Completed && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
+        .GroupBy(o => o.CreatedAt.Date)
+        .Select(g => new 
         {
-            var dailyData = await _context.Set<OrderEntity>()
-                .Where(o => o.Status == OrderStatus.Completed && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
-                .GroupBy(o => o.CreatedAt.Date)
-                .Select(g => new ChartDataPointDto
-                {
-                    Label = g.Key.ToString("yyyy-MM-dd"),
-                    Revenue = g.Sum(o => o.TotalAmount),
-                    OrderCount = g.Count(),
-                    AverageOrderValue = g.Average(o => o.TotalAmount)
-                })
-                .OrderBy(x => x.Label)
-                .ToListAsync();
+            Date = g.Key,
+            Revenue = g.Sum(o => o.TotalAmount),
+            OrderCount = g.Count(),
+            AverageOrderValue = g.Average(o => o.TotalAmount)
+        })
+        .OrderBy(x => x.Date)
+        .ToListAsync(); // <-- LOAD DATA FIRST
 
-            return dailyData.Select(d => new ChartDataPointDto
-            {
-                Label = d.Label,
-                Revenue = Math.Round(d.Revenue, 2),
-                OrderCount = d.OrderCount,
-                AverageOrderValue = Math.Round(d.AverageOrderValue, 2)
-            }).ToList();
-        }
+    // Format on client
+    return dailyData.Select(d => new ChartDataPointDto
+    {
+        Label = d.Date.ToString("yyyy-MM-dd"),  // Now it's on client
+        Revenue = Math.Round(d.Revenue, 2),
+        OrderCount = d.OrderCount,
+        AverageOrderValue = Math.Round(d.AverageOrderValue, 2)
+    }).ToList();
+}
 
         public async Task<List<ChartDataPointDto>> GetWeeklyRevenueAsync(DateTime startDate, DateTime endDate)
         {
