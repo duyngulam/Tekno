@@ -194,12 +194,11 @@ const loadAll = async () => {
 
 const loadProducts = async () => {
   try {
-    const res = await getAdminProducts();
+    // Request với PageSize lớn để lấy toàn bộ sản phẩm
+    const res = await getAdminProducts({ pageSize: 10000 });
     
-    // Log để debug
     console.log("📦 Raw response:", res);
     
-    // Xử lý các trường hợp response khác nhau
     let list = [];
     
     if (Array.isArray(res)) {
