@@ -150,8 +150,11 @@ namespace Tekno.Infrastructure
             
             // Blog
             services.AddScoped<BlogPostService>();
-            //statistic
+            
+            // Statistics
+            services.AddScoped<Application.Statistics.Interface.IStatisticsRepository, Statistics.StatisticsRepository>();
             services.AddScoped<StatisticsService>();
+            
             // Payment Services
             services.AddScoped<Application.Payment.Services.PaymentService>();
             services.AddScoped<Application.Payment.Services.AdminPaymentService>();
@@ -180,6 +183,11 @@ namespace Tekno.Infrastructure
             // ===================================================
             services.AddScoped<IElasticProductService, ElasticProductService>();
             services.AddScoped<ElasticBulkIndexer>();
+
+            // ===================================================
+            // 9️⃣ TRAINING DATA SEEDER
+            // ===================================================
+            services.AddScoped<Seeding.TrainingUserSeeder>();
 
             return services;
         }
