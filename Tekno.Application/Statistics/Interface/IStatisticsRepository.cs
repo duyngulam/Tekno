@@ -19,11 +19,12 @@ namespace Tekno.Application.Statistics.Interface
         // Top customers
         Task<List<TopCustomerDto>> GetTopCustomersAsync(DateTime startDate, DateTime endDate, int topCount);
         
-        // Revenue chart data - Standard range queries
-        Task<List<ChartDataPointDto>> GetDailyRevenueAsync(DateTime startDate, DateTime endDate);
-        Task<List<ChartDataPointDto>> GetWeeklyRevenueAsync(DateTime startDate, DateTime endDate);
-        Task<List<ChartDataPointDto>> GetMonthlyRevenueAsync(DateTime startDate, DateTime endDate);
-        
+// Revenue chart data - Standard range queries
+Task<List<ChartDataPointDto>> GetDailyRevenueAsync(DateTime startDate, DateTime endDate);
+Task<List<ChartDataPointDto>> GetWeeklyRevenueAsync(DateTime startDate, DateTime endDate);
+Task<List<ChartDataPointDto>> GetMonthlyRevenueAsync(DateTime startDate, DateTime endDate);
+
+
         // Convenience methods for "last N days/weeks/months" scenarios
         Task<List<ChartDataPointDto>> GetLastNDaysRevenueAsync(int numberOfDays);
         Task<List<ChartDataPointDto>> GetLastNWeeksRevenueAsync(int numberOfWeeks);

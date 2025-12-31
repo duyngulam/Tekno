@@ -17,6 +17,8 @@ export default function BrandPage() {
   const [openEdit, setOpenEdit] = useState(false);
   const [editingBrand, setEditingBrand] = useState<any>(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [form, setForm] = useState({
     name: "",
@@ -71,9 +73,21 @@ const handleCreate = async () => {
   }
 };
 
-  const filtered = brands.filter((b) =>
-    (b.name || "").toLowerCase().includes(search.toLowerCase())
-  );
+// ✅ Filter brands by search
+const filteredBrands = brands.filter((b) =>
+  (b.name || "").toLowerCase().includes(search.toLowerCase()) ||
+  (b.country || "").toLowerCase().includes(search.toLowerCase()) ||
+  String(b.id).includes(search)
+);
+
+// ✅ Paginate filtered brands
+const paginatedBrands = (() => {
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  return filteredBrands.slice(startIndex, endIndex);
+})();
+
+const totalPages = Math.ceil(filteredBrands.length / itemsPerPage);
 
 const handleEdit = (brand: any) => {
   setEditingBrand(brand);
@@ -132,6 +146,10 @@ const handleDelete = async (id: string) => {
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-5">
           <h2 className="text-xl font-semibold">Brands</h2>
+            <p className="text-sm text-gray-500 mt-1">
+    Tổng số: {brands.length} brands
+    {search && ` (Tìm thấy: ${filteredBrands.length})`}
+  </p>
         </div>
         <Button
           onClick={() => {
@@ -150,13 +168,16 @@ const handleDelete = async (id: string) => {
           type="text"
           placeholder="Search brands..."
           className="border p-2 rounded w-80"
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+  setSearch(e.target.value);
+  setCurrentPage(1); // Reset to first page when searching
+}}
         />
       </div>
 
       {loading ? (
         <p>Loading...</p>
-      ) : filtered.length === 0 ? (
+      ) : filteredBrands.length === 0 ? (
         <p className="text-gray-500">No brands found.</p>
       ) : (
         <div className="overflow-x-auto">
@@ -170,27 +191,90 @@ const handleDelete = async (id: string) => {
                 <th>  </th>
               </tr>
             </thead>
-            <tbody>
-              {filtered.map((b) => (
-                <tr className="border-b hover:bg-gray-50" key={b.id}>
-                  <td className="p-2">{b.id}</td>
-                  <td>
-                    {b.logoPath && (
-                      <img src={b.logoPath} alt={b.name || 'Brand'} className="h-12 w-auto object-contain" />
-                    )}
-                  </td>
-                  <td>{b.name}</td>
-                  <td>{b.country}</td>
-                  <td>
-                    <Actions
-                      onEdit={() => handleEdit(b)}
-                      onDelete={() => handleDelete(b.id)}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+<tbody>
+  {paginatedBrands.map((b) => (
+    <tr className="border-b hover:bg-gray-50" key={b.id}>
+      <td className="p-2">{b.id}</td>
+      <td>
+        {b.logoPath && (
+          <img src={b.logoPath} alt={b.name || 'Brand'} className="h-12 w-auto object-contain" />
+        )}
+      </td>
+      <td>{b.name}</td>
+      <td>{b.country}</td>
+      <td>
+        <Actions
+          onEdit={() => handleEdit(b)}
+          onDelete={() => handleDelete(b.id)}
+        />
+      </td>
+    </tr>
+  ))}
+</tbody>
           </table>
+
+        {/* === PAGINATION CONTROLS === */}
+        {filteredBrands.length > 0 && (
+          <div className="flex justify-between items-center mt-4 px-4 py-3 bg-gray-50 rounded">
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 text-sm">
+                Hiển thị:
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="border rounded px-2 py-1"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </label>
+              <span className="text-sm text-gray-600">
+                Từ {(currentPage - 1) * itemsPerPage + 1} đến{" "}
+                {Math.min(currentPage * itemsPerPage, filteredBrands.length)} trong{" "}
+                {filteredBrands.length} brands
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ← Trước
+              </button>
+
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 border rounded ${
+                      currentPage === page
+                        ? "bg-blue-500 text-white border-blue-500"
+                        : "hover:bg-gray-100"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Sau →
+              </button>
+            </div>
+          </div>
+        )}
         </div>
       )}
 

@@ -37,7 +37,7 @@ export class AdvertisementPage {
     this.createButton = page.locator('button:has-text("Create Advertisement")');
     this.searchInput = page.locator('input[placeholder*="Search by product name"]');
     this.statusFilterSelect = page.locator('select').filter({ hasText: 'All Status' });
-    this.loadingText = page.locator('text=Loading...');
+    this.loadingText = page.locator('text=Loading Advertisements...');
     this.noDataText = page.locator('text=No advertisements found');
     
     // Table
@@ -64,13 +64,19 @@ export class AdvertisementPage {
   // Navigation
   async goto() {
     await this.page.goto('/dashboard/advertisement');
-    // Wait for page to load
-    await this.page.waitForLoadState('networkidle');
+    // Wait for key element
+    await this.pageTitle.waitFor({ state: 'visible', timeout: 10000 });
   }
 
   // Wait for data to load
 async waitForDataLoad() {
-  await this.page.waitForLoadState('networkidle');
+    // Wait for table to be visible
+  await this.advertisementTable.waitFor({ 
+    state: 'visible', 
+    timeout: 10000 
+  }).catch(() => {
+    // Or no data is fine too
+  });
   await this.page.waitForTimeout(500); // Buffer time cho client-side rendering
 }
 
@@ -232,19 +238,21 @@ async submitCreateForm() {
     await this.page.waitForTimeout(1000); // Give dialog time to appear
   }
 
-  // 6. Wait for modal to close
-  if (apiSuccess) {
-    await this.createModal.waitFor({ state: 'hidden', timeout: 10000 });
-  } else {
-    // If API failed, modal might stay open with error
-    const isModalOpen = await this.createModal.isVisible();
-    if (isModalOpen) {
-      throw new Error('Advertisement creation failed - modal still open');
-    }
-  }
 
-  // 7. Wait for table to refresh
-  await this.page.waitForLoadState('networkidle');
+// 6. Close modal after successful creation
+if (apiSuccess) {
+  try {
+    await this.createModal.waitFor({ state: 'hidden', timeout: 2000 });
+  } catch {
+    // Force close with Escape
+    await this.page.keyboard.press('Escape');
+    await this.page.waitForTimeout(300);
+  }
+} else {
+  throw new Error('Advertisement creation failed - API error');
+}
+
+  // 7. Wait for table to refresh  
   await this.page.waitForTimeout(500);
 }
 

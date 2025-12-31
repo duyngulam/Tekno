@@ -39,6 +39,9 @@ export default function AdvertisementPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [form, setForm] = useState({
     productId: "",
     position: "",
@@ -54,26 +57,44 @@ export default function AdvertisementPage() {
     loadAdvertisements();
   }, []);
 
-  const loadAdvertisements = async () => {
-    try {
-      setLoading(true);
-      const json = await advertisementApi.getAll();
-      console.log("API Response:", json);
+const loadAdvertisements = async () => {
+  try {
+    setLoading(true);
+    
+    const allAds: any[] = [];
+    let page = 1;
+    const pageSize = 20;
+    let hasMore = true;
 
+    // ✅ Loop load all pages
+    while (hasMore) {
+      const json = await advertisementApi.getAll({ page, pageSize });
+      
       const list = Array.isArray(json?.data?.data)
         ? json.data.data
         : Array.isArray(json?.data)
         ? json.data
         : [];
 
-      setAdvertisements(list);
-    } catch (err) {
-      console.error("Fetch error:", err);
-      setAdvertisements([]);
-    } finally {
-      setLoading(false);
+      if (list.length === 0) {
+        hasMore = false;
+      } else {
+        allAds.push(...list);
+        console.log(`📄 Loaded page ${page} (${list.length} items)`);
+        page++;
+      }
     }
-  };
+
+    console.log(`✅ Total loaded: ${allAds.length} advertisements`);
+    setAdvertisements(allAds);
+    setCurrentPage(1);
+  } catch (err) {
+    console.error("Fetch error:", err);
+    setAdvertisements([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Handle Create with FormData (for image upload)
   const handleCreate = async () => {
@@ -177,40 +198,53 @@ export default function AdvertisementPage() {
     }
   };
 
-  // Filter + Search Logic
-  const filteredAdvertisements = useMemo(() => {
-    const today = new Date();
+// Filter + Search Logic
+const filteredAdvertisements = useMemo(() => {
+  const today = new Date();
 
-    return advertisements
-      .map((ad) => {
-        const start = new Date(ad.startDate);
-        const end = new Date(ad.endDate);
+  return advertisements
+    .map((ad) => {
+      const start = new Date(ad.startDate);
+      const end = new Date(ad.endDate);
 
-        let status = "Active";
-        if (!ad.isActive) status = "Inactive";
-        else if (start > today) status = "Scheduled";
-        else if (end < today) status = "Expired";
+      let status = "Active";
+      if (!ad.isActive) status = "Inactive";
+      else if (start > today) status = "Scheduled";
+      else if (end < today) status = "Expired";
 
-        return { ...ad, status };
-      })
-      .filter((ad) => {
-        const matchSearch =
-          ad.productName?.toLowerCase().includes(search.toLowerCase()) ||
-          ad.position?.toLowerCase().includes(search.toLowerCase()) ||
-          ad.productId?.toString().includes(search);
+      return { ...ad, status };
+    })
+    .filter((ad) => {
+      const matchSearch =
+        ad.productName?.toLowerCase().includes(search.toLowerCase()) ||
+        ad.position?.toLowerCase().includes(search.toLowerCase()) ||
+        ad.productId?.toString().includes(search);
 
-        const matchStatus =
-          statusFilter === "All" || ad.status === statusFilter;
+      const matchStatus =
+        statusFilter === "All" || ad.status === statusFilter;
 
-        return matchSearch && matchStatus;
-      });
-  }, [advertisements, search, statusFilter]);
+      return matchSearch && matchStatus;
+    });
+}, [advertisements, search, statusFilter]);
+
+// ✅ Paginate filtered advertisements
+const paginatedAdvertisements = useMemo(() => {
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  return filteredAdvertisements.slice(startIndex, endIndex);
+}, [filteredAdvertisements, currentPage, itemsPerPage]);
+
+const totalPages = Math.ceil(filteredAdvertisements.length / itemsPerPage);
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-5">
           <h2 className="text-xl font-semibold">Advertisement Management</h2>
+            <p className="text-sm text-gray-500 mt-1">
+    Tổng số: {advertisements.length} advertisements
+    {search && ` (Tìm thấy: ${filteredAdvertisements.length})`}
+  </p>
         </div>
         <Button onClick={() => setOpenCreate(true)}>+ Create Advertisement</Button>
       </div>
@@ -222,13 +256,19 @@ export default function AdvertisementPage() {
           placeholder="Search by product name, position, or ID..."
           className="border p-2 rounded w-80"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+    setSearch(e.target.value);
+    setCurrentPage(1); // Reset to first page
+  }}
         />
 
         <select
           className="border p-2 rounded"
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+  onChange={(e) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1); // Reset to first page
+  }}
         >
           <option value="All">All Status</option>
           <option value="Active">Active</option>
@@ -260,89 +300,153 @@ export default function AdvertisementPage() {
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {filteredAdvertisements.map((ad) => (
-                <tr className="border-b hover:bg-gray-50" key={ad.id}>
-                  <td className="p-2">{ad.id}</td>
-                  <td>
-                    {ad.imageUrl && (
-                      <img
-                        src={ad.imageUrl}
-                        alt={ad.productName || "Ad"}
-                        className="w-20 h-12 object-cover rounded"
-                      />
-                    )}
-                  </td>
-                  <td>
-                    <div className="font-medium">
-                      {ad.productName || `Product #${ad.productId}`}
-                    </div>
-                    <div className="text-xs text-gray-500">ID: {ad.productId}</div>
-                  </td>
-                  <td>{ad.position}</td>
-                  <td>{ad.priority}</td>
-                  <td className="text-xs">
-                    {new Date(ad.startDate).toLocaleDateString("vi-VN")}
-                  </td>
-                  <td className="text-xs">
-                    {new Date(ad.endDate).toLocaleDateString("vi-VN")}
-                  </td>
-                  <td>
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-medium ${
-                        ad.status === "Active"
-                          ? "bg-green-100 text-green-700"
-                          : ad.status === "Scheduled"
-                          ? "bg-blue-100 text-blue-700"
-                          : ad.status === "Expired"
-                          ? "bg-gray-100 text-gray-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {ad.status}
-                    </span>
-                  </td>
-                  <td className="p-2">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleViewDetail(ad)}
-                        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                        title="View Details"
-                      >
-                        <Eye size={16} />
-                      </button>
+<tbody>
+  {paginatedAdvertisements.map((ad) => (
+    <tr className="border-b hover:bg-gray-50" key={ad.id}>
+      <td className="p-2">{ad.id}</td>
+      <td>
+        {ad.imageUrl && (
+          <img
+            src={ad.imageUrl}
+            alt={ad.productName || "Ad"}
+            className="w-20 h-12 object-cover rounded"
+          />
+        )}
+      </td>
+      <td>
+        <div className="font-medium">
+          {ad.productName || `Product #${ad.productId}`}
+        </div>
+        <div className="text-xs text-gray-500">ID: {ad.productId}</div>
+      </td>
+      <td>{ad.position}</td>
+      <td>{ad.priority}</td>
+      <td className="text-xs">
+        {new Date(ad.startDate).toLocaleDateString("vi-VN")}
+      </td>
+      <td className="text-xs">
+        {new Date(ad.endDate).toLocaleDateString("vi-VN")}
+      </td>
+      <td>
+        <span
+          className={`px-2 py-1 rounded text-xs font-medium ${
+            ad.status === "Active"
+              ? "bg-green-100 text-green-700"
+              : ad.status === "Scheduled"
+              ? "bg-blue-100 text-blue-700"
+              : ad.status === "Expired"
+              ? "bg-gray-100 text-gray-700"
+              : "bg-red-100 text-red-700"
+          }`}
+        >
+          {ad.status}
+        </span>
+      </td>
+      <td className="p-2">
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleViewDetail(ad)}
+            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+            title="View Details"
+          >
+            <Eye size={16} />
+          </button>
 
-                      {ad.isActive ? (
-                        <button
-                          onClick={() => handleDeactivate(ad.id.toString())}
-                          className="p-1 text-orange-600 hover:bg-orange-50 rounded"
-                          title="Deactivate"
-                        >
-                          <PowerOff size={16} />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleActivate(ad.id.toString())}
-                          className="p-1 text-green-600 hover:bg-green-50 rounded"
-                          title="Activate"
-                        >
-                          <Power size={16} />
-                        </button>
-                      )}
+          {ad.isActive ? (
+            <button
+              onClick={() => handleDeactivate(ad.id.toString())}
+              className="p-1 text-orange-600 hover:bg-orange-50 rounded"
+              title="Deactivate"
+            >
+              <PowerOff size={16} />
+            </button>
+          ) : (
+            <button
+              onClick={() => handleActivate(ad.id.toString())}
+              className="p-1 text-green-600 hover:bg-green-50 rounded"
+              title="Activate"
+            >
+              <Power size={16} />
+            </button>
+          )}
 
-                      <button
-                        onClick={() => handleDelete(ad.id.toString())}
-                        className="p-1 text-red-600 hover:bg-red-50 rounded"
-                        title="Delete"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+          <button
+            onClick={() => handleDelete(ad.id.toString())}
+            className="p-1 text-red-600 hover:bg-red-50 rounded"
+            title="Delete"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  ))}
+</tbody>
           </table>
+
+        {/* === PAGINATION CONTROLS === */}
+        {filteredAdvertisements.length > 0 && (
+          <div className="flex justify-between items-center mt-4 px-4 py-3 bg-gray-50 rounded">
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 text-sm">
+                Hiển thị:
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="border rounded px-2 py-1"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </label>
+              <span className="text-sm text-gray-600">
+                Từ {(currentPage - 1) * itemsPerPage + 1} đến{" "}
+                {Math.min(currentPage * itemsPerPage, filteredAdvertisements.length)} trong{" "}
+                {filteredAdvertisements.length} advertisements
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ← Trước
+              </button>
+
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 border rounded ${
+                      currentPage === page
+                        ? "bg-blue-500 text-white border-blue-500"
+                        : "hover:bg-gray-100"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Sau →
+              </button>
+            </div>
+          </div>
+        )}
+
         </div>
       )}
 

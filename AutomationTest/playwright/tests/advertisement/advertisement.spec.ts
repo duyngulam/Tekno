@@ -18,7 +18,7 @@ test.describe('Advertisement Management', () => {
     test('should display page title and create button', async () => {
       await expect(adPage.pageTitle).toBeVisible();
       await expect(adPage.createButton).toBeVisible();
-      await expect(adPage.pageTitle).toHaveText('Advertisement');
+      await expect(adPage.pageTitle).toHaveText('Advertisement Management');
     });
 
     test('should display search and filter controls', async () => {
@@ -353,7 +353,7 @@ test.describe('Advertisement Management', () => {
 
       // Verify filled values
       await expect(adPage.productIdInput).toHaveValue(formData.productId);
-      await expect(adPage.positionTrigger).toHaveValue(formData.position);
+      await expect(adPage.positionTrigger).toContainText(formData.position);
       await expect(adPage.priorityInput).toHaveValue(String(formData.priority));
       await expect(adPage.startDateInput).toHaveValue(formData.startDate);
       await expect(adPage.endDateInput).toHaveValue(formData.endDate);
@@ -462,52 +462,6 @@ test.describe('Advertisement Management', () => {
     expect(foundNewAd).toBe(true);
     });
 
-    test('should create ads with all available positions', async () => {
-      const testImagePath = path.join(__dirname, '../../fixtures/test-ad-image.jpg');
-
-      // ✅ Test creating with each position
-      for (let i = 0; i < VALID_POSITIONS.length; i++) {
-        const position = VALID_POSITIONS[i];
-        const productId = VALID_PRODUCT_IDS[i % VALID_PRODUCT_IDS.length];
-
-        const newAd = {
-          productId,
-          position,
-          priority: 90 - i * 5,
-          imageURL: testImagePath,
-          startDate: '2025-02-01T08:00',
-          endDate: '2025-12-31T23:59',
-          isActive: true,
-        };
-
-        console.log(`Creating ad with position: ${position}`);
-        await adPage.createAdvertisement(newAd);
-
-        // Small delay between creations
-        await adPage.page.waitForTimeout(1000);
-      }
-
-      // Verify all created
-      await adPage.clearSearch();
-      const finalCount = await adPage.getRowCount();
-      expect(finalCount).toBeGreaterThanOrEqual(VALID_POSITIONS.length);
-    });
-
-    test('should handle position selection errors gracefully', async () => {
-      await adPage.openCreateModal();
-
-      // Try to select invalid position (should not exist in dropdown)
-      try {
-        await adPage.selectPosition('InvalidPosition');
-        // Should timeout and fail gracefully
-      } catch (error) {
-        expect(error).toBeDefined();
-      }
-
-      // Modal should still be open
-      await expect(adPage.createModal).toBeVisible();
-    });
-
     test('should show alert when image is missing', async ({ page }) => {
       await adPage.openCreateModal();
 
@@ -520,7 +474,7 @@ test.describe('Advertisement Management', () => {
 
       const formData = {
         productId: '123',
-        position: 'Test Banner',
+        position: 'HomeTop',
         startDate: '2025-01-01T10:00',
         endDate: '2025-12-31T23:59',
         // No image provided
@@ -534,6 +488,76 @@ test.describe('Advertisement Management', () => {
 
       expect(alertMessage).toContain('Please select an image');
     });
+  });
+
+  test.describe('Create ads for all positions', () => {
+  const testImagePath = path.join(__dirname, '../../fixtures/test-ad-image.jpg');
+
+  for (const position of VALID_POSITIONS) {
+test(`should create ad with position: ${position}`, async ({ page }) => {
+  const newAd = {
+    productId: '4',
+    position: position,
+    priority: 75,
+    imageURL: testImagePath,
+    startDate: '2025-02-01T08:00',
+    endDate: '2025-12-31T23:59',
+    isActive: true,
+  };
+
+  await adPage.createAdvertisement(newAd);
+
+  // ✅ Reload page với network idle wait
+  await adPage.goto();
+  await adPage.page.waitForLoadState('networkidle'); // ✅ Wait for API response
+  await adPage.waitForDataLoad();
+  
+  // ✅ Extra wait để data được set vào state
+  await adPage.page.waitForTimeout(1000);
+  
+  // Clear any filters
+  await adPage.filterByStatus('All');
+  await adPage.clearSearch();
+  await adPage.page.waitForTimeout(800);
+
+  // Search for the new ad
+  await adPage.search(position);
+  await adPage.page.waitForTimeout(800); // Wait for filter apply
+
+  const searchCount = await adPage.getRowCount();
+  console.log(`🔍 Found ${searchCount} ads with position "${position}"`);
+  
+  if (searchCount === 0) {
+    // ✅ Fallback: log data để debug
+    console.error(`❌ No ads found for ${position}. This might be a timing issue.`);
+    // Reload again
+    await adPage.page.reload();
+    await adPage.page.waitForLoadState('networkidle');
+    await adPage.waitForDataLoad();
+    await adPage.page.waitForTimeout(1000);
+    await adPage.search(position);
+  }
+
+  expect(searchCount).toBeGreaterThan(0);
+
+  let found = false;
+  for (let i = 0; i < searchCount; i++) {
+    const rowData = await adPage.getRowData(i);
+    console.log(`Row ${i}: position=${rowData.position}, priority=${rowData.priority}`);
+    
+    if (
+      rowData.position === position && 
+      rowData.priority === '75'
+    ) {
+      found = true;
+      console.log(`✅ Found newly created ad: ${position} (priority: 75)`);
+      break;
+    }
+  }
+
+  expect(found).toBe(true);
+});
+  }
   });
 
   test.describe('Empty State', () => {

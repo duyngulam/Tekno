@@ -14,12 +14,12 @@ export class AdvertisementAPIHelper {
         id: 1,
         productId: 101,
         productName: 'Laptop Dell XPS 15',
-        position: 'Homepage Banner',
+        position: 'HomeTop',
         priority: 100,
         startDate: '2025-01-01T00:00:00Z',
         endDate: '2025-12-31T23:59:59Z',
         isActive: true,
-        imageUrl: 'https://via.placeholder.com/300x150',
+        imageUrl: 'C:\\Users\\NAT\\Tekno\\AutomationTest\\playwright\\fixtures\\test-ad-image.jpg',
       },
     ];
 
@@ -130,8 +130,9 @@ export class AdvertisementDataFactory {
     const dates = DateHelper.getActiveDateRange();
     return {
       productId: '101',
-      position: 'Homepage Banner',
+      position: 'HomeTop',
       priority: 100,
+      imageURL: 'C:\\Users\\NAT\\Tekno\\AutomationTest\\playwright\\fixtures\\test-ad-image.jpg',
       startDate: dates.start,
       endDate: dates.end,
       isActive: true,
@@ -143,8 +144,9 @@ export class AdvertisementDataFactory {
     const dates = DateHelper.getScheduledDateRange();
     return {
       productId: '102',
-      position: 'Sidebar Banner',
+      position: 'ProductSidebar',
       priority: 90,
+      imageURL: 'C:\\Users\\NAT\\Tekno\\AutomationTest\\playwright\\fixtures\\test-ad-image.jpg',
       startDate: dates.start,
       endDate: dates.end,
       isActive: true,

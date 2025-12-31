@@ -44,6 +44,11 @@ export default function CategoryPage() {
   const [openAttributes, setOpenAttributes] = useState(false);
   const [openCreateAttribute, setOpenCreateAttribute] = useState(false);
   const [openGlobalAttributes, setOpenGlobalAttributes] = useState(false);
+
+  // ✅ NEW: Pagination & Search states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   
   // Form states
   const [createData, setCreateData] = useState({
@@ -104,27 +109,84 @@ export default function CategoryPage() {
     }
   };
 
-  // Flatten tree for select options
-  const flattenedCategories = useMemo(() => {
-    const result: Array<{ id: number; name: string; depth: number }> = [];
-    
-    const traverse = (nodes: CategoryNode[], depth = 0) => {
-      nodes.forEach((node) => {
-        result.push({
-          id: node.id,
-          name: node.name,
-          depth,
-        });
-        if (node.subCategories?.length) {
-          traverse(node.subCategories, depth + 1);
-        }
+// ✅ NEW: Flatten tree for table display with depth info
+const flatTableCategories = useMemo(() => {
+  const result: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    iconPath?: string;
+    imageUrl?: string;
+    parentId?: number | null;
+    isActive?: boolean;
+    subCategories?: CategoryNode[];
+    depth: number;
+  }> = [];
+
+  const traverse = (nodes: CategoryNode[], depth = 0) => {
+    nodes.forEach((node) => {
+      result.push({
+        ...node,
+        depth,
       });
-    };
+      if (node.subCategories?.length) {
+        traverse(node.subCategories, depth + 1);
+      }
+    });
+  };
 
-    traverse(tree);
-    return result;
-  }, [tree]);
+  traverse(tree);
+  return result;
+}, [tree]);
 
+// ✅ NEW: Filter categories by search query
+const filteredCategories = useMemo(() => {
+  if (!searchQuery.trim()) {
+    return flatTableCategories;
+  }
+
+  const query = searchQuery.toLowerCase().trim();
+
+  return flatTableCategories.filter((cat) => {
+    const matchId = String(cat.id).includes(query);
+    const matchName = cat.name.toLowerCase().includes(query);
+    const matchSlug = cat.slug.toLowerCase().includes(query);
+
+    return matchId || matchName || matchSlug;
+  });
+}, [flatTableCategories, searchQuery]);
+
+// ✅ NEW: Paginate filtered categories
+const paginatedCategories = useMemo(() => {
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  return filteredCategories.slice(startIndex, endIndex);
+}, [filteredCategories, currentPage, itemsPerPage]);
+
+const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
+
+// Flatten tree for select options (dropdown parent selection)
+const flattenedCategories = useMemo(() => {
+  const result: Array<{ id: number; name: string; depth: number }> = [];
+  
+  const traverse = (nodes: CategoryNode[], depth = 0) => {
+    nodes.forEach((node) => {
+      result.push({
+        id: node.id,
+        name: node.name,
+        depth,
+      });
+      if (node.subCategories?.length) {
+        traverse(node.subCategories, depth + 1);
+      }
+    });
+  };
+
+  traverse(tree);
+  return result;
+}, [tree]);
+
+  // Total categories count
   const totalCategories = useMemo(() => {
     let count = 0;
     const countNodes = (nodes: CategoryNode[]) => {
@@ -356,7 +418,10 @@ export default function CategoryPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Quản lý Categories</h1>
-          <p className="text-sm text-gray-500 mt-1">Tổng số: {totalCategories} categories</p>
+          <p className="text-sm text-gray-500 mt-1">
+  Tổng số: {totalCategories} categories
+  {searchQuery && ` (Tìm thấy: ${filteredCategories.length})`}
+</p>
         </div>
 
         <div className="flex gap-2">
@@ -385,12 +450,31 @@ export default function CategoryPage() {
         </div>
       </div>
 
+      {/* Search Box */}
+            <div className="flex justify-between py-5 bg-gray-50 rounded">
+              <input
+                type="text"
+                placeholder="🔍 Tìm theo ID, Tên, hoặc Slug..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="flex-1 border rounded px-3 py-2 text-sm"
+              />
+              {searchQuery && (
+                <p className="text-xs text-gray-600 px-4">
+                  Tìm thấy {filteredCategories.length} category
+                </p>
+              )}
+            </div>
+
       {/* Table */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-            <p className="text-gray-500">Đang tải...</p>
+            <p className="text-gray-500">Loading...</p>
           </div>
         </div>
       ) : (
@@ -410,8 +494,8 @@ export default function CategoryPage() {
                 </tr>
               </thead>
               <tbody>
-                {tree.length > 0 ? (
-                  tree.map((node) => renderNode(node))
+                {paginatedCategories.length > 0 ? (
+                  paginatedCategories.map((node) => renderNode(node))
                 ) : (
                   <tr>
                     <td colSpan={9} className="p-8 text-center text-gray-500">
@@ -422,6 +506,69 @@ export default function CategoryPage() {
               </tbody>
             </table>
           </div>
+
+            {/* Pagination Controls */}
+            {filteredCategories.length > 0 && (
+              <div className="flex justify-between items-center px-4 py-3 bg-gray-50 rounded">
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 text-sm">
+                    Hiển thị:
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="border rounded px-2 py-1"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
+                  </label>
+                  <span className="text-sm text-gray-600">
+                    Từ {(currentPage - 1) * itemsPerPage + 1} đến{" "}
+                    {Math.min(currentPage * itemsPerPage, filteredCategories.length)} trong{" "}
+                    {filteredCategories.length} categories
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    ← Trước
+                  </button>
+
+                  <div className="flex gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-2 border rounded ${
+                          currentPage === page
+                            ? "bg-blue-500 text-white border-blue-500"
+                            : "hover:bg-gray-100"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Sau →
+                  </button>
+                </div>
+              </div>
+            )}
         </div>
       )}
 

@@ -139,9 +139,17 @@ export async function getProductsInCart() {
 }
 
 // Admin product helpers
-export async function getAdminProducts() {
+export async function getAdminProducts(params?: {
+  pageSize?: number;
+  page?: number;
+} ) {
   try {
-    return await get(`${API_BASE}/admin/products`, { cache: "no-store" });
+    const query = new URLSearchParams();
+    if (params?.pageSize) query.append("PageSize", String(params.pageSize));
+    if (params?.page) query.append("Page", String(params.page));
+    
+    const url = `${API_BASE}/admin/products${query.toString() ? `?${query.toString()}` : ""}`;
+    return await get(url, { cache: "no-store" });
   } catch (error) {
     console.error("❌ Failed to load admin products:", error);
     throw error;

@@ -5,11 +5,22 @@ import { ApiResponse } from "@/type/share";
 export const API_BASE = "http://localhost:5000/api/admin/advertisements";
 
 export const advertisementApi = {
-  // GET ALL
-  async getAll() {
-    const res = await fetch(API_BASE, { cache: "no-store" });
-    return res.json();
-  },
+// GET ALL
+async getAll(params?: { pageSize?: number; page?: number }) {
+  const query = new URLSearchParams();
+  if (params?.pageSize) query.append("PageSize", String(params.pageSize));
+  if (params?.page) query.append("Page", String(params.page));
+  
+  const url = `http://localhost:5000/api/admin/advertisements${query.toString() ? `?${query.toString()}` : ""}`;
+  
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return await res.json();
+},
 
   // GET BY ID
   async getById(id: string) {
