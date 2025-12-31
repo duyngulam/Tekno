@@ -583,16 +583,22 @@ namespace Tekno.Infrastructure.Catalog
                 .FirstOrDefaultAsync(v => v.Id == variantId);
         }
 
-        public async Task<List<Product>> GetTopNewProductsByCategoryAsync(string categorySlug, int count)
+        public async Task<List<Product>> GetProductsByIdsAsync(List<int> ids)
         {
+            if (ids == null || !ids.Any()) return new List<Product>();
+
             return await _context.Products
-                .Include(p => p.Category)
+                .Where(p => ids.Contains(p.Id))
                 .Include(p => p.Brand)
+                .Include(p => p.Category)
                 .Include(p => p.Images)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.VariantAttributes)
+                        .ThenInclude(va => va.Attribute)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.VariantAttributes)
+                        .ThenInclude(va => va.Value)
                 .AsNoTracking()
-                .Where(p => p.Category.Slug == categorySlug && p.Status == "available")
-                .OrderByDescending(p => p.CreatedAt)
-                .Take(count)
                 .ToListAsync();
         }
 
@@ -634,6 +640,19 @@ namespace Tekno.Infrastructure.Catalog
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<Product>> GetTopNewProductsByCategoryAsync(string categorySlug, int count)
+        {
+            return await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.Images)
+                .AsNoTracking()
+                .Where(p => p.Category.Slug == categorySlug && p.Status == "available")
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(count)
+                .ToListAsync();
         }
     }
 }

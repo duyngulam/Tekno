@@ -66,6 +66,9 @@ namespace Tekno.Application.Catalog.Interface
         // Variant methods
         Task<ProductVariant?> GetProductVariantByIdAsync(int variantId);
         
+        // New: fetch multiple products by ids in a single DB call
+        Task<List<Product>> GetProductsByIdsAsync(List<int> ids);
+        
         // New products by category
         Task<List<Product>> GetTopNewProductsByCategoryAsync(string categorySlug, int count);
         

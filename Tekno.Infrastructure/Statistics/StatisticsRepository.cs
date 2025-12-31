@@ -27,7 +27,7 @@ namespace Tekno.Infrastructure.Statistics
                 .Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate)
                 .ToListAsync();
 
-            var completedOrders = orders.Where(o => o.Status == OrderStatus.Completed).ToList();
+            var deliveredOrders = orders.Where(o => o.Status == OrderStatus.Delivered).ToList();
 
             // Previous period for comparison
             var periodDays = (endDate - startDate).Days;
@@ -38,11 +38,11 @@ namespace Tekno.Infrastructure.Statistics
                 .Where(o => o.CreatedAt >= previousStartDate && o.CreatedAt <= previousEndDate)
                 .ToListAsync();
 
-            var previousCompletedOrders = previousOrders.Where(o => o.Status == OrderStatus.Completed).ToList();
+            var previousDeliveredOrders = previousOrders.Where(o => o.Status == OrderStatus.Delivered).ToList();
 
             // Calculate metrics
-            var totalRevenue = completedOrders.Sum(o => o.TotalAmount);
-            var previousRevenue = previousCompletedOrders.Sum(o => o.TotalAmount);
+            var totalRevenue = deliveredOrders.Sum(o => o.TotalAmount);
+            var previousRevenue = previousDeliveredOrders.Sum(o => o.TotalAmount);
             var revenueGrowth = previousRevenue > 0 
                 ? (double)((totalRevenue - previousRevenue) / previousRevenue) * 100 
                 : 0;
@@ -66,9 +66,9 @@ namespace Tekno.Infrastructure.Statistics
                 ? ((double)(customerIds.Count - previousCustomerIds.Count) / previousCustomerIds.Count) * 100 
                 : 0;
 
-            // Average order value
-            var avgOrderValue = completedOrders.Any() ? completedOrders.Average(o => o.TotalAmount) : 0;
-            var previousAvgOrderValue = previousCompletedOrders.Any() ? previousCompletedOrders.Average(o => o.TotalAmount) : 0;
+            // Average order value from delivered orders
+            var avgOrderValue = deliveredOrders.Any() ? deliveredOrders.Average(o => o.TotalAmount) : 0;
+            var previousAvgOrderValue = previousDeliveredOrders.Any() ? previousDeliveredOrders.Average(o => o.TotalAmount) : 0;
             var aovGrowth = previousAvgOrderValue > 0 
                 ? (double)((avgOrderValue - previousAvgOrderValue) / previousAvgOrderValue) * 100 
                 : 0;
@@ -76,11 +76,12 @@ namespace Tekno.Infrastructure.Statistics
             // Order status counts
             var pendingOrders = orders.Count(o => o.Status == OrderStatus.Pending);
             var processingOrders = orders.Count(o => o.Status == OrderStatus.Processing);
-            var completedOrdersCount = completedOrders.Count;
+            var completedOrdersCount = orders.Count(o => o.Status == OrderStatus.Completed);
+            var deliveredOrdersCount = deliveredOrders.Count;
             var cancelledOrders = orders.Count(o => o.Status == OrderStatus.Cancelled);
 
             // Rates
-            var orderCompletionRate = totalOrders > 0 ? (double)completedOrdersCount / totalOrders * 100 : 0;
+            var orderCompletionRate = totalOrders > 0 ? (double)deliveredOrdersCount / totalOrders * 100 : 0;
             var orderCancellationRate = totalOrders > 0 ? (double)cancelledOrders / totalOrders * 100 : 0;
 
             return new OverviewStatisticsDto
@@ -103,7 +104,7 @@ namespace Tekno.Infrastructure.Statistics
                 
                 PendingOrders = pendingOrders,
                 ProcessingOrders = processingOrders,
-                CompletedOrders = completedOrdersCount,
+                CompletedOrders = deliveredOrdersCount, // Changed to delivered for revenue
                 CancelledOrders = cancelledOrders,
                 
                 OrderCompletionRate = Math.Round(orderCompletionRate, 2),
@@ -113,15 +114,15 @@ namespace Tekno.Infrastructure.Statistics
 
         public async Task<List<TopProductDto>> GetTopSoldProductsAsync(DateTime startDate, DateTime endDate, int topCount)
         {
-            // Get completed order IDs first
-            var completedOrderIds = await _context.Set<OrderEntity>()
-                .Where(o => o.Status == OrderStatus.Completed && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
+            // Get delivered order IDs first
+            var deliveredOrderIds = await _context.Set<OrderEntity>()
+                .Where(o => o.Status == OrderStatus.Delivered && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
                 .Select(o => o.Id)
                 .ToListAsync();
 
             // Get order items for those orders
             var topProducts = await _context.Set<Tekno.Domain.Order.OrderItem>()
-                .Where(item => completedOrderIds.Contains(item.OrderId))
+                .Where(item => deliveredOrderIds.Contains(item.OrderId))
                 .GroupBy(item => item.ProductId)
                 .Select(g => new
                 {
@@ -180,9 +181,9 @@ namespace Tekno.Infrastructure.Statistics
 
         public async Task<List<CategoryRevenueDto>> GetCategoryRevenueAsync(DateTime startDate, DateTime endDate)
         {
-            // Get completed order IDs
-            var completedOrderIds = await _context.Set<OrderEntity>()
-                .Where(o => o.Status == OrderStatus.Completed && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
+            // Get delivered order IDs first
+            var deliveredOrderIds = await _context.Set<OrderEntity>()
+                .Where(o => o.Status == OrderStatus.Delivered && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
                 .Select(o => o.Id)
                 .ToListAsync();
 
@@ -191,7 +192,7 @@ namespace Tekno.Infrastructure.Statistics
                 from item in _context.Set<Tekno.Domain.Order.OrderItem>()
                 join product in _context.Products on item.ProductId equals product.Id
                 join category in _context.Categories on product.CategoryId equals category.Id
-                where completedOrderIds.Contains(item.OrderId)
+                where deliveredOrderIds.Contains(item.OrderId)
                 group new { item, product } by new { category.Id, category.Name, category.Slug } into g
                 select new
                 {
@@ -223,7 +224,7 @@ namespace Tekno.Infrastructure.Statistics
         public async Task<List<TopCustomerDto>> GetTopCustomersAsync(DateTime startDate, DateTime endDate, int topCount)
         {
             var topCustomers = await _context.Set<OrderEntity>()
-                .Where(o => o.Status == OrderStatus.Completed && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
+                .Where(o => o.Status == OrderStatus.Delivered && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
                 .GroupBy(o => o.UserId)
                 .Select(g => new
                 {
@@ -260,31 +261,30 @@ namespace Tekno.Infrastructure.Statistics
         public async Task<List<ChartDataPointDto>> GetDailyRevenueAsync(DateTime startDate, DateTime endDate)
         {
             var dailyData = await _context.Set<OrderEntity>()
-                .Where(o => o.Status == OrderStatus.Completed && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
+                .Where(o => o.Status == OrderStatus.Delivered && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
                 .GroupBy(o => o.CreatedAt.Date)
-                .Select(g => new ChartDataPointDto
+                .Select(g => new
                 {
-                    Label = g.Key.ToString("yyyy-MM-dd"),
+                    Date = g.Key,
                     Revenue = g.Sum(o => o.TotalAmount),
                     OrderCount = g.Count(),
                     AverageOrderValue = g.Average(o => o.TotalAmount)
                 })
-                .OrderBy(x => x.Label)
                 .ToListAsync();
 
             return dailyData.Select(d => new ChartDataPointDto
             {
-                Label = d.Label,
+                Label = d.Date.ToString("yyyy-MM-dd"),
                 Revenue = Math.Round(d.Revenue, 2),
                 OrderCount = d.OrderCount,
                 AverageOrderValue = Math.Round(d.AverageOrderValue, 2)
-            }).ToList();
+            }).OrderBy(d => d.Label).ToList();
         }
 
         public async Task<List<ChartDataPointDto>> GetWeeklyRevenueAsync(DateTime startDate, DateTime endDate)
         {
             var orders = await _context.Set<OrderEntity>()
-                .Where(o => o.Status == OrderStatus.Completed && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
+                .Where(o => o.Status == OrderStatus.Delivered && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
                 .ToListAsync();
 
             var weeklyData = orders
@@ -305,25 +305,25 @@ namespace Tekno.Infrastructure.Statistics
         public async Task<List<ChartDataPointDto>> GetMonthlyRevenueAsync(DateTime startDate, DateTime endDate)
         {
             var monthlyData = await _context.Set<OrderEntity>()
-                .Where(o => o.Status == OrderStatus.Completed && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
+                .Where(o => o.Status == OrderStatus.Delivered && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
                 .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month })
-                .Select(g => new ChartDataPointDto
+                .Select(g => new
                 {
-                    Label = $"{g.Key.Year}-{g.Key.Month:D2}",
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
                     Revenue = g.Sum(o => o.TotalAmount),
                     OrderCount = g.Count(),
                     AverageOrderValue = g.Average(o => o.TotalAmount)
                 })
-                .OrderBy(x => x.Label)
                 .ToListAsync();
 
             return monthlyData.Select(d => new ChartDataPointDto
             {
-                Label = d.Label,
+                Label = $"{d.Year}-{d.Month:D2}",
                 Revenue = Math.Round(d.Revenue, 2),
                 OrderCount = d.OrderCount,
                 AverageOrderValue = Math.Round(d.AverageOrderValue, 2)
-            }).ToList();
+            }).OrderBy(d => d.Label).ToList();
         }
 
         public async Task<List<RecentOrderDto>> GetRecentOrdersAsync(int count = 10)

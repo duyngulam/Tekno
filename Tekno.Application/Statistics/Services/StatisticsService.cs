@@ -48,35 +48,26 @@ namespace Tekno.Application.Statistics.Services
 
             _logger.LogInformation("Generating admin statistics for period {StartDate} to {EndDate}", startDate, endDate);
 
-            // Fetch all statistics in parallel for better performance
-            var overviewTask = _statisticsRepository.GetOverviewStatisticsAsync(startDate, endDate);
-            var topProductsTask = _statisticsRepository.GetTopSoldProductsAsync(startDate, endDate, filter.TopCount);
-            var categoryRevenueTask = _statisticsRepository.GetCategoryRevenueAsync(startDate, endDate);
-            var topCustomersTask = _statisticsRepository.GetTopCustomersAsync(startDate, endDate, filter.TopCount);
-            var recentOrdersTask = _statisticsRepository.GetRecentOrdersAsync(10);
-            var productPerformanceTask = _statisticsRepository.GetProductPerformanceAsync();
+            // Sequential awaits to avoid multiple concurrent EF queries on same DbContext
+            var overview = await _statisticsRepository.GetOverviewStatisticsAsync(startDate, endDate);
+            var topProducts = await _statisticsRepository.GetTopSoldProductsAsync(startDate, endDate, filter.TopCount);
+            var categoryRevenue = await _statisticsRepository.GetCategoryRevenueAsync(startDate, endDate);
+            var topCustomers = await _statisticsRepository.GetTopCustomersAsync(startDate, endDate, filter.TopCount);
+            var recentOrders = await _statisticsRepository.GetRecentOrdersAsync(10);
+            var productPerformance = await _statisticsRepository.GetProductPerformanceAsync();
 
-            await Task.WhenAll(
-                overviewTask,
-                topProductsTask,
-                categoryRevenueTask,
-                topCustomersTask,
-                recentOrdersTask,
-                productPerformanceTask
-            );
-
-            // Fetch revenue chart data
+            // Fetch revenue chart data sequentially as well
             var revenueChart = await GetRevenueChartDataAsync(startDate, endDate);
 
             var statistics = new AdminStatisticsDto
             {
-                Overview = overviewTask.Result,
-                TopSoldProducts = topProductsTask.Result,
-                CategoryRevenue = categoryRevenueTask.Result,
-                TopCustomers = topCustomersTask.Result,
+                Overview = overview,
+                TopSoldProducts = topProducts,
+                CategoryRevenue = categoryRevenue,
+                TopCustomers = topCustomers,
                 RevenueChart = revenueChart,
-                RecentOrders = recentOrdersTask.Result,
-                ProductPerformance = productPerformanceTask.Result
+                RecentOrders = recentOrders,
+                ProductPerformance = productPerformance
             };
 
             // Cache the results
@@ -103,23 +94,87 @@ namespace Tekno.Application.Statistics.Services
         }
 
         /// <summary>
+        /// Get top sold products for a period
+        /// </summary>
+        public async Task<List<TopProductDto>> GetTopSoldProductsAsync(StatisticsFilterDto filter)
+        {
+            var (startDate, endDate) = GetDateRange(filter);
+            var cacheKey = $"admin:stats:top-products:{filter.Period}:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}:{filter.TopCount}";
+
+            return await _cacheService.CacheOrGetAsync(cacheKey, () => _statisticsRepository.GetTopSoldProductsAsync(startDate, endDate, filter.TopCount), StatsCacheTtl);
+        }
+
+        /// <summary>
+        /// Get category revenue for a period
+        /// </summary>
+        public async Task<List<CategoryRevenueDto>> GetCategoryRevenueAsync(StatisticsFilterDto filter)
+        {
+            var (startDate, endDate) = GetDateRange(filter);
+            var cacheKey = $"admin:stats:category-revenue:{filter.Period}:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}";
+
+            return await _cacheService.CacheOrGetAsync(cacheKey, () => _statisticsRepository.GetCategoryRevenueAsync(startDate, endDate), StatsCacheTtl);
+        }
+
+        /// <summary>
+        /// Get top customers for a period
+        /// </summary>
+        public async Task<List<TopCustomerDto>> GetTopCustomersAsync(StatisticsFilterDto filter)
+        {
+            var (startDate, endDate) = GetDateRange(filter);
+            var cacheKey = $"admin:stats:top-customers:{filter.Period}:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}:{filter.TopCount}";
+
+            return await _cacheService.CacheOrGetAsync(cacheKey, () => _statisticsRepository.GetTopCustomersAsync(startDate, endDate, filter.TopCount), StatsCacheTtl);
+        }
+
+        /// <summary>
         /// Get revenue chart data
+        /// </summary>
+        public async Task<RevenueChartDto> GetRevenueChartAsync(StatisticsFilterDto filter)
+        {
+            var (startDate, endDate) = GetDateRange(filter);
+            return await GetRevenueChartDataAsync(startDate, endDate);
+        }
+
+        /// <summary>
+        /// Get recent orders
+        /// </summary>
+        public async Task<List<RecentOrderDto>> GetRecentOrdersAsync(int count = 10)
+        {
+            var cacheKey = $"admin:stats:recent-orders:{count}";
+            return await _cacheService.CacheOrGetAsync(cacheKey, () => _statisticsRepository.GetRecentOrdersAsync(count), StatsCacheTtl);
+        }
+
+        /// <summary>
+        /// Get product performance
+        /// </summary>
+        public async Task<ProductPerformanceDto> GetProductPerformanceAsync()
+        {
+            var cacheKey = "admin:stats:product-performance";
+            return await _cacheService.CacheOrGetAsync(cacheKey, () => _statisticsRepository.GetProductPerformanceAsync(), StatsCacheTtl);
+        }
+
+        /// <summary>
+        /// Get revenue chart data (internal)
         /// </summary>
         private async Task<RevenueChartDto> GetRevenueChartDataAsync(DateTime startDate, DateTime endDate)
         {
-            var dailyTask = _statisticsRepository.GetDailyRevenueAsync(startDate, endDate);
-            var weeklyTask = _statisticsRepository.GetWeeklyRevenueAsync(startDate, endDate);
-            var monthlyTask = _statisticsRepository.GetMonthlyRevenueAsync(startDate, endDate);
-
-            await Task.WhenAll(dailyTask, weeklyTask, monthlyTask);
+            // Sequential to avoid concurrent DbContext usage
+            var daily = await _statistics_repository_GetDaily(startDate, endDate);
+            var weekly = await _statistics_repository_GetWeekly(startDate, endDate);
+            var monthly = await _statistics_repository_GetMonthly(startDate, endDate);
 
             return new RevenueChartDto
             {
-                Daily = dailyTask.Result,
-                Weekly = weeklyTask.Result,
-                Monthly = monthlyTask.Result
+                Daily = daily,
+                Weekly = weekly,
+                Monthly = monthly
             };
         }
+
+        // Helper wrappers to call repository (keeps naming consistent and allows centralized AsNoTracking in repo)
+        private Task<List<ChartDataPointDto>> _statistics_repository_GetDaily(DateTime s, DateTime e) => _statisticsRepository.GetDailyRevenueAsync(s, e);
+        private Task<List<ChartDataPointDto>> _statistics_repository_GetWeekly(DateTime s, DateTime e) => _statisticsRepository.GetWeeklyRevenueAsync(s, e);
+        private Task<List<ChartDataPointDto>> _statistics_repository_GetMonthly(DateTime s, DateTime e) => _statisticsRepository.GetMonthlyRevenueAsync(s, e);
 
         /// <summary>
         /// Calculate date range from filter

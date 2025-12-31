@@ -1155,5 +1155,37 @@ namespace Tekno.Application.Catalog.Services
 
             await _productRepository.UpdateProductAsync(product);
         }
+
+        public async Task<ProductSummaryDto?> GetProductSummaryByIdAsync(int id)
+        {
+            if (id <= 0) return null;
+
+            var product = await _productRepository.GetProductByIdAsync(id);
+            if (product == null) return null;
+
+            var dto = _mapper.Map<ProductSummaryDto>(product);
+
+            // Enrich rating info
+            await EnrichWithRatingDataAsync(new List<ProductSummaryDto> { dto });
+
+            return dto;
+        }
+
+        public async Task<List<ProductSummaryDto>> GetProductSummariesByIdsAsync(List<int> ids)
+        {
+            if (ids == null || !ids.Any()) return new List<ProductSummaryDto>();
+
+            // Load products in parallel
+            var tasks = ids.Select(i => _productRepository.GetProductByIdAsync(i)).ToList();
+            await Task.WhenAll(tasks);
+
+            var products = tasks.Select(t => t.Result).Where(p => p != null).ToList()!;
+
+            var dtos = _mapper.Map<List<ProductSummaryDto>>(products);
+
+            await EnrichWithRatingDataAsync(dtos);
+
+            return dtos;
+        }
     }
 }
