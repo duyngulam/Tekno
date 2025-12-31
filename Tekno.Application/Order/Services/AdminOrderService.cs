@@ -50,35 +50,40 @@ namespace Tekno.Application.Order.Services
                 "Admin getting orders: status={Status}, search={Search}, page={Page}",
                 status, search, page);
 
-            var paging = new PagingParams(page, pageSize);
-            var result = await _orderRepository.GetPagedAsync(null, status, paging);
+            // For admin, fetch all orders to apply filters correctly
+            // TODO: Optimize by adding filters to repository if performance becomes an issue
+            var paging = new PagingParams(1, int.MaxValue); // Fetch all
+            var allOrdersResult = await _orderRepository.GetPagedAsync(null, status, paging);
+            var allOrders = allOrdersResult.Data.AsQueryable();
 
-            // Filter by search and date range (in-memory for now)
-            var filteredData = result.Data.AsQueryable();
-
+            // Apply additional filters
             if (!string.IsNullOrWhiteSpace(search))
             {
-                filteredData = filteredData.Where(o =>
+                allOrders = allOrders.Where(o =>
                     o.OrderNumber.Contains(search, StringComparison.OrdinalIgnoreCase) ||
                     o.UserId.ToString().Contains(search));
             }
 
             if (startDate.HasValue)
             {
-                filteredData = filteredData.Where(o => o.CreatedAt >= startDate.Value);
+                allOrders = allOrders.Where(o => o.CreatedAt >= startDate.Value);
             }
 
             if (endDate.HasValue)
             {
-                filteredData = filteredData.Where(o => o.CreatedAt <= endDate.Value.AddDays(1));
+                allOrders = allOrders.Where(o => o.CreatedAt <= endDate.Value.AddDays(1));
             }
 
-            var orders = filteredData.ToList();
-            var totalRecords = orders.Count;
+            var filteredOrders = allOrders.ToList();
+            var totalRecords = filteredOrders.Count;
+
+            // Apply pagination
+            var skip = (page - 1) * pageSize;
+            var pagedOrders = filteredOrders.Skip(skip).Take(pageSize).ToList();
 
             // Map to admin DTOs
             var orderDtos = new List<AdminOrderListDto>();
-            foreach (var order in orders)
+            foreach (var order in pagedOrders)
             {
                 var orderDto = new AdminOrderListDto
                 {

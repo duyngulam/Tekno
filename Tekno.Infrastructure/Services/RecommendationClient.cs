@@ -4,10 +4,11 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Tekno.Application.Recommendation;
 
-namespace Tekno.Api.Services
+namespace Tekno.Infrastructure.Services
 {
-    public class RecommendationClient
+    public class RecommendationClient : IRecommendationClient
     {
         private readonly HttpClient _http;
         private readonly string _baseUrl;
@@ -24,8 +25,8 @@ namespace Tekno.Api.Services
             var resp = await _http.PostAsJsonAsync(new Uri(new Uri(_baseUrl), "/predict"), payload);
             resp.EnsureSuccessStatusCode();
             var doc = await resp.Content.ReadFromJsonAsync<JsonElement>();
-            var category = doc.GetProperty("category").GetString();
-            var brand = doc.GetProperty("brand").GetString();
+            var category = doc.GetProperty("category").GetString() ?? string.Empty;
+            var brand = doc.GetProperty("brand").GetString() ?? string.Empty;
             return (category, brand);
         }
 
