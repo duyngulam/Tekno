@@ -24,7 +24,7 @@ const scenarios: Scenario[] = [
   { id: 'fuzzy', description: 'Fuzzy search for product', search: 'mcbk pro' },
   { id: 'no-match', description: 'Search with no matching keyword', search: 'skibiiiiideeeeeeee', expectZero: true },
   { id: 'special-chars', description: 'Search with special characters', search: '@#$%^&*()_+' },
-  { id: 'filter-category', description: 'Filter by category', category: 'laptops' },
+  { id: 'filter-category', description: 'Filter by category', category: 'laptop' },
   { id: 'filter-brand', description: 'Filter by brand', brand: 'Apple' },
   { id: 'filter-price', description: 'Filter by price range', minPrice: 1000, maxPrice: 2000 },
   { id: 'filter-attributes', description: 'Filter by attributes', attributes: { Color: ['Space Gray'] } },
@@ -41,14 +41,14 @@ const scenarios: Scenario[] = [
   { id: 'long-keyword', description: 'Search with long keyword', search: 'a'.repeat(200) },
   { id: 'numeric', description: 'Search with numeric keyword', search: '123456' },
   { id: 'alpha-numeric', description: 'Search with mixed alpha-numeric', search: 'iPhone12' },
-  { id: 'category+keyword', description: 'Search with category + keyword', search: 'pro', category: 'laptops' },
+  { id: 'category+keyword', description: 'Search with category + keyword', search: 'pro', category: 'laptop' },
   { id: 'brand+keyword', description: 'Search with brand + keyword', search: 'pro', brand: 'Apple' },
   { id: 'price+keyword', description: 'Search with price range + keyword', search: 'pro', minPrice: 500, maxPrice: 2000 },
-  { id: 'multi-filters-cat-brand', description: 'Search with multiple filters (category + brand)', category: 'laptops', brand: 'Apple' },
-  { id: 'multi-filters-cat-price', description: 'Search with multiple filters (category + price)', category: 'laptops', minPrice: 500, maxPrice: 2000 },
+  { id: 'multi-filters-cat-brand', description: 'Search with multiple filters (category + brand)', category: 'laptop', brand: 'Apple' },
+  { id: 'multi-filters-cat-price', description: 'Search with multiple filters (category + price)', category: 'laptop', minPrice: 500, maxPrice: 2000 },
   { id: 'multi-filters-brand-price', description: 'Search with multiple filters (brand + price)', brand: 'Apple', minPrice: 500, maxPrice: 2000 },
-  { id: 'keyword+cat+brand', description: 'Search with keyword + category + brand', search: 'pro', category: 'laptops', brand: 'Apple' },
-  { id: 'keyword+cat+brand+price', description: 'Search with keyword + category + brand + price', search: 'pro', category: 'laptops', brand: 'Apple', minPrice: 500, maxPrice: 3000 },
+  { id: 'keyword+cat+brand', description: 'Search with keyword + category + brand', search: 'pro', category: 'laptop', brand: 'Apple' },
+  { id: 'keyword+cat+brand+price', description: 'Search with keyword + category + brand + price', search: 'pro', category: 'laptop', brand: 'Apple', minPrice: 500, maxPrice: 3000 },
   { id: 'keyword+all', description: 'Search with keyword + category + brand + price + attributes', search: 'pro', category: 'laptops', brand: 'Apple', minPrice: 500, maxPrice: 3000, attributes: { Color: ['Space Gray'] } },
   { id: 'attributes-only', description: 'Search with attributes filter', attributes: { RAM: ['16GB'] } },
   { id: 'multi-attributes', description: 'Search with multi attributes', attributes: { RAM: ['8GB','16GB'], Color: ['Space Gray'] } },
@@ -87,6 +87,13 @@ async function applyAttributes(page: Page, attrs: Record<string, string[]>) {
   }
 }
 
+const sortLabels: Record<string, string> = {
+  'created_desc': 'Newest First',
+  'price_asc': 'Price: Low to High',
+  'price_desc': 'Price: High to Low',
+  'rating_desc': 'Best Rating'
+};
+
 test.describe('Comprehensive products search & filter suite (scaffold)', () => {
   for (const s of scenarios) {
     test(s.id + ' - ' + s.description, async ({ page }) => {
@@ -100,10 +107,16 @@ test.describe('Comprehensive products search & filter suite (scaffold)', () => {
       if (s.category) await applyCategory(page, s.category);
 
       // apply brand
-      if (s.brand) await applyBrand(page, s.brand);
+      if (s.brand) await products.applyBrand(s.brand);
 
       // apply attributes
-      if (s.attributes) await applyAttributes(page, s.attributes);
+      if (s.attributes) {
+        for (const [k, vals] of Object.entries(s.attributes)) {
+          for (const v of vals) {
+            await products.applyAttribute(k, v);
+          }
+        }
+      }
 
       // apply price
       if (s.minPrice !== undefined || s.maxPrice !== undefined) {
@@ -112,21 +125,22 @@ test.describe('Comprehensive products search & filter suite (scaffold)', () => {
         await products.applyPriceRange(min, max);
       }
 
-      // perform search if provided (use search page)
+      // perform search if provided (use products page search input)
       if (s.search !== undefined && s.search !== null) {
         // empty string means run products listing without extra query
         if (s.search.length > 0) {
-          await searchPage.goto();
-          await searchPage.search(s.search);
+          await products.searchKeyword(s.search);
         }
       }
 
       // handle sort
       if (s.extra?.sort) {
-        // select element used in product page is a custom Select; we try to change via value on the select trigger
-        await page.locator('select, [data-testid="sort-select"]').first().selectOption({ value: s.extra.sort }).catch(() => {
-          test.info().log('Sort control not found or not a native select');
-        });
+        const label = sortLabels[s.extra.sort];
+        if (label) {
+          await products.applySortBy(label);
+        } else {
+          test.info().log(`Unknown sort value: ${s.extra.sort}`);
+        }
       }
 
       // pagination
@@ -175,10 +189,16 @@ test.describe('Comprehensive products search & filter suite (scaffold)', () => {
       const finalCount = await products.resultsCount();
 
       if (s.expectZero) {
-        expect(finalCount).toBe(0);
+        // Expect no results; assert No Product Available message or zero count
+        const noText = await products.getNoResultsText();
+        if (noText) {
+          expect(noText).toContain('No Product Available');
+        } else {
+          expect(finalCount).toBe(0);
+        }
       } else {
-        // default expectation: at least 0 — but prefer >0 for positive searches
-        if (s.search && s.search.length > 0 && !s.expectZero) {
+        // default expectation: at least 0 — prefer >0 for positive keyword searches
+        if (s.search && s.search.length > 0) {
           expect(finalCount).toBeGreaterThanOrEqual(0);
         } else {
           expect(finalCount).toBeGreaterThanOrEqual(0);

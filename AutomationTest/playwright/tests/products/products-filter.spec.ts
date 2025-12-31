@@ -12,8 +12,8 @@ test.describe('Products - search & filters', () => {
     const firstTitle = await products.firstResultTitle();
     expect(firstTitle.length).toBeGreaterThan(0);
 
-    // apply first brand filter
-    await products.applyFirstBrandFilter();
+    // apply a known brand filter (use a brand present in the UI)
+    await products.applyBrand('Apple');
     const afterBrandCount = await products.resultsCount();
     expect(afterBrandCount).toBeLessThanOrEqual(initialCount);
 
