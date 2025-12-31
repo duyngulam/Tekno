@@ -56,28 +56,27 @@ public async Task<AdminStatisticsDto> GetAdminStatisticsAsync(StatisticsFilterDt
 
     _logger.LogInformation("Generating admin statistics for period {StartDate} to {EndDate}", startDate, endDate);
 
-    try
-    {
-        // FIX: Don't use Task.WhenAll with DbContext - chạy tuần tự để tránh DbContext threading issue
-        // DbContext không thread-safe khi nhiều async operation chạy đồng thời
-        var overview = await _statisticsRepository.GetOverviewStatisticsAsync(startDate, endDate);
-        var topProducts = await _statisticsRepository.GetTopSoldProductsAsync(startDate, endDate, filter.TopCount);
-        var categoryRevenue = await _statisticsRepository.GetCategoryRevenueAsync(startDate, endDate);
-        var topCustomers = await _statisticsRepository.GetTopCustomersAsync(startDate, endDate, filter.TopCount);
-        var recentOrders = await _statisticsRepository.GetRecentOrdersAsync(10);
-        var productPerformance = await _statisticsRepository.GetProductPerformanceAsync();
-        var revenueChart = await GetRevenueChartDataAsync(startDate, endDate);
+            // Sequential awaits to avoid multiple concurrent EF queries on same DbContext
+            var overview = await _statisticsRepository.GetOverviewStatisticsAsync(startDate, endDate);
+            var topProducts = await _statisticsRepository.GetTopSoldProductsAsync(startDate, endDate, filter.TopCount);
+            var categoryRevenue = await _statisticsRepository.GetCategoryRevenueAsync(startDate, endDate);
+            var topCustomers = await _statisticsRepository.GetTopCustomersAsync(startDate, endDate, filter.TopCount);
+            var recentOrders = await _statisticsRepository.GetRecentOrdersAsync(10);
+            var productPerformance = await _statisticsRepository.GetProductPerformanceAsync();
 
-        var statistics = new AdminStatisticsDto
-        {
-            Overview = overview,
-            TopSoldProducts = topProducts,
-            CategoryRevenue = categoryRevenue,
-            TopCustomers = topCustomers,
-            RevenueChart = revenueChart,
-            RecentOrders = recentOrders,
-            ProductPerformance = productPerformance
-        };
+            // Fetch revenue chart data sequentially as well
+            var revenueChart = await GetRevenueChartDataAsync(startDate, endDate);
+
+            var statistics = new AdminStatisticsDto
+            {
+                Overview = overview,
+                TopSoldProducts = topProducts,
+                CategoryRevenue = categoryRevenue,
+                TopCustomers = topCustomers,
+                RevenueChart = revenueChart,
+                RecentOrders = recentOrders,
+                ProductPerformance = productPerformance
+            };
 
         // Cache the results
         await _cacheService.SetAsync(cacheKey, statistics, StatsCacheTtl);
@@ -109,22 +108,87 @@ public async Task<AdminStatisticsDto> GetAdminStatisticsAsync(StatisticsFilterDt
         }
 
         /// <summary>
+        /// Get top sold products for a period
+        /// </summary>
+        public async Task<List<TopProductDto>> GetTopSoldProductsAsync(StatisticsFilterDto filter)
+        {
+            var (startDate, endDate) = GetDateRange(filter);
+            var cacheKey = $"admin:stats:top-products:{filter.Period}:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}:{filter.TopCount}";
+
+            return await _cacheService.CacheOrGetAsync(cacheKey, () => _statisticsRepository.GetTopSoldProductsAsync(startDate, endDate, filter.TopCount), StatsCacheTtl);
+        }
+
+        /// <summary>
+        /// Get category revenue for a period
+        /// </summary>
+        public async Task<List<CategoryRevenueDto>> GetCategoryRevenueAsync(StatisticsFilterDto filter)
+        {
+            var (startDate, endDate) = GetDateRange(filter);
+            var cacheKey = $"admin:stats:category-revenue:{filter.Period}:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}";
+
+            return await _cacheService.CacheOrGetAsync(cacheKey, () => _statisticsRepository.GetCategoryRevenueAsync(startDate, endDate), StatsCacheTtl);
+        }
+
+        /// <summary>
+        /// Get top customers for a period
+        /// </summary>
+        public async Task<List<TopCustomerDto>> GetTopCustomersAsync(StatisticsFilterDto filter)
+        {
+            var (startDate, endDate) = GetDateRange(filter);
+            var cacheKey = $"admin:stats:top-customers:{filter.Period}:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}:{filter.TopCount}";
+
+            return await _cacheService.CacheOrGetAsync(cacheKey, () => _statisticsRepository.GetTopCustomersAsync(startDate, endDate, filter.TopCount), StatsCacheTtl);
+        }
+
+        /// <summary>
         /// Get revenue chart data
         /// </summary>
-        private async Task<RevenueChartDto> GetRevenueChartDataAsync(DateTime startDate, DateTime endDate)
-{
-    // FIX: Chạy tuần tự thay vì Task.WhenAll để tránh DbContext threading issue
-    var daily = await _statisticsRepository.GetDailyRevenueAsync(startDate, endDate);
-    var weekly = await _statisticsRepository.GetWeeklyRevenueAsync(startDate, endDate);
-    var monthly = await _statisticsRepository.GetMonthlyRevenueAsync(startDate, endDate);
+        public async Task<RevenueChartDto> GetRevenueChartAsync(StatisticsFilterDto filter)
+        {
+            var (startDate, endDate) = GetDateRange(filter);
+            return await GetRevenueChartDataAsync(startDate, endDate);
+        }
 
-    return new RevenueChartDto
-    {
-        Daily = daily,
-        Weekly = weekly,
-        Monthly = monthly
-    };
-}
+        /// <summary>
+        /// Get recent orders
+        /// </summary>
+        public async Task<List<RecentOrderDto>> GetRecentOrdersAsync(int count = 10)
+        {
+            var cacheKey = $"admin:stats:recent-orders:{count}";
+            return await _cacheService.CacheOrGetAsync(cacheKey, () => _statisticsRepository.GetRecentOrdersAsync(count), StatsCacheTtl);
+        }
+
+        /// <summary>
+        /// Get product performance
+        /// </summary>
+        public async Task<ProductPerformanceDto> GetProductPerformanceAsync()
+        {
+            var cacheKey = "admin:stats:product-performance";
+            return await _cacheService.CacheOrGetAsync(cacheKey, () => _statisticsRepository.GetProductPerformanceAsync(), StatsCacheTtl);
+        }
+
+        /// <summary>
+        /// Get revenue chart data (internal)
+        /// </summary>
+        private async Task<RevenueChartDto> GetRevenueChartDataAsync(DateTime startDate, DateTime endDate)
+        {
+            // Sequential to avoid concurrent DbContext usage
+            var daily = await _statistics_repository_GetDaily(startDate, endDate);
+            var weekly = await _statistics_repository_GetWeekly(startDate, endDate);
+            var monthly = await _statistics_repository_GetMonthly(startDate, endDate);
+
+            return new RevenueChartDto
+            {
+                Daily = daily,
+                Weekly = weekly,
+                Monthly = monthly
+            };
+        }
+
+        // Helper wrappers to call repository (keeps naming consistent and allows centralized AsNoTracking in repo)
+        private Task<List<ChartDataPointDto>> _statistics_repository_GetDaily(DateTime s, DateTime e) => _statisticsRepository.GetDailyRevenueAsync(s, e);
+        private Task<List<ChartDataPointDto>> _statistics_repository_GetWeekly(DateTime s, DateTime e) => _statisticsRepository.GetWeeklyRevenueAsync(s, e);
+        private Task<List<ChartDataPointDto>> _statistics_repository_GetMonthly(DateTime s, DateTime e) => _statisticsRepository.GetMonthlyRevenueAsync(s, e);
 
         /// <summary>
         /// Calculate date range from filter

@@ -15,6 +15,8 @@ using Tekno.Infrastructure.Persistence;
 using Tekno.Infrastructure.Search;
 using System.IO;
 using System.Linq;
+using Tekno.Application.Recommendation;
+using Tekno.Infrastructure.Services;
 
 namespace Tekno.Api
 {
@@ -87,13 +89,17 @@ namespace Tekno.Api
 
             builder.Services.AddEndpointsApiExplorer();
             
-            // Register RecommendationClient and configure base address from env
-            builder.Services.AddHttpClient<RecommendationClient>((sp, client) =>
+            // Register Recommendation infrastructure client and application service
+            builder.Services.AddHttpClient<Tekno.Infrastructure.Services.RecommendationClient>((sp, client) =>
             {
                 var cfg = sp.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
                 var baseUrl = cfg["TRAINING_API_URL"] ?? "http://trainning_api:8000";
                 client.BaseAddress = new Uri(baseUrl);
             });
+            
+            // map interface -> implementation
+            builder.Services.AddScoped<Tekno.Application.Recommendation.IRecommendationClient, Tekno.Infrastructure.Services.RecommendationClient>();
+            builder.Services.AddScoped<Tekno.Application.Recommendation.IRecommendationService, Tekno.Application.Recommendation.RecommendationService>();
 
             // Swagger configuration with JWT support
             builder.Services.AddSwaggerGen(c =>
