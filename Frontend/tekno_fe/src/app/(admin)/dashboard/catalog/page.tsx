@@ -262,13 +262,6 @@ export default function VoucherPage() {
     }
   };
 
-  // Page change
-    const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-    }
-  };
-
   const handleResetFilters = () => {
     setSearch("");
     setStatusFilter("All");
@@ -321,6 +314,13 @@ export default function VoucherPage() {
 
     return { filteredVouchers: paginatedData, totalPages: total };
   }, [vouchers, search, statusFilter, currentPage, pageSize]);
+
+  // Page change - định nghĩa sau useMemo để có quyền truy cập totalPages
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
 
   return (
     <div className="p-6">

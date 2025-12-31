@@ -19,6 +19,7 @@ import {
   Package,
   RefreshCw,
   Calendar,
+  AlertTriangle,
 } from "lucide-react";
 import {
   LineChart,
@@ -45,6 +46,8 @@ const COLORS = [
   "#ec4899",
 ];
 
+type ChartType = "daily" | "weekly" | "monthly";
+
 export default function AdminStatisticsPage() {
   const [statistics, setStatistics] = useState<StatisticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,7 +58,8 @@ export default function AdminStatisticsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<DatePeriod>("Last30Days");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
-  const [topCount, setTopCount] = useState(10); // Đảm bảo giá trị khởi tạo hợp lệ
+  const [topCount, setTopCount] = useState(10);
+  const [chartType, setChartType] = useState<ChartType>("daily");
 
   // Get token (adjust based on your auth implementation)
   const getToken = () => {
@@ -80,10 +84,9 @@ const loadStatistics = async () => {
       return;
     }
 
-    // Validate và xây dựng params một cách an toàn
     const params: any = {
-      period: selectedPeriod || "Last30Days", // Fallback giá trị mặc định
-      topCount: Math.max(5, Math.min(50, topCount)), // Đảm bảo trong range 5-50
+      period: selectedPeriod || "Last30Days",
+      topCount: Math.max(5, Math.min(50, topCount)),
     };
 
     if (selectedPeriod === "Custom") {
@@ -186,7 +189,7 @@ const loadStatistics = async () => {
     );
   }
 
-  const { overview, topProducts, revenueByCategory, topCustomers, revenueChart, recentOrders, productPerformance } = statistics;
+  const { overview, topSoldProducts, categoryRevenue, topCustomers, revenueChart, recentOrders, productPerformance } = statistics;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -292,19 +295,19 @@ const loadStatistics = async () => {
           <p className="text-2xl font-bold text-gray-900">
             {formatCurrency(overview.totalRevenue)}
           </p>
-          {overview.revenueGrowth !== undefined && (
+          {overview.revenueGrowthPercent !== undefined && (
             <div className="flex items-center mt-2 text-sm">
-              {overview.revenueGrowth >= 0 ? (
+              {overview.revenueGrowthPercent >= 0 ? (
                 <TrendingUp className="w-4 h-4 text-green-600 mr-1" />
               ) : (
                 <TrendingDown className="w-4 h-4 text-red-600 mr-1" />
               )}
               <span
                 className={
-                  overview.revenueGrowth >= 0 ? "text-green-600" : "text-red-600"
+                  overview.revenueGrowthPercent >= 0 ? "text-green-600" : "text-red-600"
                 }
               >
-                {overview.revenueGrowth.toFixed(1)}%
+                {overview.revenueGrowthPercent.toFixed(1)}%
               </span>
             </div>
           )}
@@ -318,19 +321,19 @@ const loadStatistics = async () => {
           <p className="text-2xl font-bold text-gray-900">
             {overview.totalOrders.toLocaleString()}
           </p>
-          {overview.ordersGrowth !== undefined && (
+          {overview.orderGrowthPercent !== undefined && (
             <div className="flex items-center mt-2 text-sm">
-              {overview.ordersGrowth >= 0 ? (
+              {overview.orderGrowthPercent >= 0 ? (
                 <TrendingUp className="w-4 h-4 text-green-600 mr-1" />
               ) : (
                 <TrendingDown className="w-4 h-4 text-red-600 mr-1" />
               )}
               <span
                 className={
-                  overview.ordersGrowth >= 0 ? "text-green-600" : "text-red-600"
+                  overview.orderGrowthPercent >= 0 ? "text-green-600" : "text-red-600"
                 }
               >
-                {overview.ordersGrowth.toFixed(1)}%
+                {overview.orderGrowthPercent.toFixed(1)}%
               </span>
             </div>
           )}
@@ -357,21 +360,105 @@ const loadStatistics = async () => {
         </div>
       </div>
 
+      {/* Order Status Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-yellow-50 rounded-lg shadow-sm p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-yellow-700 uppercase tracking-wide">Pending</p>
+              <p className="text-2xl font-bold text-yellow-900">{overview.pendingOrders}</p>
+            </div>
+            <ShoppingCart className="w-8 h-8 text-yellow-400" />
+          </div>
+        </div>
+        <div className="bg-blue-50 rounded-lg shadow-sm p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-blue-700 uppercase tracking-wide">Processing</p>
+              <p className="text-2xl font-bold text-blue-900">{overview.processingOrders}</p>
+            </div>
+            <Package className="w-8 h-8 text-blue-400" />
+          </div>
+        </div>
+        <div className="bg-green-50 rounded-lg shadow-sm p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-green-700 uppercase tracking-wide">Completed</p>
+              <p className="text-2xl font-bold text-green-900">{overview.completedOrders}</p>
+            </div>
+            <ShoppingCart className="w-8 h-8 text-green-400" />
+          </div>
+        </div>
+        <div className="bg-red-50 rounded-lg shadow-sm p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-red-700 uppercase tracking-wide">Cancelled</p>
+              <p className="text-2xl font-bold text-red-900">{overview.cancelledOrders}</p>
+            </div>
+            <ShoppingCart className="w-8 h-8 text-red-400" />
+          </div>
+        </div>
+      </div>
+
+      {/* Order Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium text-gray-600">Order Completion Rate</p>
+            <TrendingUp className="w-5 h-5 text-green-600" />
+          </div>
+          <p className="text-2xl font-bold text-gray-900">
+            {overview.orderCompletionRate.toFixed(1)}%
+          </p>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium text-gray-600">Order Cancellation Rate</p>
+            <TrendingDown className="w-5 h-5 text-red-600" />
+          </div>
+          <p className="text-2xl font-bold text-gray-900">
+            {overview.orderCancellationRate.toFixed(1)}%
+          </p>
+        </div>
+      </div>
+
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Revenue Chart */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Revenue Trend
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
+            <div className="flex gap-2">
+              <Button
+                variant={chartType === "daily" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setChartType("daily")}
+              >
+                Daily
+              </Button>
+              <Button
+                variant={chartType === "weekly" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setChartType("weekly")}
+              >
+                Weekly
+              </Button>
+              <Button
+                variant={chartType === "monthly" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setChartType("monthly")}
+              >
+                Monthly
+              </Button>
+            </div>
+          </div>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={revenueChart}>
+            <LineChart data={revenueChart[chartType] || []}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tickFormatter={formatDate} />
+              <XAxis dataKey="label" />
               <YAxis tickFormatter={(val) => `${(val / 1000000).toFixed(1)}M`} />
               <Tooltip
                 formatter={(value: number) => formatCurrency(value)}
-                labelFormatter={formatDate}
               />
               <Legend />
               <Line
@@ -391,13 +478,13 @@ const loadStatistics = async () => {
             Orders Trend
           </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={revenueChart}>
+            <BarChart data={revenueChart[chartType] || []}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tickFormatter={formatDate} />
+              <XAxis dataKey="label" />
               <YAxis />
-              <Tooltip labelFormatter={formatDate} />
+              <Tooltip />
               <Legend />
-              <Bar dataKey="orders" fill="#10b981" name="Orders" />
+              <Bar dataKey="orderCount" fill="#10b981" name="Orders" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -413,21 +500,19 @@ const loadStatistics = async () => {
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={revenueByCategory.map((item: any) => ({
+                data={categoryRevenue.map((item: any) => ({
                   ...item,
-                  categoryName: item.categoryName,
-                  totalRevenue: item.totalRevenue,
-                  percentage: item.percentage,
+                  value: item.revenue,
                 }))}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={(entry: any) => `${entry.payload.categoryName} (${entry.payload.percentage.toFixed(1)}%)`}
+                label={(entry: any) => `${entry.payload.categoryName} (${entry.payload.revenuePercentage.toFixed(1)}%)`}
                 outerRadius={80}
                 fill="#8884d8"
-                dataKey="totalRevenue"
+                dataKey="value"
               >
-                {revenueByCategory.map((entry, index) => (
+                {categoryRevenue.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}
@@ -444,7 +529,7 @@ const loadStatistics = async () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Product Performance
           </h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-blue-50 rounded-lg p-4">
               <p className="text-sm text-blue-600 font-medium mb-1">Total Products</p>
               <p className="text-2xl font-bold text-blue-700">
@@ -470,6 +555,24 @@ const loadStatistics = async () => {
               </p>
             </div>
           </div>
+
+          {/* Low Stock Alerts */}
+          {productPerformance.lowStockAlerts && productPerformance.lowStockAlerts.length > 0 && (
+            <div className="border-t pt-4">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-orange-600" />
+                Low Stock Alerts
+              </h4>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {productPerformance.lowStockAlerts.slice(0, 5).map((alert: any) => (
+                  <div key={alert.productId} className="flex items-center justify-between p-2 bg-orange-50 rounded text-sm">
+                    <span className="text-gray-900 font-medium">{alert.productName}</span>
+                    <span className="text-orange-600 font-bold">{alert.stockLevel} left</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -483,31 +586,34 @@ const loadStatistics = async () => {
             <thead>
               <tr className="border-b">
                 <th className="text-left py-3 px-4 font-medium text-gray-600">Product</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-600">Sold</th>
+                <th className="text-center py-3 px-4 font-medium text-gray-600">Category</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-600">Units Sold</th>
                 <th className="text-right py-3 px-4 font-medium text-gray-600">Revenue</th>
+                <th className="text-center py-3 px-4 font-medium text-gray-600">Avg Rating</th>
               </tr>
             </thead>
             <tbody>
-              {topProducts.map((product, idx) => (
-                <tr key={product.id} className="border-b hover:bg-gray-50">
+              {topSoldProducts.map((product, idx) => (
+                <tr key={product.productId} className="border-b hover:bg-gray-50">
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
                       <span className="text-gray-500 font-medium">#{idx + 1}</span>
-                      {product.imageUrl && (
-                        <img
-                          src={product.imageUrl}
-                          alt={product.name}
-                          className="w-10 h-10 rounded object-cover"
-                        />
-                      )}
-                      <span className="font-medium">{product.name}</span>
+                      <span className="font-medium">{product.productName}</span>
                     </div>
                   </td>
+                  <td className="text-center py-3 px-4 text-gray-600">
+                    {product.categoryName}
+                  </td>
                   <td className="text-right py-3 px-4 font-medium">
-                    {product.totalSold}
+                    {product.unitsSold.toLocaleString()}
                   </td>
                   <td className="text-right py-3 px-4 font-medium text-green-600">
-                    {formatCurrency(product.totalRevenue)}
+                    {formatCurrency(product.revenue)}
+                  </td>
+                  <td className="text-center py-3 px-4">
+                    <span className="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-semibold">
+                      {product.averageRating.toFixed(1)} ⭐ ({product.totalReviews})
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -526,7 +632,7 @@ const loadStatistics = async () => {
           <div className="space-y-3">
             {topCustomers.map((customer, idx) => (
               <div
-                key={customer.id}
+                key={customer.userId}
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
               >
                 <div className="flex items-center gap-3">
@@ -534,8 +640,9 @@ const loadStatistics = async () => {
                     {idx + 1}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{customer.name}</p>
+                    <p className="font-medium text-gray-900">{customer.customerName}</p>
                     <p className="text-xs text-gray-500">{customer.email}</p>
+                    <p className="text-xs text-blue-600 font-medium mt-1">{customer.customerSegment}</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -543,7 +650,7 @@ const loadStatistics = async () => {
                     {formatCurrency(customer.totalSpent)}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {customer.totalOrders} orders
+                    {customer.orderCount} orders
                   </p>
                 </div>
               </div>
@@ -559,26 +666,25 @@ const loadStatistics = async () => {
           <div className="space-y-3">
             {recentOrders.map((order) => (
               <div
-                key={order.id}
+                key={order.orderId}
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
               >
                 <div>
-                  <p className="font-medium text-gray-900">#{order.id}</p>
-                  <p className="text-xs text-gray-500">{order.customerName}</p>
+                  <p className="font-medium text-gray-900">#{order.orderNumber}</p>
+                  <p className="text-xs text-gray-500">{order.itemCount} items</p>
                   <p className="text-xs text-gray-400">
-                    {new Date(order.orderDate).toLocaleString("vi-VN")}
+                    {new Date(order.createdAt).toLocaleString("vi-VN")}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-gray-900">
-                    {formatCurrency(order.totalAmount)}
-                  </p>
                   <span
                     className={`inline-block px-2 py-1 rounded text-xs font-medium ${
                       order.status === "Completed"
                         ? "bg-green-100 text-green-700"
                         : order.status === "Processing"
                         ? "bg-blue-100 text-blue-700"
+                        : order.status === "Pending"
+                        ? "bg-yellow-100 text-yellow-700"
                         : "bg-gray-100 text-gray-700"
                     }`}
                   >
