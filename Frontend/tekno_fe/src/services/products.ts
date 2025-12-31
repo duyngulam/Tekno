@@ -58,6 +58,7 @@ export async function getProductsList(params?: {
 }
 
 import { Product } from "@/type/product"; 
+import { ApiResponse } from "@/type/share";
 
 // Trả về dữ liệu chi tiết sản phẩm đúng kiểu ProductDetail
 export async function getProductDetail(slug: string): Promise<Product> {
@@ -85,6 +86,33 @@ export async function getProductDetail(slug: string): Promise<Product> {
   }
 }
 
+export async function getProductRecommendation(userId: number, k: number): Promise<Product[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/recommend/cf/products/${userId}?k=${k}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch product detail: ${res.status}`);
+    }
+
+    const result = await res.json();
+
+    if (!result.success || !result.data) {
+      throw new Error(result.message || "Invalid API response");
+    }
+
+    return result.data.recommendations as Product[];
+  } catch (error) {
+    console.error("Error in getProductDetail:", error);
+    throw error;
+  }
+}
+
+
+
 export async function getProductsInCart() {
 // try {
 //     const res = await fetch(`${API_BASE_URL}/cart`, {
@@ -111,9 +139,17 @@ export async function getProductsInCart() {
 }
 
 // Admin product helpers
-export async function getAdminProducts() {
+export async function getAdminProducts(params?: {
+  pageSize?: number;
+  page?: number;
+} ) {
   try {
-    return await get(`${API_BASE}/admin/products`, { cache: "no-store" });
+    const query = new URLSearchParams();
+    if (params?.pageSize) query.append("PageSize", String(params.pageSize));
+    if (params?.page) query.append("Page", String(params.page));
+    
+    const url = `${API_BASE}/admin/products${query.toString() ? `?${query.toString()}` : ""}`;
+    return await get(url, { cache: "no-store" });
   } catch (error) {
     console.error("❌ Failed to load admin products:", error);
     throw error;

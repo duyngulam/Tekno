@@ -7,6 +7,7 @@ export default function Actions({ onEdit, onDelete }: any) {
       <Button
         variant="ghost"
         size="icon"
+        data-testid="edit-button"
         onClick={(e) => {
           e.stopPropagation();   // ⛔ Chặn click nổi lên <tr>
           onEdit();
@@ -19,6 +20,7 @@ export default function Actions({ onEdit, onDelete }: any) {
       <Button
         variant="ghost"
         size="icon"
+        data-testid="delete-button" 
         onClick={(e) => {
           e.stopPropagation();   // ⛔ Chặn click nổi lên <tr>
           onDelete();

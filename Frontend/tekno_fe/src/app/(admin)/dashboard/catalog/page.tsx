@@ -10,7 +10,7 @@ import {
 import { voucherApi } from "@/services/voucherApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, Trash2, Edit2, Power, PowerOff, BarChart3, History } from "lucide-react";
+import { Eye, Trash2, Edit2, Power, PowerOff, BarChart3, History, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function VoucherPage() {
   const [vouchers, setVouchers] = useState<any[]>([]);
@@ -29,6 +29,10 @@ export default function VoucherPage() {
   // Search + Filter
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [form, setForm] = useState({
     code: "",
@@ -258,6 +262,12 @@ export default function VoucherPage() {
     }
   };
 
+  const handleResetFilters = () => {
+    setSearch("");
+    setStatusFilter("All");
+    setCurrentPage(1);
+  };
+
   const resetForm = () => {
     setForm({
       code: "",
@@ -271,11 +281,11 @@ export default function VoucherPage() {
     setSelectedVoucher(null);
   };
 
-  // Filter + Search Logic
-  const filteredVouchers = useMemo(() => {
+  // Filter + Search Logic + Pagination
+  const { filteredVouchers, totalPages } = useMemo(() => {
     const today = new Date();
 
-    return vouchers
+    const filtered = vouchers
       .map((v) => {
         const start = new Date(v.startDate);
         const end = new Date(v.endDate);
@@ -296,7 +306,21 @@ export default function VoucherPage() {
 
         return matchSearch && matchStatus;
       });
-  }, [vouchers, search, statusFilter]);
+
+    // Tính pagination
+    const total = Math.ceil(filtered.length / pageSize);
+    const startIdx = (currentPage - 1) * pageSize;
+    const paginatedData = filtered.slice(startIdx, startIdx + pageSize);
+
+    return { filteredVouchers: paginatedData, totalPages: total };
+  }, [vouchers, search, statusFilter, currentPage, pageSize]);
+
+  // Page change - định nghĩa sau useMemo để có quyền truy cập totalPages
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
 
   return (
     <div className="p-6">
@@ -334,7 +358,7 @@ export default function VoucherPage() {
         <div className="flex justify-center items-center py-12">
           <p className="text-gray-500">Loading vouchers...</p>
         </div>
-      ) : vouchers.length === 0 ? (
+      ) : filteredVouchers.length === 0 ? (
         <p className="text-gray-500">No vouchers found.</p>
       ) : (
         <div className="overflow-x-auto">
@@ -448,6 +472,83 @@ export default function VoucherPage() {
           </table>
         </div>
       )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-gray-600">
+              Showing {filteredVouchers.length} of {vouchers.length} vouchers (Page {currentPage} of {totalPages})
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </Button>
+
+              <div className="flex gap-1">
+                {[...Array(Math.min(5, totalPages))].map((_, idx) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = idx + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = idx + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + idx;
+                  } else {
+                    pageNum = currentPage - 2 + idx;
+                  }
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`px-3 py-1 rounded text-sm ${
+                        currentPage === pageNum
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Page size:</label>
+              <select
+                className="border rounded px-2 py-1 text-sm"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>   
+        )}
 
       {/* Create Voucher Modal */}
       <Dialog open={openCreate} onOpenChange={setOpenCreate}>

@@ -114,21 +114,32 @@ export async function getAdminStatistics(
 ): Promise<ApiResponse<StatisticsResponse>> {
   const queryParams = new URLSearchParams();
 
-  if (params?.period) {
+  // Validate period
+  const validPeriods: DatePeriod[] = [
+    "Today", "Yesterday", "Last7Days", "Last30Days",
+    "ThisWeek", "LastWeek", "ThisMonth", "LastMonth",
+    "ThisQuarter", "LastQuarter", "ThisYear", "LastYear", "Custom"
+  ];
+
+  if (params?.period && validPeriods.includes(params.period)) {
     queryParams.append("period", params.period);
+  } else {
+    queryParams.append("period", "Last30Days");
   }
 
-  if (params?.startDate) {
+  // Validate và append startDate
+  if (params?.startDate && params.startDate.trim()) {
     queryParams.append("startDate", params.startDate);
   }
 
-  if (params?.endDate) {
+  // Validate và append endDate
+  if (params?.endDate && params.endDate.trim()) {
     queryParams.append("endDate", params.endDate);
   }
 
-  if (params?.topCount) {
-    queryParams.append("topCount", params.topCount.toString());
-  }
+  // Validate topCount - LUÔN GỬI với giá trị mặc định 10 nếu không được cung cấp
+  const topCount = params?.topCount ? Math.max(5, Math.min(50, params.topCount)) : 10;
+  queryParams.append("topCount", topCount.toString());
 
   const url = `${API_BASE_URL}/admin/statistics${
     queryParams.toString() ? `?${queryParams.toString()}` : ""
@@ -136,9 +147,13 @@ export async function getAdminStatistics(
 
   console.log("[Statistics API] Request Details:");
   console.log("  URL:", url);
-  console.log("  Parameters:", Object.fromEntries(queryParams));
+  console.log("  Query Params:", {
+    period: queryParams.get("period"),
+    startDate: queryParams.get("startDate"),
+    endDate: queryParams.get("endDate"),
+    topCount: queryParams.get("topCount"),
+  });
   console.log("  Token exists:", !!token);
-  console.log("  Raw params input:", params);
 
   try {
     const res = await fetch(url, {
@@ -159,11 +174,11 @@ export async function getAdminStatistics(
       } catch {
         errorData = await res.text();
       }
-      console.error("[Statistics API] Error response body:", errorData);
-      console.error("[Statistics API] Full error:", {
+      console.error("[Statistics API] Error response:", {
         status: res.status,
         statusText: res.statusText,
-        errorData,
+        body: errorData,
+        url: url,
       });
       throw new StatisticsError(
         `Failed to fetch statistics: ${res.statusText}`,

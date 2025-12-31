@@ -104,6 +104,9 @@ export default function ProductPage() {
 
   const [openAddVariant, setOpenAddVariant] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
     // ✅ Thêm useMemo để filter products theo search query
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -123,16 +126,24 @@ export default function ProductPage() {
     });
   }, [products, searchQuery]);
 
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredProducts.slice(startIndex, endIndex);
+  }, [filteredProducts, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
   // load products, categories, brands
   useEffect(() => {
     loadAll();
   }, []);
 
-  const loadAll = async () => {
-    setLoading(true);
+const loadAll = async () => {
+  setLoading(true);
     await Promise.all([loadBrands(), loadCategories(), loadProducts()]);
-    setLoading(false);
-  };
+  setLoading(false);
+};
 
   const loadBrands = async () => {
     try {
@@ -179,16 +190,38 @@ export default function ProductPage() {
     }
   };
 
-  const loadProducts = async () => {
-    try {
-      const res = await getAdminProducts();
-      const list = res?.data?.data || res?.data || [];
-      setProducts(list);
-    } catch (err) {
-      console.error("Product load failed", err);
-      setProducts([]);
+// Thay thế hàm loadProducts hiện tại bằng code này:
+
+const loadProducts = async () => {
+  try {
+    // Request với PageSize lớn để lấy toàn bộ sản phẩm
+    const res = await getAdminProducts({ pageSize: 10000 });
+    
+    console.log("📦 Raw response:", res);
+    
+    let list = [];
+    
+    if (Array.isArray(res)) {
+      list = res;
+    } else if (res?.data) {
+      if (Array.isArray(res.data)) {
+        list = res.data;
+      } else if (Array.isArray(res.data.data)) {
+        list = res.data.data;
+      } else if (res.data.items && Array.isArray(res.data.items)) {
+        list = res.data.items;
+      }
     }
-  };
+    
+    console.log("✅ Extracted products:", list);
+    setProducts(list);
+    setCurrentPage(1); // Reset pagination
+  } catch (err) {
+    console.error("Product load failed", err);
+    setProducts([]);
+    setCurrentPage(1);
+  }
+};
 
   const loadProductDetail = async (prod: any) => {
     try {
@@ -291,6 +324,7 @@ if (variants && variants.length > 0) {
       await createAdminProduct(fd);
 
       await loadAll();
+      setCurrentPage(1);
       setOpenCreate(false);
       
       // Reset form
@@ -644,6 +678,7 @@ if (variants && variants.length > 0) {
     // ✅ STEP 4: Reload fresh data
     console.log("🔄 Reloading product list...");
     await loadProducts();
+    setCurrentPage(1);
     
     // Wait for backend to finish processing
     await new Promise(resolve => setTimeout(resolve, 800));
@@ -779,6 +814,7 @@ setVariants(variantsWithNames);
     try {
       await deleteAdminProduct(id);
       await loadAll();
+      setCurrentPage(1);
       alert("Deleted");
     } catch (err) {
       console.error(err);
@@ -788,24 +824,27 @@ setVariants(variantsWithNames);
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Products</h2>
         <Button onClick={() => setOpenCreate(true)}>+ Create Product</Button>
       </div>
-              <div className="flex items-center gap-4 mb-4">
-          <input
-            type="text"
-            placeholder="🔍 Search by ID, Name, Brand, or Category..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+<div className="flex items-center gap-4 mb-4">
+  <input
+    type="text"
+    placeholder="🔍 Search by ID, Name, Brand, or Category..."
+    value={searchQuery}
+    onChange={(e) => {
+      setSearchQuery(e.target.value);
+      setCurrentPage(1);
+    }}
             className="w-128 border rounded px-3 py-2 text-sm"
-          />
-          {searchQuery && (
+  />
+  {searchQuery && (
             <p className="text-xs text-gray-600 mt-1">
               Found {filteredProducts.length} product(s)
             </p>
-          )}
-        </div>
+  )}
+</div>
 
       {loading ? (
         <p>Loading...</p>
@@ -828,7 +867,7 @@ setVariants(variantsWithNames);
             </thead>
 
 <tbody>
-  {filteredProducts.map((p) => (
+  {paginatedProducts.map((p) => (
     <tr
       key={p.id}
       className="cursor-pointer hover:bg-gray-100"
@@ -898,10 +937,64 @@ setVariants(variantsWithNames);
             </tbody>
           </table>
 
-          {/* ✅ Thông báo khi không tìm thấy kết quả */}
-          {filteredProducts.length === 0 && searchQuery && (
-            <div className="text-center py-6 text-gray-500">
-              No products found matching "{searchQuery}"
+          {/* === PAGINATION CONTROLS === */}
+          {filteredProducts.length > 0 && (
+            <div className="flex justify-between items-center mt-4 px-4 py-3 bg-gray-50 rounded">
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 text-sm">
+                  Items per page:
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="border rounded px-2 py-1"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                </label>
+                <span className="text-sm text-gray-600">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredProducts.length)} of {filteredProducts.length} products
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  ← Prev
+                </button>
+
+                <div className="flex gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-2 border rounded ${
+                        currentPage === page
+                          ? "bg-blue-500 text-white border-blue-500"
+                          : "hover:bg-gray-100"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next →
+                </button>
+              </div>
             </div>
           )}
           

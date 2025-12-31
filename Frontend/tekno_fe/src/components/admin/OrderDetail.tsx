@@ -27,7 +27,14 @@ type OrderDetailData = {
   trackingNumber: string | null;
   shippingCarrier: string | null;
   customerNote: string | null;
-  shippingAddress: string | null;
+  shippingAddress: {
+  fullName?: string;
+  phone?: string;
+  addressLine?: string;
+  ward?: string;
+  district?: string;
+  province?: string;
+} | string | null;
   items: Array<{
     id: number;
     quantity: number;
@@ -143,6 +150,19 @@ export default function OrderDetail({ orderId, onClose, onActionComplete }: Orde
       minute: "2-digit",
     });
   };
+
+  const formatAddress = (address: any) => {
+  if (!address) return "No shipping address provided";
+  if (typeof address === "string") return address;
+  
+  const parts = [];
+  if (address.addressLine) parts.push(address.addressLine);
+  if (address.ward) parts.push(address.ward);
+  if (address.district) parts.push(address.district);
+  if (address.province) parts.push(address.province);
+  
+  return parts.length > 0 ? parts.join(", ") : "No address details";
+};
 
   const formatCurrency = (amount: number) => {
     return amount.toLocaleString("vi-VN") + "đ";
@@ -284,14 +304,20 @@ export default function OrderDetail({ orderId, onClose, onActionComplete }: Orde
                 Delivery Information
               </h3>
               <div className="space-y-2 text-sm">
-                {order.shippingAddress ? (
-                  <div>
-                    <p className="text-gray-600">Address</p>
-                    <p className="font-medium">{order.shippingAddress}</p>
-                  </div>
-                ) : (
-                  <p className="text-gray-500 italic">No shipping address provided</p>
-                )}
+<div>
+  <p className="text-gray-600">Address</p>
+  <p className="font-medium">{formatAddress(order.shippingAddress)}</p>
+  {typeof order.shippingAddress === 'object' && order.shippingAddress && (
+    <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+      {order.shippingAddress.fullName && (
+        <p>Name: {order.shippingAddress.fullName}</p>
+      )}
+      {order.shippingAddress.phone && (
+        <p>Phone: {order.shippingAddress.phone}</p>
+      )}
+    </div>
+  )}
+</div>
                 {order.trackingNumber && (
                   <div>
                     <p className="text-gray-600">Tracking Number</p>
