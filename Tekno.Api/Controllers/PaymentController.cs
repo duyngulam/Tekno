@@ -715,7 +715,7 @@ namespace Tekno.Api.Controllers
             //       $"currency={result.Currency}&" +
             //       $"responseCode={responseCode}&" +
             //       $"gateway={result.Gateway}";
-            return baseUrl + $"/{result.OrderId}";
+            return baseUrl + $"/?OrderId={result.OrderId}";
             ;
             ;
         }
