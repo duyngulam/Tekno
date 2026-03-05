@@ -18,102 +18,87 @@ Số thẻ: 9704198526191432198
 Tên chủ thẻ:NGUYEN VAN A
 Ngày phát hành:07/15
 Mật khẩu OTP:123456
-Thành công
-2	
-Ngân hàng: NCB
-Số thẻ: 9704195798459170488
-Tên chủ thẻ:NGUYEN VAN A
-Ngày phát hành:07/15
-Thẻ không đủ số dư
-3	
-Ngân hàng: NCB
-Số thẻ: 9704192181368742
-Tên chủ thẻ:NGUYEN VAN A
-Ngày phát hành:07/15
-Thẻ chưa kích hoạt
-4	
-Ngân hàng: NCB
-Số thẻ: 9704193370791314
-Tên chủ thẻ:NGUYEN VAN A
-Ngày phát hành:07/15
-Thẻ bị khóa
-5	
-Ngân hàng: NCB
-Số thẻ: 9704194841945513
-Tên chủ thẻ:NGUYEN VAN A
-Ngày phát hành:07/15
-Thẻ bị hết hạn
-6	
-Loại thẻ quốc tếVISA (No 3DS)
-Số thẻ: 4456530000001005
-CVC/CVV: 123
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:12/26
-Email:test@gmail.com
-Địa chỉ:22 Lang Ha
-Thành phố:Ha Noi
-Thành công
-7	
-Loại thẻ quốc tếVISA (3DS)
-Số thẻ: 4456530000001096
-CVC/CVV: 123
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:12/26
-Email:test@gmail.com
-Địa chỉ:22 Lang Ha
-Thành phố:Ha Noi
-Thành công
-8	
-Loại thẻ quốc tếMasterCard (No 3DS)
-Số thẻ: 5200000000001005
-CVC/CVV: 123
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:12/26
-Email:test@gmail.com
-Địa chỉ:22 Lang Ha
-Thành phố:Ha Noi
-Thành công
-9	
-Loại thẻ quốc tếMasterCard (3DS)
-Số thẻ: 5200000000001096
-CVC/CVV: 123
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:12/26
-Email:test@gmail.com
-Địa chỉ:22 Lang Ha
-Thành phố:Ha Noi
-Thành công
-10	
-Loại thẻ quốc tếJCB (No 3DS)
-Số thẻ: 3337000000000008
-CVC/CVV: 123
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:12/26
-Email:test@gmail.com
-Địa chỉ:22 Lang Ha
-Thành phố:Ha Noi
-Thành công
-11	
-Loại thẻ quốc tếJCB (3DS)
-Số thẻ: 3337000000200004
-CVC/CVV: 123
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:12/24
-Email:test@gmail.com
-Địa chỉ:22 Lang Ha
-Thành phố:Ha Noi
-Thành công
-12	
-Loại thẻ ATM nội địaNhóm Bank qua NAPAS
-Số thẻ: 9704000000000018
-Số thẻ: 9704020000000016
-Tên chủ thẻ:NGUYEN VAN A
-Ngày phát hành:03/07
-OTP:otp
-Thành công
-12	
-Loại thẻ ATM nội địaEXIMBANK
-Số thẻ: 9704310005819191
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:10/26
-Thành công
+# Tekno
+
+Tekno is an open-source e-commerce implementing a full-featured shopping platform (catalog, cart, checkout, payments, promotions, reviews, admin reporting). It follows a layered/clean architecture with separated projects for API, application logic, domain models and infrastructure.
+Summary
+- Backend: ASP.NET Core Web API implementing products, cart, orders, payments, promotions and admin endpoints.
+- Frontend: Next.js + React + TypeScript + Tailwind (located at `Frontend/tekno_fe`).
+
+Tech stack
+- Backend: .NET (ASP.NET Core), Entity Framework Core, Npgsql
+- Search: Elasticsearch (Nest client)
+- Cache: Redis
+- Auth: JWT (symmetric secret)
+- Payments: VNPay (sandbox) + mock/other providers
+- Frontend: Next.js (React) + TypeScript + Tailwind CSS
+- Dev & Ops: Docker, Docker Compose
+
+- Clean architecture: separation between `Api` (controllers), `Application` (use-cases), `Domain` (entities) and `Infrastructure` (persistence & external services).
+- Robust integrations: PostgreSQL for persistence, Redis for caching, Elasticsearch for search, Cloudinary for media, VNPay & other payment options.
+- Production-focused: Docker compose orchestration, hosted background services, structured logging, JWT auth and Swagger for API discoverability.
+
+Project layout
+- `Tekno.Api` — Web API, authentication, Swagger, DI setup and host configuration.
+- `Tekno.Application` — business use-cases, DTOs, validators and application services.
+- `Tekno.Domain` — domain entities, enums and value objects.
+- `Tekno.Infrastructure` — EF Core persistence, repositories, external API clients, background workers.
+- `Tekno.Database` — CSV seed data and DB scripts.
+- `Frontend/tekno_fe` — Next.js client application.
+
+Key design notes (short)
+- Configuration is read from `appsettings.json` and may be overridden by environment variables. Environment overrides use either `DB_CONNECTION_STRING` or double-underscore naming (e.g. `VNPay__TmnCode`).
+- Hosted/background services are used for periodic tasks (province fetch, coupon expiration, promotion management).
+- Swagger has integrated JWT support to exercise protected endpoints during interviews or demos.
+
+Getting started
+
+Prerequisites
+- Docker & Docker Compose
+- .NET SDK (7+ recommended)
+- Node.js & npm (for frontend)
+
+Run everything (recommended)
+```powershell
+docker compose up --build
+```
+
+Run backend locally (API only)
+1. Copy `.env.example` to `.env` and update secrets if needed.
+2. From repository root run:
+```powershell
+dotnet run --project Tekno.Api/Tekno.Api.csproj
+```
+
+Run frontend locally
+```powershell
+cd Frontend/tekno_fe
+npm install
+npm run dev
+```
+
+Useful URLs
+- Swagger (API explorer): http://localhost:5000/swagger
+- Frontend (Next.js dev): http://localhost:3000 (when running locally)
+
+Environment variables (see `.env.example`)
+- `DB_CONNECTION_STRING` or `ConnectionStrings__DefaultConnection` — Postgres
+- `JWT_SECRET_KEY`, `JWT_ISSUER`, `JWT_AUDIENCE`, `JWT_EXPIRY_MINUTES`
+- `Redis__ConnectionString`
+- `VNPay__TmnCode`, `VNPay__HashSecret`, `VNPay__PaymentUrl`, `VNPay__ReturnUrl`, `VNPay__IpnUrl`
+
+VNPay sandbox test card (kept minimal)
+- Ngân hàng: NCB
+- Số thẻ: 9704198526191432198
+- Tên chủ thẻ: NGUYEN VAN A
+- Ngày phát hành: 07/15
+- Mật khẩu OTP: 123456
+
+Quick demo endpoints to mention in interviews
+- `POST /api/auth/register` — create user
+- `POST /api/auth/login` — get JWT token
+- `GET /api/products` — list products
+- `POST /api/cart/items` — add item to cart
+- `POST /api/payment/process` — start payment flow (VNPay)
+Contact
+- Repo reference / maintainer: see project metadata or Git history for author details.
