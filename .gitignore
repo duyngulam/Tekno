@@ -383,7 +383,28 @@ cloudinary.json
 
 # Azure credentials
 .azure/
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+.venv311/
+venv311/
+# Python cache
+__pycache__/
+*.pyc
 
+# Build
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
 # ============================================
 # Docker Override Files
 # ============================================
