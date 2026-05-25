@@ -1,0 +1,70 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# IDE & Editor
+.vs
+.vscode
+*.swp
+*.swo
+*~
+.DS_Store
+.idea
+*.iml
+
+# Build & Dependencies
+bin
+obj
+packages
+node_modules
+dist
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+
+# Test results
+TestResults
+coverage
+.coverage
+htmlcov
+
+# Logs & Temp
+logs
+*.log
+tmp
+temp
+
+# Docker
+Dockerfile
+docker-compose.yml
+.docker
+
+# Documentation
+docs
+README.md
+*.md
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Cache
+.cache
+.grunt
+.next
+.nuxt
+dist
+
+# OS
+Thumbs.db
+.DS_Store

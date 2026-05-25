@@ -16,7 +16,7 @@ namespace Tekno.Infrastructure.Services
         public RecommendationClient(HttpClient http, Microsoft.Extensions.Configuration.IConfiguration cfg)
         {
             _http = http;
-            _baseUrl = cfg["TRAINING_API_URL"] ?? "http://trainning_api:8000";
+            _baseUrl = cfg["TRAINING_API_URL"] ?? "http://localhost:8000";
         }
 
         public async Task<(string category, string brand)> PredictAsync(int productId)

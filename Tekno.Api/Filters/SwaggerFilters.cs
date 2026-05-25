@@ -1,6 +1,7 @@
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Tekno.Api.Filters
@@ -62,6 +63,9 @@ namespace Tekno.Api.Filters
                 }
             }
 
+            // Ensure all 200 responses include a concrete example payload
+            ApplyDefaultSuccessExample(operation, context);
+
             // If controller name starts with 'Admin', add an additional 'Admin' tag to the operation
             var controllerName = context.MethodInfo.DeclaringType?.Name;
             if (!string.IsNullOrEmpty(controllerName) && controllerName.StartsWith("Admin", StringComparison.OrdinalIgnoreCase))
@@ -82,6 +86,161 @@ namespace Tekno.Api.Filters
                     operation.Tags.Insert(0, new OpenApiTag { Name = "Admin" });
                 }
             }
+        }
+
+        private static void ApplyDefaultSuccessExample(OpenApiOperation operation, OperationFilterContext context)
+        {
+            if (!operation.Responses.TryGetValue("200", out var okResponse))
+            {
+                return;
+            }
+
+            if (okResponse.Content == null || okResponse.Content.Count == 0)
+            {
+                var responseType = context.ApiDescription.SupportedResponseTypes
+                    .FirstOrDefault(r => r.StatusCode == 200)?.Type;
+
+                if (responseType != null && responseType != typeof(void))
+                {
+                    var schema = context.SchemaGenerator.GenerateSchema(responseType, context.SchemaRepository);
+                    okResponse.Content = new Dictionary<string, OpenApiMediaType>
+                    {
+                        ["application/json"] = new OpenApiMediaType
+                        {
+                            Schema = schema
+                        }
+                    };
+                }
+            }
+
+            if (okResponse.Content == null || okResponse.Content.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var media in okResponse.Content)
+            {
+                var mediaType = media.Value;
+                if (mediaType.Example != null || mediaType.Schema == null)
+                {
+                    continue;
+                }
+
+                mediaType.Example = BuildExampleFromSchema(mediaType.Schema, context.SchemaRepository, 0);
+            }
+        }
+
+        private static Microsoft.OpenApi.Any.IOpenApiAny BuildExampleFromSchema(
+            OpenApiSchema schema,
+            SchemaRepository schemaRepository,
+            int depth)
+        {
+            if (depth > 3)
+            {
+                return new Microsoft.OpenApi.Any.OpenApiString("...");
+            }
+
+            var resolvedSchema = ResolveSchema(schema, schemaRepository);
+
+            // Normalize ApiResponse<T> style payload to keep docs consistent across endpoints.
+            if (IsApiResponseSchema(resolvedSchema))
+            {
+                var apiResponse = new Microsoft.OpenApi.Any.OpenApiObject
+                {
+                    ["success"] = new Microsoft.OpenApi.Any.OpenApiBoolean(true),
+                    ["message"] = new Microsoft.OpenApi.Any.OpenApiString("Success"),
+                    ["timestamp"] = new Microsoft.OpenApi.Any.OpenApiString(DateTime.UtcNow.ToString("O"))
+                };
+
+                if (resolvedSchema.Properties.TryGetValue("data", out var dataSchema))
+                {
+                    apiResponse["data"] = BuildExampleFromSchema(dataSchema, schemaRepository, depth + 1);
+                }
+
+                if (resolvedSchema.Properties.ContainsKey("errors"))
+                {
+                    apiResponse["errors"] = new Microsoft.OpenApi.Any.OpenApiObject();
+                }
+
+                return apiResponse;
+            }
+
+            if (resolvedSchema.Enum != null && resolvedSchema.Enum.Count > 0)
+            {
+                return resolvedSchema.Enum[0];
+            }
+
+            var type = resolvedSchema.Type?.ToLowerInvariant();
+            switch (type)
+            {
+                case "boolean":
+                    return new Microsoft.OpenApi.Any.OpenApiBoolean(true);
+                case "integer":
+                    return new Microsoft.OpenApi.Any.OpenApiInteger(1);
+                case "number":
+                    return new Microsoft.OpenApi.Any.OpenApiDouble(1.0);
+                case "string":
+                    return BuildStringExample(resolvedSchema.Format);
+                case "array":
+                {
+                    var array = new Microsoft.OpenApi.Any.OpenApiArray();
+                    if (resolvedSchema.Items != null)
+                    {
+                        array.Add(BuildExampleFromSchema(resolvedSchema.Items, schemaRepository, depth + 1));
+                    }
+                    return array;
+                }
+                case "object":
+                {
+                    var obj = new Microsoft.OpenApi.Any.OpenApiObject();
+                    foreach (var prop in resolvedSchema.Properties.Take(6))
+                    {
+                        obj[prop.Key] = BuildExampleFromSchema(prop.Value, schemaRepository, depth + 1);
+                    }
+                    return obj;
+                }
+            }
+
+            // Fallback for schemas without explicit type but with properties.
+            if (resolvedSchema.Properties != null && resolvedSchema.Properties.Count > 0)
+            {
+                var obj = new Microsoft.OpenApi.Any.OpenApiObject();
+                foreach (var prop in resolvedSchema.Properties.Take(6))
+                {
+                    obj[prop.Key] = BuildExampleFromSchema(prop.Value, schemaRepository, depth + 1);
+                }
+                return obj;
+            }
+
+            return new Microsoft.OpenApi.Any.OpenApiString("sample");
+        }
+
+        private static OpenApiSchema ResolveSchema(OpenApiSchema schema, SchemaRepository schemaRepository)
+        {
+            if (schema.Reference?.Id != null && schemaRepository.Schemas.TryGetValue(schema.Reference.Id, out var resolved))
+            {
+                return resolved;
+            }
+
+            return schema;
+        }
+
+        private static bool IsApiResponseSchema(OpenApiSchema schema)
+        {
+            return schema.Properties.ContainsKey("success")
+                   && schema.Properties.ContainsKey("message")
+                   && schema.Properties.ContainsKey("data");
+        }
+
+        private static Microsoft.OpenApi.Any.IOpenApiAny BuildStringExample(string? format)
+        {
+            return format switch
+            {
+                "date-time" => new Microsoft.OpenApi.Any.OpenApiString(DateTime.UtcNow.ToString("O")),
+                "date" => new Microsoft.OpenApi.Any.OpenApiString(DateTime.UtcNow.ToString("yyyy-MM-dd")),
+                "uuid" => new Microsoft.OpenApi.Any.OpenApiString(Guid.NewGuid().ToString()),
+                _ => new Microsoft.OpenApi.Any.OpenApiString("string")
+            };
         }
 
         private static Microsoft.OpenApi.Any.IOpenApiAny? GetExampleForSchema(string schemaName)

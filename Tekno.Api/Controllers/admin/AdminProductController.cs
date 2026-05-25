@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Tekno.Api.Commons.Responses;
@@ -27,6 +27,9 @@ namespace Tekno.Api.Controllers.admin
 
         // Get paginated admin product list with full details (variants, images, stock)
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<AdminProductListDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetPagedAdmin([FromQuery] AdminProductSearchDto request)
         {
             var result = await _productService.GetAdminProductsPagedAsync(request);
@@ -34,6 +37,9 @@ namespace Tekno.Api.Controllers.admin
         }
 
         [HttpGet("{slug}")]
+        [ProducesResponseType(typeof(ApiResponse<ProductDetailDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetDetail(string slug)
         {
             var product = await _productService.GetProductDetailAsync(slug);
@@ -45,6 +51,9 @@ namespace Tekno.Api.Controllers.admin
 
         /// Create product with multiple images
         [HttpPost]
+        [ProducesResponseType(typeof(ApiResponse<CreateProductDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> CreateProduct([FromForm] CreateProductDto dto)
         {
             try
@@ -61,6 +70,9 @@ namespace Tekno.Api.Controllers.admin
 
         // Update product replace images
         [HttpPut("{id}")]
+        [ProducesResponseType(typeof(ApiResponse<ProductDetailDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdateProduct(int id, [FromForm] CreateProductDto dto)
         {
             try
@@ -79,15 +91,18 @@ namespace Tekno.Api.Controllers.admin
         }
 
         [HttpDelete("{id}")]
+        [ProducesResponseType(typeof(ApiResponse<string>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             try
             {
                 var ok = await _productService.DeleteProductAsync(id);
                 if (!ok)
-                    return NotFound(ApiResponse<object>.Fail("Product not found"));
+                    return NotFound(ApiResponse<string>.Fail("Product not found"));
 
-                return Ok(ApiResponse<object>.Ok(null, "Product deleted successfully"));
+                return Ok(ApiResponse<string>.Ok("Product deleted successfully", "Product deleted successfully"));
             }
             catch (Exception ex)
             {
@@ -97,6 +112,9 @@ namespace Tekno.Api.Controllers.admin
         }
         
         [HttpPost("images")]
+        [ProducesResponseType(typeof(ApiResponse<ProductImageDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> AddProductImage([FromForm] AddProductImageDto dto)
         {
             try
@@ -112,6 +130,9 @@ namespace Tekno.Api.Controllers.admin
         }
 
         [HttpDelete("images/{imageId}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> DeleteProductImage(int imageId)
         {
             try
@@ -131,6 +152,9 @@ namespace Tekno.Api.Controllers.admin
 
         // Update product image (set primary, change order)
         [HttpPut("images/{imageId}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdateProductImage(int imageId, [FromBody] UpdateProductImageDto dto)
         {
             try
@@ -151,6 +175,9 @@ namespace Tekno.Api.Controllers.admin
 
         /// Reorder product images
         [HttpPost("images/reorder")]
+        [ProducesResponseType(typeof(ApiResponse<List<ProductImageDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> ReorderImages([FromBody] ReorderImagesDto dto)
         {
             try
@@ -167,6 +194,9 @@ namespace Tekno.Api.Controllers.admin
 
         // Add variant to product (auto-updates product specs)
         [HttpPost("variants")]
+        [ProducesResponseType(typeof(ApiResponse<ProductVariantDetailDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> AddProductVariant([FromBody] AddProductVariantDto dto)
         {
             try
@@ -185,6 +215,9 @@ namespace Tekno.Api.Controllers.admin
         /// Update a product variant safely inside a transaction
         /// </summary>
         [HttpPut("variants/{variantId:int}")]
+        [ProducesResponseType(typeof(ApiResponse<ProductVariantDetailDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdateProductVariant(int variantId, [FromBody] UpdateProductVariantDto dto)
         {
             try
@@ -203,6 +236,9 @@ namespace Tekno.Api.Controllers.admin
         }
         /// Delete product variant (auto-updates product specs)
         [HttpDelete("variants/{variantId}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> DeleteProductVariant(int variantId)
         {
             try

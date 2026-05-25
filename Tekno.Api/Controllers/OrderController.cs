@@ -66,6 +66,8 @@ namespace Tekno.Api.Controllers
         /// </remarks>
         [HttpPost("create")]
         [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<CreateOrderResponseDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequestDto request)
         {
             try
@@ -131,6 +133,8 @@ namespace Tekno.Api.Controllers
         /// </remarks>
         [HttpGet("history")]
         [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<OrderHistoryDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetOrderHistory(
             [FromQuery] OrderStatus? status = null,
             [FromQuery] int page = 1,
@@ -169,6 +173,9 @@ namespace Tekno.Api.Controllers
         /// </remarks>
         [HttpGet("{orderNumber}")]
         [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<OrderHistoryDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 404)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetOrderDetails(string orderNumber)
         {
             try
@@ -201,6 +208,9 @@ namespace Tekno.Api.Controllers
         /// </remarks>
         [HttpGet("by-id/{orderId:int}")]
         [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<OrderHistoryDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 404)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetOrderById(int orderId)
         {
             try

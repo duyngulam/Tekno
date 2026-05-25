@@ -22,6 +22,8 @@ namespace Tekno.Api.Controllers
         }
 
         [HttpPost("login")]
+        [ProducesResponseType(typeof(ApiResponse<UserDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 401)]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var dto = await _authService.LoginAsync(request.Email, request.Password);
@@ -33,6 +35,8 @@ namespace Tekno.Api.Controllers
         }
 
         [HttpPost("register")]
+        [ProducesResponseType(typeof(ApiResponse<UserDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             var dto = await _authService.RegisterAsync(request.Email, request.Password, request.Role);

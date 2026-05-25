@@ -34,6 +34,9 @@ namespace Tekno.Api.Controllers
         /// 
         /// </remarks>
         [HttpGet("provinces")]
+        [ProducesResponseType(typeof(ApiResponse<List<ProvinceDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetProvinces([FromQuery] string? keyword)
         {
             if (!string.IsNullOrWhiteSpace(keyword))
@@ -58,6 +61,9 @@ namespace Tekno.Api.Controllers
         /// Returns districts of Hà N?i (Ba ?ình, Hoàn Ki?m, etc.)
         /// </remarks>
         [HttpGet("provinces/{provinceCode:int}/districts")]
+        [ProducesResponseType(typeof(ApiResponse<List<DistrictDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetDistrictsByProvince(int provinceCode)
         {
             var districts = await _locationService.GetDistrictsByProvinceAsync(provinceCode);
@@ -76,6 +82,9 @@ namespace Tekno.Api.Controllers
         /// Returns wards of qu?n Ba ?ình
         /// </remarks>
         [HttpGet("districts/{districtCode:int}/wards")]
+        [ProducesResponseType(typeof(ApiResponse<List<WardDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetWardsByDistrict(int districtCode)
         {
             var wards = await _locationService.GetWardsByDistrictAsync(districtCode);

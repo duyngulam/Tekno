@@ -29,6 +29,7 @@ namespace Tekno.Api.Controllers
         /// Get current user's wishlist
         /// </summary>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<List<ProductSummaryDto>>), 200)]
         public async Task<IActionResult> GetWishlist()
         {
             var userId = GetCurrentUserId();
@@ -57,6 +58,7 @@ namespace Tekno.Api.Controllers
         /// 
         /// </remarks>
         [HttpPost("items")]
+        [ProducesResponseType(typeof(ApiResponse<WishlistDto>), 200)]
         public async Task<IActionResult> AddToWishlist([FromBody] AddToWishlistDto dto)
         {
             var userId = GetCurrentUserId();
@@ -68,6 +70,8 @@ namespace Tekno.Api.Controllers
         /// Remove item from wishlist
         /// </summary>
         [HttpDelete("items/{productId:int}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 404)]
         public async Task<IActionResult> RemoveFromWishlist(int productId)
         {
             var userId = GetCurrentUserId();
@@ -83,6 +87,7 @@ namespace Tekno.Api.Controllers
         /// Check if product is in wishlist
         /// </summary>
         [HttpGet("check/{productId:int}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
         public async Task<IActionResult> IsInWishlist(int productId)
         {
             var userId = GetCurrentUserId();

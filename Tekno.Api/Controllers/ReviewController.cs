@@ -35,6 +35,9 @@ namespace Tekno.Api.Controllers
         ///     GET /api/products/1/reviews?verifiedOnly=true&amp;page=1&amp;pageSize=20
         /// </remarks>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<ReviewListDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [AllowAnonymous]
         public async Task<IActionResult> GetProductReviews(
             int productId,
@@ -55,6 +58,9 @@ namespace Tekno.Api.Controllers
         ///     GET /api/products/1/reviews/summary
         /// </remarks>
         [HttpGet("summary")]
+        [ProducesResponseType(typeof(ApiResponse<ProductReviewSummaryDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [AllowAnonymous]
         public async Task<IActionResult> GetProductSummary(int productId)
         {
@@ -74,6 +80,9 @@ namespace Tekno.Api.Controllers
         ///     GET /api/products/1/reviews/can-review
         /// </remarks>
         [HttpGet("can-review")]
+        [ProducesResponseType(typeof(ApiResponse<CanReviewResultDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [Authorize]
         public async Task<IActionResult> CanReview(int productId)
         {
@@ -112,6 +121,9 @@ namespace Tekno.Api.Controllers
         /// - Review will be pending approval by default
         /// </remarks>
         [HttpPost]
+        [ProducesResponseType(typeof(ApiResponse<ProductReviewDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [Authorize]
         public async Task<IActionResult> CreateReview(int productId, [FromBody] CreateReviewDto dto)
         {
@@ -144,6 +156,9 @@ namespace Tekno.Api.Controllers
         ///     }
         /// </remarks>
         [HttpPut("{reviewId:int}")]
+        [ProducesResponseType(typeof(ApiResponse<ProductReviewDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [Authorize]
         public async Task<IActionResult> UpdateReview(int productId, int reviewId, [FromBody] UpdateReviewDto dto)
         {
@@ -168,6 +183,9 @@ namespace Tekno.Api.Controllers
         ///     DELETE /api/products/1/reviews/123
         /// </remarks>
         [HttpDelete("{reviewId:int}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [Authorize]
         public async Task<IActionResult> DeleteReview(int productId, int reviewId)
         {
@@ -197,6 +215,9 @@ namespace Tekno.Api.Controllers
         ///     }
         /// </remarks>
         [HttpPost("{reviewId:int}/vote")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [Authorize]
         public async Task<IActionResult> VoteHelpfulness(
             int productId,

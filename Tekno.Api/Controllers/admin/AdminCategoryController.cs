@@ -38,6 +38,9 @@ namespace Tekno.Api.Controllers.admin
 
         // GET /api/admin/categories - Paginated list
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<CategoryDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetCategoriesPaged(
             [FromQuery] string? search,
             [FromQuery] int page = 1,
@@ -49,6 +52,9 @@ namespace Tekno.Api.Controllers.admin
 
         // GET /api/admin/categories/list - All categories (kept for backward compatibility)
         [HttpGet("list")]
+        [ProducesResponseType(typeof(ApiResponse<List<CategoryTreeDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetAllCategories()
         {
             var categories = await _categoryService.GetAllCategoriesAsync();
@@ -58,6 +64,9 @@ namespace Tekno.Api.Controllers.admin
 
         // New endpoint: returns hierarchical category tree for admin
         [HttpGet("tree")]
+        [ProducesResponseType(typeof(ApiResponse<List<CategoryTreeDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetCategoryTree()
         {
             var categoryTree = await _categoryService.GetCategoryTreeAsync();
@@ -66,6 +75,9 @@ namespace Tekno.Api.Controllers.admin
         }
 
         [HttpGet("{slug}")]
+        [ProducesResponseType(typeof(ApiResponse<CategoryTreeDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetCategoryBySlug(string slug)
         {
             var category = await _categoryService.GetCategoryBySlugAsync(slug);
@@ -76,6 +88,9 @@ namespace Tekno.Api.Controllers.admin
             return Ok(ApiResponse<CategoryTreeDto>.Ok(result, "Category loaded successfully"));
         }
         [HttpGet("attributes/global")]
+        [ProducesResponseType(typeof(ApiResponse<List<ProductAttributeDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetGlobalAttributes()
         {
             try
@@ -100,6 +115,9 @@ namespace Tekno.Api.Controllers.admin
         /// Used when creating product variants to know which attributes can be selected.
         /// </remarks>
         [HttpGet("{categoryId:int}/attributes")]
+        [ProducesResponseType(typeof(ApiResponse<List<ProductAttributeDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetCategoryAttributes(int categoryId)
         {
             try
@@ -122,6 +140,9 @@ namespace Tekno.Api.Controllers.admin
         /// Both files are optional. Transactions ensure no orphan images.
         /// </remarks>
         [HttpPost("create")]
+        [ProducesResponseType(typeof(ApiResponse<CategoryDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> CreateCategory([FromForm] CreateCategoryApiDto createDto)
         {
             try
@@ -155,6 +176,9 @@ namespace Tekno.Api.Controllers.admin
         /// Transactions ensure no orphan images.
         /// </remarks>
         [HttpPut("update")]
+        [ProducesResponseType(typeof(ApiResponse<CategoryDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdateCategory([FromForm] UpdateCategoryApiDto apiDto)
         {
             try
@@ -191,6 +215,9 @@ namespace Tekno.Api.Controllers.admin
         /// Transactions ensure database consistency.
         /// </remarks>
         [HttpDelete("delete")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> DeleteCategory([FromBody] DeleteCategoryApiDto apiDto)
         {
             try
@@ -217,6 +244,9 @@ namespace Tekno.Api.Controllers.admin
         /// Get a specific attribute by ID
         /// </summary>
         [HttpGet("attributes/{attributeId}")]
+        [ProducesResponseType(typeof(ApiResponse<CategoryAttributeDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetAttribute(int attributeId)
         {
             try
@@ -238,6 +268,9 @@ namespace Tekno.Api.Controllers.admin
         /// Create a new attribute
         /// </summary>
         [HttpPost("attributes")]
+        [ProducesResponseType(typeof(ApiResponse<CategoryAttributeDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> CreateAttribute([FromBody] CreateAttributeDto dto)
         {
             try
@@ -256,6 +289,9 @@ namespace Tekno.Api.Controllers.admin
         /// Update an existing attribute
         /// </summary>
         [HttpPut("attributes/{attributeId}")]
+        [ProducesResponseType(typeof(ApiResponse<CategoryAttributeDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdateAttribute(int attributeId, [FromBody] UpdateAttributeDto dto)
         {
             try
@@ -277,6 +313,9 @@ namespace Tekno.Api.Controllers.admin
         /// Delete an attribute (only if not in use)
         /// </summary>
         [HttpDelete("attributes/{attributeId}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> DeleteAttribute(int attributeId)
         {
             try
@@ -302,6 +341,9 @@ namespace Tekno.Api.Controllers.admin
         /// Add a new value to an attribute
         /// </summary>
         [HttpPost("attributes/values")]
+        [ProducesResponseType(typeof(ApiResponse<AttributeValueDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> AddAttributeValue([FromBody] AddAttributeValueDto dto)
         {
             try
@@ -324,6 +366,9 @@ namespace Tekno.Api.Controllers.admin
         /// Update an attribute value
         /// </summary>
         [HttpPut("attributes/values/{valueId}")]
+        [ProducesResponseType(typeof(ApiResponse<AttributeValueDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdateAttributeValue(int valueId, [FromBody] UpdateAttributeValueDto dto)
         {
             try
@@ -350,6 +395,9 @@ namespace Tekno.Api.Controllers.admin
         /// Delete an attribute value (only if not in use)
         /// </summary>
         [HttpDelete("attributes/values/{valueId}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> DeleteAttributeValue(int valueId)
         {
             try

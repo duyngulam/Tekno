@@ -16,11 +16,7 @@ import React from "react";
 // Add icon per item
 export const AccountItemsData = [
   { href: "/account/personal-data", label: "Personal Data", icon: User },
-  {
-    href: "/account/payment",
-    label: "Payment & Instalments",
-    icon: CreditCard,
-  },
+
   { href: "/account/orders", label: "Orders", icon: ShoppingBag },
   { href: "/account/wish-list", label: "Wish list", icon: Heart },
   { href: "/account/discount", label: "Discounts", icon: Tag },

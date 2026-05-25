@@ -3,6 +3,11 @@
     build:
       context: .
       dockerfile: Dockerfile
+      # Build cache optimization
+      args:
+        BUILDKIT_INLINE_CACHE: 1
+    image: tekno-api:latest
+    container_name: tekno-api
     ports:
       - "5000:8080"
     depends_on:
@@ -41,6 +46,13 @@
       # Training Python API (FastAPI)
       - TRAINING_API_URL=http://trainning_api:8000
     restart: unless-stopped
+    # Resource limits for .NET API
+    deploy:
+      resources:
+        limits:
+          memory: 1000M
+        reservations:
+          memory: 500M
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
       interval: 30s
@@ -52,7 +64,10 @@
     build:
       context: ./Trainning
       dockerfile: Dockerfile
+      args:
+        BUILDKIT_INLINE_CACHE: 1
     image: tekno-trainning-api:latest
+    container_name: tekno-trainning-api
     ports:
       - "8000:8000"
     restart: unless-stopped
@@ -61,6 +76,13 @@
         condition: service_started
       elasticsearch:
         condition: service_healthy
+    # Resource limits for Python/TensorFlow service
+    deploy:
+      resources:
+        limits:
+          memory: 2500M
+        reservations:
+          memory: 2000M
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 20s
@@ -94,6 +116,13 @@
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -109,12 +138,22 @@
       - xpack.security.enrollment.enabled=false
       - xpack.security.http.ssl.enabled=false
       - xpack.security.transport.ssl.enabled=false
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      # Optimized JVM options for reduced memory footprint
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      # GC tuning for lower heap pressure
+      - ES_EXTRA_OPTS=-Dcom.sun.jndi.ldap.connect.pool=false
     ports:
       - "9200:9200"
     volumes:
       - esdata:/usr/share/elasticsearch/data
     restart: unless-stopped
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 1500M
+        reservations:
+          memory: 1000M
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
       interval: 30s

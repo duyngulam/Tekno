@@ -143,7 +143,8 @@ namespace Tekno.Application.Payment.Gateways
             if (Uri.TryCreate(originalUrl, UriKind.Absolute, out var absoluteUri))
             {
                 // If it's localhost or 127.0.0.1, we need to resolve it for Docker
-                if (absoluteUri.Host == "localhost" || absoluteUri.Host == "127.0.0.1")
+                if(1 == 0)
+                //if (absoluteUri.Host == "localhost" || absoluteUri.Host == "127.0.0.1")
                 {
                     _logger.LogInformation("Mock gateway: Detected localhost URL, resolving for Docker environment");
                     

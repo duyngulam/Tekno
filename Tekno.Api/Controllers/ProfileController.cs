@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Security.Claims;
@@ -31,6 +31,9 @@ namespace Tekno.Api.Controllers
         /// Get current user's profile
         /// </summary>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetProfile()
         {
             var userId = GetCurrentUserId();
@@ -50,12 +53,15 @@ namespace Tekno.Api.Controllers
         /// 
         ///     PUT /api/profile
         ///     {
-        ///       "fullname": "Nguyễn Văn A",
+        ///       "fullname": "Nguy?n Van A",
         ///       "phoneNumber": "0987654321"
         ///     }
         /// 
         /// </remarks>
         [HttpPut]
+        [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
         {
             var userId = GetCurrentUserId();
@@ -71,7 +77,7 @@ namespace Tekno.Api.Controllers
         /// 
         ///     PUT /api/profile/all
         ///     {
-        ///       "fullname": "Nguyễn Văn A",
+        ///       "fullname": "Nguy?n Van A",
         ///       "phoneNumber": "0987654321",
         ///       "newEmail": "newemail@example.com",
         ///       "newPassword": "NewPassword456",
@@ -83,7 +89,7 @@ namespace Tekno.Api.Controllers
         /// 
         ///     PUT /api/profile/all
         ///     {
-        ///       "fullname": "Nguyễn Văn A",
+        ///       "fullname": "Nguy?n Van A",
         ///       "phoneNumber": "0987654321",
         ///       "newEmail": "newemail@example.com",
         ///       "currentPassword": "CurrentPassword123"
@@ -92,6 +98,9 @@ namespace Tekno.Api.Controllers
         /// Note: Current password is always required. Email and password changes are optional.
         /// </remarks>
         [HttpPut("all")]
+        [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdateAllProfile([FromBody] UpdateAllProfileDto dto)
         {
             var userId = GetCurrentUserId();
@@ -113,6 +122,9 @@ namespace Tekno.Api.Controllers
         /// 
         /// </remarks>
         [HttpPut("email")]
+        [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdateEmail([FromBody] UpdateEmailDto dto)
         {
             var userId = GetCurrentUserId();
@@ -135,6 +147,9 @@ namespace Tekno.Api.Controllers
         /// 
         /// </remarks>
         [HttpPut("password")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
         {
             var userId = GetCurrentUserId();
@@ -148,9 +163,9 @@ namespace Tekno.Api.Controllers
         /// <remarks>
         /// Returns addresses with Vietnamese province/district/ward structure:
         /// - address_line: Street address
-        /// - province_code/province_name: e.g., 79 / "Thành phố Hồ Chí Minh"
-        /// - district_code/district_name: e.g., 760 / "Quận 1"
-        /// - ward_code/ward_name: e.g., 26734 / "Phường Bến Nghé"
+        /// - province_code/province_name: e.g., 79 / "Th�nh ph? H? Ch� Minh"
+        /// - district_code/district_name: e.g., 760 / "Qu?n 1"
+        /// - ward_code/ward_name: e.g., 26734 / "Phu?ng B?n Ngh�"
         /// 
         /// Use with Location API:
         /// - GET /api/location/provinces - Get all provinces
@@ -158,6 +173,9 @@ namespace Tekno.Api.Controllers
         /// - GET /api/location/districts/{code}/wards - Get wards by district
         /// </remarks>
         [HttpGet("addresses")]
+        [ProducesResponseType(typeof(ApiResponse<List<UserAddressDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetAddresses()
         {
             var userId = GetCurrentUserId();
@@ -173,26 +191,26 @@ namespace Tekno.Api.Controllers
         /// 
         ///     POST /api/profile/addresses
         ///     {
-        ///       "recipientName": "Nguyễn Văn A",
+        ///       "recipientName": "Nguy?n Van A",
         ///       "phoneNumber": "0987654321",
-        ///       "addressLine": "123 Nguyễn Huệ",
+        ///       "addressLine": "123 Nguy?n Hu?",
         ///       "provinceCode": 79,
-        ///       "provinceName": "Thành phố Hồ Chí Minh",
+        ///       "provinceName": "Th�nh ph? H? Ch� Minh",
         ///       "districtCode": 760,
-        ///       "districtName": "Quận 1",
+        ///       "districtName": "Qu?n 1",
         ///       "wardCode": 26734,
-        ///       "wardName": "Phường Bến Nghé",
+        ///       "wardName": "Phu?ng B?n Ngh�",
         ///       "isDefault": true
         ///     }
         /// 
         /// **How to get location data:**
         /// 
         /// 1. Call `GET /api/location/provinces` to get all provinces
-        /// 2. User selects province (e.g., code: 79, name: "Thành phố Hồ Chí Minh")
+        /// 2. User selects province (e.g., code: 79, name: "Th�nh ph? H? Ch� Minh")
         /// 3. Call `GET /api/location/provinces/79/districts` to get districts
-        /// 4. User selects district (e.g., code: 760, name: "Quận 1")
+        /// 4. User selects district (e.g., code: 760, name: "Qu?n 1")
         /// 5. Call `GET /api/location/districts/760/wards` to get wards
-        /// 6. User selects ward (e.g., code: 26734, name: "Phường Bến Nghé")
+        /// 6. User selects ward (e.g., code: 26734, name: "Phu?ng B?n Ngh�")
         /// 7. Submit all codes and names in the address
         /// 
         /// **Why both code and name:**
@@ -201,6 +219,9 @@ namespace Tekno.Api.Controllers
         /// - This ensures addresses remain readable even if location database updates
         /// </remarks>
         [HttpPost("addresses")]
+        [ProducesResponseType(typeof(ApiResponse<UserAddressDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> AddAddress([FromBody] CreateAddressDto dto)
         {
             var userId = GetCurrentUserId();
@@ -218,21 +239,24 @@ namespace Tekno.Api.Controllers
         /// 
         ///     PUT /api/profile/addresses/1
         ///     {
-        ///       "recipientName": "Nguyễn Văn A",
+        ///       "recipientName": "Nguy?n Van A",
         ///       "phoneNumber": "0987654321",
-        ///       "addressLine": "456 Võ Văn Tần",
+        ///       "addressLine": "456 V� Van T?n",
         ///       "provinceCode": 79,
-        ///       "provinceName": "Thành phố Hồ Chí Minh",
+        ///       "provinceName": "Th�nh ph? H? Ch� Minh",
         ///       "districtCode": 769,
-        ///       "districtName": "Quận 3",
+        ///       "districtName": "Qu?n 3",
         ///       "wardCode": 27031,
-        ///       "wardName": "Phường 6"
+        ///       "wardName": "Phu?ng 6"
         ///     }
         /// 
         /// Use the same Location API workflow as creating addresses.
         /// All location codes and names must be provided.
         /// </remarks>
         [HttpPut("addresses/{addressId:int}")]
+        [ProducesResponseType(typeof(ApiResponse<UserAddressDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdateAddress(int addressId, [FromBody] UpdateAddressDto dto)
         {
             var userId = GetCurrentUserId();
@@ -251,6 +275,9 @@ namespace Tekno.Api.Controllers
         /// 
         /// </remarks>
         [HttpPatch("addresses/{addressId:int}/default")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> SetDefaultAddress(int addressId)
         {
             var userId = GetCurrentUserId();
@@ -270,6 +297,9 @@ namespace Tekno.Api.Controllers
         /// 
         /// </remarks>
         [HttpDelete("addresses/{addressId:int}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> DeleteAddress(int addressId)
         {
             var userId = GetCurrentUserId();

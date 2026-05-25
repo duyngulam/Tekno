@@ -25,6 +25,9 @@ namespace Tekno.Api.Controllers
         /// Get published blog posts (paginated)
         /// </summary>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<BlogPostSummaryDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetAll([FromQuery] BlogPostQueryDto query)
         {
             // Force status to Published for public API
@@ -46,6 +49,9 @@ namespace Tekno.Api.Controllers
         /// - GET /api/blog/introducing-dell-xps-13
         /// </remarks>
         [HttpGet("{slug}")]
+        [ProducesResponseType(typeof(ApiResponse<BlogPostDetailDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetBySlug(string slug)
         {
             var blogPost = await _blogPostService.GetBySlugAsync(slug);
@@ -65,6 +71,9 @@ namespace Tekno.Api.Controllers
         /// </summary>
         /// <param name="count">Number of posts to return (default: 5, max: 20)</param>
         [HttpGet("recent")]
+        [ProducesResponseType(typeof(ApiResponse<List<BlogPostSummaryDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetRecent([FromQuery] int count = 5)
         {
             if (count > 20) count = 20;
@@ -80,6 +89,9 @@ namespace Tekno.Api.Controllers
         /// <param name="id">Blog post ID</param>
         /// <param name="count">Number of related posts (default: 3, max: 10)</param>
         [HttpGet("{id:int}/related")]
+        [ProducesResponseType(typeof(ApiResponse<List<BlogPostSummaryDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetRelated(int id, [FromQuery] int count = 3)
         {
             if (count > 10) count = 10;
@@ -96,6 +108,9 @@ namespace Tekno.Api.Controllers
         /// <param name="page">Page number</param>
         /// <param name="pageSize">Items per page</param>
         [HttpGet("tag/{tag}")]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<BlogPostSummaryDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetByTag(
             string tag,
             [FromQuery] int page = 1,

@@ -25,6 +25,7 @@ namespace Tekno.Api.Controllers
         /// Get paginated advertisement banners with filtering
         /// </summary>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<ProductAdvertisementDto>>), 200)]
         public async Task<IActionResult> GetPaged(
             [FromQuery] string? position,
             [FromQuery] bool? isActive,
@@ -49,6 +50,7 @@ namespace Tekno.Api.Controllers
         /// Get all currently active advertisement banners (kept for backward compatibility)
         /// </summary>
         [HttpGet("active")]
+        [ProducesResponseType(typeof(ApiResponse<List<ProductAdvertisementDto>>), 200)]
         public async Task<IActionResult> GetActive()
         {
             var advertisements = await _advertisementService.GetCurrentlyActiveAsync();
@@ -69,6 +71,7 @@ namespace Tekno.Api.Controllers
         /// - GET /api/advertisements/position/ProductSidebar - Product detail sidebar
         /// </remarks>
         [HttpGet("position/{position}")]
+        [ProducesResponseType(typeof(ApiResponse<List<ProductAdvertisementDto>>), 200)]
         public async Task<IActionResult> GetByPosition(string position)
         {
             var advertisements = await _advertisementService.GetByPositionAsync(position);

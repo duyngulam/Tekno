@@ -43,37 +43,68 @@ export default function ProductsOnSale() {
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-6 py-2 mb-4">
             <span className="text-2xl">✨</span>
             <h2 className="text-lg font-bold text-gray-800">
-              RECOMMENDATION FOR YOU
+              DÀNH CHO BẠN
             </h2>
           </div>
         </div>
 
         {/* Products Horizontal Scroll */}
-        <div className="relative">
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 scroll-smooth">
-            {products?.map((product) => (
-              <div
-                key={product.id}
-                className="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px]"
-              >
-                <ProductCard product={product} />
-              </div>
-            ))}
-          </div>
+<div className="relative">
+  <div
+    className="
+      flex
+      gap-4
+      overflow-x-auto
+      overflow-y-hidden
+      pb-4
+      scroll-smooth
+      snap-x
+      snap-mandatory
+      touch-pan-x
+      [-ms-overflow-style:none]
+      [scrollbar-width:none]
+      [&::-webkit-scrollbar]:hidden
+    "
+  >
+    {products?.map((product) => (
+      <div
+        key={product.id}
+        className="
+          min-w-[280px]
+          sm:min-w-[300px]
+          md:min-w-[320px]
+          flex-none
+          snap-start
+        "
+      >
+        <ProductCard product={product} />
+      </div>
+    ))}
+  </div>
 
-          {/* Scroll indicators */}
-          {products.length > 0 && (
-            <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 z-20">
-              <ArrowRightCircle className="w-5 h-5 text-gray-600" />
-            </button>
-          )}
-        </div>
+  {/* Scroll button */}
+  {products.length > 0 && (
+    <button
+      className="
+        absolute
+        right-2
+        top-1/2
+        -translate-y-1/2
+        bg-white/80
+        hover:bg-white
+        rounded-full
+        p-2
+        shadow-lg
+        z-20
+      "
+    >
+      <ArrowRightCircle className="w-5 h-5 text-gray-600" />
+    </button>
+  )}
+</div>
 
-        {/* Bottom Action */}
-        <div className="text-center mt-6">
-          <ViewAllButton />
         </div>
       </div>
-    </div>
+
   );
 }

@@ -16,6 +16,7 @@ namespace Tekno.Api.Controllers
         }
 
         [HttpGet("predict/{productId}")]
+        [ProducesResponseType(typeof(object), 200)]
         public async Task<IActionResult> Predict(int productId)
         {
             var (category, brand) = await _recommendationService.PredictAsync(productId);
@@ -23,6 +24,7 @@ namespace Tekno.Api.Controllers
         }
 
         [HttpGet("cf/{userId}")]
+        [ProducesResponseType(typeof(object), 200)]
         public async Task<IActionResult> RecommendCf(int userId, [FromQuery] int k = 10)
         {
             var list = await _recommendationService.RecommendCfAsync(userId, k);
@@ -30,6 +32,7 @@ namespace Tekno.Api.Controllers
         }
 
         [HttpGet("content/{userId}")]
+        [ProducesResponseType(typeof(object), 200)]
         public async Task<IActionResult> RecommendContent(int userId, [FromQuery] int k = 10)
         {
             var list = await _recommendationService.RecommendContentAsync(userId, k);
@@ -37,6 +40,7 @@ namespace Tekno.Api.Controllers
         }
 
         [HttpGet("cf/products/{userId}")]
+        [ProducesResponseType(typeof(object), 200)]
         public async Task<IActionResult> RecommendCfWithProducts(int userId, [FromQuery] int k = 10)
         {
             var products = await _recommendationService.RecommendCfWithProductsAsync(userId, k);
@@ -44,6 +48,7 @@ namespace Tekno.Api.Controllers
         }
 
         [HttpGet("content/products/{userId}")]
+        [ProducesResponseType(typeof(object), 200)]
         public async Task<IActionResult> RecommendContentWithProducts(int userId, [FromQuery] int k = 10)
         {
             var products = await _recommendationService.RecommendContentWithProductsAsync(userId, k);

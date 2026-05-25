@@ -28,6 +28,9 @@ namespace Tekno.Api.Controllers
         /// Get paginated list of active coupons (public)
         /// </summary>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<CouponDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [AllowAnonymous]
         public async Task<IActionResult> GetPaged(
             [FromQuery] string? search,
@@ -81,6 +84,9 @@ namespace Tekno.Api.Controllers
         /// </summary>
         /// <param name="code">Coupon code (e.g., PHVC000003)</param>
         [HttpGet("{code}")]
+        [ProducesResponseType(typeof(ApiResponse<CouponDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [AllowAnonymous]
         public async Task<IActionResult> GetByCode(string code)
         {
@@ -115,6 +121,9 @@ namespace Tekno.Api.Controllers
         /// - discountAmount: how much will be saved
         /// </remarks>
         [HttpPost("validate")]
+        [ProducesResponseType(typeof(ApiResponse<CouponValidationResult>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [AllowAnonymous]
         public async Task<IActionResult> ValidateCoupon([FromBody] ValidateCouponDto dto)
         {
@@ -144,6 +153,9 @@ namespace Tekno.Api.Controllers
         /// </summary>
         /// <param name="code">Coupon code to check</param>
         [HttpGet("check/{code}")]
+        [ProducesResponseType(typeof(ApiResponse<CouponExistsResultDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [AllowAnonymous]
         public async Task<IActionResult> CheckCouponExists(string code)
         {
@@ -151,7 +163,11 @@ namespace Tekno.Api.Controllers
             
             if (coupon == null)
             {
-                return Ok(ApiResponse<object>.Ok(new { exists = false, message = "Coupon code not found" }));
+                return Ok(ApiResponse<CouponExistsResultDto>.Ok(new CouponExistsResultDto
+                {
+                    Exists = false,
+                    Message = "Coupon code not found"
+                }));
             }
 
             var isUsable = coupon.Status == "Active" 
@@ -159,16 +175,16 @@ namespace Tekno.Api.Controllers
                 && System.DateTime.UtcNow >= coupon.StartDate 
                 && System.DateTime.UtcNow <= coupon.EndDate;
 
-            return Ok(ApiResponse<object>.Ok(new 
-            { 
-                exists = true,
-                usable = isUsable,
-                name = coupon.Name,
-                type = coupon.Type,
-                value = coupon.Value,
-                minPurchaseAmount = coupon.MinPurchaseAmount,
-                message = isUsable 
-                    ? "Coupon is available" 
+            return Ok(ApiResponse<CouponExistsResultDto>.Ok(new CouponExistsResultDto
+            {
+                Exists = true,
+                Usable = isUsable,
+                Name = coupon.Name,
+                Type = coupon.Type,
+                Value = coupon.Value,
+                MinPurchaseAmount = coupon.MinPurchaseAmount,
+                Message = isUsable
+                    ? "Coupon is available"
                     : "Coupon exists but cannot be used (inactive, expired, or out of stock)"
             }));
         }
@@ -205,6 +221,9 @@ namespace Tekno.Api.Controllers
         /// </summary>
         /// <param name="productId">Product ID</param>
         [HttpGet("for-product/{productId:int}")]
+        [ProducesResponseType(typeof(ApiResponse<System.Collections.Generic.List<CouponDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [AllowAnonymous]
         public async Task<IActionResult> GetCouponsForProduct(int productId)
         {
@@ -227,6 +246,9 @@ namespace Tekno.Api.Controllers
         /// </summary>
         /// <param name="categoryId">Category ID</param>
         [HttpGet("for-category/{categoryId:int}")]
+        [ProducesResponseType(typeof(ApiResponse<System.Collections.Generic.List<CouponDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [AllowAnonymous]
         public async Task<IActionResult> GetCouponsForCategory(int categoryId)
         {

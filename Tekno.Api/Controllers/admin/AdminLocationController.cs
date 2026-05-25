@@ -52,6 +52,9 @@ namespace Tekno.Api.Controllers.Admin
         /// 
         /// </remarks>
         [HttpPost("import")]
+        [ProducesResponseType(typeof(ApiResponse<ImportResultDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<ImportResultDto>), 404)]
+        [ProducesResponseType(typeof(ApiResponse<ImportResultDto>), 500)]
         public async Task<IActionResult> ImportFromJson()
         {
             var filePath = Path.Combine(Directory.GetCurrentDirectory(), "data", "vietnam-divisions.json");

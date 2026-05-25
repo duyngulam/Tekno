@@ -27,6 +27,9 @@ namespace Tekno.Api.Controllers
         /// Get current user's cart
         /// </summary>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<CartDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetCart()
         {
             var userId = GetCurrentUserId();
@@ -48,6 +51,9 @@ namespace Tekno.Api.Controllers
         /// 
         /// </remarks>
         [HttpPost("items")]
+        [ProducesResponseType(typeof(ApiResponse<CartDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> AddToCart([FromBody] AddToCartDto dto)
         {
             var userId = GetCurrentUserId();
@@ -59,6 +65,9 @@ namespace Tekno.Api.Controllers
         /// Update cart item quantity
         /// </summary>
         [HttpPut("items/{variantId:int}")]
+        [ProducesResponseType(typeof(ApiResponse<CartDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdateCartItem(int variantId, [FromBody] UpdateCartItemDto dto)
         {
             var userId = GetCurrentUserId();
@@ -70,6 +79,9 @@ namespace Tekno.Api.Controllers
         /// Remove item from cart
         /// </summary>
         [HttpDelete("items/{variantId:int}")]
+        [ProducesResponseType(typeof(ApiResponse<CartDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> RemoveFromCart(int variantId)
         {
             var userId = GetCurrentUserId();
@@ -81,6 +93,9 @@ namespace Tekno.Api.Controllers
         /// Clear all items from cart
         /// </summary>
         [HttpDelete]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> ClearCart()
         {
             var userId = GetCurrentUserId();

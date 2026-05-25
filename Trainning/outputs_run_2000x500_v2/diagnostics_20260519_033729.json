@@ -1,0 +1,200 @@
+{
+  "errors": {
+    "mae": 0.3127179751709292,
+    "rmse": 0.4050137619542087,
+    "count": 89657
+  },
+  "per_category": [
+    {
+      "category": "Chromebook",
+      "pred_mean": 3.8052520638864076,
+      "pred_count": 206000,
+      "actual_mean": 3.7539872823934117,
+      "actual_count": 19186
+    },
+    {
+      "category": "Convertible",
+      "pred_mean": 3.738565356145055,
+      "pred_count": 182000,
+      "actual_mean": 3.8075778735806667,
+      "actual_count": 16469
+    },
+    {
+      "category": "Gaming",
+      "pred_mean": 3.955156503784466,
+      "pred_count": 206000,
+      "actual_mean": 3.891422281625914,
+      "actual_count": 25438
+    },
+    {
+      "category": "Ultrabook",
+      "pred_mean": 3.9440288890122646,
+      "pred_count": 212000,
+      "actual_mean": 3.7645308924485126,
+      "actual_count": 17480
+    },
+    {
+      "category": "Workstation",
+      "pred_mean": 3.833465075340206,
+      "pred_count": 194000,
+      "actual_mean": 3.7765247203175747,
+      "actual_count": 11084
+    }
+  ],
+  "topn_comp": [
+    {
+      "user_group": "Casual User",
+      "category": "Chromebook",
+      "count": 539,
+      "total": 4070,
+      "pct": 0.13243243243243244
+    },
+    {
+      "user_group": "Casual User",
+      "category": "Gaming",
+      "count": 1089,
+      "total": 4070,
+      "pct": 0.26756756756756755
+    },
+    {
+      "user_group": "Casual User",
+      "category": "Ultrabook",
+      "count": 2035,
+      "total": 4070,
+      "pct": 0.5
+    },
+    {
+      "user_group": "Casual User",
+      "category": "Workstation",
+      "count": 407,
+      "total": 4070,
+      "pct": 0.1
+    },
+    {
+      "user_group": "Designer / Editor",
+      "category": "Gaming",
+      "count": 836,
+      "total": 1930,
+      "pct": 0.43316062176165804
+    },
+    {
+      "user_group": "Designer / Editor",
+      "category": "Ultrabook",
+      "count": 965,
+      "total": 1930,
+      "pct": 0.5
+    },
+    {
+      "user_group": "Designer / Editor",
+      "category": "Workstation",
+      "count": 129,
+      "total": 1930,
+      "pct": 0.06683937823834196
+    },
+    {
+      "user_group": "Gamer",
+      "category": "Convertible",
+      "count": 1,
+      "total": 4080,
+      "pct": 0.00024509803921568627
+    },
+    {
+      "user_group": "Gamer",
+      "category": "Gaming",
+      "count": 1583,
+      "total": 4080,
+      "pct": 0.3879901960784314
+    },
+    {
+      "user_group": "Gamer",
+      "category": "Ultrabook",
+      "count": 2040,
+      "total": 4080,
+      "pct": 0.5
+    },
+    {
+      "user_group": "Gamer",
+      "category": "Workstation",
+      "count": 456,
+      "total": 4080,
+      "pct": 0.11176470588235295
+    },
+    {
+      "user_group": "Office Worker",
+      "category": "Chromebook",
+      "count": 746,
+      "total": 3750,
+      "pct": 0.19893333333333332
+    },
+    {
+      "user_group": "Office Worker",
+      "category": "Gaming",
+      "count": 1128,
+      "total": 3750,
+      "pct": 0.3008
+    },
+    {
+      "user_group": "Office Worker",
+      "category": "Ultrabook",
+      "count": 1875,
+      "total": 3750,
+      "pct": 0.5
+    },
+    {
+      "user_group": "Office Worker",
+      "category": "Workstation",
+      "count": 1,
+      "total": 3750,
+      "pct": 0.0002666666666666667
+    },
+    {
+      "user_group": "Reviewer / Tech Reviewer",
+      "category": "Gaming",
+      "count": 855,
+      "total": 1950,
+      "pct": 0.43846153846153846
+    },
+    {
+      "user_group": "Reviewer / Tech Reviewer",
+      "category": "Ultrabook",
+      "count": 971,
+      "total": 1950,
+      "pct": 0.4979487179487179
+    },
+    {
+      "user_group": "Reviewer / Tech Reviewer",
+      "category": "Workstation",
+      "count": 124,
+      "total": 1950,
+      "pct": 0.06358974358974359
+    },
+    {
+      "user_group": "Student",
+      "category": "Chromebook",
+      "count": 651,
+      "total": 4220,
+      "pct": 0.1542654028436019
+    },
+    {
+      "user_group": "Student",
+      "category": "Gaming",
+      "count": 1075,
+      "total": 4220,
+      "pct": 0.254739336492891
+    },
+    {
+      "user_group": "Student",
+      "category": "Ultrabook",
+      "count": 2110,
+      "total": 4220,
+      "pct": 0.5
+    },
+    {
+      "user_group": "Student",
+      "category": "Workstation",
+      "count": 384,
+      "total": 4220,
+      "pct": 0.0909952606635071
+    }
+  ]
+}

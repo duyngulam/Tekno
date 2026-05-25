@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Tekno.Application.Catalog.Services;
 using Tekno.Application.Catalog.DTOs;
 using Tekno.Api.Models.Catalog;
@@ -26,6 +26,9 @@ namespace Tekno.Api.Controllers
 
         // GET /api/categories - Paginated list
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<CategoryDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetCategoriesPaged(
             [FromQuery] string? search,
             [FromQuery] int page = 1,
@@ -37,6 +40,9 @@ namespace Tekno.Api.Controllers
 
         // GET /api/categories/list - All categories (kept for backward compatibility)
         [HttpGet("list")]
+        [ProducesResponseType(typeof(ApiResponse<List<CategoryDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetCategories()
         {
             var categories = await _categoryService.GetAllCategoriesAsync();
@@ -47,6 +53,9 @@ namespace Tekno.Api.Controllers
 
         // GET /api/categories/tree
         [HttpGet("tree")]
+        [ProducesResponseType(typeof(ApiResponse<List<CategoryTreeDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetCategoryTree()
         {
             var categoryTree = await _categoryService.GetCategoryTreeAsync();
@@ -56,6 +65,9 @@ namespace Tekno.Api.Controllers
         }
 
         [HttpGet("{slug}")]
+        [ProducesResponseType(typeof(ApiResponse<CategoryTreeDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetCategoryBySlug(string slug)
         {
             var categories = await _categoryService.GetCategoryTreeAsync();
@@ -70,12 +82,18 @@ namespace Tekno.Api.Controllers
 
         // GET /api/categories/{id}/attributes
         [HttpGet("{id:int}/attributes")]
+        [ProducesResponseType(typeof(ApiResponse<List<ProductAttributeDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetAttributesByCategoryId(int id)
         {
             var attributes = await _categoryService.GetAttributesByCategoryIdAsync(id);
             return Ok(ApiResponse<List<ProductAttributeDto>>.Ok(attributes, "Attributes loaded"));
         }
         [HttpGet("{slug}/attributes")]
+        [ProducesResponseType(typeof(ApiResponse<List<ProductAttributeDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetAttributesBySlugAsync(string slug)
         {
             var attributes = await _categoryService.GetAttributesByCategorySlugAsync(slug);

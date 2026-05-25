@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -86,8 +86,8 @@ namespace Tekno.Api.Controllers
         /// VNPay Flow Details:
         /// - Frontend sends returnUrl (e.g., "http://localhost:3000/payment/result")
         /// - Backend sends vnp_ReturnUrl to VNPay (e.g., "https://api.com/api/v1/payments/vnpay-return?frontendUrl=...")
-        /// - After payment: Customer Browser → VNPay → Backend ReturnUrl → Frontend returnUrl
-        /// - Simultaneously: VNPay Server → Backend IPN (reliable callback)
+        /// - After payment: Customer Browser ? VNPay ? Backend ReturnUrl ? Frontend returnUrl
+        /// - Simultaneously: VNPay Server ? Backend IPN (reliable callback)
         /// 
         /// Two Callbacks:
         /// 1. IPN (Server-to-Server): Reliable, updates database, configured in VNPay portal
@@ -194,14 +194,14 @@ namespace Tekno.Api.Controllers
         /// - Cannot retry payment for cancelled orders
         /// 
         /// **On Payment Success:**
-        /// - Order status → Processing
-        /// - Cart items → Cleared
-        /// - Stock → Reduced
-        /// - Sold count → Incremented
+        /// - Order status ? Processing
+        /// - Cart items ? Cleared
+        /// - Stock ? Reduced
+        /// - Sold count ? Incremented
         /// 
         /// **On Payment Failure/Timeout:**
-        /// - Order status → Cancelled
-        /// - Cart items → Restored
+        /// - Order status ? Cancelled
+        /// - Cart items ? Restored
         /// - User can create new order and retry
         /// 
         /// Example request (initial payment):
@@ -240,8 +240,8 @@ namespace Tekno.Api.Controllers
         ///     }
         /// 
         /// Payment Gateways:
-        /// - 0 = Mock (for testing) ✓ Available
-        /// - 3 = VNPay (Vietnam) ✓ Available
+        /// - 0 = Mock (for testing) ? Available
+        /// - 3 = VNPay (Vietnam) ? Available
         /// 
         /// Payment Methods:
         /// - 1 = CreditCard
@@ -306,14 +306,15 @@ namespace Tekno.Api.Controllers
         /// - MUST respond with JSON: {"RspCode":"00","Message":"Confirm Success"}
         /// 
         /// Retry Logic:
-        /// - RspCode "00" or "02" → VNPay stops retrying (success)
-        /// - RspCode "01", "04", "97", "99" or timeout → VNPay retries
+        /// - RspCode "00" or "02" ? VNPay stops retrying (success)
+        /// - RspCode "01", "04", "97", "99" or timeout ? VNPay retries
         /// 
         /// vs ReturnUrl: IPN is reliable server callback, ReturnUrl is browser redirect for UX
         /// </summary>
         [HttpGet("vnpay/ipn")]
         [HttpGet("/api/v1/payments/vnpay-ipn")]
         [AllowAnonymous]
+        [ProducesResponseType(typeof(object), 200)]
         public async Task<IActionResult> VNPayIPN()
         {
             try
@@ -391,6 +392,8 @@ namespace Tekno.Api.Controllers
         /// </summary>
         [HttpGet("/api/v1/payments/vnpay-return")]
         [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status302Found)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> VNPayReturn([FromQuery] string? frontendUrl)
         {
             try
@@ -489,6 +492,8 @@ namespace Tekno.Api.Controllers
         /// </remarks>
         [HttpPost("callback")]
         [AllowAnonymous] // Webhook needs to be accessible
+        [ProducesResponseType(typeof(ApiResponse<PaymentStatusDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
         public async Task<IActionResult> PaymentCallback([FromBody] PaymentCallbackDto callback)
         {
             try
@@ -509,6 +514,8 @@ namespace Tekno.Api.Controllers
         /// Get payment status by transaction ID
         /// </summary>
         [HttpGet("status/{transactionId}")]
+        [ProducesResponseType(typeof(ApiResponse<PaymentStatusDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 404)]
         public async Task<IActionResult> GetPaymentStatus(string transactionId)
         {
             var status = await _paymentService.GetPaymentStatusAsync(transactionId);
@@ -590,6 +597,9 @@ namespace Tekno.Api.Controllers
         /// </remarks>
         [HttpGet("order/{orderId}/status")]
         [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<OrderPaymentStatusDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 404)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> GetOrderPaymentStatus(int orderId)
         {
             try
@@ -671,29 +681,30 @@ namespace Tekno.Api.Controllers
         /// </remarks>
         [HttpGet("gateways")]
         [AllowAnonymous]
+        [ProducesResponseType(typeof(ApiResponse<List<AvailablePaymentGatewayDto>>), 200)]
         public IActionResult GetAvailableGateways([FromServices] PaymentGatewayFactory gatewayFactory)
         {
-            var allGateways = new[]
+            var allGateways = new List<AvailablePaymentGatewayDto>
             {
-                new { id = 0, name = "Mock", description = "Test payment gateway" },
-                new { id = 1, name = "Stripe", description = "Credit/Debit card payments" },
-                new { id = 2, name = "PayPal", description = "PayPal payments" },
-                new { id = 3, name = "VNPay", description = "Vietnam payment gateway" },
-                new { id = 4, name = "MoMo", description = "MoMo e-wallet" },
-                new { id = 5, name = "ZaloPay", description = "ZaloPay e-wallet" }
+                new() { Id = 0, Name = "Mock", Description = "Test payment gateway" },
+                new() { Id = 1, Name = "Stripe", Description = "Credit/Debit card payments" },
+                new() { Id = 2, Name = "PayPal", Description = "PayPal payments" },
+                new() { Id = 3, Name = "VNPay", Description = "Vietnam payment gateway" },
+                new() { Id = 4, Name = "MoMo", Description = "MoMo e-wallet" },
+                new() { Id = 5, Name = "ZaloPay", Description = "ZaloPay e-wallet" }
             };
 
             var availableGatewayIds = gatewayFactory.GetAvailableGateways().Select(g => (int)g).ToHashSet();
 
-            var result = allGateways.Select(g => new
-            {
-                g.id,
-                g.name,
-                g.description,
-                available = availableGatewayIds.Contains(g.id)
-            });
+            var result = allGateways
+                .Select(g =>
+                {
+                    g.Available = availableGatewayIds.Contains(g.Id);
+                    return g;
+                })
+                .ToList();
 
-            return Ok(ApiResponse<object>.Ok(result));
+            return Ok(ApiResponse<List<AvailablePaymentGatewayDto>>.Ok(result));
         }
 
         #region Helper Methods

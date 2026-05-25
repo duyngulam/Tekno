@@ -52,6 +52,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Returns transactions with pagination metadata
         /// </remarks>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<PaymentStatusDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetPagedTransactions(
             [FromQuery] int? userId,
             [FromQuery] PaymentStatus? status,
@@ -84,6 +87,9 @@ namespace Tekno.Api.Controllers.Admin
         ///     GET /api/admin/payments/123
         /// </remarks>
         [HttpGet("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<PaymentStatusDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetPaymentById(int id)
         {
             try
@@ -114,6 +120,9 @@ namespace Tekno.Api.Controllers.Admin
         ///     GET /api/admin/payments/transaction/MOCK-abc123
         /// </remarks>
         [HttpGet("transaction/{transactionId}")]
+        [ProducesResponseType(typeof(ApiResponse<PaymentStatusDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetPaymentByTransactionId(string transactionId)
         {
             try
@@ -148,12 +157,15 @@ namespace Tekno.Api.Controllers.Admin
         ///     GET /api/admin/payments/timeout-statistics
         /// </remarks>
         [HttpGet("timeout-statistics")]
+        [ProducesResponseType(typeof(ApiResponse<PaymentTimeoutStatistics>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetTimeoutStatistics()
         {
             try
             {
                 var stats = await _timeoutService.GetTimeoutStatisticsAsync();
-                return Ok(ApiResponse<object>.Ok(stats));
+                return Ok(ApiResponse<PaymentTimeoutStatistics>.Ok(stats));
             }
             catch (Exception ex)
             {
@@ -173,6 +185,9 @@ namespace Tekno.Api.Controllers.Admin
         ///     POST /api/admin/payments/check-timeouts
         /// </remarks>
         [HttpPost("check-timeouts")]
+        [ProducesResponseType(typeof(ApiResponse<ManualTimeoutCheckResultDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> CheckTimeouts()
         {
             try
@@ -182,11 +197,11 @@ namespace Tekno.Api.Controllers.Admin
                 await _timeoutService.CheckTimeoutsAsync();
                 
                 var stats = await _timeoutService.GetTimeoutStatisticsAsync();
-                
-                return Ok(ApiResponse<object>.Ok(new
+
+                return Ok(ApiResponse<ManualTimeoutCheckResultDto>.Ok(new ManualTimeoutCheckResultDto
                 {
-                    message = "Payment timeout check completed",
-                    statistics = stats
+                    Message = "Payment timeout check completed",
+                    Statistics = stats
                 }));
             }
             catch (Exception ex)
@@ -206,13 +221,16 @@ namespace Tekno.Api.Controllers.Admin
         ///     GET /api/admin/payments/statistics
         /// </remarks>
         [HttpGet("statistics")]
+        [ProducesResponseType(typeof(ApiResponse<PaymentStatisticsSummaryDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public IActionResult GetPaymentStatistics()
         {
             // This can be implemented later with actual statistics calculation
-            var stats = new
+            var stats = new PaymentStatisticsSummaryDto
             {
-                message = "Payment statistics endpoint - to be implemented",
-                availableEndpoints = new[]
+                Message = "Payment statistics endpoint - to be implemented",
+                AvailableEndpoints = new List<string>
                 {
                     "GET /api/admin/payments - Get paged transactions",
                     "GET /api/admin/payments/{id} - Get payment by ID",
@@ -222,7 +240,7 @@ namespace Tekno.Api.Controllers.Admin
                 }
             };
 
-            return Ok(ApiResponse<object>.Ok(stats));
+            return Ok(ApiResponse<PaymentStatisticsSummaryDto>.Ok(stats));
         }
     }
 }

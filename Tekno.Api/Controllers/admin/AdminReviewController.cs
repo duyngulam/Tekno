@@ -27,6 +27,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Get all reviews for a product (including pending/rejected)
         /// </summary>
         [HttpGet("product/{productId}")]
+        [ProducesResponseType(typeof(ApiResponse<ReviewListDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetProductReviews(
             int productId,
             [FromQuery] string? status = null,
@@ -41,6 +44,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Approve a review
         /// </summary>
         [HttpPatch("{reviewId:int}/approve")]
+        [ProducesResponseType(typeof(ApiResponse<ProductReviewDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> ApproveReview(int reviewId)
         {
             var adminId = GetCurrentUserId();
@@ -56,6 +62,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Reject a review
         /// </summary>
         [HttpPatch("{reviewId:int}/reject")]
+        [ProducesResponseType(typeof(ApiResponse<ProductReviewDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> RejectReview(int reviewId)
         {
             var adminId = GetCurrentUserId();

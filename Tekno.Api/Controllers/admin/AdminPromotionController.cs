@@ -29,6 +29,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Get paginated list of promotions with filtering
         /// </summary>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<PromotionDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetPaged(
             [FromQuery] string? search,
             [FromQuery] string? status,
@@ -46,6 +49,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Get promotion by ID
         /// </summary>
         [HttpGet("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<PromotionDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetById(int id)
         {
             var promotion = await _promotionService.GetPromotionByIdAsync(id);
@@ -59,6 +65,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Get all active promotions
         /// </summary>
         [HttpGet("active")]
+        [ProducesResponseType(typeof(ApiResponse<System.Collections.Generic.List<PromotionDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetActive()
         {
             var promotions = await _promotionService.GetActivePromotionsAsync();
@@ -89,6 +98,9 @@ namespace Tekno.Api.Controllers.Admin
         /// If startDate is now or past, promotion is immediately "Active" and applied to products
         /// </remarks>
         [HttpPost]
+        [ProducesResponseType(typeof(ApiResponse<PromotionDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Create([FromBody] CreatePromotionDto dto)
         {
             var promotion = await _promotionService.CreatePromotionAsync(dto);
@@ -102,6 +114,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Update existing promotion
         /// </summary>
         [HttpPut("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<PromotionDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Update(int id, [FromBody] UpdatePromotionDto dto)
         {
             var promotion = await _promotionService.UpdatePromotionAsync(id, dto);
@@ -118,6 +133,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Warning: This will remove discounts from all affected products
         /// </remarks>
         [HttpDelete("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _promotionService.DeletePromotionAsync(id);
@@ -134,6 +152,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Activates the promotion and applies discounts to products immediately
         /// </remarks>
         [HttpPatch("{id:int}/activate")]
+        [ProducesResponseType(typeof(ApiResponse<PromotionDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Activate(int id)
         {
             var promotion = await _promotionService.ActivatePromotionAsync(id);
@@ -150,6 +171,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Pauses the promotion and removes discounts from products
         /// </remarks>
         [HttpPatch("{id:int}/pause")]
+        [ProducesResponseType(typeof(ApiResponse<PromotionDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Pause(int id)
         {
             var promotion = await _promotionService.PausePromotionAsync(id);

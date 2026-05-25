@@ -65,6 +65,9 @@ namespace Tekno.Api.Controllers.Admin
         ///     GET /api/admin/orders?status=4&amp;page=2&amp;pageSize=50  // Shipping orders, page 2
         /// </remarks>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<AdminOrderListDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetAllOrders(
             [FromQuery] OrderStatus? status = null,
             [FromQuery] string? search = null,
@@ -105,6 +108,9 @@ namespace Tekno.Api.Controllers.Admin
         ///     GET /api/admin/orders/123
         /// </remarks>
         [HttpGet("{orderId:int}")]
+        [ProducesResponseType(typeof(ApiResponse<AdminOrderDetailDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetOrderDetails(int orderId)
         {
             try
@@ -147,6 +153,9 @@ namespace Tekno.Api.Controllers.Admin
         ///     }
         /// </remarks>
         [HttpPut("{orderId:int}/status")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdateOrderStatus(
             int orderId,
             [FromBody] UpdateOrderStatusDto dto)
@@ -196,6 +205,9 @@ namespace Tekno.Api.Controllers.Admin
         ///     }
         /// </remarks>
         [HttpPost("{orderId:int}/ship")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> ShipOrder(
             int orderId,
             [FromBody] ShipOrderDto dto)
@@ -239,6 +251,9 @@ namespace Tekno.Api.Controllers.Admin
         ///     POST /api/admin/orders/123/deliver
         /// </remarks>
         [HttpPost("{orderId:int}/deliver")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> DeliverOrder(int orderId)
         {
             try
@@ -283,6 +298,9 @@ namespace Tekno.Api.Controllers.Admin
         ///     }
         /// </remarks>
         [HttpPost("{orderId:int}/cancel")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> CancelOrder(
             int orderId,
             [FromBody] CancelOrderDto dto)
@@ -326,6 +344,9 @@ namespace Tekno.Api.Controllers.Admin
         ///     GET /api/admin/orders/statistics
         /// </remarks>
         [HttpGet("statistics")]
+        [ProducesResponseType(typeof(ApiResponse<OrderStatisticsDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetStatistics()
         {
             try

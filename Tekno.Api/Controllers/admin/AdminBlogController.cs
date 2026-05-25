@@ -27,6 +27,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Get all blog posts (paginated)
         /// </summary>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<Application.Common.Paging.PagedResult<BlogPostSummaryDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetAll([FromQuery] BlogPostQueryDto query)
         {
             var result = await _blogPostService.GetPagedAsync(query);
@@ -37,6 +40,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Get blog post by ID
         /// </summary>
         [HttpGet("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<BlogPostDetailDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetById(int id)
         {
             var blogPost = await _blogPostService.GetByIdAsync(id);
@@ -69,6 +75,9 @@ namespace Tekno.Api.Controllers.Admin
         /// 
         /// </remarks>
         [HttpPost]
+        [ProducesResponseType(typeof(ApiResponse<BlogPostDetailDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Create([FromForm] CreateBlogPostDto dto)
         {
             // Get author ID from JWT token
@@ -90,6 +99,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Update blog post
         /// </summary>
         [HttpPut("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<BlogPostDetailDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Update(int id, [FromForm] UpdateBlogPostDto dto)
         {
             var blogPost = await _blogPostService.UpdateAsync(id, dto);
@@ -104,6 +116,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Delete blog post
         /// </summary>
         [HttpDelete("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _blogPostService.DeleteAsync(id);
@@ -118,6 +133,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Publish blog post
         /// </summary>
         [HttpPatch("{id:int}/publish")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Publish(int id)
         {
             var success = await _blogPostService.PublishAsync(id);
@@ -132,6 +150,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Unpublish blog post (set to draft)
         /// </summary>
         [HttpPatch("{id:int}/unpublish")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Unpublish(int id)
         {
             var success = await _blogPostService.UnpublishAsync(id);

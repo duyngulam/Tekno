@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -65,7 +63,7 @@ namespace Tekno.Infrastructure.Seeding
         {
             var usersCreated = 0;
 
-            for (int i = 1; i <= 30; i++)
+            for (int i = 1; i <= 5000; i++)
             {
                 var email = $"training{i}@tekno.com";
                 var password = $"training{i}";
@@ -76,12 +74,21 @@ namespace Tekno.Infrastructure.Seeding
 
                 if (existingUser != null)
                 {
-                    _logger.LogInformation("User {Email} already exists, skipping", email);
+                    if (!existingUser.PasswordHash.StartsWith("$2", StringComparison.Ordinal))
+                    {
+                        existingUser.UpdatePassword(BCrypt.Net.BCrypt.HashPassword(password));
+                        _logger.LogInformation("User {Email} already existed with a legacy hash and was migrated", email);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("User {Email} already exists, skipping", email);
+                    }
+
                     continue;
                 }
 
                 // Hash password
-                var passwordHash = HashPassword(password);
+                var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
 
                 // Create user (roleId = 2 for Customer)
                 var user = new User(email, passwordHash, roleId: 2);
@@ -97,16 +104,6 @@ namespace Tekno.Infrastructure.Seeding
             return usersCreated;
         }
 
-        /// <summary>
-        /// Simple password hashing (SHA256)
-        /// </summary>
-        private string HashPassword(string password)
-        {
-            using var sha256 = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(password);
-            var hash = sha256.ComputeHash(bytes);
-            return Convert.ToBase64String(hash);
-        }
     }
 
     /// <summary>

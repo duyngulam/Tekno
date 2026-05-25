@@ -26,6 +26,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Get all advertisements (paginated)
         /// </summary>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<Application.Common.Paging.PagedResult<ProductAdvertisementDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetAll([FromQuery] AdvertisementQueryDto query)
         {
             var result = await _advertisementService.GetPagedAsync(query);
@@ -36,6 +39,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Get advertisement by ID
         /// </summary>
         [HttpGet("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<ProductAdvertisementDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetById(int id)
         {
             var advertisement = await _advertisementService.GetByIdAsync(id);
@@ -69,6 +75,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Priority: 0-100 (higher = shown first)
         /// </remarks>
         [HttpPost]
+        [ProducesResponseType(typeof(ApiResponse<ProductAdvertisementDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Create([FromForm] CreateAdvertisementDto dto)
         {
             var advertisement = await _advertisementService.CreateAsync(dto);
@@ -82,6 +91,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Update advertisement banner
         /// </summary>
         [HttpPut("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<ProductAdvertisementDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Update(int id, [FromForm] UpdateAdvertisementDto dto)
         {
             var advertisement = await _advertisementService.UpdateAsync(id, dto);
@@ -96,6 +108,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Delete advertisement banner
         /// </summary>
         [HttpDelete("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _advertisementService.DeleteAsync(id);
@@ -110,6 +125,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Activate advertisement
         /// </summary>
         [HttpPatch("{id:int}/activate")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Activate(int id)
         {
             var success = await _advertisementService.ActivateAsync(id);
@@ -124,6 +142,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Deactivate advertisement
         /// </summary>
         [HttpPatch("{id:int}/deactivate")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Deactivate(int id)
         {
             var success = await _advertisementService.DeactivateAsync(id);

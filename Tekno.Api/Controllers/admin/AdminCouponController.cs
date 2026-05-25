@@ -31,6 +31,9 @@ namespace Tekno.Api.Controllers.Admin
         /// <param name="page">Page number (default: 1)</param>
         /// <param name="pageSize">Items per page (default: 20, max: 100)</param>
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<CouponDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetPaged(
             [FromQuery] string? search,
             [FromQuery] string? status,
@@ -48,6 +51,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Get coupon by ID with full details
         /// </summary>
         [HttpGet("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<CouponDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetById(int id)
         {
             var coupon = await _couponService.GetCouponByIdAsync(id);
@@ -82,6 +88,9 @@ namespace Tekno.Api.Controllers.Admin
         /// 
         /// </remarks>
         [HttpPost]
+        [ProducesResponseType(typeof(ApiResponse<CouponDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Create([FromBody] CreateCouponDto dto)
         {
             var coupon = await _couponService.CreateCouponAsync(dto);
@@ -98,6 +107,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Note: Cannot update coupon code. Create a new coupon if code needs to change.
         /// </remarks>
         [HttpPut("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<CouponDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateCouponDto dto)
         {
             var coupon = await _couponService.UpdateCouponAsync(id, dto);
@@ -115,6 +127,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Consider deactivating instead of deleting if you need to preserve history.
         /// </remarks>
         [HttpDelete("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _couponService.DeleteCouponAsync(id);
@@ -131,6 +146,9 @@ namespace Tekno.Api.Controllers.Admin
         /// <param name="page">Page number</param>
         /// <param name="pageSize">Items per page</param>
         [HttpGet("{id:int}/usage")]
+        [ProducesResponseType(typeof(ApiResponse<System.Collections.Generic.List<CouponUsageDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetUsageHistory(
             int id,
             [FromQuery] int page = 1,
@@ -144,6 +162,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Activate a coupon
         /// </summary>
         [HttpPatch("{id:int}/activate")]
+        [ProducesResponseType(typeof(ApiResponse<CouponDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Activate(int id)
         {
             var coupon = await _couponService.ActivateCouponAsync(id);
@@ -157,6 +178,9 @@ namespace Tekno.Api.Controllers.Admin
         /// Deactivate a coupon
         /// </summary>
         [HttpPatch("{id:int}/deactivate")]
+        [ProducesResponseType(typeof(ApiResponse<CouponDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Deactivate(int id)
         {
             var coupon = await _couponService.DeactivateCouponAsync(id);
@@ -170,16 +194,19 @@ namespace Tekno.Api.Controllers.Admin
         /// Get coupon statistics/analytics
         /// </summary>
         [HttpGet("{id:int}/statistics")]
+        [ProducesResponseType(typeof(ApiResponse<CouponStatisticsDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetStatistics(int id)
         {
             var coupon = await _couponService.GetCouponByIdAsync(id);
             if (coupon == null)
                 return NotFound(ApiResponse<CouponDto>.Fail("Coupon not found"));
 
-            var stats = new
+            var stats = new CouponStatisticsDto
             {
-                coupon.Code,
-                coupon.Name,
+                Code = coupon.Code,
+                Name = coupon.Name,
                 TotalAvailable = coupon.Quantity,
                 UsedCount = coupon.UsedCount,
                 RemainingCount = coupon.RemainingQuantity,
@@ -192,7 +219,7 @@ namespace Tekno.Api.Controllers.Admin
                 DaysRemaining = (coupon.EndDate - DateTime.UtcNow).Days
             };
 
-            return Ok(ApiResponse<object>.Ok(stats));
+            return Ok(ApiResponse<CouponStatisticsDto>.Ok(stats));
         }
     }
 }

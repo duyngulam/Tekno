@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Tekno.Application.Cart.DTOs;
+using Tekno.Application.Payment.Services;
 using Tekno.Domain.Order;
 using Tekno.Domain.Payment;
 
@@ -181,5 +182,25 @@ namespace Tekno.Application.Payment.DTOs
         public DateTime? CompletedAt { get; set; }
         public DateTime? FailedAt { get; set; }
         public string? ErrorMessage { get; set; }
+    }
+
+    public class AvailablePaymentGatewayDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public bool Available { get; set; }
+    }
+
+    public class ManualTimeoutCheckResultDto
+    {
+        public string Message { get; set; } = string.Empty;
+        public PaymentTimeoutStatistics Statistics { get; set; } = new();
+    }
+
+    public class PaymentStatisticsSummaryDto
+    {
+        public string Message { get; set; } = string.Empty;
+        public List<string> AvailableEndpoints { get; set; } = new();
     }
 }

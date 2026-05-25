@@ -143,4 +143,29 @@ namespace Tekno.Application.Promotion.DTOs
         public decimal DiscountAmount { get; set; }
         public DateTime UsedAt { get; set; }
     }
+
+    public class CouponExistsResultDto
+    {
+        public bool Exists { get; set; }
+        public bool? Usable { get; set; }
+        public string? Name { get; set; }
+        public string? Type { get; set; }
+        public decimal? Value { get; set; }
+        public decimal? MinPurchaseAmount { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }
+
+    public class CouponStatisticsDto
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public int TotalAvailable { get; set; }
+        public int UsedCount { get; set; }
+        public int RemainingCount { get; set; }
+        public double UsageRate { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public bool IsExpired { get; set; }
+        public int DaysRemaining { get; set; }
+    }
 }

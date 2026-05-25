@@ -1,0 +1,1 @@
+Low MAE: model reconstruction looks good; inspect recommendation diversity and popularity bias.

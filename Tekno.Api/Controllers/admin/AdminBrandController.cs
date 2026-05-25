@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Tekno.Api.Commons.Responses;
@@ -32,6 +32,9 @@ namespace Tekno.Api.Controllers.admin
 
         // GET /api/admin/brands - Paginated list
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<BrandDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetBrandsPaged(
             [FromQuery] string? search,
             [FromQuery] int page = 1,
@@ -43,6 +46,9 @@ namespace Tekno.Api.Controllers.admin
 
         // GET /api/admin/brands/list - All brands (kept for backward compatibility)
         [HttpGet("list")]
+        [ProducesResponseType(typeof(ApiResponse<List<BrandDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetAllBrands()
         {
             var brands = await _brandService.GetAllBrandsAsync();
@@ -50,6 +56,9 @@ namespace Tekno.Api.Controllers.admin
         }
 
         [HttpGet("{slug}")]
+        [ProducesResponseType(typeof(ApiResponse<BrandDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetBrandBySlug(string slug)
         {
             var brand = await _brandService.GetBrandBySlugAsync(slug);
@@ -66,6 +75,9 @@ namespace Tekno.Api.Controllers.admin
         /// Upload logo file (optional). Transactions ensure no orphan images.
         /// </remarks>
         [HttpPost("create")]
+        [ProducesResponseType(typeof(ApiResponse<BrandDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> CreateBrand([FromForm] CreateBrandApiDto createDto)
         {
             try
@@ -97,6 +109,9 @@ namespace Tekno.Api.Controllers.admin
         /// Transactions ensure no orphan images.
         /// </remarks>
         [HttpPut("update")]
+        [ProducesResponseType(typeof(ApiResponse<BrandDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdateBrand([FromForm] UpdateBrandApiDto apiDto)
         {
             try
@@ -132,6 +147,9 @@ namespace Tekno.Api.Controllers.admin
         /// Transactions ensure database consistency.
         /// </remarks>
         [HttpDelete("delete")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> DeleteBrand([FromBody] DeleteBrandApiDto apiDto)
         {
             try

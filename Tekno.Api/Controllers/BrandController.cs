@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Tekno.Api.Commons.Responses;
 using Tekno.Api.Models.Catalog;
@@ -23,6 +23,9 @@ namespace Tekno.Api.Controllers
 
         // GET /api/brands - Paginated list
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<BrandDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetBrandsPaged(
             [FromQuery] string? search,
             [FromQuery] int page = 1,
@@ -34,6 +37,9 @@ namespace Tekno.Api.Controllers
 
         // GET /api/brands/list - All brands (kept for backward compatibility)
         [HttpGet("list")]
+        [ProducesResponseType(typeof(ApiResponse<List<BrandDto>>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetBrands()
         {
             var brands = await _brandService.GetAllBrandsAsync();
@@ -41,6 +47,9 @@ namespace Tekno.Api.Controllers
             return Ok(ApiResponse<List<BrandDto>>.Ok(result, "Brands loaded successfully"));
         }
         [HttpGet("{slug}")]
+        [ProducesResponseType(typeof(ApiResponse<BrandDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> GetBrandBySlug(string slug)
         {
             var brand = await _brandService.GetBrandBySlugAsync(slug);

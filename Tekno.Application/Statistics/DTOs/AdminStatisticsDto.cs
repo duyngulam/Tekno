@@ -179,4 +179,20 @@ namespace Tekno.Application.Statistics.DTOs
         LastYear,
         Custom
     }
+
+    public class DateRangeOptionDto
+    {
+        public string Value { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+
+    public class StatisticsFilterOptionsDto
+    {
+        public List<DateRangeOptionDto> DateRanges { get; set; } = new();
+        public string DefaultPeriod { get; set; } = string.Empty;
+        public int MaxTopCount { get; set; }
+        public int DefaultTopCount { get; set; }
+        public string CacheTtl { get; set; } = string.Empty;
+    }
 }

@@ -1,119 +1,234 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 from pathlib import Path
-import joblib
-import numpy as np
 import pandas as pd
-import json
-from sklearn.metrics.pairwise import cosine_similarity
+import os
+
+# =========================================================
+# PATH CONFIG
+# =========================================================
 
 ROOT = Path(__file__).resolve().parent
-MODELS = ROOT / 'models'
-PRODUCT_CSV = ROOT / 'product.csv'
-ORDERS_CSV = ROOT / 'orders.csv'
 
-app = FastAPI(title='Trainning Model API')
+AEMC_OUTPUT_DIR = Path(
+    os.environ.get(
+        "AEMC_OUTPUT_DIR",
+        str(ROOT / "outputs_run_2000x500_v2")
+    )
+)
 
+# =========================================================
+# FASTAPI
+# =========================================================
 
-class PredictRequest(BaseModel):
-    product_id: int = None
-    text: str = None
+app = FastAPI(
+    title="CF Recommendation API"
+)
 
+# =========================================================
+# CACHE
+# =========================================================
 
-@app.on_event('startup')
-def load_models():
-    global df_products, vect_cat, le_cat, clf_cat, le_brand, clf_brand
-    global vect_products, prod_vectors, cf_model
-    df_products = pd.read_csv(PRODUCT_CSV)
-    df_products['Name'] = df_products['Name'].fillna('')
-    df_products['Specs'] = df_products['Specs'].fillna('')
-    df_products['text'] = df_products['Name'].astype(str) + ' ' + df_products['Specs'].astype(str)
+_aemc_cache = {
+    "path": None,
+    "mtime": None,
+    "recommend_map": None
+}
 
-    vect_cat = joblib.load(MODELS / 'vect_category.joblib')
-    le_cat = joblib.load(MODELS / 'le_category.joblib')
-    clf_cat = joblib.load(MODELS / 'clf_category.joblib')
+# =========================================================
+# FIND LATEST CSV
+# =========================================================
 
-    le_brand = joblib.load(MODELS / 'le_brand.joblib')
-    clf_brand = joblib.load(MODELS / 'clf_brand.joblib')
+def _find_latest_aemc_predictions(
+    output_dir: Path
+) -> Path:
 
-    vect_products = joblib.load(MODELS / 'vect_products.joblib')
-    prod_vectors = joblib.load(MODELS / 'prod_vectors.joblib')
+    candidates = list(
+        output_dir.glob(
+            "topn_export_*.csv"
+        )
+    )
 
-    cf_model = joblib.load(MODELS / 'cf_model.joblib')
+    if not candidates:
+        raise FileNotFoundError(
+            f"No AEMC prediction files found in {output_dir}"
+        )
 
+    latest_file = max(
+        candidates,
+        key=lambda p: p.stat().st_mtime
+    )
 
-def _predict_from_text(text: str):
-    Xv = vect_cat.transform([text])
-    cat = le_cat.inverse_transform(clf_cat.predict(Xv))[0]
-    brand = le_brand.inverse_transform(clf_brand.predict(Xv))[0]
-    return {'category': str(cat), 'brand': str(brand)}
+    return latest_file
 
+# =========================================================
+# LOAD CSV + CACHE
+# =========================================================
 
-@app.post('/predict')
-def predict(req: PredictRequest):
-    if req.product_id is None and not req.text:
-        raise HTTPException(status_code=400, detail='Provide product_id or text')
-    if req.product_id is not None:
-        row = df_products[df_products['Id'] == req.product_id]
-        if row.empty:
-            raise HTTPException(status_code=404, detail='product_id not found')
-        text = row['text'].iloc[0]
-    else:
-        text = req.text
-    return _predict_from_text(text)
+def _load_aemc_predictions():
 
+    global _aemc_cache
 
-@app.get('/recommend/cf/{user_id}')
-def recommend_cf_api(user_id: int, k: int = 10):
-    if 'user_index' not in cf_model or 'item_index' not in cf_model:
-        raise HTTPException(status_code=500, detail='CF model missing indexes')
-    if user_id not in cf_model['user_index']:
-        return {'recommendations': []}
-    uidx = cf_model['user_index'][user_id]
-    scores = cf_model['item_factors'] @ cf_model['user_factors'][uidx]
-    item_list = sorted(cf_model['item_index'].items(), key=lambda x: x[1])
-    item_ids = [p for p, _ in item_list]
-    ranked = sorted(zip(item_ids, scores), key=lambda x: -x[1])
-    return {'recommendations': [int(pid) for pid, _ in ranked[:k]]}
+    pred_path = _find_latest_aemc_predictions(
+        AEMC_OUTPUT_DIR
+    )
 
+    mtime = pred_path.stat().st_mtime
 
-@app.get('/recommend/content/{user_id}')
-def recommend_content_api(user_id: int, k: int = 10):
-    # read orders and aggregate purchased by user
+    # =====================================
+    # CACHE HIT
+    # =====================================
+
+    if (
+        _aemc_cache["path"] == pred_path
+        and _aemc_cache["mtime"] == mtime
+    ):
+        return _aemc_cache["recommend_map"]
+
+    # =====================================
+    # LOAD CSV
+    # =====================================
+
+    df = pd.read_csv(
+        pred_path,
+        usecols=[
+            "user_id",
+            "rank",
+            "item_id",
+            "score"
+        ]
+    )
+
+    required_cols = {
+        "user_id",
+        "rank",
+        "item_id",
+        "score"
+    }
+
+    missing = required_cols - set(df.columns)
+
+    if missing:
+        raise ValueError(
+            f"Missing required columns: {missing}"
+        )
+
+    # =====================================
+    # TYPE CAST
+    # =====================================
+
+    df["user_id"] = (
+        df["user_id"]
+        .astype(int)
+    )
+
+    df["item_id"] = (
+        df["item_id"]
+        .astype(int)
+    )
+
+    df["rank"] = (
+        df["rank"]
+        .astype(int)
+    )
+
+    # =====================================
+    # SORT
+    # =====================================
+
+    df = df.sort_values(
+        ["user_id", "rank"],
+        ascending=[True, True]
+    )
+
+    # =====================================
+    # BUILD LOOKUP MAP
+    # =====================================
+
+    recommend_map = (
+        df.groupby("user_id")["item_id"]
+        .apply(list)
+        .to_dict()
+    )
+
+    # =====================================
+    # UPDATE CACHE
+    # =====================================
+
+    _aemc_cache = {
+        "path": pred_path,
+        "mtime": mtime,
+        "recommend_map": recommend_map
+    }
+
+    return recommend_map
+
+# =========================================================
+# STARTUP
+# =========================================================
+
+@app.on_event("startup")
+def startup_event():
+
     try:
-        orders = pd.read_csv(ORDERS_CSV)
-    except Exception:
-        return {'recommendations': []}
-    # ProductIds stored as JSON strings
-    bought = []
-    for _, r in orders[orders['UserId'] == user_id].iterrows():
-        try:
-            pids = json.loads(r['ProductIds'])
-        except Exception:
-            pids = []
-        bought.extend(pids)
-    bought = list(set([int(x) for x in bought]))
-    if not bought:
-        return {'recommendations': []}
 
-    purchased_idx = df_products[df_products['Id'].isin(bought)].index.tolist()
-    pv = prod_vectors[purchased_idx]
-    user_profile = pv.mean(axis=0)
-    if hasattr(user_profile, 'toarray'):
-        user_profile = user_profile.toarray()
-    else:
-        user_profile = np.asarray(user_profile)
-    if hasattr(prod_vectors, 'toarray'):
-        pvecs = prod_vectors.toarray()
-    else:
-        pvecs = np.asarray(prod_vectors)
-    sims = cosine_similarity(user_profile, pvecs).flatten()
-    ranked = np.argsort(-sims)
-    rec_ids = df_products.iloc[ranked]['Id'].tolist()
-    rec_filtered = [int(pid) for pid in rec_ids if pid not in set(bought)]
-    return {'recommendations': rec_filtered[:k]}
+        _load_aemc_predictions()
 
+        print(
+            "AEMC predictions loaded successfully"
+        )
 
-@app.get('/health')
+    except Exception as exc:
+
+        print(
+            f"Failed to preload AEMC predictions: {exc}"
+        )
+
+# =========================================================
+# CF RECOMMENDATION ENDPOINT
+# =========================================================
+
+@app.get("/recommend/cf/{user_id}")
+def recommend_cf_api(
+    user_id: int,
+    k: int = 10
+):
+
+    try:
+
+        recommend_map = (
+            _load_aemc_predictions()
+        )
+
+    except FileNotFoundError as exc:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(exc)
+        ) from exc
+
+    except Exception as exc:
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load CF predictions: {str(exc)}"
+        ) from exc
+
+    recommendations = (
+        recommend_map.get(user_id, [])[:k]
+    )
+
+    return {
+        "user_id": user_id,
+        "recommendations": recommendations
+    }
+
+# =========================================================
+# HEALTH CHECK
+# =========================================================
+
+@app.get("/health")
 def health():
-    return {'status': 'ok'}
+
+    return {
+        "status": "ok"
+    }

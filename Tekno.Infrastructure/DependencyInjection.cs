@@ -49,10 +49,15 @@ namespace Tekno.Infrastructure
             // ===================================================
             // 2️⃣ REDIS CACHE
             // ===================================================
+            //services.AddStackExchangeRedisCache(options =>
+            //{
+            //    options.Configuration = config["Redis:ConnectionString"];
+            //    options.InstanceName = config["Redis:InstanceName"];
+            //});
             services.AddStackExchangeRedisCache(options =>
             {
-                options.Configuration = config["Redis:ConnectionString"];
-                options.InstanceName = config["Redis:InstanceName"];
+                options.Configuration = "localhost:6379";
+                options.InstanceName = "Tekno_";
             });
 
             // ===================================================
@@ -188,6 +193,8 @@ namespace Tekno.Infrastructure
             // 9️⃣ TRAINING DATA SEEDER
             // ===================================================
             services.AddScoped<Seeding.TrainingUserSeeder>();
+            services.AddScoped<Seeding.TrainingProductImportService>();
+            services.AddScoped<Seeding.TrainingPipelineRunner>();
 
             return services;
         }

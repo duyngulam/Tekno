@@ -66,7 +66,7 @@ namespace Tekno.Api.Controllers.admin
         /// <response code="403">Forbidden - Admin role required</response>
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<AdminStatisticsDto>), 200)]
-        [ProducesResponseType(typeof(ApiResponse<object>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
         public async Task<IActionResult> GetStatistics(
             [FromQuery] DateRangeFilter period = DateRangeFilter.Last7Days,
             [FromQuery] DateTime? startDate = null,
@@ -75,19 +75,19 @@ namespace Tekno.Api.Controllers.admin
         {
             if (topCount < 1 || topCount > 50)
             {
-                return BadRequest(ApiResponse<object>.Fail("topCount must be between 1 and 50"));
+                return BadRequest(ApiResponse<string>.Fail("topCount must be between 1 and 50"));
             }
 
             if (period == DateRangeFilter.Custom)
             {
                 if (!startDate.HasValue || !endDate.HasValue)
                 {
-                    return BadRequest(ApiResponse<object>.Fail("startDate and endDate are required for custom period"));
+                    return BadRequest(ApiResponse<string>.Fail("startDate and endDate are required for custom period"));
                 }
 
                 if (startDate.Value > endDate.Value)
                 {
-                    return BadRequest(ApiResponse<object>.Fail("startDate must be before endDate"));
+                    return BadRequest(ApiResponse<string>.Fail("startDate must be before endDate"));
                 }
             }
 
@@ -175,7 +175,7 @@ namespace Tekno.Api.Controllers.admin
         /// <response code="403">Forbidden - Admin role required</response>
         [HttpGet("top-products")]
         [ProducesResponseType(typeof(ApiResponse<List<TopProductDto>>), 200)]
-        [ProducesResponseType(typeof(ApiResponse<object>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
         public async Task<IActionResult> GetTopProducts(
             [FromQuery] DateRangeFilter period = DateRangeFilter.Last7Days,
             [FromQuery] DateTime? startDate = null,
@@ -183,7 +183,7 @@ namespace Tekno.Api.Controllers.admin
             [FromQuery] int topCount = 10)
         {
             if (topCount < 1 || topCount > 50)
-                return BadRequest(ApiResponse<object>.Fail("topCount must be between 1 and 50"));
+                return BadRequest(ApiResponse<string>.Fail("topCount must be between 1 and 50"));
 
             var filter = new StatisticsFilterDto { Period = period, StartDate = startDate, EndDate = endDate, TopCount = topCount };
             var data = await _statisticsService.GetTopSoldProductsAsync(filter);
@@ -396,34 +396,34 @@ namespace Tekno.Api.Controllers.admin
         /// <response code="200">Returns list of available filters</response>
         [HttpGet("filters")]
         [AllowAnonymous] // Allow this for UI building
-        [ProducesResponseType(typeof(ApiResponse<object>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<StatisticsFilterOptionsDto>), 200)]
         public IActionResult GetAvailableFilters()
         {
-            var filters = new
+            var filters = new StatisticsFilterOptionsDto
             {
-                dateRanges = new[]
+                DateRanges = new List<DateRangeOptionDto>
                 {
-                    new { value = "Today", label = "Today", description = "Orders from today" },
-                    new { value = "Yesterday", label = "Yesterday", description = "Orders from yesterday" },
-                    new { value = "Last7Days", label = "Last 7 Days", description = "Orders from the last 7 days" },
-                    new { value = "Last30Days", label = "Last 30 Days", description = "Orders from the last 30 days" },
-                    new { value = "ThisWeek", label = "This Week", description = "Orders from the current week" },
-                    new { value = "LastWeek", label = "Last Week", description = "Orders from last week" },
-                    new { value = "ThisMonth", label = "This Month", description = "Orders from the current month" },
-                    new { value = "LastMonth", label = "Last Month", description = "Orders from last month" },
-                    new { value = "ThisQuarter", label = "This Quarter", description = "Orders from the current quarter" },
-                    new { value = "LastQuarter", label = "Last Quarter", description = "Orders from last quarter" },
-                    new { value = "ThisYear", label = "This Year", description = "Orders from the current year" },
-                    new { value = "LastYear", label = "Last Year", description = "Orders from last year" },
-                    new { value = "Custom", label = "Custom Range", description = "Custom date range (requires startDate and endDate)" }
+                    new() { Value = "Today", Label = "Today", Description = "Orders from today" },
+                    new() { Value = "Yesterday", Label = "Yesterday", Description = "Orders from yesterday" },
+                    new() { Value = "Last7Days", Label = "Last 7 Days", Description = "Orders from the last 7 days" },
+                    new() { Value = "Last30Days", Label = "Last 30 Days", Description = "Orders from the last 30 days" },
+                    new() { Value = "ThisWeek", Label = "This Week", Description = "Orders from the current week" },
+                    new() { Value = "LastWeek", Label = "Last Week", Description = "Orders from last week" },
+                    new() { Value = "ThisMonth", Label = "This Month", Description = "Orders from the current month" },
+                    new() { Value = "LastMonth", Label = "Last Month", Description = "Orders from last month" },
+                    new() { Value = "ThisQuarter", Label = "This Quarter", Description = "Orders from the current quarter" },
+                    new() { Value = "LastQuarter", Label = "Last Quarter", Description = "Orders from last quarter" },
+                    new() { Value = "ThisYear", Label = "This Year", Description = "Orders from the current year" },
+                    new() { Value = "LastYear", Label = "Last Year", Description = "Orders from last year" },
+                    new() { Value = "Custom", Label = "Custom Range", Description = "Custom date range (requires startDate and endDate)" }
                 },
-                defaultPeriod = "Last7Days",
-                maxTopCount = 50,
-                defaultTopCount = 10,
-                cacheTtl = "5 minutes (overview: 2 minutes)"
+                DefaultPeriod = "Last7Days",
+                MaxTopCount = 50,
+                DefaultTopCount = 10,
+                CacheTtl = "5 minutes (overview: 2 minutes)"
             };
 
-            return Ok(ApiResponse<object>.Ok(filters));
+            return Ok(ApiResponse<StatisticsFilterOptionsDto>.Ok(filters));
         }
 
         /// <summary>
@@ -440,11 +440,11 @@ namespace Tekno.Api.Controllers.admin
         /// </remarks>
         /// <response code="200">Cache invalidation initiated</response>
         [HttpPost("invalidate-cache")]
-        [ProducesResponseType(typeof(ApiResponse<object>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 200)]
         public async Task<IActionResult> InvalidateCache()
         {
             await _statisticsService.InvalidateStatisticsCacheAsync();
-            return Ok(ApiResponse<object>.Ok(null, "Statistics cache invalidation initiated"));
+            return Ok(ApiResponse<string>.Ok("Statistics cache invalidation initiated", "Statistics cache invalidation initiated"));
         }
 
         /// <summary>

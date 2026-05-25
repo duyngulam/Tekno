@@ -21,6 +21,8 @@ namespace Tekno.Api.Controllers
         /// </summary>
         [HttpPost("category-icon")]
         [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(object), 200)]
+        [ProducesResponseType(400)]
         public async Task<IActionResult> UploadCategoryIcon([FromForm] FileUploadRequest request)
         {
             if (request.File == null || request.File.Length == 0)
@@ -35,6 +37,8 @@ namespace Tekno.Api.Controllers
         /// </summary>
         [HttpPost("product-image")]
         [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(object), 200)]
+        [ProducesResponseType(400)]
         public async Task<IActionResult> UploadProductImage([FromForm] FileUploadRequest request)
         {
             if (request.File == null || request.File.Length == 0)
@@ -44,6 +48,8 @@ namespace Tekno.Api.Controllers
             return Ok(new { Url = url });
         }
         [HttpDelete]
+        [ProducesResponseType(typeof(object), 200)]
+        [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteImage([FromQuery] string Url)
         {
             if (string.IsNullOrEmpty(Url))
