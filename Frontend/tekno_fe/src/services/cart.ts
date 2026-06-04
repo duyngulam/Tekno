@@ -1,95 +1,54 @@
+// src/services/cart.ts
+import { httpClient } from "@/lib/httpClient";
 import { CartResponse } from "@/hook/useCart";
-import { Product } from "@/type/product";
 
-const BASE_URL = "http://localhost:5000/api";
+export class CartService {
+  private static instance: CartService | null = null;
 
-export const cartApi = {
-  getCart: async (token: string): Promise<CartResponse> => {
-    const res = await fetch(`${BASE_URL}/cart`, {
-      credentials: "include",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-      },
-    });
+  private constructor() {}
 
-    if (!res.ok) throw new Error("Failed to fetch cart");
-    return res.json();
-  },
-
-  addToCart: async (
-    token: string,
-    { variantId, quantity }: { variantId: number; quantity: number }
-  ) => {
-    const res = await fetch(`${BASE_URL}/cart/items`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({ variantId, quantity }),
-    });
-
-    if (!res.ok) throw new Error("Failed to add to cart");
-    return res.json();
-  },
-
-  removeFromCart: async (token: string, variantId: number) => {
-    const res = await fetch(`${BASE_URL}/cart/items/${variantId}`, {
-      method: "DELETE ",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({ variantId }),
-    });
-
-    if (!res.ok) throw new Error("Failed to remove from cart");
-    return res.json();
-  },
-
-cleanCart: async (token: string): Promise<CartResponse> => {
-  const res = await fetch(`${BASE_URL}/cart`, {
-    method: "DELETE",
-    credentials: "include",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!res.ok) {
-    const errorText = await res.text(); // log chi tiết lỗi backend
-    throw new Error(`Failed to delete cart: ${errorText}`);
+  public static getInstance(): CartService {
+    if (!CartService.instance) {
+      CartService.instance = new CartService();
+    }
+    return CartService.instance;
   }
 
-  // Một số API DELETE không trả JSON → check trước khi parse
+  public async getCart(): Promise<CartResponse> {
+    // Explicitly casting response to CartResponse
+    return httpClient.get<CartResponse>("/cart", { credentials: "include" });
+  }
 
-    return await res.json();
-  
-  },
-updateQuantity: async (
-    variantId: number,
-    quantity: number,
-    token: string
-  ): Promise<CartResponse> => {
-    const res = await fetch(`${BASE_URL}/cart/items/${variantId}`, {
-      method: "PUT",
+  public async addToCart(variantId: number, quantity: number) {
+    return httpClient.post<any>(
+      "/cart/items",
+      { variantId, quantity },
+      { credentials: "include" }
+    );
+  }
+
+  public async removeFromCart(variantId: number) {
+    // Note: del requires sending payload in options if needed, but endpoint might only need url parameter
+    return httpClient.del<any>(`/cart/items/${variantId}`, {
+      body: JSON.stringify({ variantId }),
       credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({ quantity }),
     });
+  }
 
-    if (!res.ok) {
-      const error = await res.text();
-      throw new Error("Failed to update quantity: " + error);
-    }
+  public async cleanCart(): Promise<CartResponse> {
+    return httpClient.del<CartResponse>("/cart", { credentials: "include" });
+  }
 
-    return res.json();
-  },
+  public async updateQuantity(
+    variantId: number,
+    quantity: number
+  ): Promise<CartResponse> {
+    return httpClient.put<CartResponse>(
+      `/cart/items/${variantId}`,
+      { quantity },
+      { credentials: "include" }
+    );
+  }
+}
 
-};
+export const cartService = CartService.getInstance();

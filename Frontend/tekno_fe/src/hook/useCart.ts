@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { cartApi } from '@/services/cart';
+import { cartService } from '@/services/cart';
 
 export interface CartItem {
   id: number;
@@ -56,7 +56,7 @@ export function useCart() {
     setError(null);
 
     try {
-      const data = await cartApi.getCart(token);
+      const data = await cartService.getCart();
       setCart(data);
     } catch (err: any) {
       setError(err.message);
@@ -70,7 +70,7 @@ export function useCart() {
     const token = getToken();
     if (!token) return alert("Bạn cần đăng nhập!");
 
-    await cartApi.addToCart(token, { variantId, quantity });
+    await cartService.addToCart(variantId, quantity);
     await fetchCart();
   };
 
@@ -79,7 +79,7 @@ export function useCart() {
     const token = getToken();
     if (!token) return;
 
-    await cartApi.removeFromCart(token, variantId);
+    await cartService.removeFromCart(variantId);
     await fetchCart();
   };
 
@@ -90,7 +90,7 @@ export function useCart() {
       const token = getToken();
       if (!token) throw new Error("Không tìm thấy token");
 
-      const res = await cartApi.cleanCart(token);
+      const res = await cartService.cleanCart();
       if (!res.success) throw new Error("Xoá giỏ hàng thất bại");
 
       setCart(null);
@@ -111,7 +111,7 @@ export function useCart() {
       const token = getToken();
       if (!token) throw new Error("Token not found");
 
-      await cartApi.updateQuantity(variantId, quantity, token);
+      await cartService.updateQuantity(variantId, quantity);
 
       // refetch lại cart để đồng bộ FE
       await fetchCart();

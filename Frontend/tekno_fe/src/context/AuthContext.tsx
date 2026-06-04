@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
-import { loginApi } from "@/services/auth";
+import { authService } from "@/services/auth";
 import { userInfo } from "os";
 
 export interface User {
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user]);
 
   const login = async (email: string, password: string) => {
-    const res = await loginApi({ email, password });
+    const res = await authService.login({ email, password });
 
     const userData = res.data;
 

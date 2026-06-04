@@ -1,42 +1,41 @@
-import { get, postForm, put, del, API_BASE } from "@/lib/api";
+// src/services/brand.ts
+import { httpClient } from "@/lib/httpClient";
 
-export async function getBrandList() {
-  try {
-    return await get(`${API_BASE}/admin/brands/list`, { cache: "no-store" });
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
+export class BrandService {
+  private static instance: BrandService | null = null;
+
+  private constructor() {}
+
+  public static getInstance(): BrandService {
+    if (!BrandService.instance) {
+      BrandService.instance = new BrandService();
+    }
+    return BrandService.instance;
   }
-}
 
-export async function createBrand(fd: FormData) {
-  try {
-    return await postForm(`${API_BASE}/admin/brands/create`, fd);
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
+  public async getBrandList() {
+    return httpClient.get<any>("/admin/brands/list", { cache: "no-store" });
   }
-}
 
-export async function updateBrand(fd: FormData) {
-  try {
-    return await put(`${API_BASE}/admin/brands/update`, fd);
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
+  public async createBrand(fd: FormData) {
+    return httpClient.post<any>("/admin/brands/create", fd);
   }
-}
 
-export async function deleteBrand(id: string) {
-  try {
-    const fd = new FormData();
-    fd.append("Id", id);
-    return await del(`${API_BASE}/admin/brands/delete`, {
-    body: JSON.stringify({ Id: id }),
-    headers: { "Content-Type": "application/json" },
+  public async updateBrand(fd: FormData) {
+    return httpClient.put<any>("/admin/brands/update", fd);
+  }
+
+  public async deleteBrand(id: string) {
+    return httpClient.del<any>("/admin/brands/delete", {
+      body: JSON.stringify({ Id: id }),
     });
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
   }
 }
+
+export const brandService = BrandService.getInstance();
+
+// Backward compatibility exports
+export const getBrandList = () => brandService.getBrandList();
+export const createBrand = (fd: FormData) => brandService.createBrand(fd);
+export const updateBrand = (fd: FormData) => brandService.updateBrand(fd);
+export const deleteBrand = (id: string) => brandService.deleteBrand(id);

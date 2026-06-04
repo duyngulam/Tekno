@@ -1,6 +1,6 @@
-import { API_BASE_URL } from "@/lib/apiConfig";
+// src/services/categories.ts
+import { httpClient } from "@/lib/httpClient";
 import { Category, CategoryAttribute } from "@/type/categories";
-import { get, post, put, putForm, del, API_BASE } from "@/lib/api";
 
 export interface AttributeValue {
   id: number;
@@ -26,259 +26,151 @@ export interface CreateAttributeRequest {
   initialValues: string[];
 }
 
-export async function getCategoriesList(): Promise<Category[]> {
-  try {
-    const res = await fetch (`${API_BASE}/admin/categories/list`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      cache: "no-store", // optional: tránh cache khi SSR
-    });
+export class CategoryService {
+  private static instance: CategoryService | null = null;
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Lấy danh sách thất bại!");
+  private constructor() {}
+
+  public static getInstance(): CategoryService {
+    if (!CategoryService.instance) {
+      CategoryService.instance = new CategoryService();
     }
-
-    // ⬇️ Trả về đúng kiểu Category[]
-    const result = await res.json();
-
-    // Trả về chỉ phần data là Category[]
-    return result.data as Category[];
-
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
+    return CategoryService.instance;
   }
-}
 
-export async function getCategoriesTree(): Promise<Category[]> {
-  try {
-    const res = await fetch(`${API_BASE_URL}/categories/tree`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      cache: "no-store", // optional: tránh cache khi SSR
+  public async getCategoriesList(): Promise<Category[]> {
+    return httpClient.get<Category[]>("/admin/categories/list", {
+      cache: "no-store",
     });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Lấy danh sách thất bại!");
-    }
-
-    // ⬇️ Trả về đúng kiểu Category[]
-    const result = await res.json();
-
-    // Trả về chỉ phần data là Category[]
-    return result.data as Category[];
-
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
   }
-}
 
-export async function createCategory(fd: FormData) {
-  try {
-    return await post(`${API_BASE}/admin/categories/create`, fd);
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
+  public async getCategoriesTree(): Promise<Category[]> {
+    return httpClient.get<Category[]>("/categories/tree", {
+      cache: "no-store",
+    });
   }
-}
 
-export async function updateCategory(fd: FormData) {
-  try {
-    return await put(`${API_BASE}/admin/categories/update`, fd);
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
+  public async createCategory(fd: FormData) {
+    return httpClient.post<any>("/admin/categories/create", fd);
   }
-}
 
-export async function deleteCategory(id: number) {
-  try {
-    return await del(`${API_BASE}/admin/categories/delete`, {
+  public async updateCategory(fd: FormData) {
+    return httpClient.put<any>("/admin/categories/update", fd);
+  }
+
+  public async deleteCategory(id: number) {
+    return httpClient.del<any>("/admin/categories/delete", {
       body: JSON.stringify({ Id: id }),
-      headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
   }
-}
 
-export async function getCategoryAttributesForFilter(categorySlug: string): Promise<CategoryAttribute[]> {
-  try {
-    const res = await fetch(`http://localhost:5000/api/categories/${categorySlug}/attributes`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store",
+  public async getCategoryAttributesForFilter(
+    categorySlug: string
+  ): Promise<CategoryAttribute[]> {
+    return httpClient.get<CategoryAttribute[]>(
+      `/categories/${categorySlug}/attributes`,
+      { cache: "no-store" }
+    );
+  }
+
+  public async getCategoryAttributes(categoryId: number) {
+    return httpClient.get<any>(
+      `/admin/categories/${categoryId}/attributes`,
+      { cache: "no-store" }
+    );
+  }
+
+  public async createCategoryAttribute(
+    categoryId: number,
+    name: string,
+    inputType: string = "text"
+  ) {
+    return httpClient.post<any>("/admin/categories/attributes", {
+      categoryId,
+      name,
     });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Lấy attributes thất bại!");
-    }
-
-    const result = await res.json();
-    return result.data as CategoryAttribute[];
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API attributes:", error);
-    throw error;
-  }
-}
-
-
-export async function getCategoryAttributes(categoryId: number) {
-  const res = await fetch(
-    `${API_BASE}/admin/categories/${categoryId}/attributes`,
-    {
-      cache: "no-store",
-    }
-  );
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Lấy attributes thất bại!");
   }
 
-  const result = await res.json();
-
-  if (!result.success || !Array.isArray(result.data)) {
-    throw new Error("Invalid attributes response");
+  public async updateCategoryAttribute(
+    attributeId: number,
+    name: string,
+    inputType: string = "text"
+  ) {
+    return httpClient.put<any>(
+      `/admin/categories/attributes/${attributeId}`,
+      { name }
+    );
   }
 
-  return result.data; // ✅ TRẢ VỀ ARRAY
-}
-
-export async function createCategoryAttribute(categoryId: number, name: string, inputType: string = "text") {
-  return post(
-    `${API_BASE}/admin/categories/attributes`,
-    {
-        categoryId,
-        name,
-    }
-  );
-}
-
-export async function updateCategoryAttribute(
-  attributeId: number,
-  name: string,
-  inputType: string = "text"
-) {
-  if (!attributeId) {
-    throw new Error("attributeId is required");
-  }
-
-  // Gửi JSON thay vì FormData
-  return put(
-    `${API_BASE}/admin/categories/attributes/${attributeId}`,
-    {
-      name: name,
-    }
-  );
-}
-
-export async function deleteCategoryAttribute(attributeId: number) {
-  try {
-    return await del(`${API_BASE}/admin/categories/attributes/${attributeId}`, {
-      body: JSON.stringify({ AttributeId: attributeId }),
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
-  }
-}
-
-export async function getCategoryAttributeValues(
-  attributeId: number
-): Promise<AttributeValuesResponse> {
-  try {
-    const res = await fetch(
-      `${API_BASE}/admin/categories/attributes/${attributeId}`,
+  public async deleteCategoryAttribute(attributeId: number) {
+    return httpClient.del<any>(
+      `/admin/categories/attributes/${attributeId}`,
       {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        cache: "no-store",
+        body: JSON.stringify({ AttributeId: attributeId }),
       }
     );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Lấy attribute values thất bại!");
-    }
-    const result = await res.json();
-    return result.data as AttributeValuesResponse;
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API attribute values:", error);
-    throw error;
   }
-}
 
-export async function addCategoryAttributeValue(attributeId: number, value: string) {
-  try {
+  public async getCategoryAttributeValues(
+    attributeId: number
+  ): Promise<AttributeValuesResponse> {
+    return httpClient.get<AttributeValuesResponse>(
+      `/admin/categories/attributes/${attributeId}`,
+      { cache: "no-store" }
+    );
+  }
+
+  public async addCategoryAttributeValue(attributeId: number, value: string) {
     const body = { AttributeId: attributeId, Value: value };
-    return await post(`${API_BASE}/admin/categories/attributes/values`, body);
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
+    return httpClient.post<any>("/admin/categories/attributes/values", body);
   }
-}
 
-export async function deleteCategoryAttributeValue(valueId: number, value: string) {
-  try {
+  public async deleteCategoryAttributeValue(valueId: number, value: string) {
     const body = { ValueId: valueId, Value: value };
-    return await del(`${API_BASE}/admin/categories/attributes/values/${valueId}`, {
-      body: JSON.stringify(body),
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
+    return httpClient.del<any>(
+      `/admin/categories/attributes/values/${valueId}`,
+      { body: JSON.stringify(body) }
+    );
   }
-}
 
-export async function updateCategoryAttributeValues(valueId: number, values: string[]) {
-  try {
+  public async updateCategoryAttributeValues(
+    valueId: number,
+    values: string[]
+  ) {
     const body = { ValueId: valueId, Values: values };
-    return await put(`${API_BASE}/admin/categories/attributes/values/${valueId}`, body);
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
+    return httpClient.put<any>(
+      `/admin/categories/attributes/values/${valueId}`,
+      body
+    );
   }
-}
 
-export async function createAttribute(data: CreateAttributeRequest) {
-  try {
-    return await post(`${API_BASE}/admin/categories/attributes`, data);
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
+  public async createAttribute(data: CreateAttributeRequest) {
+    return httpClient.post<any>("/admin/categories/attributes", data);
   }
-}
 
-export async function getGlobalAttributes() {
-  try {
-    const res = await fetch(`${API_BASE}/admin/categories/attributes/global`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+  public async getGlobalAttributes() {
+    return httpClient.get<any>("/admin/categories/attributes/global", {
       cache: "no-store",
     });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Lấy global attributes thất bại!");
-    }
-
-    const result = await res.json();
-    return result.data || [];
-  } catch (error) {
-    console.error("❌ Lỗi khi gọi API:", error);
-    throw error;
   }
 }
+
+export const categoryService = CategoryService.getInstance();
+
+// Backward compatibility exports
+export const getCategoriesList = () => categoryService.getCategoriesList();
+export const getCategoriesTree = () => categoryService.getCategoriesTree();
+export const createCategory = (fd: FormData) => categoryService.createCategory(fd);
+export const updateCategory = (fd: FormData) => categoryService.updateCategory(fd);
+export const deleteCategory = (id: number) => categoryService.deleteCategory(id);
+export const getCategoryAttributesForFilter = (categorySlug: string) => categoryService.getCategoryAttributesForFilter(categorySlug);
+export const getCategoryAttributes = (categoryId: number) => categoryService.getCategoryAttributes(categoryId);
+export const createCategoryAttribute = (categoryId: number, name: string, inputType?: string) => categoryService.createCategoryAttribute(categoryId, name, inputType);
+export const updateCategoryAttribute = (attributeId: number, name: string, inputType?: string) => categoryService.updateCategoryAttribute(attributeId, name, inputType);
+export const deleteCategoryAttribute = (attributeId: number) => categoryService.deleteCategoryAttribute(attributeId);
+export const getCategoryAttributeValues = (attributeId: number) => categoryService.getCategoryAttributeValues(attributeId);
+export const addCategoryAttributeValue = (attributeId: number, value: string) => categoryService.addCategoryAttributeValue(attributeId, value);
+export const deleteCategoryAttributeValue = (valueId: number, value: string) => categoryService.deleteCategoryAttributeValue(valueId, value);
+export const updateCategoryAttributeValues = (valueId: number, values: string[]) => categoryService.updateCategoryAttributeValues(valueId, values);
+export const createAttribute = (data: CreateAttributeRequest) => categoryService.createAttribute(data);
+export const getGlobalAttributes = () => categoryService.getGlobalAttributes();

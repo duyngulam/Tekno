@@ -1,6 +1,6 @@
-import { getCategoriesList } from "@/services/categories";
+import { categoryService } from "@/services/categories";
 
-const data = await getCategoriesList();
+const data = await categoryService.getCategoriesList();
 const category = data[0].slug
 export const headerData = [
   { href: "/", match: "/", label: "Home" },

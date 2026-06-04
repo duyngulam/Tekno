@@ -12,7 +12,7 @@ import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createOrder } from "@/services/order";
+import { orderService } from "@/services/order";
 
 interface CartItem {
   product: Product;
@@ -70,15 +70,12 @@ export default function CartPage() {
 
       if (selectedItems.length === 0) return;
 
-      const res = await createOrder(
-        {
-          note: "Order from cart",
-          selectedItems,
-        },
-        token
-      );
+      const res = await orderService.createOrder({
+        note: "Order from cart",
+        selectedItems,
+      });
 
-      const orderId = res.data.orderId;
+      const orderId = res.orderId;
       router.push(`/payment?orderId=${orderId}`);
     } catch (error) {
       console.error("Create order error:", error);

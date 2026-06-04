@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { signupApi } from "@/services/auth";
+import { authService } from "@/services/auth";
 import {
   Field,
   FieldContent,
@@ -43,7 +43,7 @@ export default function SignUpForm({ switchToLogin }: SignupFormProps) {
     const role = "Customer";
 
     try {
-      const data = await signupApi({ username, email, password, role });
+      const data = await authService.signup({ username, email, password, role });
 
       if (data.token) {
         localStorage.setItem("token", data.token);

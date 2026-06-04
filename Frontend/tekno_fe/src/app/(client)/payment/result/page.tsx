@@ -1,4 +1,6 @@
 "use client";
+export const dynamic = "force-dynamic";
+
 import False from "@/components/cart-payment-checkout/result/false";
 import FormattedPrice from "@/components/share/FormattedPriced";
 import { getOrderByOrderId } from "@/services/order";

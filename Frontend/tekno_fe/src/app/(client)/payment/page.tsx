@@ -27,7 +27,8 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { PaymentGateway, PaymentPayload } from "@/type/payment";
-import { getPaymentGateways, processPayment } from "@/services/payment";
+import { paymentService } from "@/services/payment";
+import { PaymentContext, PaymentStrategyFactory } from "@/services/paymentStrategy";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "recharts";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -35,7 +36,7 @@ import { ProfileAddress } from "@/type/address";
 import { getProfileAddresses } from "@/services/profile";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
-import { getOrderByOrderId } from "@/services/order";
+import { orderService } from "@/services/order";
 import { OrderItem } from "@/type/order";
 import { log } from "console";
 import FormattedPrice from "@/components/share/FormattedPriced";
@@ -58,7 +59,7 @@ export default function PaymentPage() {
       try {
         setLoadingOrder(true);
         const token = localStorage.getItem("token") || "";
-        const res = await getOrderByOrderId(token, Number(orderId));
+        const res = await orderService.getOrderByOrderId(Number(orderId));
         // normalize response
 
         console.log(res);
@@ -130,7 +131,7 @@ export default function PaymentPage() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await getPaymentGateways();
+        const data = await paymentService.getPaymentGateways();
         setGateways(data);
         if (data.length && !paymentMethod) setPaymentMethod(String(data[0].id));
       } catch (e) {
@@ -191,10 +192,10 @@ export default function PaymentPage() {
         orderId: Number(orderId),
       };
 
-      const { paymentUrl } = await processPayment(token, payload);
-      localStorage.setItem("Payment URL:", paymentUrl);
-      if (!paymentUrl) throw new Error("No payment URL returned");
-      window.location.href = paymentUrl;
+      // Apply Strategy Pattern
+      const strategy = PaymentStrategyFactory.getStrategy(gw?.name || "");
+      const context = new PaymentContext(strategy);
+      await context.execute(payload);
     } catch (e: any) {
       toast.error(e?.message || "Payment error");
     }

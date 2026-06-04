@@ -1,6 +1,6 @@
 import { Container } from "@/components/MainLayout/Container";
 import { Breadcrumb } from "@/components/share/breadcumbCustom";
-import { getProductDetail } from "@/services/products";
+import { productService } from "@/services/products";
 import ImageView from "@/components/product/productDetail/ImageView";
 import {
   Check,
@@ -36,7 +36,7 @@ export default async function SingleProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = await getProductDetail(slug);
+  const product = await productService.getProductDetail(slug);
   const isStock = product?.variants[0]?.stock > 0 || false;
 
   console.log("Product detail fetched:", product);

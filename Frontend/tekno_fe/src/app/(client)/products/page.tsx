@@ -6,7 +6,7 @@ import ProductCard from "@/components/product/ProductCard";
 import { Product } from "@/type/product";
 import { Breadcrumb } from "@/components/share/breadcumbCustom";
 import { Container } from "@/components/MainLayout/Container";
-import { getProductsList } from "@/services/products";
+import { productService } from "@/services/products";
 
 import { AnimatePresence, motion } from "motion/react";
 
@@ -70,7 +70,7 @@ export default function ProductPage() {
     const fecthProductList = async () => {
       setLoading(true);
       try {
-        const res = await getProductsList({
+        const res = await productService.getProductsList({
           category: selectedCategory,
           page: page,
           pageSize: pageSize,

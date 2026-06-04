@@ -1,4 +1,6 @@
 // layout cho client
+export const dynamic = "force-dynamic";
+
 import Header from "@/components/MainLayout/Header/Header";
 import "../../styles/globals.css";
 import Footer from "@/components/MainLayout/Footer/Footer";
